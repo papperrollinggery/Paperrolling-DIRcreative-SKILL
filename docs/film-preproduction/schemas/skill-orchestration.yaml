@@ -1,0 +1,485 @@
+skill_pack:
+  name: "dircreative"
+  repo: "Paperrolling-DIRcreative-SKILL"
+  version: "0.1.0"
+  status: "release_candidate"
+  root_skill: "skills/dircreative/SKILL.md"
+  update_policy:
+    update_check: true
+    source_refresh: true
+    generated_docs: true
+    learning_log: true
+
+global_contract:
+  artifact_first: true
+  phase_contract_required: true
+  hidden_conversation_state_allowed_as_primary_input: false
+  direct_generation_allowed_without_phase_permission: false
+  universal_video_prompt_allowed: false
+  execution_contexts:
+    - standalone_chat
+    - orchestrated_worker
+  orchestrated_worker_fails_closed: true
+  external_adoption_owned_by_caller: true
+
+state_files:
+  current: ".dircreative/state/current.json"
+  checkpoints: ".dircreative/checkpoints/"
+  runs: ".dircreative/runs/"
+  historical_fixtures: "tests/fixtures/runtime/history/ (read-only; no live authority)"
+
+artifacts:
+  required_metadata:
+    artifact_id: ""
+    version: ""
+    source_artifact_ids: []
+    status: "draft"
+    owner_skill: ""
+    created_at: ""
+    updated_at: ""
+    locked_by_user: false
+    notes: []
+
+subskills:
+  - skill_id: "chat-facilitator"
+    purpose: "Render the current stage as a customer-readable preview and one decision request."
+    inputs:
+      - current_project_artifact
+      - current_co_creation_gate
+      - candidate_options
+    outputs:
+      - chat_stage_message
+      - decision_request
+      - co_creation_gate_update
+    knowledge_packs:
+      - docs/film-preproduction/chat-co-creation-interface.md
+      - docs/film-preproduction/chat-stage-gate-integrity.md
+      - docs/film-preproduction/professional-agent-voice-standard.md
+    next_skill: "co-creation-gate-runtime"
+
+  - skill_id: "idea-intake"
+    purpose: "Turn raw idea into project brief and missing-question list."
+    inputs:
+      - raw_user_idea
+      - optional_references
+    outputs:
+      - project_brief
+    knowledge_packs:
+      - docs/film-preproduction/schemas/project.yaml
+      - docs/film-preproduction/research/channel-playbooks.md
+    next_skill: "director-room"
+
+  - skill_id: "director-room"
+    purpose: "Run role-based creative discussion and select a direction."
+    inputs:
+      - project_brief
+    outputs:
+      - director_room
+      - concept_options
+      - selected_concept
+    knowledge_packs:
+      - docs/film-preproduction/schemas/director-room.yaml
+      - docs/film-preproduction/research/channel-playbooks.md
+      - docs/film-preproduction/research/film-production-glossary.md
+    next_skill: "story-development"
+
+  - skill_id: "co-creation-gate-runtime"
+    purpose: "Persist real, simulated, pending, or stale creative decisions and block unsafe downstream work."
+    inputs:
+      - current_project_artifacts
+      - proposed_creative_options
+      - user_or_fixture_decision
+    outputs:
+      - co_creation_run_manifest
+      - gate_status_report
+      - decision_request
+      - media_blockers
+    knowledge_packs:
+      - docs/film-preproduction/co-creation-gate-policy.md
+      - docs/film-preproduction/schemas/co-creation-run.yaml
+    next_skill: "stage_owner_from_gate"
+
+  - skill_id: "story-development"
+    purpose: "Create logline, beat sheet, treatment, and story review."
+    inputs:
+      - selected_concept
+      - director_room
+    outputs:
+      - story_package
+    knowledge_packs:
+      - docs/film-preproduction/schemas/story-package.yaml
+      - docs/film-preproduction/research/channel-playbooks.md
+    next_skill: "script-treatment"
+
+  - skill_id: "script-treatment"
+    purpose: "Turn treatment into script-ready scenes, action, dialogue, or voiceover."
+    inputs:
+      - story_package
+    outputs:
+      - script
+    knowledge_packs:
+      - docs/film-preproduction/schemas/story-package.yaml
+      - docs/film-preproduction/research/audio-design-notes.md
+    next_skill: "script-breakdown"
+
+  - skill_id: "script-breakdown"
+    purpose: "Extract characters, locations, props, wardrobe, audio, and special requirements."
+    inputs:
+      - script
+    outputs:
+      - script_breakdown
+      - asset_requirements
+      - audio_policy
+    knowledge_packs:
+      - docs/film-preproduction/research/film-production-glossary.md
+      - docs/film-preproduction/research/audio-design-notes.md
+    next_skill: "shot-design"
+
+  - skill_id: "shot-design"
+    purpose: "Create professional shot list, camera plan, blocking plan, and shot QA."
+    inputs:
+      - script
+      - script_breakdown
+      - audio_policy
+    outputs:
+      - shot_list
+      - camera_plan
+      - blocking_plan
+    knowledge_packs:
+      - docs/film-preproduction/schemas/shot-list.yaml
+      - docs/film-preproduction/research/film-production-glossary.md
+    next_skill: "visual-bible"
+
+  - skill_id: "visual-bible"
+    purpose: "Define identity, environment, prop, wardrobe, lighting, color, and material continuity."
+    inputs:
+      - shot_list
+      - asset_requirements
+    outputs:
+      - visual_bible
+      - reference_pack_plan
+      - image_layout_spec
+    knowledge_packs:
+      - docs/film-preproduction/schemas/visual-bible.yaml
+      - docs/film-preproduction/research/storyboard-reference-analysis.md
+      - docs/film-preproduction/research/image-prompt-style-system.md
+    next_skill: "reference-image-planner"
+
+  - skill_id: "reference-image-planner"
+    purpose: "Plan model-safe reference boards, storyboard motion pages, clean frames, and asset roles."
+    inputs:
+      - visual_bible
+      - shot_list
+      - asset_requirements
+    outputs:
+      - reference_pack_plan
+      - reference_pack_manifest
+      - image_layout_spec
+      - direct_input_policy
+    knowledge_packs:
+      - docs/film-preproduction/ad-reference-pack-generation-gate.md
+      - docs/film-preproduction/schemas/reference-pack-manifest.yaml
+      - docs/film-preproduction/reference-consistency-gate.md
+    next_skill: "sequence-planner_or_image-prompt-compiler"
+
+  - skill_id: "sequence-planner"
+    purpose: "Decompose longform stories into generation units while preserving whole-film continuity."
+    inputs:
+      - selected_concept
+      - treatment_or_script
+      - shot_list
+      - target_duration
+    outputs:
+      - sequence_plan
+      - generation_unit_policy
+      - user_gate_map
+      - edit_handoff_skeleton
+    knowledge_packs:
+      - docs/film-preproduction/longform-decomposition-policy.md
+      - docs/film-preproduction/schemas/sequence-plan.yaml
+    next_skill: "longform-reference-planner"
+
+  - skill_id: "longform-reference-planner"
+    purpose: "Split locked global references from per-sequence reference and clean-frame requirements."
+    inputs:
+      - sequence_plan
+      - visual_bible
+      - reference_pack_manifest
+      - target_model_list
+    outputs:
+      - longform_reference_pack
+      - global_reference_pack
+      - sequence_reference_pack_plan
+      - clean_frame_requirements
+    knowledge_packs:
+      - docs/film-preproduction/longform-decomposition-policy.md
+      - docs/film-preproduction/schemas/longform-reference-pack.yaml
+    next_skill: "image-prompt-compiler"
+
+  - skill_id: "image-prompt-compiler"
+    purpose: "Compile reference image board prompts from visual bible and pattern registry."
+    inputs:
+      - visual_bible
+      - reference_pack_plan
+      - image_layout_spec
+    outputs:
+      - image_prompt_manifest
+      - image_prompt_files
+    knowledge_packs:
+      - docs/film-preproduction/schemas/image-prompt-manifest.yaml
+      - docs/film-preproduction/schemas/image-prompt-style-config.schema.json
+      - docs/film-preproduction/templates/image-prompt-style-config.template.json
+      - docs/film-preproduction/prompt-pattern-registry.json
+    next_skill: "video-model-adapter"
+
+  - skill_id: "video-model-adapter"
+    purpose: "Convert shot list and reference pack into model-specific video prompts."
+    inputs:
+      - shot_list
+      - reference_pack_plan
+      - image_prompt_manifest
+      - audio_policy
+    outputs:
+      - video_prompt_manifest
+      - model_specific_prompt_files
+      - adapter_risk_notes
+    knowledge_packs:
+      - docs/film-preproduction/schemas/video-prompt-manifest.yaml
+      - docs/film-preproduction/research/model-adapter-notes.md
+      - docs/film-preproduction/research/audio-design-notes.md
+    next_skill: "generation-qa"
+
+  - skill_id: "generation-qa"
+    purpose: "Score generated outputs and produce retry instructions."
+    inputs:
+      - generation_run
+      - image_prompt_manifest
+      - video_prompt_manifest
+    outputs:
+      - qa_report
+      - retry_plan
+      - pattern_registry_candidates
+    knowledge_packs:
+      - docs/film-preproduction/schemas/qa-report.yaml
+      - docs/film-preproduction/prompt-pattern-registry.json
+    next_skill: "learn"
+
+  - skill_id: "edit-assembly-planner"
+    purpose: "Map generated or external clips into sequence order, transitions, audio spine, and retry priority."
+    inputs:
+      - sequence_plan
+      - longform_reference_pack
+      - video_prompt_manifest
+      - generation_qa_or_external_clip_list
+    outputs:
+      - edit_assembly_plan
+      - transition_notes
+      - audio_spine
+      - retry_priority_list
+    knowledge_packs:
+      - docs/film-preproduction/longform-decomposition-policy.md
+      - docs/film-preproduction/research/audio-design-notes.md
+    next_skill: "generation-qa"
+
+  - skill_id: "learn"
+    purpose: "Record reusable project learnings, prompt fixes, and model behavior."
+    inputs:
+      - qa_report
+      - retry_plan
+      - user_feedback
+    outputs:
+      - learning_entries
+      - registry_update_requests
+    knowledge_packs:
+      - docs/film-preproduction/prompt-pattern-registry.json
+    next_skill: "checkpoint"
+
+  - skill_id: "update"
+    purpose: "Refresh source facts and propose tested pattern or model-adapter updates."
+    inputs:
+      - source_registry
+      - prompt_registry
+      - qa_observations
+    outputs:
+      - source_freshness_report
+      - pattern_candidate
+      - model_adapter_revision_request
+      - deprecation_note
+    knowledge_packs:
+      - docs/film-preproduction/sources/model-sources.yaml
+      - docs/film-preproduction/sources/prompt-sources.yaml
+      - docs/film-preproduction/prompt-pattern-registry.json
+    next_skill: "checkpoint"
+
+  - skill_id: "checkpoint"
+    purpose: "Persist the active phase, receipt, blockers, verification state, and next exact action."
+    inputs:
+      - current_phase
+      - workspace_status
+      - latest_skill_run_receipt
+      - unresolved_questions
+    outputs:
+      - checkpoint_markdown
+      - timeline_entry
+      - next_exact_action
+    knowledge_packs:
+      - docs/film-preproduction/phase-contracts.yaml
+      - docs/film-preproduction/schemas/skill-orchestration.yaml
+    next_skill: "root_router"
+
+external_orchestrators:
+  adco:
+    caller_skill: "ad-creative-orchestrator"
+    protocol_id: "adco.specialist-exchange"
+    profile_id: "dircreative.film-preproduction"
+    supported_contract_versions:
+      - "1.0"
+    descriptor_path: "docs/film-preproduction/schemas/adco-specialist-descriptor.json"
+    protocol_path: "docs/film-preproduction/adco-integration-contract.md"
+    audit_command: "python3 scripts/dircreative_adco_native_exchange.py --self-test"
+    bilateral_audit_command: "python3 scripts/dircreative_adco_native_exchange.py --adco-repo <adco_repo>"
+    execution_context: "orchestrated_worker"
+    default_execution_mode: "inline"
+    compatibility_mode: "provider_descriptor_and_capability_negotiation"
+    failure_policy: "fail_closed"
+    caller_owns:
+      - user_and_client_interaction
+      - project_current_truth
+      - worker_dispatch_and_cleanup
+      - artifact_adoption
+      - client_gates
+      - versions_and_exports
+      - final_delivery
+    dircreative_owns:
+      - scoped_film_preproduction_artifacts
+      - domain_quality_review
+      - bounded_retry
+      - decision_requests
+      - adoption_recommendation
+
+director_room_roles:
+  - role_id: "producer"
+    owns:
+      - channel_fit
+      - scope_constraints
+      - deliverable_plan
+  - role_id: "creative_director"
+    owns:
+      - concept_options
+      - tone_statement
+      - visual_hook
+  - role_id: "director"
+    owns:
+      - director_statement
+      - scene_intent
+      - blocking_notes
+  - role_id: "screenwriter"
+    owns:
+      - logline
+      - beat_sheet
+      - treatment
+      - script
+  - role_id: "cinematographer"
+    owns:
+      - shot_language
+      - lens_strategy
+      - lighting_strategy
+      - camera_motion_notes
+  - role_id: "production_designer"
+    owns:
+      - environment_notes
+      - prop_notes
+      - wardrobe_notes
+      - material_logic
+  - role_id: "editor"
+    owns:
+      - pacing_plan
+      - shot_duration_review
+      - transition_notes
+  - role_id: "sound_designer"
+    owns:
+      - audio_policy
+      - dialogue
+      - voiceover
+      - ambience
+      - sfx
+      - music
+      - silence
+  - role_id: "model_prompt_engineer"
+    owns:
+      - reference_pack_implications
+      - image_prompt_manifest
+      - video_prompt_manifest
+      - adapter_risks
+  - role_id: "continuity_qa"
+    owns:
+      - contradiction_report
+      - missing_assets
+      - required_locks
+      - retry_plan
+
+skill_run_receipt:
+  receipt_version: "1.0"
+  run_id: ""
+  skill_id: ""
+  execution_context:
+    mode: "standalone_chat"
+    controller_skill: "dircreative"
+  orchestrator_context:
+    contract_name: ""
+    contract_version: ""
+    caller_skill: ""
+    caller_run_id: ""
+    handoff_id: ""
+    goal_id: ""
+    work_id: ""
+    lane_id: ""
+    lane_run_id: ""
+    target_gate_id: ""
+    absolute_deadline_at: ""
+    adoption_owner: ""
+    skill_sha256: ""
+  worker_identity:
+    thread_id: ""
+    source_thread_id: ""
+    assigned_worker_thread_id: ""
+    reporting_thread_id: ""
+  stage_gate:
+    id: ""
+    type: "checkpoint"
+    status: "needs_user"
+    decision_owner: "user"
+  input_artifacts: []
+  output_artifacts: []
+  decisions: []
+  unresolved_questions: []
+  retry_loop:
+    failure_id: ""
+    corrected_layer: ""
+    unchanged_locks: []
+    next_smallest_artifact: ""
+  qa_gate:
+    status: "needs_user"
+    reasons: []
+  session_state:
+    checkpoint_path: ""
+    source_truth_refs: []
+    stale_artifacts: []
+  domain_delivery:
+    domain_verdict: "blocked"
+    discussion_ready: false
+    specialist_handoff_ready: false
+    generation_ready: false
+    client_ready: false
+    final_export_allowed: false
+    hard_blockers: []
+    evidence_refs: []
+    dirty_state_impact: ""
+    worker_recommendation: ""
+    loop_state: ""
+    qa_gate_status: ""
+    manifest_index_updates_needed: []
+    recurrence_guard: ""
+    cleanup_actions: []
+    adoption_recommendation: "defer"
+  next_recommended_skill: ""

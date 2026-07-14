@@ -1,0 +1,899 @@
+artifact:
+  artifact_id: cyber-courier-image-prompt-manifest-v1
+  version: 1.0.0
+  source_artifact_ids:
+    - cyber-courier-visual-bible-v1
+    - cyber-courier-reference-pack-plan-v1
+    - cyber-courier-image-layout-spec-v1
+  status: approved
+  owner_skill: image-prompt-compiler
+  created_at: "2026-05-14"
+  locked_by_user: false
+
+image_prompt_manifest:
+  project_title: "Cyber Courier: The Alley Accepts The Package"
+  generation_target: "reference_pack"
+  image_model: "GPT Image / Image2 compatible"
+  authoring_mode: "json_first"
+  visual_output_mode: "prompt_only"
+  longform_generation_mode: "single_sequence"
+  sequence_plan: ""
+  style_system:
+    style_schema: "docs/film-preproduction/schemas/image-prompt-style-config.schema.json"
+    pattern_registry: "docs/film-preproduction/prompt-pattern-registry.json"
+    selected_pattern_ids:
+      - "art_directed_asymmetric_layout_v1"
+      - "json_config_prompt_v1"
+      - "surface_integrity_guard_v1"
+      - "multi_panel_identity_lock_v1"
+  global_style_locks:
+    - "grounded cyber-noir suspense"
+    - "blue-black rain with restrained red/cyan light"
+    - "production board, not generic mood collage"
+    - "all labels short, exact, and readable"
+  global_avoid:
+    - "generic cyberpunk poster"
+    - "evenly distributed auto grid"
+    - "fake text"
+    - "decorative filler"
+    - "fish-scale texture"
+    - "excessive sharpening"
+    - "extra characters"
+    - "door opening"
+
+capability_resolution:
+  registry_path: "docs/film-preproduction/sources/model-sources.yaml"
+  registry_version: "2.0.0"
+  capability_card_id: gpt_image_2_openai_api
+  version: "gpt-image-2"
+  status: current
+  provider_surface: "OpenAI Image API and Responses API image_generation tool"
+  verified_on: "2026-07-10"
+  accessed_on: "2026-07-10"
+  evidence_level: S1
+  source_urls:
+    - "https://developers.openai.com/api/docs/guides/image-generation"
+  source_conflicts: []
+  access_mode: api
+  execution_mode: api
+  execution_verification_status: unverified
+  resolution_status: resolved
+
+rights_gate:
+  status: unverified
+  conditions: []
+  source_asset_rights: "Prompt-only artifact; rights must be verified before generation."
+  likeness_authorization: unverified
+  brand_or_character_authorization: unverified
+  provider_restrictions_checked: true
+  evidence_refs: []
+  generation_allowed: false
+
+audio_intent:
+  desired_audio: downstream_metadata_only
+  generation_audio_route: not_applicable
+  prohibited_in_image_prompt: true
+
+
+execution_capabilities:
+  image_generation:
+    available: false
+    provider: none
+    allowed_by_user: false
+    external_upload_authorized: false
+    external_execution_state: instructions_only
+    external_execution_evidence: []
+  video_generation:
+    available: false
+    provider: none
+    allowed_by_user: false
+  file_write:
+    available: true
+  browser_review:
+    available: false
+
+images:
+  - image_id: "image_01"
+    operation: generate
+    capability_card_id: gpt_image_2_openai_api
+    source_references: []
+    rights:
+      status: unverified
+      evidence_refs: []
+    transformation_contract:
+      preserve: []
+      change: []
+      allow_incidental_change: []
+      forbidden_change: []
+      overlap_check: pass
+    type: "character_design_board"
+    purpose: "Lock courier identity, wardrobe, expression range, and bag handling."
+    sequence_id: "cyber-courier-seq-01"
+    prompt_file: "examples/cyber-courier/prompts/image_01_character_board.txt"
+    input_dependencies:
+      story_package: "examples/cyber-courier/05-logline.md"
+      shot_list: "examples/cyber-courier/13-shot-list.yaml"
+      visual_bible: "examples/cyber-courier/17-visual-bible.md"
+      sequence_plan: ""
+      reference_pack_manifest: "examples/cyber-courier/18-reference-pack-plan.yaml"
+    layout:
+      aspect_ratio: "16:9"
+      sections:
+        - "large full-body hero pose"
+        - "turnaround/support views"
+        - "face expression studies"
+        - "wardrobe/material callouts"
+      density: "medium-high but readable"
+      readability_rules:
+        - "labels must be short and readable"
+        - "hero pose must occupy the largest region"
+        - "support views must not become tiny thumbnails"
+    asset_output:
+      status: prompt_ready
+      prompt_file: "examples/cyber-courier/prompts/image_01_character_board.txt"
+      generated_file: ""
+      external_instructions: "Run this prompt in the selected image tool and import the result before locking character identity."
+      source_tool: none
+      user_lock_status: pending
+    style_config:
+      config_id: "cyber_courier_character_board_v1"
+      image_type: "character_design_board"
+      source_patterns:
+        - "art_directed_asymmetric_layout_v1"
+        - "json_config_prompt_v1"
+        - "surface_integrity_guard_v1"
+        - "multi_panel_identity_lock_v1"
+      art_direction_policy:
+        non_negotiables:
+          - "do not use a generic layout"
+          - "do not use evenly distributed grids unless a technical sub-section requires it"
+          - "do not make the layout symmetrical only for symmetry"
+          - "composition must feel art-directed, intentional, and slightly asymmetric"
+          - "every section must feel carefully placed, not automatically generated"
+        placement_rule: "hero body pose is largest; identity and material details are placed by production importance"
+      quality_and_artifact_control:
+        surface_integrity_guard:
+          required:
+            - "clean natural materials"
+            - "smooth and coherent surface texture"
+            - "main subject remains clear"
+            - "background depth layers remain distinct"
+            - "complete object geometry"
+          avoid:
+            - "fish-scale texture"
+            - "excessive sharpening"
+            - "color speckles"
+            - "random noise"
+            - "cracks"
+            - "collapsed surfaces"
+            - "distorted geometry"
+            - "broken material continuity"
+        transparent_background: false
+      self_update:
+        registry_pattern_ids:
+          - "art_directed_asymmetric_layout_v1"
+          - "multi_panel_identity_lock_v1"
+        qa_observations: []
+    exact_text_labels:
+      - "COURIER IDENTITY"
+      - "RED RAIN JACKET"
+      - "BLACK DELIVERY BAG"
+      - "RESTRAINED DREAD"
+    avoid:
+      - "helmeted faceless biker"
+      - "combat armor"
+      - "weapon"
+      - "second character"
+    qa:
+      role_clear: true
+      text_readable: true
+      panels_large_enough: true
+      continuity_locks_present: true
+      output_mode_supported: true
+      asset_output_status_present: true
+      video_model_safe: true
+      capability_card_resolved: true
+      rights_gate_passed: false
+      preserve_change_disjoint: true
+      source_reference_present_for_edit: true
+      optional_qa_macro_not_forced: true
+
+  - image_id: "image_02"
+    operation: generate
+    capability_card_id: gpt_image_2_openai_api
+    source_references: []
+    rights:
+      status: unverified
+      evidence_refs: []
+    transformation_contract:
+      preserve: []
+      change: []
+      allow_incidental_change: []
+      forbidden_change: []
+      overlap_check: pass
+    type: "environment_blocking_board"
+    purpose: "Lock alley geography, entrance-to-door axis, signs, camera path, and subject path."
+    sequence_id: "cyber-courier-seq-01"
+    prompt_file: "examples/cyber-courier/prompts/image_02_environment_board.txt"
+    input_dependencies:
+      story_package: "examples/cyber-courier/07-treatment.md"
+      shot_list: "examples/cyber-courier/13-shot-list.yaml"
+      visual_bible: "examples/cyber-courier/17-visual-bible.md"
+      sequence_plan: ""
+      reference_pack_manifest: "examples/cyber-courier/18-reference-pack-plan.yaml"
+    layout:
+      aspect_ratio: "16:9"
+      sections:
+        - "large alley hero view"
+        - "top-down blocking map"
+        - "destination door detail"
+        - "sign and camera markers"
+      density: "high but map-readable"
+      readability_rules:
+        - "path and camera positions must be readable"
+        - "hero view must be the largest region"
+        - "map markers must not rely on tiny OCR"
+    asset_output:
+      status: prompt_ready
+      prompt_file: "examples/cyber-courier/prompts/image_02_environment_board.txt"
+      generated_file: ""
+      external_instructions: "Run this prompt externally or with authorized image generation, then export clean frames separately."
+      source_tool: none
+      user_lock_status: pending
+    style_config:
+      config_id: "cyber_courier_environment_board_v1"
+      image_type: "environment_blocking_board"
+      source_patterns:
+        - "art_directed_asymmetric_layout_v1"
+        - "json_config_prompt_v1"
+        - "surface_integrity_guard_v1"
+      art_direction_policy:
+        non_negotiables:
+          - "do not use a generic layout"
+          - "do not use evenly distributed grids unless a technical map sub-section requires it"
+          - "composition must feel art-directed, intentional, and slightly asymmetric"
+        placement_rule: "hero alley view dominates; blocking map and door detail support geography"
+      quality_and_artifact_control:
+        surface_integrity_guard:
+          required:
+            - "clean natural rain surfaces"
+            - "coherent wet pavement reflections"
+            - "distinct foreground, midground, background"
+          avoid:
+            - "fish-scale texture"
+            - "noisy rain speckles"
+            - "warped pipes"
+            - "collapsed building geometry"
+        transparent_background: false
+      self_update:
+        registry_pattern_ids:
+          - "art_directed_asymmetric_layout_v1"
+        qa_observations: []
+    exact_text_labels:
+      - "ALLEY AXIS"
+      - "RED SIGN LEFT"
+      - "BLUE 24H SIGN"
+      - "DESTINATION DOOR"
+      - "COURIER PATH"
+    avoid:
+      - "wide city plaza"
+      - "open storefront"
+      - "crowd"
+      - "door opened"
+    qa:
+      role_clear: true
+      text_readable: true
+      panels_large_enough: true
+      continuity_locks_present: true
+      output_mode_supported: true
+      asset_output_status_present: true
+      video_model_safe: true
+      capability_card_resolved: true
+      rights_gate_passed: false
+      preserve_change_disjoint: true
+      source_reference_present_for_edit: true
+      optional_qa_macro_not_forced: true
+
+  - image_id: "image_03"
+    operation: generate
+    capability_card_id: gpt_image_2_openai_api
+    source_references: []
+    rights:
+      status: unverified
+      evidence_refs: []
+    transformation_contract:
+      preserve: []
+      change: []
+      allow_incidental_change: []
+      forbidden_change: []
+      overlap_check: pass
+    type: "prop_product_board"
+    purpose: "Lock delivery bag, sealed package, scanner glow, material, and state changes."
+    sequence_id: "cyber-courier-seq-01"
+    prompt_file: "examples/cyber-courier/prompts/image_03_prop_board.txt"
+    input_dependencies:
+      story_package: "examples/cyber-courier/07-treatment.md"
+      shot_list: "examples/cyber-courier/13-shot-list.yaml"
+      visual_bible: "examples/cyber-courier/17-visual-bible.md"
+      sequence_plan: ""
+      reference_pack_manifest: "examples/cyber-courier/18-reference-pack-plan.yaml"
+    layout:
+      aspect_ratio: "16:9"
+      sections:
+        - "large bag and package hero view"
+        - "off/on state strip"
+        - "hand interaction"
+        - "material and wet reflection details"
+      density: "medium"
+      readability_rules:
+        - "package shape must be clear"
+        - "state changes must be visually separate"
+        - "material callouts must sit near the visible surface"
+    asset_output:
+      status: prompt_ready
+      prompt_file: "examples/cyber-courier/prompts/image_03_prop_board.txt"
+      generated_file: ""
+      external_instructions: "Run this prompt externally or with authorized image generation before locking prop state."
+      source_tool: none
+      user_lock_status: pending
+    style_config:
+      config_id: "cyber_courier_prop_board_v1"
+      image_type: "prop_product_board"
+      source_patterns:
+        - "art_directed_asymmetric_layout_v1"
+        - "json_config_prompt_v1"
+        - "surface_integrity_guard_v1"
+        - "multi_panel_identity_lock_v1"
+      art_direction_policy:
+        non_negotiables:
+          - "do not use a generic product grid"
+          - "do not make the layout symmetrical only for symmetry"
+          - "every prop state must be clearly placed for production comparison"
+        placement_rule: "hero prop view and state strip are larger than material callouts"
+      quality_and_artifact_control:
+        surface_integrity_guard:
+          required:
+            - "natural coated fabric"
+            - "matte black rigid package"
+            - "clean red scanner pulse"
+            - "complete bag and package geometry"
+          avoid:
+            - "fish-scale texture"
+            - "plastic toy look"
+            - "weapon-like silhouette"
+            - "over-sharpened glow"
+        transparent_background: false
+      self_update:
+        registry_pattern_ids:
+          - "surface_integrity_guard_v1"
+          - "multi_panel_identity_lock_v1"
+        qa_observations: []
+    exact_text_labels:
+      - "BAG CLOSED"
+      - "PACKAGE OFF"
+      - "SCANNER PULSE"
+      - "HAND INTERACTION"
+      - "WET REFLECTION"
+    avoid:
+      - "large suitcase"
+      - "food delivery box"
+      - "weapon"
+      - "visible brand logo"
+    qa:
+      role_clear: true
+      text_readable: true
+      panels_large_enough: true
+      continuity_locks_present: true
+      output_mode_supported: true
+      asset_output_status_present: true
+      video_model_safe: true
+      capability_card_resolved: true
+      rights_gate_passed: false
+      preserve_change_disjoint: true
+      source_reference_present_for_edit: true
+      optional_qa_macro_not_forced: true
+
+  - image_id: "image_04"
+    operation: generate
+    capability_card_id: gpt_image_2_openai_api
+    source_references: []
+    rights:
+      status: unverified
+      evidence_refs: []
+    transformation_contract:
+      preserve: []
+      change: []
+      allow_incidental_change: []
+      forbidden_change: []
+      overlap_check: pass
+    type: "director_storyboard_board"
+    purpose: "Lock five-shot sequence, timing, action order, lens, and camera movement."
+    sequence_id: "cyber-courier-seq-01"
+    prompt_file: "examples/cyber-courier/prompts/image_04_storyboard_board.txt"
+    input_dependencies:
+      story_package: "examples/cyber-courier/06-beat-sheet.md"
+      shot_list: "examples/cyber-courier/13-shot-list.yaml"
+      visual_bible: "examples/cyber-courier/17-visual-bible.md"
+      sequence_plan: ""
+      reference_pack_manifest: "examples/cyber-courier/18-reference-pack-plan.yaml"
+    layout:
+      aspect_ratio: "16:9"
+      sections:
+        - "large geography anchor frames"
+        - "ordered five-shot strip"
+        - "duration/lens/camera notes"
+        - "audio plan label"
+      density: "high but shot-readable"
+      readability_rules:
+        - "shot panels must be large enough to show action"
+        - "labels must be exact and short"
+        - "include REFERENCE BOARD ONLY label"
+    asset_output:
+      status: prompt_ready
+      prompt_file: "examples/cyber-courier/prompts/image_04_storyboard_board.txt"
+      generated_file: ""
+      external_instructions: "Run this prompt for planning only; do not use generated storyboard board as direct Kling/Runway first frame."
+      source_tool: none
+      user_lock_status: pending
+    style_config:
+      config_id: "cyber_courier_storyboard_board_v1"
+      image_type: "director_storyboard_board"
+      source_patterns:
+        - "art_directed_asymmetric_layout_v1"
+        - "json_config_prompt_v1"
+        - "surface_integrity_guard_v1"
+      art_direction_policy:
+        non_negotiables:
+          - "do not use a generic 3x3 storyboard grid"
+          - "shot strip may be ordered but the full board must be art-directed"
+          - "composition must feel intentional, not automatically generated"
+        placement_rule: "SH01 and SH05 geography anchors are larger; SH02-SH04 support the action sequence"
+      quality_and_artifact_control:
+        surface_integrity_guard:
+          required:
+            - "clear shot frames"
+            - "readable labels"
+            - "coherent alley geometry"
+          avoid:
+            - "tiny unreadable panels"
+            - "fake text"
+            - "overloaded layout"
+            - "fish-scale rain texture"
+        transparent_background: false
+      self_update:
+        registry_pattern_ids:
+          - "art_directed_asymmetric_layout_v1"
+        qa_observations: []
+    exact_text_labels:
+      - "REFERENCE BOARD ONLY"
+      - "SH01 0-3s THRESHOLD"
+      - "SH02 3-6s ENTRY"
+      - "SH03 6-8s PACKAGE PULSE"
+      - "SH04 8-12s REACTION"
+      - "SH05 12-15s DOOR ACTIVATION"
+    avoid:
+      - "generic 3x3 grid"
+      - "tiny thumbnails"
+      - "extra shots"
+      - "door opened"
+    qa:
+      role_clear: true
+      text_readable: true
+      panels_large_enough: true
+      continuity_locks_present: true
+      output_mode_supported: true
+      asset_output_status_present: true
+      video_model_safe: true
+      capability_card_resolved: true
+      rights_gate_passed: false
+      preserve_change_disjoint: true
+      source_reference_present_for_edit: true
+      optional_qa_macro_not_forced: true
+
+  - image_id: "image_05"
+    operation: generate
+    capability_card_id: gpt_image_2_openai_api
+    source_references: []
+    rights:
+      status: unverified
+      evidence_refs: []
+    transformation_contract:
+      preserve: []
+      change: []
+      allow_incidental_change: []
+      forbidden_change: []
+      overlap_check: pass
+    type: "lighting_style_board"
+    purpose: "Lock palette, rain texture, reflections, lens mood, and material behavior."
+    sequence_id: "cyber-courier-seq-01"
+    prompt_file: "examples/cyber-courier/prompts/image_05_style_board.txt"
+    input_dependencies:
+      story_package: "examples/cyber-courier/07-treatment.md"
+      shot_list: "examples/cyber-courier/13-shot-list.yaml"
+      visual_bible: "examples/cyber-courier/17-visual-bible.md"
+      sequence_plan: ""
+      reference_pack_manifest: "examples/cyber-courier/18-reference-pack-plan.yaml"
+    layout:
+      aspect_ratio: "16:9"
+      sections:
+        - "large mood frame"
+        - "palette swatches"
+        - "lighting source samples"
+        - "material texture samples"
+        - "surface integrity note"
+      density: "medium"
+      readability_rules:
+        - "swatches must be labeled"
+        - "texture samples must be large enough to inspect"
+        - "style references must map to assets or shots"
+    asset_output:
+      status: prompt_ready
+      prompt_file: "examples/cyber-courier/prompts/image_05_style_board.txt"
+      generated_file: ""
+      external_instructions: "Run this prompt externally or with authorized image generation before using as style reference."
+      source_tool: none
+      user_lock_status: pending
+    style_config:
+      config_id: "cyber_courier_lighting_style_board_v1"
+      image_type: "lighting_style_board"
+      source_patterns:
+        - "art_directed_asymmetric_layout_v1"
+        - "json_config_prompt_v1"
+        - "surface_integrity_guard_v1"
+      art_direction_policy:
+        non_negotiables:
+          - "do not make a random mood collage"
+          - "every swatch and texture sample must support a shot or material"
+          - "layout must be art-directed and slightly asymmetric"
+        placement_rule: "large mood frame anchors the board; swatches and texture details orbit it by production relevance"
+      quality_and_artifact_control:
+        surface_integrity_guard:
+          required:
+            - "clean natural materials"
+            - "smooth rain texture"
+            - "distinct background depth layers"
+            - "complete reflections"
+          avoid:
+            - "fish-scale texture"
+            - "excessive sharpening"
+            - "color speckles"
+            - "random noise"
+        transparent_background: false
+      self_update:
+        registry_pattern_ids:
+          - "surface_integrity_guard_v1"
+        qa_observations: []
+    exact_text_labels:
+      - "BLUE-BLACK RAIN"
+      - "RED SCANNER GLOW"
+      - "CYAN DEPTH LIGHT"
+      - "WET ASPHALT"
+      - "NO FISH-SCALE TEXTURE"
+    avoid:
+      - "purple neon overload"
+      - "generic sci-fi glow"
+      - "noisy rain"
+      - "decorative bokeh filler"
+    qa:
+      role_clear: true
+      text_readable: true
+      panels_large_enough: true
+      continuity_locks_present: true
+      output_mode_supported: true
+      asset_output_status_present: true
+      video_model_safe: true
+      capability_card_resolved: true
+      rights_gate_passed: false
+      preserve_change_disjoint: true
+      source_reference_present_for_edit: true
+      optional_qa_macro_not_forced: true
+
+  - image_id: "image_06_clean_sh01"
+    operation: generate
+    capability_card_id: gpt_image_2_openai_api
+    source_references: []
+    rights:
+      status: unverified
+      evidence_refs: []
+    transformation_contract:
+      preserve: []
+      change: []
+      allow_incidental_change: []
+      forbidden_change: []
+      overlap_check: pass
+    type: "clean_first_frame"
+    purpose: "No-text direct I2V first frame for SH01 alley threshold."
+    sequence_id: "cyber-courier-seq-01"
+    prompt_file: "examples/cyber-courier/prompts/image_06_clean_sh01_start.txt"
+    input_dependencies:
+      story_package: "examples/cyber-courier/07-treatment.md"
+      shot_list: "examples/cyber-courier/13-shot-list.yaml"
+      visual_bible: "examples/cyber-courier/17-visual-bible.md"
+      sequence_plan: ""
+      reference_pack_manifest: "examples/cyber-courier/18-reference-pack-plan.yaml"
+    layout:
+      aspect_ratio: "16:9"
+      sections:
+        - "single cinematic frame only"
+      density: "single frame"
+      readability_rules:
+        - "no text"
+        - "no labels"
+        - "no panels"
+        - "composition must match SH01 start state"
+    text_policy: no_text
+    direct_video_input:
+      allowed: true
+      model_slots:
+        - "Kling SH01 primary image"
+        - "Runway SH01 primary image"
+      frame_role: clean_first_frame
+      shot_id: SH01
+    asset_output:
+      status: prompt_ready
+      prompt_file: "examples/cyber-courier/prompts/image_06_clean_sh01_start.txt"
+      generated_file: ""
+      external_instructions: "Generate this clean frame, then user-lock it before SH01 Kling/Runway I2V."
+      source_tool: none
+      user_lock_status: pending
+    style_config:
+      config_id: "cyber_courier_clean_sh01_start_v1"
+      image_type: "clean_first_frame"
+      source_patterns:
+        - "json_config_prompt_v1"
+        - "surface_integrity_guard_v1"
+      art_direction_policy:
+        non_negotiables:
+          - "single cinematic frame only"
+          - "no text, labels, arrows, panels, maps, swatches, or callouts"
+          - "match SH01 start state exactly"
+        placement_rule: "courier left foreground, alley depth toward sealed far door"
+      quality_and_artifact_control:
+        surface_integrity_guard:
+          required:
+            - "clear courier silhouette"
+            - "coherent alley depth"
+            - "natural wet nylon"
+            - "smooth rain texture"
+          avoid:
+            - "fish-scale rain texture"
+            - "extra characters"
+            - "door open"
+            - "fake text"
+        transparent_background: false
+      self_update:
+        registry_pattern_ids:
+          - "surface_integrity_guard_v1"
+        qa_observations: []
+    exact_text_labels: []
+    avoid:
+      - "labels"
+      - "arrows"
+      - "panel borders"
+      - "storyboard layout"
+      - "extra characters"
+    qa:
+      role_clear: true
+      text_absent: true
+      panels_absent: true
+      continuity_locks_present: true
+      output_mode_supported: true
+      asset_output_status_present: true
+      video_model_safe: true
+      capability_card_resolved: true
+      rights_gate_passed: false
+      preserve_change_disjoint: true
+      source_reference_present_for_edit: true
+      optional_qa_macro_not_forced: true
+
+  - image_id: "image_07_clean_sh03"
+    operation: generate
+    capability_card_id: gpt_image_2_openai_api
+    source_references: []
+    rights:
+      status: unverified
+      evidence_refs: []
+    transformation_contract:
+      preserve: []
+      change: []
+      allow_incidental_change: []
+      forbidden_change: []
+      overlap_check: pass
+    type: "clean_key_frame"
+    purpose: "No-text direct I2V key frame for SH03 package scanner pulse."
+    sequence_id: "cyber-courier-seq-01"
+    prompt_file: "examples/cyber-courier/prompts/image_07_clean_sh03_package.txt"
+    input_dependencies:
+      story_package: "examples/cyber-courier/07-treatment.md"
+      shot_list: "examples/cyber-courier/13-shot-list.yaml"
+      visual_bible: "examples/cyber-courier/17-visual-bible.md"
+      sequence_plan: ""
+      reference_pack_manifest: "examples/cyber-courier/18-reference-pack-plan.yaml"
+    layout:
+      aspect_ratio: "16:9"
+      sections:
+        - "single cinematic macro frame only"
+      density: "single frame"
+      readability_rules:
+        - "no text"
+        - "no labels"
+        - "no panels"
+        - "package state must match SH03"
+    text_policy: no_text
+    direct_video_input:
+      allowed: true
+      model_slots:
+        - "Kling SH03 primary image"
+        - "Runway SH03 primary image"
+      frame_role: clean_key_frame
+      shot_id: SH03
+    asset_output:
+      status: prompt_ready
+      prompt_file: "examples/cyber-courier/prompts/image_07_clean_sh03_package.txt"
+      generated_file: ""
+      external_instructions: "Generate this clean macro frame, then user-lock it before SH03 Kling/Runway I2V."
+      source_tool: none
+      user_lock_status: pending
+    style_config:
+      config_id: "cyber_courier_clean_sh03_package_v1"
+      image_type: "clean_key_frame"
+      source_patterns:
+        - "json_config_prompt_v1"
+        - "surface_integrity_guard_v1"
+      art_direction_policy:
+        non_negotiables:
+          - "single cinematic macro frame only"
+          - "no text, labels, arrows, panels, maps, swatches, or callouts"
+          - "package remains compact and sealed"
+        placement_rule: "black bag frames compact package with thin red scanner pulse"
+      quality_and_artifact_control:
+        surface_integrity_guard:
+          required:
+            - "matte rigid package"
+            - "natural coated fabric"
+            - "clean thin red scanner pulse"
+            - "complete bag and package geometry"
+          avoid:
+            - "fish-scale texture"
+            - "weapon shape"
+            - "plastic toy look"
+            - "random labels"
+        transparent_background: false
+      self_update:
+        registry_pattern_ids:
+          - "surface_integrity_guard_v1"
+        qa_observations: []
+    exact_text_labels: []
+    avoid:
+      - "labels"
+      - "arrows"
+      - "panel borders"
+      - "storyboard layout"
+      - "weapon-like package"
+    qa:
+      role_clear: true
+      text_absent: true
+      panels_absent: true
+      continuity_locks_present: true
+      output_mode_supported: true
+      asset_output_status_present: true
+      video_model_safe: true
+      capability_card_resolved: true
+      rights_gate_passed: false
+      preserve_change_disjoint: true
+      source_reference_present_for_edit: true
+      optional_qa_macro_not_forced: true
+
+  - image_id: "image_08_clean_sh05"
+    operation: generate
+    capability_card_id: gpt_image_2_openai_api
+    source_references: []
+    rights:
+      status: unverified
+      evidence_refs: []
+    transformation_contract:
+      preserve: []
+      change: []
+      allow_incidental_change: []
+      forbidden_change: []
+      overlap_check: pass
+    type: "clean_end_frame"
+    purpose: "No-text end-state frame for SH05 sealed door intercom activation."
+    sequence_id: "cyber-courier-seq-01"
+    prompt_file: "examples/cyber-courier/prompts/image_08_clean_sh05_end.txt"
+    input_dependencies:
+      story_package: "examples/cyber-courier/07-treatment.md"
+      shot_list: "examples/cyber-courier/13-shot-list.yaml"
+      visual_bible: "examples/cyber-courier/17-visual-bible.md"
+      sequence_plan: ""
+      reference_pack_manifest: "examples/cyber-courier/18-reference-pack-plan.yaml"
+    layout:
+      aspect_ratio: "16:9"
+      sections:
+        - "single cinematic frame only"
+      density: "single frame"
+      readability_rules:
+        - "no text"
+        - "no labels"
+        - "no panels"
+        - "door activation state must match SH05"
+    text_policy: no_text
+    direct_video_input:
+      allowed: true
+      model_slots:
+        - "Kling SH05 end frame or primary image"
+        - "Runway SH05 primary image"
+      frame_role: clean_end_frame
+      shot_id: SH05
+    asset_output:
+      status: prompt_ready
+      prompt_file: "examples/cyber-courier/prompts/image_08_clean_sh05_end.txt"
+      generated_file: ""
+      external_instructions: "Generate this clean end frame, then user-lock it before SH05 Kling/Runway I2V."
+      source_tool: none
+      user_lock_status: pending
+    style_config:
+      config_id: "cyber_courier_clean_sh05_end_v1"
+      image_type: "clean_end_frame"
+      source_patterns:
+        - "json_config_prompt_v1"
+        - "surface_integrity_guard_v1"
+      art_direction_policy:
+        non_negotiables:
+          - "single cinematic frame only"
+          - "no text, labels, arrows, panels, maps, swatches, or callouts"
+          - "door activates but does not open"
+        placement_rule: "courier faces sealed door with intercom glow and puddle reflection"
+      quality_and_artifact_control:
+        surface_integrity_guard:
+          required:
+            - "clear door endpoint"
+            - "coherent wet pavement reflection"
+            - "complete courier silhouette"
+            - "stable intercom glow"
+          avoid:
+            - "door opening"
+            - "extra characters"
+            - "fake text"
+            - "storyboard look"
+        transparent_background: false
+      self_update:
+        registry_pattern_ids:
+          - "surface_integrity_guard_v1"
+        qa_observations: []
+    exact_text_labels: []
+    avoid:
+      - "labels"
+      - "arrows"
+      - "panel borders"
+      - "storyboard layout"
+      - "door open"
+    qa:
+      role_clear: true
+      text_absent: true
+      panels_absent: true
+      continuity_locks_present: true
+      output_mode_supported: true
+      asset_output_status_present: true
+      video_model_safe: true
+      capability_card_resolved: true
+      rights_gate_passed: false
+      preserve_change_disjoint: true
+      source_reference_present_for_edit: true
+      optional_qa_macro_not_forced: true
+
+handoff_notes:
+  reference_map_names:
+    - "image_01: courier character identity and wardrobe"
+    - "image_02: alley geography and blocking"
+    - "image_03: delivery bag, package, scanner state"
+    - "image_04: five-shot director storyboard board"
+    - "image_05: lighting, palette, texture"
+    - "image_06_clean_sh01: SH01 clean I2V first frame"
+    - "image_07_clean_sh03: SH03 clean package key frame"
+    - "image_08_clean_sh05: SH05 clean door activation end frame"
+  external_generation_instructions:
+    - "Mode is prompt_only; no generated image files exist in this fixture."
+    - "Generate images externally or in an authorized assisted_generation run before marking asset_output as user_locked."
+    - "Kling/Runway direct I2V must use image_06/image_07/image_08 clean frames as primary visual inputs, not dense boards."
+  video_adapter_warning: "Use storyboard/reference boards only as production guidance. Do not show or animate boards, panels, labels, arrows, grids, or layouts."

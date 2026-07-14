@@ -1,0 +1,16 @@
+contract_fixture:
+  id: per-model-audio-card-conflict
+  validator: audio_route
+  expected_error_contains: "does not match selected model card"
+  negative:
+    selected_capability_card_id: seedance_2_0_official_launch
+    capability_card_id: runway_gen_4_5_web
+    desired_audio: dialogue_music_and_effects
+    generation_audio_route: postproduction
+    postproduction_handoff: "Editorial audio package with dialogue, music, ambience, and effects stems."
+  positive_control:
+    selected_capability_card_id: runway_gen_4_5_web
+    capability_card_id: runway_gen_4_5_web
+    desired_audio: dialogue_music_and_effects
+    generation_audio_route: postproduction
+    postproduction_handoff: "Editorial audio package with dialogue, music, ambience, and effects stems."

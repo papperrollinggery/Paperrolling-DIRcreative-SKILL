@@ -1,0 +1,21 @@
+fixture_type: "missing_role_contract"
+expected_failure_contains: "role producer missing evidence_and_tools"
+roles:
+  producer:
+    responsibilities: ["Constrain the brief to a channel-fit production scope."]
+    trigger_conditions: ["The request entered the director room."]
+    inputs: ["project brief"]
+    outputs: ["scope recommendation"]
+    professional_judgment: ["Can the stated duration carry the required proof?"]
+    prohibited_actions: ["Do not invent a budget."]
+    quality_gate:
+      pass_conditions: ["Names an executable scope."]
+      fail_when: ["Only repeats the brief."]
+    handoff:
+      to: ["creative_director"]
+      required_fields: ["scope_constraints"]
+      stop_condition: "A user-owned budget decision is required."
+    failure_and_retry:
+      failure_signals: ["scope is too broad"]
+      smallest_retry: "Revise the scope recommendation only."
+      stop_when: "The brief needs a user decision."

@@ -1,0 +1,562 @@
+artifact:
+  artifact_id: rainlock-image-prompt-manifest-v1
+  version: 1.0.0
+  source_artifact_ids:
+    - rainlock-reference-pack-plan-v1
+    - rainlock-shot-list-v1
+  status: approved
+  owner_skill: image-prompt-compiler
+  created_at: "2026-05-14"
+  locked_by_user: false
+
+image_prompt_manifest:
+  project_title: "RainLock Commuter Shell"
+  generation_target: "advertising_reference_pack"
+  image_model: "GPT Image / Image2 compatible"
+  authoring_mode: "json_first"
+  visual_output_mode: "prompt_only"
+  longform_generation_mode: "single_sequence"
+  sequence_plan: ""
+  style_system:
+    style_schema: "docs/film-preproduction/schemas/image-prompt-style-config.schema.json"
+    pattern_registry: "docs/film-preproduction/prompt-pattern-registry.json"
+    selected_pattern_ids:
+      - art_directed_asymmetric_layout_v1
+      - json_config_prompt_v1
+      - surface_integrity_guard_v1
+      - multi_panel_identity_lock_v1
+  global_style_locks:
+    - "urban product advertising"
+    - "real rain, real material behavior"
+    - "graphite shell with amber and steel city palette"
+    - "premium but functional commuter tone"
+    - "required lighting/material/style board before ad image generation"
+  global_avoid:
+    - "generic outdoor jacket campaign"
+    - "mountain hiking environment"
+    - "evenly distributed auto grid"
+    - "fake text"
+    - "fish-scale texture"
+    - "plastic raincoat material"
+
+capability_resolution:
+  registry_path: "docs/film-preproduction/sources/model-sources.yaml"
+  registry_version: "2.0.0"
+  capability_card_id: gpt_image_2_openai_api
+  version: "gpt-image-2"
+  status: current
+  provider_surface: "OpenAI Image API and Responses API image_generation tool"
+  verified_on: "2026-07-10"
+  accessed_on: "2026-07-10"
+  evidence_level: S1
+  source_urls:
+    - "https://developers.openai.com/api/docs/guides/image-generation"
+  source_conflicts: []
+  access_mode: api
+  execution_mode: api
+  execution_verification_status: unverified
+  resolution_status: resolved
+
+rights_gate:
+  status: unverified
+  conditions: []
+  source_asset_rights: "Prompt-only artifact; rights must be verified before generation."
+  likeness_authorization: unverified
+  brand_or_character_authorization: unverified
+  provider_restrictions_checked: true
+  evidence_refs: []
+  generation_allowed: false
+
+audio_intent:
+  desired_audio: downstream_metadata_only
+  generation_audio_route: not_applicable
+  prohibited_in_image_prompt: true
+
+
+execution_capabilities:
+  image_generation:
+    available: false
+    provider: none
+    allowed_by_user: false
+    external_upload_authorized: false
+    external_execution_state: instructions_only
+    external_execution_evidence: []
+  video_generation:
+    available: false
+    provider: none
+    allowed_by_user: false
+  file_write:
+    available: true
+  browser_review:
+    available: false
+
+images:
+  - image_id: rainlock_image_01
+    operation: generate
+    capability_card_id: gpt_image_2_openai_api
+    source_references: []
+    rights:
+      status: unverified
+      evidence_refs: []
+    transformation_contract:
+      preserve: []
+      change: []
+      allow_incidental_change: []
+      forbidden_change: []
+      overlap_check: pass
+    type: "product_material_board"
+    purpose: "Lock shell geometry, hood, zipper, seam, fabric, and water-bead proof."
+    sequence_id: "rainlock-seq-01"
+    input_dependencies:
+      story_package: "examples/product-ad-raincoat/04-selected-concept.md"
+      shot_list: "examples/product-ad-raincoat/06-shot-list.yaml"
+      visual_bible: "examples/product-ad-raincoat/07-reference-pack-plan.yaml"
+      sequence_plan: ""
+      reference_pack_manifest: "examples/product-ad-raincoat/07-reference-pack-plan.yaml"
+    layout:
+      aspect_ratio: "16:9"
+      sections:
+        - "large hero product three-quarter view"
+        - "macro water bead strip"
+        - "zipper and seam close-up"
+        - "hood and cuff detail"
+      density: "medium, product-readable"
+      readability_rules:
+        - "product silhouette must be clear"
+        - "macro panels must not become noisy texture"
+        - "exact labels stay large and short"
+    asset_output:
+      status: prompt_ready
+      prompt_file: "examples/product-ad-raincoat/08-image-prompt-manifest.yaml#rainlock_image_01"
+      generated_file: ""
+      external_instructions: "Run this prompt in an external image tool or authorized assisted_generation run before locking product material reference."
+      source_tool: none
+      user_lock_status: pending
+    style_config:
+      config_id: rainlock_product_material_board_v1
+      image_type: product_material_board
+      source_patterns:
+        - art_directed_asymmetric_layout_v1
+        - json_config_prompt_v1
+        - surface_integrity_guard_v1
+        - multi_panel_identity_lock_v1
+      art_direction_policy:
+        non_negotiables:
+          - "do not use a generic product grid"
+          - "do not use evenly distributed panels unless a technical detail strip requires it"
+          - "composition must feel art-directed, intentional, and slightly asymmetric"
+        placement_rule: "hero shell view dominates; material proof panels support the visible claim."
+      quality_and_artifact_control:
+        surface_integrity_guard:
+          required:
+            - "smooth coherent waterproof fabric"
+            - "natural rain beads"
+            - "complete product geometry"
+            - "clean zipper and seam detail"
+          avoid:
+            - "fish-scale texture"
+            - "over-sharpened rain noise"
+            - "plastic costume look"
+            - "warped zipper"
+        transparent_background: false
+      self_update:
+        registry_pattern_ids:
+          - art_directed_asymmetric_layout_v1
+          - surface_integrity_guard_v1
+          - multi_panel_identity_lock_v1
+        qa_observations: []
+    prompt: |
+      Pre-generation contract:
+      Largest title on the page: PRODUCT IDENTITY REFERENCE / PRODUCT MATERIAL BOARD
+      Smaller metadata only: Project: RainLock Commuter Shell
+      Do not make RainLock Commuter Shell the largest title.
+      Direct video input policy: NOT DIRECT VIDEO INPUT; use this board to lock product shape, fabric, zipper, hood fit, and water-bead material truth.
+
+      {
+        "artifact": "premium product material board for RainLock Commuter Shell",
+        "canvas": "16:9 landscape production board",
+        "layout_policy": "art-directed, intentional, slightly asymmetric, no generic equal grid",
+        "hero": "graphite waterproof commuter rain shell, three-quarter view, clean hood, sealed zipper, tailored city fit",
+        "support_panels": ["macro water beads rolling off fabric", "zipper seam close-up", "hood fit detail", "cuff and pocket detail"],
+        "text_labels": ["WATER BEADS", "SEALED ZIPPER", "DRY COLLAR", "CITY FIT"],
+        "material_truth": "coherent fabric weave, real rain behavior, no plastic sheen, no fish-scale texture",
+        "style": "premium urban product advertising, brushed steel and amber city reflections"
+      }
+    exact_text_labels:
+      - "WATER BEADS"
+      - "SEALED ZIPPER"
+      - "DRY COLLAR"
+      - "CITY FIT"
+    avoid:
+      - "hiking mountain setting"
+      - "plastic poncho"
+      - "fake microtext"
+      - "scale-like fabric"
+    qa:
+      role_clear: true
+      text_readable: true
+      panels_large_enough: true
+      continuity_locks_present: true
+      output_mode_supported: true
+      asset_output_status_present: true
+      video_model_safe: true
+      capability_card_resolved: true
+      rights_gate_passed: false
+      preserve_change_disjoint: true
+      source_reference_present_for_edit: true
+      optional_qa_macro_not_forced: true
+
+  - image_id: rainlock_image_02
+    operation: generate
+    capability_card_id: gpt_image_2_openai_api
+    source_references: []
+    rights:
+      status: unverified
+      evidence_refs: []
+    transformation_contract:
+      preserve: []
+      change: []
+      allow_incidental_change: []
+      forbidden_change: []
+      overlap_check: pass
+    type: "commute_use_case_board"
+    purpose: "Lock real city commute use: lobby threshold, rain crosswalk, platform arrival."
+    sequence_id: "rainlock-seq-01"
+    input_dependencies:
+      story_package: "examples/product-ad-raincoat/04-selected-concept.md"
+      shot_list: "examples/product-ad-raincoat/06-shot-list.yaml"
+      visual_bible: "examples/product-ad-raincoat/07-reference-pack-plan.yaml"
+      sequence_plan: ""
+      reference_pack_manifest: "examples/product-ad-raincoat/07-reference-pack-plan.yaml"
+    layout:
+      aspect_ratio: "9:16"
+      sections:
+        - "large first-frame lobby-to-rain hero"
+        - "crosswalk motion frame"
+        - "platform dry-arrival frame"
+      density: "low-medium, first-frame usable"
+      readability_rules:
+        - "hero frame must be usable as image-to-video input"
+        - "support frames stay large enough for model reference"
+    asset_output:
+      status: prompt_ready
+      prompt_file: "examples/product-ad-raincoat/08-image-prompt-manifest.yaml#rainlock_image_02"
+      generated_file: ""
+      external_instructions: "Run this prompt externally or with authorized image generation, then export text-free clean start/end frames."
+      source_tool: none
+      user_lock_status: pending
+    style_config:
+      config_id: rainlock_commute_use_case_board_v1
+      image_type: commute_use_case_board
+      source_patterns:
+        - art_directed_asymmetric_layout_v1
+        - json_config_prompt_v1
+        - surface_integrity_guard_v1
+      art_direction_policy:
+        non_negotiables:
+          - "do not use a generic lifestyle collage"
+          - "composition must feel art-directed and intentionally weighted toward the hero first frame"
+        placement_rule: "large hero first frame, smaller but readable support frames."
+      quality_and_artifact_control:
+        surface_integrity_guard:
+          required:
+            - "clear main subject"
+            - "distinct lobby, street, and platform layers"
+            - "natural rain and fabric texture"
+          avoid:
+            - "fish-scale texture"
+            - "random rain speckles"
+            - "collapsed background geometry"
+        transparent_background: false
+      self_update:
+        registry_pattern_ids:
+          - art_directed_asymmetric_layout_v1
+          - surface_integrity_guard_v1
+        qa_observations: []
+    prompt: |
+      Pre-generation contract:
+      Largest title on the page: SCENE + USE-CASE REFERENCE / COMMUTE CAMERA BOARD
+      Smaller metadata only: Project: RainLock Commuter Shell
+      Do not make RainLock Commuter Shell the largest title.
+      Direct video input policy: PLANNING ONLY; use this board to lock commute environments, actor blocking, and possible clean-frame sources.
+
+      {
+        "artifact": "vertical commute use-case reference board",
+        "canvas": "9:16, image-to-video friendly",
+        "layout_policy": "hero first frame dominates; support frames are intentionally placed, not equal grid",
+        "subject": "urban commuter wearing graphite RainLock shell, dry work shirt collar, leather work bag",
+        "frames": ["lobby doors opening to heavy rain", "wet crosswalk tracking moment", "train platform dry arrival"],
+        "text_labels": ["STEP OUT", "STAY DRY", "ARRIVE READY"],
+        "lighting": "cool rain exterior, warm lobby and train practicals",
+        "avoid": "fake text, outdoor hiking cliche, unreadable tiny panels"
+      }
+    exact_text_labels:
+      - "STEP OUT"
+      - "STAY DRY"
+      - "ARRIVE READY"
+    avoid:
+      - "mountain trail"
+      - "crowded fashion editorial"
+      - "fake brand logos"
+    qa:
+      role_clear: true
+      text_readable: true
+      panels_large_enough: true
+      continuity_locks_present: true
+      output_mode_supported: true
+      asset_output_status_present: true
+      video_model_safe: true
+      capability_card_resolved: true
+      rights_gate_passed: false
+      preserve_change_disjoint: true
+      source_reference_present_for_edit: true
+      optional_qa_macro_not_forced: true
+
+  - image_id: rainlock_image_03
+    operation: generate
+    capability_card_id: gpt_image_2_openai_api
+    source_references: []
+    rights:
+      status: unverified
+      evidence_refs: []
+    transformation_contract:
+      preserve: []
+      change: []
+      allow_incidental_change: []
+      forbidden_change: []
+      overlap_check: pass
+    type: "storyboard_order_board"
+    purpose: "Show 15s five-shot order, timing, camera movement, copy moments, and audio cues."
+    sequence_id: "rainlock-seq-01"
+    input_dependencies:
+      story_package: "examples/product-ad-raincoat/05-ad-structure.md"
+      shot_list: "examples/product-ad-raincoat/06-shot-list.yaml"
+      visual_bible: "examples/product-ad-raincoat/07-reference-pack-plan.yaml"
+      sequence_plan: ""
+      reference_pack_manifest: "examples/product-ad-raincoat/07-reference-pack-plan.yaml"
+    layout:
+      aspect_ratio: "16:9"
+      sections:
+        - "five-shot strip with large panels"
+        - "duration labels"
+        - "copy placement markers"
+        - "audio cue notes"
+      density: "medium, readable timing board"
+      readability_rules:
+        - "shot labels must be readable"
+        - "storyboard board is guidance only, not final video content"
+    asset_output:
+      status: prompt_ready
+      prompt_file: "examples/product-ad-raincoat/08-image-prompt-manifest.yaml#rainlock_image_03"
+      generated_file: ""
+      external_instructions: "Run this prompt for planning or Seedance/Veo guidance only; avoid direct Kling/Runway first-frame use."
+      source_tool: none
+      user_lock_status: pending
+    style_config:
+      config_id: rainlock_storyboard_order_board_v1
+      image_type: storyboard_order_board
+      source_patterns:
+        - art_directed_asymmetric_layout_v1
+        - json_config_prompt_v1
+      art_direction_policy:
+        non_negotiables:
+          - "do not use a generic evenly spaced thumbnail grid"
+          - "composition must feel like a premium agency storyboard board"
+        placement_rule: "five large readable panels, proof shot enlarged."
+      quality_and_artifact_control:
+        surface_integrity_guard:
+          required:
+            - "clear frame boundaries"
+            - "readable shot labels"
+            - "distinct rain and platform layers"
+          avoid:
+            - "fake microtext"
+            - "tiny unusable panels"
+            - "noisy rain texture"
+        transparent_background: false
+      self_update:
+        registry_pattern_ids:
+          - art_directed_asymmetric_layout_v1
+        qa_observations: []
+    prompt: |
+      Pre-generation contract:
+      Largest title on the page: PROFESSIONAL STORYBOARD + MOTION MAP
+      Smaller metadata only: Project: RainLock Commuter Shell
+      Do not make RainLock Commuter Shell the largest title.
+      Direct video input policy: PLANNING ONLY; this storyboard board is not a direct video frame.
+      Storyboard density requirement: each shot must include timecode, duration, shot image region, detailed frame description, shot size, focal length, camera position, camera movement start/end, subject blocking, sound or audio cue, transition, and model risk.
+
+      {
+        "artifact": "premium agency storyboard board for 15s RainLock ad",
+        "canvas": "16:9 landscape",
+        "layout_policy": "five large panels with intentional hierarchy; proof macro panel slightly larger",
+        "shots": ["R01 step out", "R02 water beads", "R03 crosswalk", "R04 hood fit", "R05 dry arrival"],
+        "text_labels": ["0-2s", "2-5s", "5-8s", "8-11s", "11-15s", "ARRIVE DRY"],
+        "warning": "production storyboard board only, not a final video frame",
+        "style": "clean advertising preproduction board, readable labels, real city rain"
+      }
+    exact_text_labels:
+      - "0-2s"
+      - "2-5s"
+      - "5-8s"
+      - "8-11s"
+      - "11-15s"
+      - "ARRIVE DRY"
+    avoid:
+      - "generic mood collage"
+      - "fake unreadable text"
+      - "tiny panels"
+    qa:
+      role_clear: true
+      text_readable: true
+      panels_large_enough: true
+      continuity_locks_present: true
+      output_mode_supported: true
+      asset_output_status_present: true
+      video_model_safe: true
+      capability_card_resolved: true
+      rights_gate_passed: false
+      preserve_change_disjoint: true
+      source_reference_present_for_edit: true
+      optional_qa_macro_not_forced: true
+
+  - image_id: rainlock_image_04
+    operation: generate
+    capability_card_id: gpt_image_2_openai_api
+    source_references: []
+    rights:
+      status: unverified
+      evidence_refs: []
+    transformation_contract:
+      preserve: []
+      change: []
+      allow_incidental_change: []
+      forbidden_change: []
+      overlap_check: pass
+    type: "style_material_board"
+    purpose: "Lock rain lighting, graphite material behavior, water-bead scale, palette, and artifact guards."
+    sequence_id: "rainlock-seq-01"
+    input_dependencies:
+      story_package: "examples/product-ad-raincoat/04-selected-concept.md"
+      shot_list: "examples/product-ad-raincoat/06-shot-list.yaml"
+      visual_bible: "examples/product-ad-raincoat/07-reference-pack-plan.yaml"
+      sequence_plan: ""
+      reference_pack_manifest: "examples/product-ad-raincoat/07-reference-pack-plan.yaml"
+    layout:
+      aspect_ratio: "16:9"
+      sections:
+        - "cool rain exterior lighting"
+        - "amber lobby and station practicals"
+        - "graphite waterproof fabric macro"
+        - "water bead texture guard"
+      density: "medium, material-readable"
+      readability_rules:
+        - "material panels must stay large"
+        - "labels are planning notes only"
+        - "board is not a direct I2V frame"
+    asset_output:
+      status: prompt_ready
+      prompt_file: "examples/product-ad-raincoat/08-image-prompt-manifest.yaml#rainlock_image_04"
+      generated_file: ""
+      external_instructions: "Run this prompt externally or in authorized assisted_generation before locking lighting/material/style."
+      source_tool: none
+      user_lock_status: pending
+    style_config:
+      config_id: rainlock_style_material_board_v1
+      image_type: style_material_board
+      source_patterns:
+        - art_directed_asymmetric_layout_v1
+        - json_config_prompt_v1
+        - surface_integrity_guard_v1
+      art_direction_policy:
+        non_negotiables:
+          - "do not make a generic fashion mood board"
+          - "do not use evenly distributed swatches unless readability requires it"
+          - "composition must feel art-directed and intentional"
+        placement_rule: "lighting key and material proof dominate; palette swatches support only."
+      quality_and_artifact_control:
+        surface_integrity_guard:
+          required:
+            - "smooth coherent waterproof fabric"
+            - "natural water beads"
+            - "cool rain exterior"
+            - "warm practical interiors"
+          avoid:
+            - "fish-scale texture"
+            - "over-sharpened rain speckles"
+            - "plastic poncho sheen"
+            - "warped seam geometry"
+        transparent_background: false
+      self_update:
+        registry_pattern_ids:
+          - art_directed_asymmetric_layout_v1
+          - surface_integrity_guard_v1
+        qa_observations: []
+    prompt: |
+      Pre-generation contract:
+      Largest title on the page: LIGHTING + MATERIAL STYLE REFERENCE
+      Smaller metadata only: Project: RainLock Commuter Shell
+      Do not make RainLock Commuter Shell the largest title.
+      Direct video input policy: PLANNING ONLY; use this board to lock palette, rain texture, material behavior, and anti-fish-scale artifact guards.
+
+      {
+        "artifact": "lighting material style board for RainLock Commuter Shell ad",
+        "canvas": "16:9 landscape production board",
+        "layout_policy": "art-directed material board, intentional hierarchy, no generic equal grid",
+        "lighting_key": "cool rain exterior balanced with amber lobby and station practicals",
+        "material_panels": ["graphite waterproof fabric", "water beads rolling off surface", "sealed zipper detail", "brushed steel and amber city palette"],
+        "text_labels": ["COOL RAIN", "AMBER PRACTICAL", "GRAPHITE FABRIC", "NO FISH-SCALE"],
+        "artifact_guard": "avoid fish-scale texture, excessive sharpening, color speckles, random noise, plastic sheen, cracks, collapse, and distortion",
+        "style": "premium urban commuter product realism"
+      }
+    exact_text_labels:
+      - "COOL RAIN"
+      - "AMBER PRACTICAL"
+      - "GRAPHITE FABRIC"
+      - "NO FISH-SCALE"
+    avoid:
+      - "generic mood board"
+      - "plastic raincoat"
+      - "fish-scale texture"
+      - "random rain noise"
+    qa:
+      role_clear: true
+      text_readable: true
+      panels_large_enough: true
+      continuity_locks_present: true
+      output_mode_supported: true
+      asset_output_status_present: true
+      video_model_safe: true
+      capability_card_resolved: true
+      rights_gate_passed: false
+      preserve_change_disjoint: true
+      source_reference_present_for_edit: true
+      optional_qa_macro_not_forced: true
+
+handoff_notes:
+  reference_map_names:
+    - rainlock_image_01: "product material reference"
+    - rainlock_image_02: "commute first-frame and use-case reference"
+    - rainlock_image_03: "shot order reference only"
+    - rainlock_image_04: "lighting/material/style reference"
+  external_generation_instructions:
+    - "Mode is prompt_only; no generated image files exist in this fixture."
+    - "Generate externally or with authorized assisted_generation, then update asset_output before direct video use."
+  video_adapter_warning: "Do not animate the storyboard board, labels, panel borders, or timing text."
+
+skill_run_receipt:
+  run_id: rainlock-image-prompt-manifest-2026-05-14
+  skill_id: image-prompt-compiler
+  input_artifacts:
+    - examples/product-ad-raincoat/06-shot-list.yaml
+    - examples/product-ad-raincoat/07-reference-pack-plan.yaml
+  output_artifacts:
+    - examples/product-ad-raincoat/08-image-prompt-manifest.yaml
+  decisions:
+    - "Inline JSON-first prompt blocks include the required lighting/material/style board for the advertising fixture."
+  unresolved_questions: []
+  qa_gate:
+    status: pass
+    reasons:
+      - "Each image prompt includes style config, selected pattern IDs, exact labels, QA, and video-model warning."
+  next_recommended_skill: video-model-adapter

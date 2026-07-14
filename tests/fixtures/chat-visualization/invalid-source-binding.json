@@ -1,0 +1,21 @@
+{
+  "spec_version": "1.0",
+  "view_id": "invalid-source-binding",
+  "execution_context": "standalone_chat",
+  "controller": {"surface_owner": "dircreative", "user_facing": true},
+  "stage_gate": {"id": "visual_gate", "type": "visual_direction_gate", "status": "needs_user", "decision_owner": "user"},
+  "view": {"intent": "confirm", "display_mode": "inline", "customer_stage_label": "视觉方向", "decision_prompt": "确认视觉方向。"},
+  "source_truth": {"artifacts": [{"artifact_id": "visual", "version": "1.0.0", "sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"}]},
+  "presentation": {
+    "fields": [
+      {"id": "current_stage", "label": "当前阶段", "value": "视觉方向", "classification": "presentation_only", "source_ref": null},
+      {"id": "palette", "label": "色彩", "value": "暖色", "classification": "source_bound", "source_ref": "missing-visual#/palette"}
+    ],
+    "options": [],
+    "recommendation": null,
+    "downstream_effects": [{"stage": "visual_bible", "effect": "建立视觉锁。"}]
+  },
+  "interactions": {"local": [], "actions": [{"id": "approve", "label": "确认", "kind": "submit_selection", "target_gate_id": "visual_gate", "conversation_intent": "确认视觉方向。"}], "max_actions": 2, "deep_navigation": false, "nested_scroll": false},
+  "write_boundary": {"preview_only": true, "confirmation_required": true, "writes_authoritative_state": false, "write_owner": "dircreative", "possible_write_targets": [], "forbidden_claims": ["lock", "readiness", "acceptance", "completion", "generation_authorization"]},
+  "fallback": {"format": "markdown", "required_visible_fields": ["current_stage", "decision_prompt", "visual_direction", "downstream_effects"], "decision_question": "确认视觉方向吗？"}
+}

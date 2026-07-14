@@ -1,0 +1,19 @@
+fixture_type: "invalid_resolution"
+expected_failure_contains: "director-room resolution r1 references an unknown disagreement"
+disagreement_ids: ["d1", "d2"]
+arbitration_ids: ["a1", "a2"]
+resolution_notes:
+  - resolution_id: "r1"
+    source_disagreement_ids: ["unknown"]
+    arbitration_id: "a1"
+    production_rule: "Show proof early."
+    rationale: "Protect legibility."
+    downstream_owner: "story-development"
+    handoff_effect: "Move proof into the first beat."
+  - resolution_id: "r2"
+    source_disagreement_ids: ["d2"]
+    arbitration_id: "a2"
+    production_rule: "Limit the hesitation."
+    rationale: "Protect the hook."
+    downstream_owner: "script-treatment"
+    handoff_effect: "Reserve time for the ending."

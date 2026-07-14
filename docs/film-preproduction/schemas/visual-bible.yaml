@@ -1,0 +1,57 @@
+visual_bible:
+  project_title: ""
+  channel: ""
+  aspect_ratio: ""
+  style_statement: ""
+  palette: []
+  lens_texture: ""
+  lighting_rules: []
+  continuity_rules: []
+
+characters:
+  - character_id: ""
+    name: ""
+    role: ""
+    identity_locks: []
+    face_notes: ""
+    hair_notes: ""
+    wardrobe: []
+    materials: []
+    expressions: []
+    action_poses: []
+    forbidden_changes: []
+
+locations:
+  - location_id: ""
+    name: ""
+    environment_type: ""
+    hero_view: ""
+    support_views: []
+    blocking_map_required: true
+    camera_positions: []
+    subject_paths: []
+    lighting_sources: []
+    continuity_locks: []
+
+props:
+  - prop_id: ""
+    name: ""
+    story_function: ""
+    shape_locks: []
+    material_locks: []
+    views_required: []
+    interaction_notes: []
+    state_changes: []
+
+reference_pack_plan:
+  - image_id: ""
+    type: ""
+    purpose: ""
+    required_panels: []
+    layout_notes: ""
+    text_labels: []
+
+qa:
+  visual_bible_gate: ""
+  missing_assets: []
+  drift_risks: []

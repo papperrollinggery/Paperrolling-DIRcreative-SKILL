@@ -1,0 +1,316 @@
+artifact:
+  artifact_id: noodle-reference-pack-plan-v1
+  version: 1.0.0
+  source_artifact_ids:
+    - noodle-visual-bible-v1
+    - noodle-shot-list-v1
+  status: approved
+  owner_skill: reference-image-planner
+  locked_by_user: false
+
+reference_pack:
+  project_title: "Midnight Broth Cup"
+  strategy: "Use five assets: product identity board, environment-camera board, lighting/material/style board, storyboard-motion board, and clean first/end frames."
+  images:
+    - image_id: noodle_image_01
+      role: "product_identity_board"
+      purpose: "Lock cup shape, label, seal band, lid edge, broth, noodles, steam, and hand scale."
+      board_risk: "Tiny label text can become fake or unreadable."
+    - image_id: noodle_image_02
+      role: "environment_camera_board"
+      purpose: "Lock office desk, city window, monitor blue, lamp amber, and actor blocking."
+      board_risk: "Panel layout must not be used as direct I2V first frame."
+    - image_id: noodle_image_03
+      role: "style_material_board"
+      purpose: "Lock blue/amber lighting, matte paper cup, broth, steam, noodle texture, color palette, and artifact guards."
+      board_risk: "Style boards can be over-read as final scene composition if used as direct I2V input."
+    - image_id: noodle_image_04
+      role: "storyboard_motion_board"
+      purpose: "Lock five-shot order, timing, camera motion, and audio cue notes."
+      board_risk: "Video models may animate storyboard labels if used directly."
+    - image_id: noodle_clean_frames
+      role: "clean_first_frame"
+      purpose: "Provide no-text first/end frames for direct I2V runs."
+      board_risk: "Clean frames remain external_pending in this prompt-only simulation."
+
+reference_pack_manifest:
+  project_title: "Midnight Broth Cup"
+  version: "1.0.0"
+  strategy: "compressed_model_safe_pack"
+  longform_generation_mode: "single_sequence"
+  visual_output_mode: "prompt_only"
+  source_artifact_ids:
+    - noodle-shot-list-v1
+    - noodle-visual-bible-v1
+  execution_capabilities:
+    image_generation:
+      available: false
+      provider: none
+      allowed_by_user: false
+    video_generation:
+      available: false
+      provider: none
+      allowed_by_user: false
+    file_write:
+      available: true
+    browser_review:
+      available: false
+  user_decision_gate:
+    required: true
+    status: approved
+    options_presented: 3
+    selected_option: "compact five-asset ad pack with clean frames deferred"
+    user_lock_required_before_video_adapter: true
+    can_mix_options: true
+    batch_skip_per_sequence_gate: false
+    accepted_risk:
+      - "Clean frames are specified but not generated in prompt-only mode."
+  sequence_scope:
+    target_duration_sec: 15
+    sequence_plan: ""
+    sequence_ids:
+      - noodle-seq-01
+    generation_unit_sec: 15
+    global_reference_pack: true
+    per_sequence_reference_packs: false
+  assets:
+    - asset_id: noodle_image_01
+      role: identity_product_board
+      primary_job: "Lock cup identity, label, seal band, lid edge, broth surface, noodle texture, steam behavior, and hand scale."
+      supports:
+        - "Seedance product binding"
+        - "Kling element reference"
+        - "Veo structured reference"
+      source_prompt_or_file: "examples/live-user-sim-noodle/10-image-prompt-manifest.yaml#noodle_image_01"
+      status: locked
+      asset_output:
+        status: prompt_ready
+        prompt_file: "examples/live-user-sim-noodle/10-image-prompt-manifest.yaml#noodle_image_01"
+        generated_file: ""
+        external_instructions: "Generate this product identity board externally or with authorized image generation before using it as visual truth."
+        source_tool: none
+        user_lock_status: pending
+      direct_input_policy:
+        seedance: allowed
+        kling: element_only
+        runway: reference_only
+        veo: allowed
+      contains:
+        - "cup front and lid"
+        - "red seal tab"
+        - "broth and noodle macro"
+        - "steam material study"
+      text_policy: short_labels_only
+      must_not_animate:
+        - "callout labels"
+        - "board layout"
+      model_risks:
+        - "Fake label text if typography is too small."
+      qa:
+        readable_at_video_resolution: true
+        one_primary_job: true
+        no_conflicting_subjects: true
+        clean_frame_available_if_needed: true
+        anti_misread_clause_required: true
+        anti_misread_clause_present: true
+    - asset_id: noodle_image_02
+      role: environment_camera_board
+      primary_job: "Lock desk layout, rainy window, monitor and lamp lighting, worker posture, and camera positions."
+      supports:
+        - "Seedance scene binding"
+        - "Veo scene and camera sections"
+      source_prompt_or_file: "examples/live-user-sim-noodle/10-image-prompt-manifest.yaml#noodle_image_02"
+      status: locked
+      asset_output:
+        status: prompt_ready
+        prompt_file: "examples/live-user-sim-noodle/10-image-prompt-manifest.yaml#noodle_image_02"
+        generated_file: ""
+        external_instructions: "Generate this environment board externally, then crop clean stills if direct I2V is needed."
+        source_tool: none
+        user_lock_status: pending
+      direct_input_policy:
+        seedance: allowed
+        kling: planning_only
+        runway: planning_only
+        veo: allowed
+      contains:
+        - "wide desk environment"
+        - "macro activation angle"
+        - "sip close-up angle"
+      text_policy: short_labels_only
+      must_not_animate:
+        - "labels"
+        - "panel borders"
+        - "floor-plan notes"
+      model_risks:
+        - "Direct I2V models may animate board panels."
+      qa:
+        readable_at_video_resolution: true
+        one_primary_job: true
+        no_conflicting_subjects: true
+        clean_frame_available_if_needed: true
+        anti_misread_clause_required: true
+        anti_misread_clause_present: true
+    - asset_id: noodle_image_03
+      role: style_material_board
+      primary_job: "Lock lighting grammar, palette, material behavior, steam softness, noodle texture guard, and late-night food realism."
+      supports:
+        - "Seedance style binding"
+        - "Veo lighting and material section"
+        - "human approval for material truth"
+      source_prompt_or_file: "examples/live-user-sim-noodle/10-image-prompt-manifest.yaml#noodle_image_03"
+      status: locked
+      asset_output:
+        status: prompt_ready
+        prompt_file: "examples/live-user-sim-noodle/10-image-prompt-manifest.yaml#noodle_image_03"
+        generated_file: ""
+        external_instructions: "Generate this lighting/material/style board externally before treating the style as visual truth."
+        source_tool: none
+        user_lock_status: pending
+      direct_input_policy:
+        seedance: allowed
+        kling: planning_only
+        runway: planning_only
+        veo: allowed
+      contains:
+        - "blue monitor and amber lamp palette"
+        - "matte paper cup material"
+        - "clear broth and noodle texture"
+        - "soft layered steam"
+      text_policy: short_labels_only
+      must_not_animate:
+        - "style labels"
+        - "material swatches"
+        - "board layout"
+      model_risks:
+        - "Direct I2V models may copy swatches or style labels."
+      qa:
+        readable_at_video_resolution: true
+        one_primary_job: true
+        no_conflicting_subjects: true
+        clean_frame_available_if_needed: true
+        anti_misread_clause_required: true
+        anti_misread_clause_present: true
+    - asset_id: noodle_image_04
+      role: storyboard_motion_board
+      primary_job: "Lock N01 to N05 shot order, timing, motion, proof beat, copy timing, and audio cues."
+      supports:
+        - "Seedance shot-order guidance"
+        - "Veo structured shot guidance"
+      source_prompt_or_file: "examples/live-user-sim-noodle/10-image-prompt-manifest.yaml#noodle_image_04"
+      status: locked
+      asset_output:
+        status: prompt_ready
+        prompt_file: "examples/live-user-sim-noodle/10-image-prompt-manifest.yaml#noodle_image_04"
+        generated_file: ""
+        external_instructions: "Use this only as planning guidance or as a clearly labeled reference map for models that can handle dense boards."
+        source_tool: none
+        user_lock_status: pending
+      direct_input_policy:
+        seedance: conditional
+        kling: forbidden
+        runway: forbidden
+        veo: conditional
+      contains:
+        - "N01 desk fatigue"
+        - "N02 seal pull"
+        - "N03 steam"
+        - "N04 sip"
+        - "N05 hero cup"
+      text_policy: short_labels_only
+      must_not_animate:
+        - "shot labels"
+        - "timing text"
+        - "panel borders"
+        - "storyboard layout"
+      model_risks:
+        - "Storyboard board can be misread as final layout."
+      qa:
+        readable_at_video_resolution: true
+        one_primary_job: true
+        no_conflicting_subjects: true
+        clean_frame_available_if_needed: true
+        anti_misread_clause_required: true
+        anti_misread_clause_present: true
+    - asset_id: noodle_clean_frames
+      role: clean_first_frame
+      primary_job: "Define no-text clean start and end frames for direct I2V, without generating them in this run."
+      supports:
+        - "Kling direct I2V"
+        - "Runway direct I2V"
+      source_prompt_or_file: "planned clean crops from noodle_image_02 or dedicated clean-frame prompts"
+      status: selected
+      asset_output:
+        status: external_pending
+        prompt_file: ""
+        generated_file: ""
+        external_instructions: "When image generation is authorized, create N01 clean desk start frame and N05 clean product end frame without text labels."
+        source_tool: external
+        user_lock_status: pending
+      direct_input_policy:
+        seedance: allowed
+        kling: allowed
+        runway: allowed
+        veo: allowed
+      contains:
+        - "N01 clean desk start frame"
+        - "N05 clean product end frame"
+      text_policy: no_text
+      must_not_animate: []
+      model_risks:
+        - "Direct I2V quality depends on clean frame readability."
+      qa:
+        readable_at_video_resolution: true
+        one_primary_job: true
+        no_conflicting_subjects: true
+        clean_frame_available_if_needed: true
+        anti_misread_clause_required: false
+        anti_misread_clause_present: true
+  model_pack_recipes:
+    seedance:
+      enabled: true
+      required_bindings:
+        - "@image noodle_image_01 as product identity"
+        - "@image noodle_image_02 as office lighting and blocking"
+        - "@image noodle_image_03 as lighting, material, and style"
+        - "@image noodle_image_04 as shot order only"
+    kling:
+      enabled: true
+      prefer_clean_first_frame: true
+      forbidden_primary_input_roles:
+        - storyboard_motion_board
+    runway:
+      enabled: true
+      prefer_clean_first_frame: true
+      forbidden_primary_input_roles:
+        - storyboard_motion_board
+    veo:
+      enabled: true
+      reference_map_required: true
+  qa:
+    roles_unique: true
+    dense_board_policy_present: true
+    clean_first_frame_policy_present: true
+    visual_output_mode_valid: true
+    capability_receipt_present: true
+    asset_output_statuses_present: true
+    longform_mode_valid: true
+    model_budget_ok: true
+    video_model_safe: true
+
+skill_run_receipt:
+  run_id: noodle-reference-pack-2026-05-16
+  skill_id: reference-image-planner
+  input_artifacts:
+    - examples/live-user-sim-noodle/07-shot-list.yaml
+    - examples/live-user-sim-noodle/08-visual-bible.md
+  output_artifacts:
+    - examples/live-user-sim-noodle/09-reference-pack-plan.yaml
+  decisions:
+    - "Use five compact reference roles, including a required lighting/material/style board, and defer clean frames in prompt-only mode."
+  unresolved_questions: []
+  qa_gate:
+    status: pass
+    reasons:
+      - "The pack separates dense boards from direct I2V inputs."
+  next_recommended_skill: image-prompt-compiler

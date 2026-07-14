@@ -1,0 +1,15 @@
+{
+  "name": "dircreative-visualization-audit",
+  "private": true,
+  "version": "0.4.0",
+  "description": "Browser audit tooling for DIRcreative chat visualizations",
+  "scripts": {
+    "audit:visual-browser": "node scripts/dircreative_visualization_browser_audit.cjs"
+  },
+  "devDependencies": {
+    "playwright": "1.60.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -1,0 +1,12 @@
+fixture:
+  fixture_id: invalid-creative-copy-deck-missing-voice-profile
+  description: Reject audience-facing brand copy without a source-derived VOICE PROFILE.
+  expectation: reject
+  mutations:
+    - operation: replace
+      path: project.copy_development.voice_profile
+      value: {}
+  expected_failure_ids:
+    - copy_execution_status_inconsistent
+    - copy_voice_profile_missing
+  expected_review_ids: []

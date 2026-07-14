@@ -1,0 +1,406 @@
+artifact:
+  artifact_id: rainlock-180-longform-reference-pack-v1
+  version: 1.0.0
+  source_artifact_ids:
+    - rainlock-180-sequence-plan-v1
+    - rainlock-reference-pack-plan-v1
+    - rainlock-image-prompt-manifest-v1
+  status: approved
+  owner_skill: longform-reference-planner
+  created_at: "2026-05-15"
+  locked_by_user: false
+
+longform_reference_pack:
+  project_title: "RainLock Commuter Shell: 3-Minute Commuter Proof Film"
+  version: "1.0.0"
+  source_artifact_ids:
+    - rainlock-180-sequence-plan-v1
+    - rainlock-reference-pack-plan-v1
+  longform_generation_mode: hybrid
+  visual_output_mode: prompt_only
+  sequence_plan: "examples/product-ad-raincoat/10-sequence-plan.yaml"
+
+capability_resolution:
+  registry_path: "docs/film-preproduction/sources/model-sources.yaml"
+  registry_version: "2.0.0"
+  selected_cards:
+    - capability_card_id: seedance_2_0_official_launch
+      version: "2.0"
+      status: current
+      provider_surface: "Seedance 2.0 launch product surfaces described by ByteDance Seed"
+      verified_on: "2026-07-10"
+      accessed_on: "2026-07-10"
+      evidence_level: S2
+      source_urls:
+        - "https://seed.bytedance.com/en/blog/seedance-2-0-official-launch"
+        - "https://arxiv.org/abs/2604.14148"
+      source_conflicts: []
+      access_mode: documented_product
+      execution_mode: manual_export
+      execution_verification_status: unverified
+      resolution_status: resolved
+    - capability_card_id: kling_video_3_0_official_guide
+      version: "3.0"
+      status: current
+      provider_surface: "Kling AI VIDEO 3.0 product guide"
+      verified_on: "2026-07-10"
+      accessed_on: "2026-07-10"
+      evidence_level: S3
+      source_urls:
+        - "https://app.klingai.com/cn/quickstart/klingai-video-3-model-user-guide"
+      source_conflicts: []
+      access_mode: documented_product
+      execution_mode: manual_export
+      execution_verification_status: unverified
+      resolution_status: resolved
+    - capability_card_id: runway_gen_4_5_web
+      version: "Gen-4.5"
+      status: current
+      provider_surface: "Runway web Gen-4.5 generation"
+      verified_on: "2026-07-10"
+      accessed_on: "2026-07-10"
+      evidence_level: S3
+      source_urls:
+        - "https://help.runwayml.com/hc/en-us/articles/46974685288467-Creating-with-Gen-4-5"
+        - "https://help.runwayml.com/hc/en-us/articles/42460036199443-Text-to-Video-Prompting-Guide"
+      source_conflicts: []
+      resolution_status: resolved
+    - capability_card_id: veo_3_1_generate_001_vertex_api
+      version: "veo-3.1-generate-001"
+      status: current
+      provider_surface: "Vertex AI publisher model predictLongRunning API"
+      verified_on: "2026-07-11"
+      accessed_on: "2026-07-11"
+      evidence_level: S1
+      source_urls:
+        - "https://docs.cloud.google.com/vertex-ai/generative-ai/docs/models/veo/3-1-generate"
+        - "https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/veo-video-generation"
+        - "https://docs.cloud.google.com/vertex-ai/generative-ai/docs/release-notes"
+        - "https://cloud.google.com/blog/products/ai-machine-learning/veo-3-1-lite-and-a-new-veo-upscaling-capability-on-vertex-ai/"
+      source_conflicts:
+        - "The exact stable page says sound generation is not supported; family-level audio claims and the generic API URL do not authorize audio for this exact card."
+      resolution_status: resolved
+
+rights_gate:
+  status: unverified
+  source_asset_rights: "Prompt-only pack; rights must be verified before any upload or generation."
+  likeness_authorization: unverified
+  voice_authorization: unverified
+  brand_or_character_authorization: unverified
+  music_or_audio_rights: unverified
+  provider_restrictions_checked: true
+  evidence_refs: []
+  generation_allowed: false
+
+
+global_pack:
+  pack_id: rainlock-global-pack
+  status: selected
+  user_gate:
+    required: true
+    status: approved
+  assets:
+    - asset_id: rainlock_image_01
+      role: identity_product_board
+      primary_job: "Lock shell geometry, hood, zipper, seam, fabric, and water-bead proof."
+      asset_output:
+        status: prompt_ready
+        prompt_file: "examples/product-ad-raincoat/08-image-prompt-manifest.yaml#rainlock_image_01"
+        generated_file: ""
+        external_instructions: "Generate or import before marking product identity as user_locked."
+        source_tool: none
+        user_lock_status: pending
+    - asset_id: rainlock_global_style_audio_rule
+      role: audio_reference
+      primary_job: "Keep rain, fabric, footsteps, transit ambience, and no-dialogue default consistent across sequence exports."
+      asset_output:
+        status: prompt_ready
+        prompt_file: "examples/product-ad-raincoat/09-video-prompt-manifest.yaml#audio_policy"
+        generated_file: ""
+        external_instructions: "Use as text/audio policy only unless target model supports audio reference upload."
+        source_tool: none
+        user_lock_status: not_required
+
+sequence_packs:
+  - sequence_id: rainlock-seq-01
+    pack_id: rainlock-seq-01-pack
+    duration_sec: 15
+    user_gate:
+      required: true
+      status: approved
+    continuity_reuse:
+      global_asset_ids:
+        - rainlock_image_01
+        - rainlock_image_02
+      locked_identity_refs:
+        - "graphite shell geometry"
+        - "same commuter and leather work bag"
+      locked_style_refs:
+        - "warm lobby practicals against steel-blue rain"
+    capability_targets:
+      - capability_card_id: seedance_2_0_official_launch
+        operation: generate
+        enabled: true
+        reference_policy:
+          board_input_allowed: true
+          clean_start_frame_required: false
+          clean_end_frame_preferred: false
+          element_reference_preferred: false
+          structured_reference_map_required: false
+      - capability_card_id: kling_video_3_0_official_guide
+        operation: generate
+        enabled: true
+        reference_policy:
+          board_input_allowed: false
+          clean_start_frame_required: true
+          clean_end_frame_preferred: true
+          element_reference_preferred: true
+          structured_reference_map_required: false
+      - capability_card_id: runway_gen_4_5_web
+        operation: generate
+        enabled: true
+        reference_policy:
+          board_input_allowed: false
+          clean_start_frame_required: true
+          clean_end_frame_preferred: false
+          element_reference_preferred: false
+          structured_reference_map_required: false
+      - capability_card_id: veo_3_1_generate_001_vertex_api
+        operation: generate
+        enabled: true
+        reference_policy:
+          board_input_allowed: true
+          clean_start_frame_required: false
+          clean_end_frame_preferred: false
+          element_reference_preferred: false
+          structured_reference_map_required: true
+    assets:
+      - asset_id: rainlock_seq01_scene_plate
+        role: scene_plate
+        primary_job: "Lock apartment/lobby doorway, exterior rain wall, commuter stance, and first choice moment."
+        direct_input_policy:
+          - capability_card_id: seedance_2_0_official_launch
+            input_mode: allowed
+          - capability_card_id: kling_video_3_0_official_guide
+            input_mode: planning_only
+          - capability_card_id: runway_gen_4_5_web
+            input_mode: planning_only
+          - capability_card_id: veo_3_1_generate_001_vertex_api
+            input_mode: allowed
+        asset_output:
+          status: prompt_ready
+          prompt_file: "examples/product-ad-raincoat/08-image-prompt-manifest.yaml#rainlock_image_02"
+          generated_file: ""
+          external_instructions: "Generate scene plate externally, then export a text-free clean start frame."
+          source_tool: none
+          user_lock_status: pending
+        must_not_animate:
+          - "labels"
+          - "panel borders"
+          - "board layout"
+        qa:
+          one_primary_job: true
+          video_model_safe: true
+          clean_frame_available_if_needed: true
+          user_gate_resolved: true
+      - asset_id: rainlock_seq01_clean_start
+        role: clean_first_frame
+        primary_job: "Direct I2V start frame: commuter at lobby threshold before stepping into rain."
+        direct_input_policy:
+          - capability_card_id: seedance_2_0_official_launch
+            input_mode: allowed
+          - capability_card_id: kling_video_3_0_official_guide
+            input_mode: allowed
+          - capability_card_id: runway_gen_4_5_web
+            input_mode: allowed
+          - capability_card_id: veo_3_1_generate_001_vertex_api
+            input_mode: allowed
+        asset_output:
+          status: external_pending
+          prompt_file: ""
+          generated_file: ""
+          external_instructions: "Create a no-text clean 9:16 frame from the lobby threshold hero view before direct video generation."
+          source_tool: external
+          user_lock_status: pending
+        must_not_animate: []
+        qa:
+          one_primary_job: true
+          video_model_safe: true
+          clean_frame_available_if_needed: true
+          user_gate_resolved: true
+      - asset_id: rainlock_seq01_clean_end
+        role: clean_end_frame
+        primary_job: "Optional end frame: commuter fully outside, rain active, collar still dry."
+        direct_input_policy:
+          - capability_card_id: seedance_2_0_official_launch
+            input_mode: allowed
+          - capability_card_id: kling_video_3_0_official_guide
+            input_mode: allowed
+          - capability_card_id: runway_gen_4_5_web
+            input_mode: allowed
+          - capability_card_id: veo_3_1_generate_001_vertex_api
+            input_mode: allowed
+        asset_output:
+          status: external_pending
+          prompt_file: ""
+          generated_file: ""
+          external_instructions: "Create a no-text clean end frame only if using start-end frame workflow."
+          source_tool: external
+          user_lock_status: pending
+        must_not_animate: []
+        qa:
+          one_primary_job: true
+          video_model_safe: true
+          clean_frame_available_if_needed: true
+          user_gate_resolved: true
+  - sequence_id: rainlock-seq-02
+    pack_id: rainlock-seq-02-pack
+    duration_sec: 15
+    user_gate:
+      required: true
+      status: pending
+    continuity_reuse:
+      global_asset_ids:
+        - rainlock_image_01
+      locked_identity_refs:
+        - "same shell and zipper geometry"
+      locked_style_refs:
+        - "macro rain beads, natural fabric texture, no fish-scale artifacts"
+    capability_targets:
+      - capability_card_id: seedance_2_0_official_launch
+        operation: generate
+        enabled: true
+        reference_policy:
+          board_input_allowed: true
+          clean_start_frame_required: false
+          clean_end_frame_preferred: false
+          element_reference_preferred: false
+          structured_reference_map_required: false
+      - capability_card_id: kling_video_3_0_official_guide
+        operation: generate
+        enabled: true
+        reference_policy:
+          board_input_allowed: false
+          clean_start_frame_required: true
+          clean_end_frame_preferred: false
+          element_reference_preferred: true
+          structured_reference_map_required: false
+      - capability_card_id: runway_gen_4_5_web
+        operation: generate
+        enabled: true
+        reference_policy:
+          board_input_allowed: false
+          clean_start_frame_required: true
+          clean_end_frame_preferred: false
+          element_reference_preferred: false
+          structured_reference_map_required: false
+      - capability_card_id: veo_3_1_generate_001_vertex_api
+        operation: generate
+        enabled: true
+        reference_policy:
+          board_input_allowed: true
+          clean_start_frame_required: false
+          clean_end_frame_preferred: false
+          element_reference_preferred: false
+          structured_reference_map_required: true
+    assets:
+      - asset_id: rainlock_seq02_macro_material
+        role: scene_plate
+        primary_job: "Macro proof plate for water beads rolling off the shell fabric and sealed zipper seam."
+        direct_input_policy:
+          - capability_card_id: seedance_2_0_official_launch
+            input_mode: allowed
+          - capability_card_id: kling_video_3_0_official_guide
+            input_mode: planning_only
+          - capability_card_id: runway_gen_4_5_web
+            input_mode: reference_only
+          - capability_card_id: veo_3_1_generate_001_vertex_api
+            input_mode: allowed
+        asset_output:
+          status: prompt_ready
+          prompt_file: "examples/product-ad-raincoat/08-image-prompt-manifest.yaml#rainlock_image_01"
+          generated_file: ""
+          external_instructions: "Generate material board or dedicated macro frame before direct video export."
+          source_tool: none
+          user_lock_status: pending
+        must_not_animate:
+          - "callout labels"
+          - "product board layout"
+        qa:
+          one_primary_job: true
+          video_model_safe: true
+          clean_frame_available_if_needed: true
+          user_gate_resolved: false
+
+remaining_sequence_pack_policy:
+  sequence_ids:
+    - rainlock-seq-03
+    - rainlock-seq-04
+    - rainlock-seq-05
+    - rainlock-seq-06
+    - rainlock-seq-07
+    - rainlock-seq-08
+    - rainlock-seq-09
+    - rainlock-seq-10
+    - rainlock-seq-11
+    - rainlock-seq-12
+  rule: "Create one sequence pack at a time after user approves the previous pack in hybrid mode."
+
+edit_assembly:
+  sequence_order:
+    - rainlock-seq-01
+    - rainlock-seq-02
+    - rainlock-seq-03
+    - rainlock-seq-04
+    - rainlock-seq-05
+    - rainlock-seq-06
+    - rainlock-seq-07
+    - rainlock-seq-08
+    - rainlock-seq-09
+    - rainlock-seq-10
+    - rainlock-seq-11
+    - rainlock-seq-12
+  continuity_checks:
+    - "shell geometry unchanged"
+    - "dry collar payoff remains visible"
+    - "rain and fabric texture stay natural"
+    - "no fake text inside generated footage"
+  audio_spine: "rain and transit ambience, no dialogue, optional music only after product proof."
+  transition_notes:
+    - "Use reflection and water-bead match cuts between proof beats."
+  retry_order:
+    - rainlock-seq-01
+    - rainlock-seq-02
+    - rainlock-seq-05
+    - rainlock-seq-11
+    - rainlock-seq-12
+
+qa:
+  global_pack_locked_or_prompt_ready: true
+  per_sequence_policy_valid: true
+  output_statuses_present: true
+  model_budget_ok: true
+  video_model_safe: true
+  exact_capability_cards_resolved: true
+  family_aliases_absent: true
+  failures: []
+
+skill_run_receipt:
+  run_id: rainlock-180-longform-reference-pack-2026-05-15
+  skill_id: longform-reference-planner
+  input_artifacts:
+    - examples/product-ad-raincoat/10-sequence-plan.yaml
+    - examples/product-ad-raincoat/07-reference-pack-plan.yaml
+    - examples/product-ad-raincoat/08-image-prompt-manifest.yaml
+  output_artifacts:
+    - examples/product-ad-raincoat/11-longform-reference-pack.yaml
+  decisions:
+    - "Use prompt_only mode with external_pending clean frames for direct I2V."
+    - "Show two sequence packs as the executable pattern; remaining packs are created one by one after user gates."
+  unresolved_questions:
+    - "Actual generated images are not present until external_generation or assisted_generation runs."
+  qa_gate:
+    status: pass
+    reasons:
+      - "Manifest expresses global, sequence-level, and direct clean-frame assets without requiring image generation."
+  next_recommended_skill: image-prompt-compiler

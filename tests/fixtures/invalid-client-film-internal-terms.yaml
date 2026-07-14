@@ -1,0 +1,23 @@
+client_film_gate_contract:
+  project_title: "Invalid Internal Terms"
+  target_duration_sec: 15
+  gate_status:
+    story: pass
+    script: pass
+    shot: pass
+    asset_reference: pass
+    prompt_generation: pending
+    client_language: fail
+  client_visible_text_blocks:
+    - "客户稿里标成 prompt gate，通过后 worker 再进入 AI 执行过程，内部素材权限需确认。"
+  acceptance_boundary:
+    validation_scope: structural_contract_only
+    structural_pass_not_client_deliverable: true
+    structural_pass_not_copy_quality: true
+    structural_pass_not_visual_quality: true
+    structural_pass_not_asset_authorization: true
+    structural_pass_not_live_acceptance: true
+qa:
+  client_film_gate_contract: fail
+  failures:
+    - client_visible_internal_terms

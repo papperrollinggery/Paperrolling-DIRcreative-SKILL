@@ -1,0 +1,305 @@
+{
+  "version": "1.0.0",
+  "customer_facing_stages": [
+    "阶段: 出图执行建议",
+    "阶段: 视频生成建议",
+    "阶段: QA 与重试规则"
+  ],
+  "customer_preview_stages": [
+    "阶段: 出图执行建议",
+    "阶段: 视频生成建议"
+  ],
+  "backstage_evidence_terms": [
+    "pre_generation_contract.status: pass",
+    "direct video input policy"
+  ],
+  "forbidden_frontstage_artifacts": [
+    "raw JSON",
+    "YAML",
+    "pre_generation_contract",
+    "prompt bodies"
+  ],
+  "stage_gate": {
+    "confirm_stage_exempts": [
+      "阶段: 目标模式模拟测试",
+      "阶段: 真实聊天验收预演"
+    ],
+    "simulated_decision_stage_exempts": [
+      "阶段: 下一步选择",
+      "阶段: 预演结论"
+    ]
+  },
+  "checks": [
+    {
+      "id": "rough_idea_chat",
+      "path": "examples/live-user-sim-noodle/16-chat-interface-demo.md",
+      "ordered_stages": [
+        "阶段: 想法读取",
+        "阶段: 导演组会议",
+        "阶段: 15秒脚本",
+        "阶段: 5镜头分镜",
+        "阶段: 参考图方案",
+        "阶段: 出图执行建议",
+        "阶段: 视频生成建议",
+        "阶段: QA 与重试规则"
+      ],
+      "forbidden_before_generation": [
+        "阶段: 导出提示词",
+        "阶段: 视频生成建议"
+      ],
+      "required_terms": [
+        "智能体创作内容",
+        "用户确认点",
+        "prompt-only产物",
+        "当前没有生成真实图片或视频",
+        "pre_generation_contract.status: pass",
+        "不让用户审批 raw JSON",
+        "direct video input policy",
+        "self-QA",
+        "Seedance",
+        "Kling",
+        "Runway",
+        "Veo"
+      ],
+      "required_any_terms": [
+        ["最小重试", "重试最小", "Retry Routing"],
+        ["产品身份板", "product identity board"],
+        ["storyboard/motion board", "storyboard board"]
+      ],
+      "min_counts": {
+        "用户确认点": 8,
+        "阶段:": 9
+      },
+      "simulated_decisions_required": false
+    },
+    {
+      "id": "complete_idea_chat",
+      "path": "examples/complete-idea-segmentation-test/02-chat-transcript.md",
+      "ordered_stages": [
+        "阶段: 完整想法读取",
+        "阶段: 导演组会议",
+        "阶段: 故事逻辑确认",
+        "阶段: 专业分镜确认",
+        "阶段: 参考图组方案",
+        "阶段: 出图执行建议",
+        "阶段: 视频生成建议",
+        "阶段: QA 与重试规则"
+      ],
+      "forbidden_before_generation": [
+        "阶段: 视频生成建议"
+      ],
+      "required_terms": [
+        "智能体创作内容",
+        "用户确认点",
+        "模拟用户选择",
+        "prompt-only产物",
+        "当前没有生成真实图片或视频",
+        "pre_generation_contract.status: pass",
+        "不在聊天里让用户审批 raw JSON",
+        "direct video input policy",
+        "self-QA",
+        "叙事任务",
+        "机位/镜头",
+        "主体调度",
+        "构图层次",
+        "声音剪辑",
+        "模型风险",
+        "character identity reference",
+        "scene geography + camera FOV reference",
+        "professional storyboard + motion map",
+        "Seedance",
+        "Kling",
+        "Runway",
+        "Veo"
+      ],
+      "required_any_terms": [["最小重试", "重试最小", "Retry Routing"]],
+      "min_counts": {
+        "用户确认点": 8,
+        "模拟用户选择": 7,
+        "阶段:": 9
+      },
+      "simulated_decisions_required": true
+    },
+    {
+      "id": "goal_mode_complete_simulation",
+      "path": "examples/goal-mode-simulation-test/01-chat-transcript.md",
+      "ordered_stages": [
+        "阶段: 目标模式模拟测试",
+        "阶段: 完整想法读取",
+        "阶段: 导演组会议",
+        "阶段: 故事逻辑确认",
+        "阶段: 脚本确认",
+        "阶段: 专业分镜确认",
+        "阶段: 参考图组方案",
+        "阶段: 出图执行建议",
+        "阶段: 视频生成建议",
+        "阶段: QA 与重试规则",
+        "阶段: 模拟测试结论"
+      ],
+      "forbidden_before_generation": ["阶段: 视频生成建议"],
+      "required_terms": [
+        "智能体创作内容",
+        "用户确认点",
+        "模拟用户选择",
+        "prompt-only产物",
+        "未生成真实图片/视频",
+        "不写 live-user-acceptance.yaml",
+        "不计入真实验收",
+        "pre_generation_contract.status: pass",
+        "用户不审批 raw JSON/YAML",
+        "direct video input policy",
+        "self-QA",
+        "叙事任务",
+        "机位/镜头",
+        "主体调度",
+        "构图层次",
+        "声音剪辑",
+        "模型风险",
+        "Seedance",
+        "Kling",
+        "Runway",
+        "Veo"
+      ],
+      "required_any_terms": [["最小重试", "重试最小", "Retry Routing"]],
+      "min_counts": {
+        "用户确认点": 9,
+        "模拟用户选择": 9,
+        "阶段:": 11
+      },
+      "simulated_decisions_required": true
+    },
+    {
+      "id": "goal_mode_rough_simulation",
+      "path": "examples/goal-mode-rough-idea-simulation-test/01-chat-transcript.md",
+      "ordered_stages": [
+        "阶段: 目标模式模拟测试",
+        "阶段: 想法读取",
+        "阶段: 导演组会议",
+        "阶段: 故事确认",
+        "阶段: 脚本确认",
+        "阶段: 分镜头确认",
+        "阶段: 视觉方向 / 视觉 bible",
+        "阶段: 参考图方案",
+        "阶段: 出图执行建议",
+        "阶段: 视频生成建议",
+        "阶段: QA 与重试规则",
+        "阶段: 模拟测试结论"
+      ],
+      "forbidden_before_generation": ["阶段: 视频生成建议"],
+      "required_terms": [
+        "智能体创作内容",
+        "用户确认点",
+        "模拟用户选择",
+        "prompt-only产物",
+        "未生成真实图片/视频",
+        "不计入真实验收",
+        "pre_generation_contract.status: pass",
+        "用户不审批 raw JSON/YAML",
+        "direct video input policy",
+        "self-QA",
+        "叙事任务",
+        "机位/镜头",
+        "主体调度",
+        "构图层次",
+        "声音剪辑",
+        "模型风险",
+        "Seedance",
+        "Kling",
+        "Runway",
+        "Veo"
+      ],
+      "required_any_terms": [["最小重试", "重试最小", "Retry Routing"]],
+      "min_counts": {
+        "用户确认点": 10,
+        "模拟用户选择": 10,
+        "阶段:": 12
+      },
+      "simulated_decisions_required": true
+    },
+    {
+      "id": "live_acceptance_rehearsal",
+      "path": "examples/live-acceptance-rehearsal/01-chat-transcript.md",
+      "ordered_stages": [
+        "阶段: 真实聊天验收预演",
+        "阶段: 验收入口",
+        "阶段: 想法读取",
+        "阶段: 导演组会议",
+        "阶段: 故事确认",
+        "阶段: 脚本确认",
+        "阶段: 分镜头确认",
+        "阶段: 参考图方案",
+        "阶段: 出图执行建议",
+        "阶段: 视频生成建议",
+        "阶段: QA 与重试规则",
+        "阶段: 预演结论"
+      ],
+      "forbidden_before_generation": ["阶段: 视频生成建议"],
+      "required_terms": [
+        "智能体创作内容",
+        "用户确认点",
+        "模拟用户选择",
+        "prompt-only产物",
+        "当前没有生成真实图片或视频",
+        "不写 live-user-acceptance.yaml",
+        "不计入真实验收: true",
+        "未写 live-user-acceptance.yaml: true",
+        "pre_generation_contract.status: pass",
+        "不让用户审批 raw JSON/YAML",
+        "direct video input policy",
+        "self-QA",
+        "Seedance",
+        "Kling",
+        "Runway",
+        "Veo"
+      ],
+      "required_any_terms": [["最小重试", "重试最小", "Retry Routing"]],
+      "min_counts": {
+        "用户确认点": 10,
+        "模拟用户选择": 10,
+        "阶段:": 12
+      },
+      "simulated_decisions_required": true
+    },
+    {
+      "id": "assisted_generation_preflight",
+      "path": "examples/assisted-generation-preflight-chat/01-chat-transcript.md",
+      "customer_preview_stages": [
+        "阶段: 出图执行建议"
+      ],
+      "ordered_stages": [
+        "阶段: 出图请求前置拦截",
+        "阶段: 最早未确认 gate",
+        "阶段: 分镜头确认",
+        "阶段: 参考图方案",
+        "阶段: 出图执行建议",
+        "阶段: assisted_generation 前置结果",
+        "阶段: QA 与重试规则"
+      ],
+      "forbidden_before_generation": [],
+      "required_terms": [
+        "智能体创作内容",
+        "用户确认点",
+        "模拟用户选择",
+        "当前不能直接出图",
+        "pre_generation_contract.status: pass",
+        "后台证据已准备",
+        "不让用户审批 raw JSON/YAML",
+        "CHARACTER IDENTITY REFERENCE",
+        "direct video input policy",
+        "真实工具调用: false",
+        "assisted_generation_status: blocked_for_real_authorization",
+        "blocked_media: image_generation, video_generation",
+        "只生成 CHARACTER IDENTITY REFERENCE",
+        "post-generation self-QA",
+        "失败图不能进入用户锁定"
+      ],
+      "required_any_terms": [["最小重试", "重试最小", "Retry Routing"]],
+      "min_counts": {
+        "用户确认点": 5,
+        "模拟用户选择": 5,
+        "阶段:": 7
+      },
+      "simulated_decisions_required": true
+    }
+  ]
+}

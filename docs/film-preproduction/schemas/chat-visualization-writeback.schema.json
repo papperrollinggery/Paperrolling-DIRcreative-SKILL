@@ -1,0 +1,162 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://paperrolling.example/schemas/chat-visualization-writeback.schema.json",
+  "title": "DIRcreative Chat Visualization Writeback Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_version",
+    "receipt_id",
+    "execution_context",
+    "controller",
+    "source_view",
+    "conversation_intent",
+    "gate_result",
+    "artifact_writes",
+    "lock_effects",
+    "downstream_effects",
+    "next_stage",
+    "authority"
+  ],
+  "properties": {
+    "receipt_version": {"const": "dircreative.chat-visualization-writeback@1.0"},
+    "receipt_id": {"type": "string", "minLength": 1, "maxLength": 160},
+    "execution_context": {"enum": ["standalone_chat", "orchestrated_worker"]},
+    "controller": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["write_owner", "recorded_by", "user_facing"],
+      "properties": {
+        "write_owner": {"enum": ["dircreative", "ad-creative-orchestrator"]},
+        "recorded_by": {"enum": ["dircreative", "ad-creative-orchestrator"]},
+        "user_facing": {"type": "boolean"}
+      }
+    },
+    "source_view": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["spec_path", "spec_sha256", "view_id", "gate_id"],
+      "properties": {
+        "spec_path": {"$ref": "#/$defs/relativePath"},
+        "spec_sha256": {"$ref": "#/$defs/sha256"},
+        "view_id": {"type": "string", "minLength": 1},
+        "gate_id": {"type": "string", "minLength": 1}
+      }
+    },
+    "conversation_intent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "action_id",
+        "action_kind",
+        "selected_option_id",
+        "submitted_text",
+        "decision_source",
+        "user_confirmation_id"
+      ],
+      "properties": {
+        "action_id": {"type": "string", "minLength": 1},
+        "action_kind": {
+          "enum": [
+            "submit_selection",
+            "request_revision",
+            "request_mix",
+            "retry_smallest",
+            "stop",
+            "pause_prompt_only"
+          ]
+        },
+        "selected_option_id": {"type": ["string", "null"], "minLength": 1},
+        "submitted_text": {"type": "string", "minLength": 1, "maxLength": 4000},
+        "decision_source": {"enum": ["real_user", "simulated_fixture"]},
+        "user_confirmation_id": {"type": "string", "minLength": 1}
+      }
+    },
+    "gate_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "selected_option_id", "rationale", "conflict"],
+      "properties": {
+        "status": {"enum": ["approved", "needs_revision", "pending", "skipped_with_risk"]},
+        "selected_option_id": {"type": ["string", "null"], "minLength": 1},
+        "rationale": {"type": "string", "minLength": 1},
+        "conflict": {"type": ["string", "null"], "minLength": 1}
+      }
+    },
+    "artifact_writes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["artifact_id", "label", "path", "change_kind", "before_sha256", "after_sha256"],
+        "properties": {
+          "artifact_id": {"type": "string", "minLength": 1},
+          "label": {"type": "string", "minLength": 1, "maxLength": 120},
+          "path": {"$ref": "#/$defs/relativePath"},
+          "change_kind": {"enum": ["created", "updated", "preserved"]},
+          "before_sha256": {"anyOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]},
+          "after_sha256": {"$ref": "#/$defs/sha256"}
+        }
+      }
+    },
+    "lock_effects": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["created", "preserved"],
+      "properties": {
+        "created": {"$ref": "#/$defs/stringList"},
+        "preserved": {"$ref": "#/$defs/stringList"}
+      }
+    },
+    "downstream_effects": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stale", "preserved", "blocked"],
+      "properties": {
+        "stale": {"$ref": "#/$defs/stringList"},
+        "preserved": {"$ref": "#/$defs/stringList"},
+        "blocked": {"$ref": "#/$defs/stringList"}
+      }
+    },
+    "next_stage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label", "status"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "label": {"type": "string", "minLength": 1, "maxLength": 80},
+        "status": {"enum": ["ready", "blocked", "stay"]}
+      }
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "visual_action_wrote_state",
+        "controller_revalidated_source",
+        "artifact_hashes_verified",
+        "generation_authorized"
+      ],
+      "properties": {
+        "visual_action_wrote_state": {"const": false},
+        "controller_revalidated_source": {"const": true},
+        "artifact_hashes_verified": {"const": true},
+        "generation_authorized": {"const": false}
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "relativePath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"
+    },
+    "stringList": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    }
+  }
+}

@@ -1,0 +1,15 @@
+fixture:
+  fixture_id: invalid-creative-copy-deck-presentations-not-editable
+  description: Reject a Presentations route that drops element-level editability.
+  expectation: reject
+  mutations:
+    - operation: replace
+      path: deck_narrative_spec.delivery_route.editable_ppt_required
+      value: false
+    - operation: replace
+      path: deck_narrative_spec.delivery_route.element_level_editability
+      value: not_available
+  expected_failure_ids:
+    - deck_editability_route_invalid
+    - deck_qa_status_invalid
+  expected_review_ids: []

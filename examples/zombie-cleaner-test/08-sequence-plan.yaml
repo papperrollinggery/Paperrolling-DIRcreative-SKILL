@@ -1,0 +1,229 @@
+artifact:
+  artifact_id: zombie-cleaner-sequence-plan-v1
+  version: 1.0.0
+  source_artifact_ids:
+    - zombie-cleaner-shot-list-v1
+  status: approved
+  owner_skill: sequence-planner
+
+sequence_plan:
+  project_title: "Wasteland Sanitation Route"
+  version: "1.0.0"
+  target_duration_sec: 180
+  channel: "ai_short_film"
+  source_artifact_ids:
+    - zombie-cleaner-shot-list-v1
+  longform_generation_mode: hybrid
+  visual_output_mode: prompt_only
+
+generation_unit_policy:
+  target_unit_sec: 15
+  min_unit_sec: 5
+  max_unit_sec: 15
+  allow_multi_shot_inside_unit: true
+  split_when:
+    - "zombie crowd scale drifts"
+    - "vehicle geometry changes"
+    - "barrel glow becomes unclear"
+    - "camera move overloads one generation"
+
+execution_capabilities:
+  image_generation:
+    available: false
+    provider: none
+    allowed_by_user: false
+  video_generation:
+    available: false
+    provider: none
+    allowed_by_user: false
+  file_write:
+    available: true
+  browser_review:
+    available: false
+
+user_gates:
+  sequence_plan_gate:
+    required: true
+    status: approved
+  global_visual_lock_gate:
+    required: true
+    status: approved
+  per_sequence_gate_policy: required
+  batch_skip_per_sequence_gate: false
+  accepted_risk: []
+
+global_continuity_anchors:
+  identity:
+    - "same tired sanitation worker, orange rubber suit, clear face shield, practical posture"
+  product_or_prop:
+    - "rusted street sweeper with Unit 47 decal"
+    - "single glowing green waste barrel"
+    - "clipboard and rubber stamp"
+  wardrobe:
+    - "orange sanitation suit, black gloves, cracked face shield, utility boots"
+  locations:
+    - "quarantine street, flooded alley, service lane, recycling yard, clean dawn street"
+  palette_lighting:
+    - "sodium amber, diseased green glow, blue pre-dawn haze, wet asphalt"
+  lens_camera:
+    - "28mm wasteland wides, 35mm vehicle tracking, 85mm gross-comedy inserts"
+  audio:
+    - "no dialogue, engine rattle, sweeper jingle, zombie shuffle, Geiger clicks"
+
+sequences:
+  - sequence_id: zc-seq-01
+    duration_sec: 15
+    generation_units: 1
+    dramatic_function: "Cold open route begins."
+    shots: [ZC01]
+    continuity_anchors: ["worker identity", "street sweeper", "pre-dawn quarantine"]
+    required_reference_pack_id: zc-seq-01-pack
+    clean_start_frame_required: true
+    clean_end_frame_required: true
+    user_gate: {required: true, status: approved}
+    edit_handoff: {incoming_transition: "black to hazard lights", outgoing_transition: "clipboard cut to alley glow", audio_handoff: "siren into jingle", retry_priority: high}
+  - sequence_id: zc-seq-02
+    duration_sec: 15
+    generation_units: 1
+    dramatic_function: "Glowing barrel objective appears."
+    shots: [ZC02]
+    continuity_anchors: ["barrel glow", "first zombies", "flooded alley"]
+    required_reference_pack_id: zc-seq-02-pack
+    clean_start_frame_required: true
+    clean_end_frame_required: false
+    user_gate: {required: true, status: pending}
+    edit_handoff: {incoming_transition: "address to barrel", outgoing_transition: "barrel pulse to brush spin", audio_handoff: "Geiger clicks rise", retry_priority: high}
+  - sequence_id: zc-seq-03
+    duration_sec: 15
+    generation_units: 1
+    dramatic_function: "Sweeper becomes survival tool."
+    shots: [ZC03]
+    continuity_anchors: ["rotating brushes", "zombie line", "calm worker"]
+    required_reference_pack_id: zc-seq-03-pack
+    clean_start_frame_required: true
+    clean_end_frame_required: true
+    user_gate: {required: true, status: pending}
+    edit_handoff: {incoming_transition: "brush start", outgoing_transition: "zombie line to rolling barrel", audio_handoff: "brush scrape", retry_priority: high}
+  - sequence_id: zc-seq-04
+    duration_sec: 15
+    generation_units: 1
+    dramatic_function: "Barrel rolls away and chase begins."
+    shots: [ZC04]
+    continuity_anchors: ["barrel leads", "sweeper follows", "zombie trail"]
+    required_reference_pack_id: zc-seq-04-pack
+    clean_start_frame_required: true
+    clean_end_frame_required: true
+    user_gate: {required: true, status: pending}
+    edit_handoff: {incoming_transition: "glow streak", outgoing_transition: "foam burst", audio_handoff: "barrel clank", retry_priority: medium}
+  - sequence_id: zc-seq-05
+    duration_sec: 15
+    generation_units: 1
+    dramatic_function: "Foam malfunction makes comedy corridor."
+    shots: [ZC05]
+    continuity_anchors: ["foam sprayer", "windshield", "slipping zombies"]
+    required_reference_pack_id: zc-seq-05-pack
+    clean_start_frame_required: true
+    clean_end_frame_required: false
+    user_gate: {required: true, status: pending}
+    edit_handoff: {incoming_transition: "barrel to foam", outgoing_transition: "foam clears to top-down path", audio_handoff: "sprayer cough", retry_priority: medium}
+  - sequence_id: zc-seq-06
+    duration_sec: 15
+    generation_units: 1
+    dramatic_function: "Midpoint herding strategy."
+    shots: [ZC06]
+    continuity_anchors: ["S-shaped route", "ordered zombie crowd", "traffic island"]
+    required_reference_pack_id: zc-seq-06-pack
+    clean_start_frame_required: true
+    clean_end_frame_required: false
+    user_gate: {required: true, status: pending}
+    edit_handoff: {incoming_transition: "foam clears", outgoing_transition: "barrel slam", audio_handoff: "jingle rhythm", retry_priority: medium}
+  - sequence_id: zc-seq-07
+    duration_sec: 15
+    generation_units: 1
+    dramatic_function: "Barrel danger close to cab."
+    shots: [ZC07]
+    continuity_anchors: ["barrel close", "broom hook", "worker eyes"]
+    required_reference_pack_id: zc-seq-07-pack
+    clean_start_frame_required: true
+    clean_end_frame_required: true
+    user_gate: {required: true, status: pending}
+    edit_handoff: {incoming_transition: "route to prop danger", outgoing_transition: "hook pull to yard gate", audio_handoff: "Geiger spike", retry_priority: high}
+  - sequence_id: zc-seq-08
+    duration_sec: 15
+    generation_units: 1
+    dramatic_function: "Vehicle fails at recycling yard."
+    shots: [ZC08]
+    continuity_anchors: ["compactor belt", "stalling sweeper", "zombies closing"]
+    required_reference_pack_id: zc-seq-08-pack
+    clean_start_frame_required: true
+    clean_end_frame_required: false
+    user_gate: {required: true, status: pending}
+    edit_handoff: {incoming_transition: "yard gate", outgoing_transition: "dashboard to stamp", audio_handoff: "engine dies", retry_priority: medium}
+  - sequence_id: zc-seq-09
+    duration_sec: 15
+    generation_units: 1
+    dramatic_function: "Wrong form starts compactor."
+    shots: [ZC09]
+    continuity_anchors: ["rubber stamp", "hazard form", "belt starts"]
+    required_reference_pack_id: zc-seq-09-pack
+    clean_start_frame_required: true
+    clean_end_frame_required: true
+    user_gate: {required: true, status: pending}
+    edit_handoff: {incoming_transition: "dead dashboard to form", outgoing_transition: "belt movement to zombie crowd", audio_handoff: "stamp into motor", retry_priority: high}
+  - sequence_id: zc-seq-10
+    duration_sec: 15
+    generation_units: 1
+    dramatic_function: "Final action saves barrel."
+    shots: [ZC10]
+    continuity_anchors: ["belt motion", "zombies follow glow", "worker pulls barrel"]
+    required_reference_pack_id: zc-seq-10-pack
+    clean_start_frame_required: true
+    clean_end_frame_required: true
+    user_gate: {required: true, status: pending}
+    edit_handoff: {incoming_transition: "belt wakes", outgoing_transition: "barrel clear to dawn", audio_handoff: "belt grind", retry_priority: high}
+  - sequence_id: zc-seq-11
+    duration_sec: 15
+    generation_units: 1
+    dramatic_function: "Dawn cleanup payoff."
+    shots: [ZC11]
+    continuity_anchors: ["clean street", "barrel loaded", "route completed"]
+    required_reference_pack_id: zc-seq-11-pack
+    clean_start_frame_required: true
+    clean_end_frame_required: true
+    user_gate: {required: true, status: pending}
+    edit_handoff: {incoming_transition: "belt to sunrise", outgoing_transition: "checklist to printer slip", audio_handoff: "birds fade in", retry_priority: medium}
+  - sequence_id: zc-seq-12
+    duration_sec: 15
+    generation_units: 1
+    dramatic_function: "Final joke and next route."
+    shots: [ZC12]
+    continuity_anchors: ["overtime denied slip", "worker pockets paper", "next block"]
+    required_reference_pack_id: zc-seq-12-pack
+    clean_start_frame_required: true
+    clean_end_frame_required: true
+    user_gate: {required: true, status: pending}
+    edit_handoff: {incoming_transition: "printer slip", outgoing_transition: "sweeper exits", audio_handoff: "jingle fades", retry_priority: medium}
+
+qa:
+  duration_matches_target: true
+  sequence_units_within_model_limit: true
+  global_anchors_present: true
+  user_gates_match_mode: true
+  prompt_only_supported: true
+  failures: []
+
+skill_run_receipt:
+  run_id: zombie-cleaner-sequence-plan-2026-05-16
+  skill_id: sequence-planner
+  input_artifacts:
+    - examples/zombie-cleaner-test/07-shot-list.yaml
+  output_artifacts:
+    - examples/zombie-cleaner-test/08-sequence-plan.yaml
+  decisions:
+    - "Use hybrid 12x15s decomposition for a 180s AI short."
+  unresolved_questions: []
+  qa_gate:
+    status: pass
+    reasons:
+      - "Duration, user gates, and prompt-only capability are valid."
+  next_recommended_skill: visual-bible

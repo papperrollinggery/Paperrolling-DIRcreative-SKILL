@@ -1,0 +1,12 @@
+{
+  "candidates": [
+    {
+      "source": {"status": "confirmed", "record": "fixture-source-a"},
+      "authorization": {"status": "confirmed", "record": "fixture-authorization-a"}
+    },
+    {
+      "source": {"status": "confirmed", "record": "fixture-source-b"},
+      "authorization": {"status": "confirmed", "record": "fixture-authorization-b"}
+    }
+  ]
+}

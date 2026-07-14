@@ -1,0 +1,12 @@
+{
+  "smallest_failure": "角色手部连续性",
+  "passed_locks": ["人物身份", "厨房空间", "产品材质", "镜头构图"],
+  "failed_locks": ["末段手部姿态"],
+  "smallest_retry": "只重做候选 A 的 4.2–5.0 秒手部动作，不改镜头和材质。",
+  "preserved_artifacts": ["候选 A 前 4.2 秒", "人物身份参考", "产品材质设定", "音频计划"],
+  "candidate_delta": {"status": "reviewed", "summary": "候选 A 可做局部重试；候选 B 需要完整重做。"},
+  "candidates": [
+    {"channel_fit": {"status": "confirmed", "record": "fixture-channel-a"}},
+    {"channel_fit": {"status": "confirmed", "record": "fixture-channel-b"}}
+  ]
+}

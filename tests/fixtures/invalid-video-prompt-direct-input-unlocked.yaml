@@ -1,0 +1,109 @@
+artifact:
+  artifact_id: invalid-video-prompt-direct-input-unlocked
+  version: 1.0.0
+  status: fixture_invalid
+  owner_skill: video-model-adapter
+
+video_prompt_manifest:
+  project_title: "Invalid Unlocked Direct Input"
+  target_sequence_duration: "15s"
+  longform_generation_mode: "single_sequence"
+  visual_output_mode: "assisted_generation"
+  selected_reference_strategy: "per_shot_i2v"
+  sequence_plan: ""
+  sequence_ids:
+    - invalid-seq-01
+  reference_pack:
+    - "invalid_clean_frame_01"
+
+execution_capabilities:
+  image_generation:
+    available: true
+    provider: image_gen
+    allowed_by_user: true
+  video_generation:
+    available: true
+    provider: external_video_tool
+    allowed_by_user: true
+  file_write:
+    available: true
+  browser_review:
+    available: false
+
+reference_map:
+  - ref_id: invalid_clean_frame_01
+    file_or_generation_id: "prompt-only-clean-frame"
+    role: "clean_frame_reference"
+    asset_output_status: prompt_ready
+    use_for:
+      - "primary first frame for shot SH01"
+    do_not_use_for:
+      - "video generation before image exists and user locks it"
+
+reference_bindings:
+  - model: kling
+    shot_id: SH01
+    ref_id: invalid_clean_frame_01
+    upload_slot: "primary image"
+    role: primary_direct_input
+    required_for_generation: true
+    prompt_file: "tests/fixtures/invalid-video-prompt-direct-input-unlocked.yaml#kling"
+    risk_note: "Incorrectly treats a prompt-only clean frame as ready for video generation."
+
+model_prompts:
+  seedance:
+    enabled: true
+    best_for: "fixture"
+    prompt: "Seedance structured sequence prompt using secondary references only."
+    reference_warning: "fixture warning"
+    audio_policy: "fixture audio"
+    risk_notes:
+      - "fixture risk seedance"
+    retry_rules:
+      - "fixture retry seedance"
+  kling:
+    enabled: true
+    best_for: "fixture"
+    prompt: "Kling per-shot prompt incorrectly assumes the primary image exists."
+    reference_warning: "fixture warning"
+    audio_policy: "fixture audio"
+    risk_notes:
+      - "fixture risk kling"
+    retry_rules:
+      - "fixture retry kling"
+  runway:
+    enabled: true
+    best_for: "fixture"
+    prompt: "Runway single-shot prompt with no direct locked frame."
+    reference_warning: "fixture warning"
+    audio_policy: "fixture audio"
+    risk_notes:
+      - "fixture risk runway"
+    retry_rules:
+      - "fixture retry runway"
+  veo:
+    enabled: true
+    best_for: "fixture"
+    prompt: "Veo structured text prompt for the same scene."
+    reference_warning: "fixture warning"
+    audio_policy: "fixture audio"
+    risk_notes:
+      - "fixture risk veo"
+    retry_rules:
+      - "fixture retry veo"
+
+universal_anti_misread_clause: |
+  Do not show reference boards, labels, arrows, grids, or panels.
+
+qa:
+  video_prompt_gate: "fail"
+  missing_audio_policy: false
+  missing_reference_map: false
+  visual_output_mode_valid: true
+  capability_receipt_present: true
+  missing_generated_assets_blocked: false
+  longform_sequence_refs_valid: true
+  conflicting_actions: []
+  model_prompts_differ_materially: true
+  reference_bindings_present: true
+  selected_reference_strategy_present: true

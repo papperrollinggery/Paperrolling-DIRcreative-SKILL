@@ -1,0 +1,37 @@
+Clean frame contract:
+No visible title, project metadata, labels, arrows, panels, maps, swatches, callouts, or text in the image.
+Direct video input policy: allowed for Kling and Runway after user lock; this is the SH03 clean key frame.
+
+Create one clean cinematic key frame for direct image-to-video generation. Do not create a board.
+
+{
+  "meta": {
+    "config_id": "cyber_courier_clean_sh03_package_v1",
+    "image_type": "clean_key_frame",
+    "shot_id": "SH03",
+    "frame_role": "package pulse clean key frame for Kling and Runway"
+  },
+  "artifact": {
+    "title": "SH03 Clean Package Pulse Frame",
+    "canvas": "16:9 cinematic macro frame, final footage style, no labels or panels",
+    "primary_job": "provide direct I2V frame for the scanner pulse insert"
+  },
+  "strict_clean_frame_rules": {
+    "forbidden": ["text", "labels", "arrows", "panel borders", "storyboard strip", "floor plan", "swatches", "callouts", "watermark", "UI overlay"],
+    "must_show": "only the cinematic macro scene"
+  },
+  "shot": {
+    "shot_size": "extreme close-up insert",
+    "camera_angle": "slight high angle into a half-open black delivery bag",
+    "lens": "90mm macro",
+    "composition": "wet black bag fabric frames a compact sealed matte-black package, a thin red scanner line beginning across the package seal, partial red jacket edge soft at frame edge",
+    "lighting": "subtle red scanner glow reflected on black material, soft cyan/red rainy alley reflections out of focus",
+    "subject_state": "package remains compact and sealed, scanner pulse is thin and mechanical, no transformation",
+    "background_state": "bag interior and soft rain reflections only, no extra gadgets",
+    "continuity_locks": ["same compact package shape", "same black courier bag", "no brand text", "no weapon-like silhouette"]
+  },
+  "quality_and_artifact_control": {
+    "required": ["matte rigid package", "natural coated fabric", "clean thin red scanner pulse", "complete bag and package geometry", "smooth coherent texture"],
+    "avoid": ["fish-scale texture", "plastic toy look", "weapon shape", "over-sharpened glow", "random labels", "distorted strap geometry"]
+  }
+}

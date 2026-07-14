@@ -1,0 +1,68 @@
+fixture_authority: none
+live_state_authority: false
+live_acceptance_authority: false
+host_attestation_authority: false
+
+artifact:
+  artifact_id: goal-mode-simulation-visual-dogfood-receipt-v1
+  version: 1.0.0
+  source_artifact_ids:
+    - goal-mode-simulation-chat-transcript-v1
+    - dircreative-visual-dogfood-pages
+  status: approved
+  owner_skill: checkpoint
+
+run:
+  run_id: goal-mode-simulation-visual-dogfood-2026-05-17
+  tool: local_browser_playwright
+  visual_dogfood_index: /tmp/dircreative-visual-dogfood/index.html
+  page_url: file:///tmp/dircreative-visual-dogfood/goal-mode-simulation.html
+  console_status: no_console_messages
+  browser_status: pass
+  screenshot_reviewed_by_agent: true
+  screenshot_path: /tmp/dircreative-goal-mode-simulation.png
+  real_media_generated: false
+  live_user_acceptance_receipt_written: false
+
+page_checked:
+  page_id: goal_mode_simulation_page
+  url: file:///tmp/dircreative-visual-dogfood/goal-mode-simulation.html
+  status: 200
+  console_status: no_console_messages
+  screenshot_path: /tmp/dircreative-goal-mode-simulation.png
+  required_visible_terms:
+    - DIRcreative Goal 模式模拟测试
+    - "阶段: 目标模式模拟测试"
+    - 模拟用户选择
+    - "阶段: 出图执行建议"
+    - "阶段: 模拟测试结论"
+    - 不计入真实验收
+  missing_visible_terms: []
+
+qa:
+  goal_mode_page_generated: true
+  browser_opened_page: true
+  screenshots_saved: true
+  console_errors_absent: true
+  no_real_media_generated: true
+  live_acceptance_not_claimed: true
+  failures: []
+
+skill_run_receipt:
+  run_id: goal-mode-simulation-visual-dogfood-2026-05-17
+  skill_id: checkpoint
+  input_artifacts:
+    - /tmp/dircreative-visual-dogfood/goal-mode-simulation.html
+    - examples/goal-mode-simulation-test/01-chat-transcript.md
+  output_artifacts:
+    - tests/fixtures/runtime/runs/goal-mode-simulation-visual-dogfood-receipt.yaml
+  decisions:
+    - "Add a browser-smoke receipt for the new goal-mode simulation dogfood page."
+    - "Keep the existing gstack receipt as prior multi-page browser evidence."
+  unresolved_questions:
+    - "Real user acceptance remains pending."
+  qa_gate:
+    status: pass
+    reasons:
+      - "Goal-mode simulation page opened with all required terms visible and no console messages."
+  next_recommended_skill: checkpoint

@@ -1,0 +1,52 @@
+Pre-generation contract:
+Largest title on the page: PROP / PRODUCT REFERENCE BOARD
+Smaller metadata only: Project: Cyber Courier: The Alley Accepts The Package
+Do not make Cyber Courier: The Alley Accepts The Package the largest title.
+Direct video input policy: NOT DIRECT VIDEO INPUT; use this board only to lock bag, package, scanner pulse, material, and interaction states.
+
+Create the reference image from this JSON-first prompt config. Render a single 16:9 prop/product production board for the delivery bag and package, not final footage.
+
+{
+  "meta": {
+    "config_id": "cyber_courier_prop_board_v1",
+    "image_type": "prop_product_board",
+    "source_patterns": ["art_directed_asymmetric_layout_v1", "json_config_prompt_v1", "surface_integrity_guard_v1", "multi_panel_identity_lock_v1"]
+  },
+  "artifact": {
+    "title": "Package And Bag Prop Board",
+    "role": "lock black delivery bag, sealed package, red scanner pulse, material, and interaction states",
+    "canvas": "16:9 landscape, product-style production board"
+  },
+  "art_direction_policy": {
+    "non_negotiables": [
+      "do not use a generic product grid",
+      "do not make the layout symmetrical only for symmetry",
+      "every prop state must be placed for production comparison",
+      "composition must feel art-directed and intentional"
+    ]
+  },
+  "layout_system": {
+    "hero_region": "large view of black delivery bag half-open with compact sealed matte-black package inside",
+    "secondary_regions": ["bag closed state", "package off state", "package scanner pulse on state", "hand gripping bag strap", "wet reflection detail"],
+    "exact_text_labels": ["BAG CLOSED", "PACKAGE OFF", "SCANNER PULSE", "HAND INTERACTION", "WET REFLECTION"]
+  },
+  "visual_systems": {
+    "bag": "wet black nylon or coated-fabric courier bag, practical strap, compact against body scale",
+    "package": "compact sealed matte-black hard parcel, no visible brand, no weapon silhouette",
+    "state_change": "thin red mechanical scanner pulse appears on package seal, subtle glow reflected on wet black material",
+    "interaction": "courier hand tightens bag strap; partial red jacket edge may appear"
+  },
+  "consistency_locks": {
+    "prop": "same compact package shape across off/on states; same bag material and size",
+    "forbidden": ["large suitcase", "food delivery box", "weapon", "glowing magic artifact", "brand logo"]
+  },
+  "quality_and_artifact_control": {
+    "surface_integrity_guard": {
+      "required": ["natural coated fabric", "matte rigid package", "clean red scanner pulse", "complete bag and package geometry"],
+      "avoid": ["fish-scale texture", "plastic toy look", "over-sharpened glow", "distorted strap geometry"]
+    }
+  },
+  "avoid": ["fake text", "random labels", "decorative filler", "unrelated gadgets"]
+}
+
+QA notes: state changes must be visually separated; package must stay compact and sealed.

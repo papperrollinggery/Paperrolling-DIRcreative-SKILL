@@ -1,0 +1,33 @@
+eval_fixture:
+  id: E4
+  rule: "Verified rights cannot conflict with provider review or likeness authorization."
+  expected_error_id: E4_RIGHTS_GATE_BLOCKED
+  negative:
+    execution_state: generation_ready
+    rights_gate:
+      status: verified
+      conditions: []
+      source_asset_rights: client_owned
+      likeness_authorization: blocked
+      voice_authorization: not_applicable
+      brand_or_character_authorization: not_applicable
+      music_or_audio_rights: not_applicable
+      provider_restrictions_checked: false
+      generation_allowed: true
+      evidence_refs:
+        - client-asset-license-receipt
+  positive_control:
+    execution_state: generation_ready
+    rights_gate:
+      status: verified
+      conditions: []
+      source_asset_rights: client_owned
+      likeness_authorization: verified
+      voice_authorization: not_applicable
+      brand_or_character_authorization: not_applicable
+      music_or_audio_rights: not_applicable
+      provider_restrictions_checked: true
+      generation_allowed: true
+      evidence_refs:
+        - client-asset-license-receipt
+        - likeness-authorization-receipt

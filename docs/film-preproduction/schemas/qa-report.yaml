@@ -1,0 +1,50 @@
+qa_report:
+  project_title: ""
+  artifact_under_review: ""
+  reviewer_role: "continuity_qa"
+  status: ""
+
+gates:
+  story_gate:
+    passed: false
+    findings: []
+  script_gate:
+    passed: false
+    findings: []
+  shot_gate:
+    passed: false
+    findings: []
+  visual_bible_gate:
+    passed: false
+    findings: []
+  image_prompt_gate:
+    passed: false
+    findings: []
+  video_prompt_gate:
+    passed: false
+    findings: []
+  generation_qa_gate:
+    passed: false
+    findings: []
+
+failure_types:
+  character_drift: false
+  costume_drift: false
+  prop_missing: false
+  location_confusion: false
+  storyboard_sheet_animated: false
+  wrong_camera_motion: false
+  too_many_actions: false
+  bad_audio: false
+  no_audio_when_required: false
+  unwanted_text_or_labels: false
+  layout_unreadable: false
+  image_prompt_missing_visual_decomposition: false
+  image_prompt_missing_prompt_layers: false
+  invented_visual_fact: false
+  empty_quality_wording: false
+  model_refusal_or_filter: false
+
+required_fixes: []
+retry_instruction: ""
+next_step: ""

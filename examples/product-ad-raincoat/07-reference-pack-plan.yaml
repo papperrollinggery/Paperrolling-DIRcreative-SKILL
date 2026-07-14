@@ -1,0 +1,370 @@
+artifact:
+  artifact_id: rainlock-reference-pack-plan-v1
+  version: 1.0.0
+  source_artifact_ids:
+    - rainlock-shot-list-v1
+  status: approved
+  owner_skill: reference-image-planner
+  created_at: "2026-05-14"
+  locked_by_user: false
+
+reference_pack:
+  project_title: "RainLock Commuter Shell"
+  strategy: "Separate product identity, lighting/material/style, use-case proof, and shot order so video models do not misread production boards."
+  images:
+    - image_id: rainlock_image_01
+      role: "product_material_board"
+      purpose: "Lock shell color, zipper geometry, hood shape, seam detail, water-bead scale, and fabric texture."
+      downstream_use:
+        - "product geometry reference"
+        - "material proof reference"
+      board_risk: "Macro texture can become fake or scale-like if over-sharpened."
+    - image_id: rainlock_image_04
+      role: "lighting_material_style_board"
+      purpose: "Lock rain lighting, graphite fabric material, water-bead behavior, palette, and anti-fish-scale artifact guard."
+      downstream_use:
+        - "style and material truth reference"
+        - "human approval before clean frames"
+      board_risk: "Style boards are planning references and should not be used as direct first frames."
+    - image_id: rainlock_image_02
+      role: "commute_use_case_board"
+      purpose: "Lock commuter silhouette, work bag position, lobby-to-rain threshold, and platform payoff."
+      downstream_use:
+        - "first-frame selection"
+        - "location and styling reference"
+      board_risk: "Too many panels can reduce first-frame usability."
+    - image_id: rainlock_image_03
+      role: "storyboard_order_board"
+      purpose: "Show five-shot 15s flow, timing, camera motion, and copy moments."
+      downstream_use:
+        - "shot planning"
+        - "Seedance or Veo shot-order guidance"
+      board_risk: "Must be marked as production guidance only for video prompts."
+  first_frame_policy:
+    kling: "Use clean single-frame exports from image_02, not the full board."
+    runway: "Use the strongest still for each single-shot run."
+    seedance: "Can use full reference map if board roles are explicit."
+    veo: "Use structured reference map and shot components."
+
+qa:
+  roles_separated: true
+  no_overloaded_board: true
+  video_model_misread_warning: true
+  product_benefit_visible: true
+
+reference_pack_manifest:
+  project_title: "RainLock Commuter Shell"
+  version: "1.1.0"
+  strategy: "compressed_model_safe_pack"
+  longform_generation_mode: "single_sequence"
+  visual_output_mode: "prompt_only"
+  source_artifact_ids:
+    - rainlock-shot-list-v1
+  execution_capabilities:
+    image_generation:
+      available: false
+      provider: none
+      allowed_by_user: false
+    video_generation:
+      available: false
+      provider: none
+      allowed_by_user: false
+    file_write:
+      available: true
+    browser_review:
+      available: false
+  user_decision_gate:
+    required: true
+    status: approved
+    options_presented: 3
+    selected_option: "product board + lighting/material/style board + commute board + storyboard board + clean start/end frames"
+    user_lock_required_before_video_adapter: true
+    can_mix_options: true
+    batch_skip_per_sequence_gate: false
+    accepted_risk: []
+    notes:
+      - "Product board, lighting/material/style board, commute board, and storyboard board are kept separate."
+      - "Clean start/end frames are required for direct Kling and Runway video tests."
+  sequence_scope:
+    target_duration_sec: 15
+    sequence_plan: ""
+    sequence_ids:
+      - rainlock-seq-01
+    generation_unit_sec: 15
+    global_reference_pack: true
+    per_sequence_reference_packs: false
+  assets:
+    - asset_id: rainlock_image_01
+      role: identity_product_board
+      primary_job: "Lock graphite shell geometry, hood shape, zipper, seam, cuff, water-bead scale, and fabric texture."
+      supports:
+        - "Kling product element reference"
+        - "Seedance product binding"
+      source_prompt_or_file: "examples/product-ad-raincoat/08-image-prompt-manifest.yaml#rainlock_image_01"
+      status: locked
+      asset_output:
+        status: prompt_ready
+        prompt_file: "examples/product-ad-raincoat/08-image-prompt-manifest.yaml#rainlock_image_01"
+        generated_file: ""
+        external_instructions: "Generate the product material board externally or with authorized image generation before final video export."
+        source_tool: none
+        user_lock_status: pending
+      direct_input_policy:
+        seedance: allowed
+        kling: element_only
+        runway: reference_only
+        veo: allowed
+      contains:
+        - "hero product view"
+        - "water bead macro"
+        - "zipper seam"
+        - "hood and cuff detail"
+      text_policy: short_labels_only
+      must_not_animate:
+        - "product labels"
+        - "callout layout"
+      model_risks:
+        - "Over-sharpened macro texture can create fish-scale fabric."
+      qa:
+        readable_at_video_resolution: true
+        one_primary_job: true
+        no_conflicting_subjects: true
+        clean_frame_available_if_needed: true
+        anti_misread_clause_required: true
+        anti_misread_clause_present: true
+    - asset_id: rainlock_image_04
+      role: style_material_board
+      primary_job: "Lock rain lighting, graphite fabric material, water bead behavior, amber/steel palette, and anti-fish-scale guard."
+      supports:
+        - "Seedance style binding"
+        - "Veo lighting and material section"
+        - "human approval for material truth"
+      source_prompt_or_file: "examples/product-ad-raincoat/08-image-prompt-manifest.yaml#rainlock_image_04"
+      status: locked
+      asset_output:
+        status: prompt_ready
+        prompt_file: "examples/product-ad-raincoat/08-image-prompt-manifest.yaml#rainlock_image_04"
+        generated_file: ""
+        external_instructions: "Generate the lighting/material/style board externally or with authorized image generation before locking ad style."
+        source_tool: none
+        user_lock_status: pending
+      direct_input_policy:
+        seedance: allowed
+        kling: planning_only
+        runway: planning_only
+        veo: allowed
+      contains:
+        - "cool rain exterior"
+        - "amber practical interior"
+        - "graphite waterproof fabric"
+        - "water bead macro texture guard"
+      text_policy: short_labels_only
+      must_not_animate:
+        - "style labels"
+        - "material swatches"
+        - "board layout"
+      model_risks:
+        - "Direct I2V models may copy swatches or style labels."
+      qa:
+        readable_at_video_resolution: true
+        one_primary_job: true
+        no_conflicting_subjects: true
+        clean_frame_available_if_needed: true
+        anti_misread_clause_required: true
+        anti_misread_clause_present: true
+    - asset_id: rainlock_image_02
+      role: environment_camera_board
+      primary_job: "Lock lobby threshold, crosswalk movement, platform arrival, commuter silhouette, and city rain layers."
+      supports:
+        - "clean first-frame source"
+        - "Seedance scene binding"
+        - "Veo structured scene prompt"
+      source_prompt_or_file: "examples/product-ad-raincoat/08-image-prompt-manifest.yaml#rainlock_image_02"
+      status: locked
+      asset_output:
+        status: prompt_ready
+        prompt_file: "examples/product-ad-raincoat/08-image-prompt-manifest.yaml#rainlock_image_02"
+        generated_file: ""
+        external_instructions: "Generate the commute board externally or with authorized image generation, then export clean frames from it."
+        source_tool: none
+        user_lock_status: pending
+      direct_input_policy:
+        seedance: allowed
+        kling: planning_only
+        runway: planning_only
+        veo: allowed
+      contains:
+        - "lobby-to-rain hero"
+        - "crosswalk motion frame"
+        - "platform dry arrival"
+      text_policy: short_labels_only
+      must_not_animate:
+        - "labels"
+        - "panel layout"
+        - "board borders"
+      model_risks:
+        - "Literal I2V models may treat the board as a triptych."
+      qa:
+        readable_at_video_resolution: true
+        one_primary_job: true
+        no_conflicting_subjects: true
+        clean_frame_available_if_needed: true
+        anti_misread_clause_required: true
+        anti_misread_clause_present: true
+    - asset_id: rainlock_image_03
+      role: storyboard_motion_board
+      primary_job: "Lock five-shot 15s order, timing, proof beat, camera motion, and copy moments."
+      supports:
+        - "Seedance shot-order binding"
+        - "Veo shot-order guidance"
+      source_prompt_or_file: "examples/product-ad-raincoat/08-image-prompt-manifest.yaml#rainlock_image_03"
+      status: locked
+      asset_output:
+        status: prompt_ready
+        prompt_file: "examples/product-ad-raincoat/08-image-prompt-manifest.yaml#rainlock_image_03"
+        generated_file: ""
+        external_instructions: "Generate only for planning or Seedance/Veo guidance; never use as direct Kling/Runway first frame."
+        source_tool: none
+        user_lock_status: pending
+      direct_input_policy:
+        seedance: conditional
+        kling: forbidden
+        runway: forbidden
+        veo: conditional
+      contains:
+        - "R01 step out"
+        - "R02 water beads"
+        - "R03 crosswalk"
+        - "R04 hood fit"
+        - "R05 dry arrival"
+      text_policy: short_labels_only
+      must_not_animate:
+        - "shot labels"
+        - "timing text"
+        - "panel borders"
+        - "storyboard layout"
+      model_risks:
+        - "Board may be animated as a layout instead of a product ad."
+      qa:
+        readable_at_video_resolution: true
+        one_primary_job: true
+        no_conflicting_subjects: true
+        clean_frame_available_if_needed: true
+        anti_misread_clause_required: true
+        anti_misread_clause_present: true
+    - asset_id: rainlock_clean_start_end_frames
+      role: clean_first_frame
+      primary_job: "Provide no-text start frames and optional end frames for product ad I2V tests."
+      supports:
+        - "Kling direct I2V"
+        - "Runway direct I2V"
+        - "TapNow-style start/end frame workflow"
+      source_prompt_or_file: "planned exports from rainlock_image_02 after user locks final reference board"
+      status: selected
+      asset_output:
+        status: external_pending
+        prompt_file: ""
+        generated_file: ""
+        external_instructions: "Export text-free clean start/end frames from rainlock_image_02 or generate dedicated clean frame prompts before direct I2V use."
+        source_tool: external
+        user_lock_status: pending
+      direct_input_policy:
+        seedance: allowed
+        kling: allowed
+        runway: allowed
+        veo: allowed
+      contains:
+        - "R01 clean lobby threshold start frame"
+        - "R02 clean product macro start frame"
+        - "R05 clean dry-arrival end frame"
+      text_policy: no_text
+      must_not_animate: []
+      model_risks:
+        - "Product proof weakens if start/end frames do not show shell state clearly."
+      qa:
+        readable_at_video_resolution: true
+        one_primary_job: true
+        no_conflicting_subjects: true
+        clean_frame_available_if_needed: true
+        anti_misread_clause_required: false
+        anti_misread_clause_present: false
+  model_pack_recipes:
+    seedance:
+      enabled: true
+      max_image_refs_policy: 9
+      max_video_refs_policy: 3
+      max_audio_refs_policy: 3
+      mixed_file_cap_policy: 12
+      allowed_asset_roles:
+        - identity_product_board
+        - style_material_board
+        - environment_camera_board
+        - storyboard_motion_board
+        - clean_first_frame
+      required_bindings:
+        - "@image1 product material and geometry"
+        - "@image4 lighting, material, and style"
+        - "@image2 commute environment and first-frame source"
+        - "@image3 shot order only"
+      anti_misread_required_for_boards: true
+    kling:
+      enabled: true
+      prefer_clean_first_frame: true
+      prefer_clean_end_frame: true
+      element_reference:
+        enabled: true
+        max_images_per_element: 4
+        required_element_roles:
+          - "rain_shell"
+          - "commuter"
+          - "city_rain_scene"
+      forbidden_primary_input_roles:
+        - master_reference_board
+        - storyboard_motion_board
+        - environment_camera_board
+      required_motion_fields:
+        - subject_movement
+        - background_movement
+        - camera_movement
+    runway:
+      enabled: true
+      prefer_clean_first_frame: true
+      split_multi_shot: true
+      forbidden_primary_input_roles:
+        - master_reference_board
+        - storyboard_motion_board
+        - environment_camera_board
+    veo:
+      enabled: true
+      structured_prompt_required: true
+      reference_map_required: true
+      audio_section_required: true
+      anti_misread_required_for_boards: true
+  qa:
+    reference_pack_gate: "pass"
+    roles_unique: true
+    dense_board_policy_present: true
+    clean_first_frame_policy_present: true
+    visual_output_mode_valid: true
+    capability_receipt_present: true
+    asset_output_statuses_present: true
+    longform_mode_valid: true
+    model_budget_ok: true
+    video_model_safe: true
+    failures: []
+
+skill_run_receipt:
+  run_id: rainlock-reference-pack-plan-2026-05-14
+  skill_id: reference-image-planner
+  input_artifacts:
+    - examples/product-ad-raincoat/06-shot-list.yaml
+  output_artifacts:
+    - examples/product-ad-raincoat/07-reference-pack-plan.yaml
+  decisions:
+    - "Use four reference boards plus clean frames instead of one dense universal board."
+  unresolved_questions: []
+  qa_gate:
+    status: pass
+    reasons:
+      - "Reference roles and video-model use boundaries are explicit."
+  next_recommended_skill: image-prompt-compiler

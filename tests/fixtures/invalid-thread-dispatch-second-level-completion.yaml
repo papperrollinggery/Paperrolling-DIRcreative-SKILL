@@ -1,0 +1,130 @@
+thread_dispatch_record:
+  record_id: invalid-second-level-completion
+  version: "1.0.0"
+  project_title: "Invalid Second-Level Dispatch"
+  main_controller_thread_id: "controller"
+  active_goal_summary: "Invalid second-level subagent authority."
+  acceptance_standard: "OBJECTIVE_COMPLETE: YES only after real live-user acceptance"
+  created_at: "2026-06-27"
+
+thread_class_policy:
+  allowed_thread_classes:
+    - pinned_user_facing_controller
+    - disposable_read_only_worker
+    - isolated_worktree_worker
+    - reusable_research_thread
+  default_user_facing_thread_class: pinned_user_facing_controller
+  same_directory_worker_default: read_only
+  substantive_output_default_thread_class: isolated_worktree_worker
+  read_only_worker_use: review_research_cold_review_only
+  main_controller_write_boundary: receipts_adoption_merge_rollback_validation_only
+  hidden_thread_state_is_truth: false
+  second_level_subagents:
+    allowed: true
+    default_authorized: false
+    host_thread_classes:
+      - isolated_worktree_worker
+    allowed_task_modes:
+      - risk_inventory
+    forbidden_actions:
+      - write_live_acceptance
+      - mark_goal_complete
+      - become_durable_truth
+
+thread_budget:
+  max_active_workers: 3
+  active_worker_count: 1
+  approval_required_above: 5
+  over_budget_reason: ""
+
+dispatches:
+  - thread_id: "controller"
+    thread_class: pinned_user_facing_controller
+    role: "main controller"
+    professional_identity: "main-controller delivery lead"
+    viewpoint: main-controller
+    read_scope:
+      - "repo files"
+    write_scope: main_controller_only
+    worktree_path: "/Users/example-user/work/DIR SKILL"
+    allowed_actions:
+      - "adopt or reject worker diffs"
+    expected_output: "dispatch record"
+    stop_condition: "validation complete"
+    cleanup_rule: keep_pinned
+    may_mark_goal_complete: false
+    output_status: consumed
+    findings_summary:
+      - "Controller dispatch exists."
+    adopted_into:
+      - "docs/film-preproduction/thread-orchestration-protocol.md"
+    consumed_at: "2026-06-27"
+    cleanup_verified_by: "controller"
+    archived: false
+    pinned: true
+  - thread_id: "worker"
+    thread_class: isolated_worktree_worker
+    role: "invalid worker"
+    professional_identity: "implementation worker"
+    viewpoint: implementation
+    read_scope:
+      - "docs/film-preproduction/thread-orchestration-protocol.md"
+    write_scope: isolated_worktree_only
+    worktree_path: "/Users/example-user/.codex/worktrees/invalid-second-level-worker"
+    allowed_actions:
+      - "scoped docs edit"
+    expected_output: "patch and receipt"
+    stop_condition: "return patch and validation"
+    cleanup_rule: archive_after_adoption_or_rejection
+    may_mark_goal_complete: false
+    output_status: adopted
+    findings_summary:
+      - "Invalid second-level finding."
+    adopted_into:
+      - "docs/film-preproduction/thread-orchestration-protocol.md"
+    consumed_at: "2026-06-27"
+    cleanup_verified_by: "controller"
+    archived: true
+    pinned: false
+    second_level_subagents:
+      authorized: true
+      allowed_task_modes:
+        - risk_inventory
+      invocations:
+        - subagent_id: "subagent-invalid"
+          agent_type: "stateless_read_only"
+          task_mode: risk_inventory
+          input_question: "Can this worker mark completion?"
+          output_summary: "Incorrectly claims completion can be marked."
+          closed_status: completed_closed
+          adoption_decision: adopted
+          adopted_into:
+            - ".dircreative/runs/live-user-acceptance.yaml"
+          durable_truth: true
+          may_write_live_acceptance: true
+          may_mark_goal_complete: true
+
+worktree_audit:
+  command: "git worktree list --porcelain"
+  expected_main_worktree: "/Users/example-user/work/DIR SKILL"
+  unintended_worker_worktrees_present: false
+  stale_worker_checkout_present: false
+  checked_paths:
+    - "/Users/example-user/work/DIR SKILL"
+  evidence_source: git
+
+completion_boundary:
+  live_user_acceptance_receipt_exists: false
+  release_gate_passed: false
+  objective_complete: false
+  completion_claim_allowed: false
+
+qa:
+  one_pinned_main_controller: true
+  disposable_workers_archived: true
+  useful_findings_reconciled: true
+  no_hidden_thread_truth: true
+  no_unintended_worktrees: true
+  no_completion_claim: true
+  failures:
+    - "second_level_completion_claim"

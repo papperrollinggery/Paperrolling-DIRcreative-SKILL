@@ -1,0 +1,51 @@
+{
+  "spec_version": "1.0",
+  "view_id": "script-timing-bands-inline",
+  "execution_context": "standalone_chat",
+  "controller": {"surface_owner": "dircreative", "user_facing": true},
+  "stage_gate": {"id": "script_approval_02", "type": "script_approval_gate", "status": "needs_user", "decision_owner": "user"},
+  "view": {"intent": "timeline", "display_mode": "inline", "customer_stage_label": "脚本预览", "decision_prompt": "脚本的时长和表达密度是否成立？"},
+  "source_truth": {"artifacts": [{"artifact_id": "script-02", "version": "1.0.0", "sha256": "8888888888888888888888888888888888888888888888888888888888888888"}]},
+  "presentation": {
+    "fields": [
+      {"id": "current_stage", "label": "当前阶段", "value": "脚本预览", "classification": "presentation_only", "source_ref": null},
+      {"id": "duration_budget", "label": "时长预算", "value": "30 秒", "classification": "source_bound", "source_ref": "script-02#/target_duration_sec"},
+      {"id": "dialogue", "label": "对白", "value": "0–18 秒无对白，18–24 秒一句女儿台词。", "classification": "source_bound", "source_ref": "script-02#/dialogue_policy"},
+      {"id": "voiceover", "label": "旁白", "value": "无旁白。", "classification": "source_bound", "source_ref": "script-02#/voiceover_policy"},
+      {"id": "audio", "label": "声音", "value": "环境声建立，动作音承担转折，音乐只在品牌收束进入。", "classification": "source_bound", "source_ref": "script-02#/audio_policy"},
+      {"id": "overrun", "label": "超时风险", "value": "无；保留 2 秒品牌落点。", "classification": "source_bound", "source_ref": "script-02#/duration_qa"},
+      {"id": "time_bands", "label": "脚本时长带", "value": [
+        {"id": "beat-a", "label": "建立关系", "start": 0, "end": 7},
+        {"id": "beat-b", "label": "细节累积", "start": 7, "end": 18},
+        {"id": "beat-c", "label": "产品成为证据", "start": 18, "end": 26},
+        {"id": "beat-d", "label": "品牌收束", "start": 26, "end": 30}
+      ], "classification": "source_bound", "source_ref": "script-02#/timing_bands"}
+    ],
+    "options": [],
+    "recommendation": null,
+    "downstream_effects": [{"stage": "shot", "effect": "确认后按时长带拆分镜头，不重新解释故事。"}]
+  },
+  "interactions": {
+    "local": ["expand"],
+    "actions": [
+      {"id": "approve", "label": "脚本可以拆镜头", "kind": "submit_selection", "target_gate_id": "script_approval_02", "conversation_intent": "提交脚本结构确认，请先核对时长、对白和声音预算。"},
+      {"id": "revise", "label": "调整表达密度", "kind": "request_revision", "target_gate_id": "script_approval_02", "conversation_intent": "保持当前脚本不变，先询问一个最关键的表达密度调整。"}
+    ],
+    "max_actions": 2,
+    "deep_navigation": false,
+    "nested_scroll": false
+  },
+  "write_boundary": {
+    "preview_only": true,
+    "confirmation_required": true,
+    "writes_authoritative_state": false,
+    "write_owner": "dircreative",
+    "possible_write_targets": ["script", "co-creation-run.gates", "skill_run_receipt.decisions"],
+    "forbidden_claims": ["lock", "readiness", "acceptance", "completion", "generation_authorization"]
+  },
+  "fallback": {
+    "format": "table",
+    "required_visible_fields": ["current_stage", "decision_prompt", "time_bands", "downstream_effects", "duration_budget"],
+    "decision_question": "脚本可以进入分镜，还是要调整一个表达密度问题？"
+  }
+}

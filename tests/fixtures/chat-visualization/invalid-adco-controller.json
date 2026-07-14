@@ -1,0 +1,18 @@
+{
+  "spec_version": "1.0",
+  "view_id": "invalid-adco-controller",
+  "execution_context": "orchestrated_worker",
+  "controller": {"surface_owner": "dircreative", "user_facing": true},
+  "stage_gate": {"id": "reference_gate", "type": "global_reference_pack_gate", "status": "needs_user", "decision_owner": "controller"},
+  "view": {"intent": "graph", "display_mode": "fallback", "customer_stage_label": "参考图方案", "decision_prompt": "确认参考图方案。"},
+  "source_truth": {"artifacts": [{"artifact_id": "reference-pack", "version": "1.0.0", "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"}]},
+  "presentation": {
+    "fields": [{"id": "current_stage", "label": "当前阶段", "value": "参考图方案", "classification": "presentation_only", "source_ref": null}],
+    "options": [],
+    "recommendation": null,
+    "downstream_effects": [{"stage": "video_prompt", "effect": "进入提示词。"}]
+  },
+  "interactions": {"local": [], "actions": [{"id": "approve", "label": "确认", "kind": "submit_selection", "target_gate_id": "reference_gate", "conversation_intent": "直接向客户确认。"}], "max_actions": 2, "deep_navigation": false, "nested_scroll": false},
+  "write_boundary": {"preview_only": true, "confirmation_required": true, "writes_authoritative_state": false, "write_owner": "dircreative", "possible_write_targets": ["host current truth"], "forbidden_claims": ["lock", "readiness", "acceptance", "completion", "generation_authorization"]},
+  "fallback": {"format": "mermaid", "required_visible_fields": ["current_stage", "decision_prompt", "reference_graph", "downstream_effects"], "decision_question": "确认参考图方案吗？"}
+}

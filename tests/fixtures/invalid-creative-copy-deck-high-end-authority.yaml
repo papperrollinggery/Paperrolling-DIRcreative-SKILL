@@ -1,0 +1,18 @@
+fixture:
+  fixture_id: invalid-creative-copy-deck-high-end-authority
+  description: Reject high-end-visual-design as the authority for PPT construction or QA rules.
+  expectation: reject
+  mutations:
+    - operation: replace
+      path: deck_narrative_spec.delivery_route.high_end_visual_design.allowed_role
+      value: presentation_rules
+    - operation: replace
+      path: deck_narrative_spec.delivery_route.high_end_visual_design.presentation_rule_authority
+      value: true
+    - operation: replace
+      path: deck_narrative_spec.delivery_route.high_end_visual_design.qa_authority
+      value: true
+  expected_failure_ids:
+    - deck_presentation_authority_invalid
+    - deck_qa_status_invalid
+  expected_review_ids: []

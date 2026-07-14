@@ -1,0 +1,31 @@
+artifact:
+  artifact_id: invalid-generation-qa-character-drift-approved
+  version: 1.0.0
+  status: fixture_invalid
+  owner_skill: generation-qa
+
+run:
+  visual_output_mode: assisted_generation
+  video_generated: false
+  user_lock_required_before_video: true
+
+human_review:
+  verdict: reject_for_revision
+  failure_ids:
+    - character_identity_reference_drift
+
+qa:
+  approved_for_video_prompt_test: true
+  character_consistency_passed: true
+  video_generation_blocked_until_user_lock: false
+  no_video_generated: true
+  failures:
+    - character_identity_reference_drift
+
+skill_run_receipt:
+  skill_id: generation-qa
+  qa_gate:
+    status: pass
+    reasons:
+      - "Invalid fixture: character drift was detected but the candidate was marked approved."
+  next_recommended_skill: video-model-adapter

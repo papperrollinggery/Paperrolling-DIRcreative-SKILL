@@ -1,0 +1,133 @@
+shot_list:
+  project_title: ""
+  channel: ""
+  target_duration: ""
+  aspect_ratio: ""
+  shot_count: 0
+
+entities:
+  - entity_id: ""
+    external_name: ""
+    entity_type: "person | character | product | prop | vehicle | animal | environment_hardware"
+    reference_asset_ids: []
+    immutable: []
+    starting_state: ""
+    screen_position: ""
+    owner_entity_id: ""
+
+shots:
+  - shot_id: ""
+    timecode: ""
+    duration: ""
+    story_beat: ""
+    narrative_purpose: ""
+    shot_type: ""
+    shot_size: ""
+    camera_angle: ""
+    lens: ""
+    lens_reason: ""
+    camera_support: ""
+    camera_motion: ""
+    focus: ""
+    composition: ""
+    composition_card:
+      visual_center: ""
+      subject_hierarchy: ""
+      negative_space: ""
+      movement_room: ""
+      leading_lines_occlusion_parallax: ""
+      perspective_depth: ""
+      screen_direction: ""
+      narrative_purpose: ""
+    subject_action: ""
+    entity_actions:
+      - owner_entity_id: ""
+        target_entity_id: ""
+        initial_state: ""
+        trigger: ""
+        path: ""
+        physical_consequence: ""
+        final_state: ""
+    blocking:
+      start_position: ""
+      end_position: ""
+      path: ""
+      eyeline: ""
+      screen_direction: ""
+      axis_note: ""
+    scene:
+      location: ""
+      foreground: ""
+      midground: ""
+      background: ""
+      weather: ""
+      lighting: ""
+    render_look:
+      lighting:
+        condition: ""
+        effect: ""
+        intensity: "none | subtle | moderate | strong"
+        preserve: []
+        exit_or_continuity: ""
+      optics:
+        condition: ""
+        lens_family: ""
+        filtration: ""
+        physical_behavior: ""
+        intensity: "none | subtle | moderate | strong"
+        preserve: []
+        exit_or_continuity: ""
+      atmosphere:
+        condition: ""
+        medium: ""
+        density_scale: ""
+        light_path_visibility: ""
+        movement: ""
+        intensity: "none | subtle | moderate | strong"
+        preserve: []
+        exit_or_continuity: ""
+      grade:
+        condition: ""
+        effect: ""
+        white_balance_anchor: ""
+        contrast_gamma: ""
+        black_level: ""
+        highlight_rolloff: ""
+        saturation_density: ""
+        palette_separation: ""
+        grain_halation: ""
+        intensity: "none | subtle | moderate | strong"
+        preserve: []
+        exit_or_continuity: ""
+    continuity:
+      characters: []
+      props: []
+      wardrobe: []
+      state_locks: []
+    audio:
+      dialogue: []
+      voiceover: []
+      ambience: []
+      sfx: []
+      foley: []
+      music: ""
+      silence: ""
+      events:
+        - time: ""
+          kind: "dialogue | voiceover | ambience | music | foley | sfx | silence"
+          speaker_entity_id: ""
+          source_entity_id: ""
+          cue: ""
+          perspective: ""
+    transition_in: ""
+    transition_out: ""
+    model_notes:
+      seedance: ""
+      kling: ""
+      runway: ""
+      veo: ""
+
+qa:
+  shot_gate: ""
+  continuity_issues: []
+  model_risks: []

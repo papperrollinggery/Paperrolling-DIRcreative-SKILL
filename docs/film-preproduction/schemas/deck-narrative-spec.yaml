@@ -1,0 +1,68 @@
+deck_narrative_spec:
+  project_title: ""
+  version: "1.0.0"
+
+  communication_job:
+    audience: ""
+    deck_job: ""
+    audience_outcome: ""
+    central_takeaway: ""
+
+  source_constraints:
+    fact_ids: []
+    source_evidence_ids: []
+    inference_ids: []
+    approved_claim_ids: []
+    inference_disclosure_policy: "label_as_inference"
+
+  story_arc:
+    arc_type: ""
+    opening_tension: ""
+    beats:
+      - beat_id: ""
+        audience_question: ""
+        narrative_job: ""
+        primary_claim_id: ""
+        primary_claim: ""
+        evidence_ids: []
+        audience_shift: ""
+        transition_to_next: ""
+    closing_resolution: ""
+
+  slides:
+    - slide_id: ""
+      beat_id: ""
+      narrative_job: ""
+      takeaway_title: ""
+      primary_claim_id: ""
+      primary_claim: ""
+      evidence_ids: []
+      layout:
+        layout_family: ""
+        composition: ""
+        primary_visual_role: ""
+        text_density: "low"
+        title_max_lines: 1
+        avoid_ui_panels: true
+
+  delivery_route:
+    default_route: "Presentations"
+    selected_route: "Presentations"
+    editable_ppt_required: true
+    element_level_editability: "required"
+    codex_ppt:
+      allowed_only_with_non_editable_acceptance: true
+      user_accepted_full_slide_images: false
+      output_editability: "full_slide_image_only"
+    high_end_visual_design:
+      allowed_role: "aesthetic_reference_only"
+      presentation_rule_authority: false
+
+  qa:
+    story_arc_complete: false
+    one_narrative_job_per_slide: false
+    claims_traceable: false
+    evidence_traceable: false
+    layout_readable: false
+    audience_facing_copy_only: false
+    editability_route_valid: false

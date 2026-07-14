@@ -1,0 +1,9 @@
+fixture_type: "duplicate_lane_seat"
+expected_failure_contains: "council_execution lane seat appears more than once: director"
+default_lanes:
+  - lane_id: "creative_story_lane"
+    seats: ["creative_director", "director", "screenwriter"]
+  - lane_id: "production_image_lane"
+    seats: ["producer", "cinematographer", "production_designer", "editor", "sound_designer", "director"]
+  - lane_id: "model_continuity_lane"
+    seats: ["model_prompt_engineer", "continuity_qa"]

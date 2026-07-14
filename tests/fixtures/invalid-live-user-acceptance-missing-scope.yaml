@@ -1,0 +1,74 @@
+artifact:
+  artifact_id: invalid-live-user-acceptance-missing-scope
+  version: 1.0.0
+  status: approved
+  owner_skill: checkpoint
+
+acceptance_run:
+  run_type: live_user_acceptance
+  visual_output_mode: prompt_only
+
+user_acceptance:
+  status: accepted
+  accepted_by_user: true
+  real_user_co_creation_verified: true
+  accepted_at: "2026-05-17T20:00:00+08:00"
+  user_acceptance_statement: "通过。"
+  user_prompt_used_for_acceptance: "测试一个 15 秒广告片。"
+  transcript_summary: "User saw a partial flow only."
+
+chat_evidence:
+  evidence_source: real_user_chat
+  observed_stages:
+    - "阶段: 想法读取"
+  user_decisions_recorded:
+    - "accepted partial rough idea"
+  council_adversarial_review:
+    triggered: false
+    viewpoints:
+      - user
+      - professional_film_expert
+      - product_manager
+      - skill_developer
+      - code_researcher
+    findings_summary: []
+    adopted_changes: []
+  thread_orchestration:
+    threads_used: []
+    main_controller_thread_id: "controller"
+    dispatch_record_artifacts:
+      - ".dircreative/runs/thread-orchestration-cleanup-2026-06-06.yaml"
+    disposable_workers_archived: true
+    unintended_worker_worktrees_present: false
+    thread_audit_passed: true
+  chat_transcript_artifacts:
+    - "examples/live-user-sim-noodle/16-chat-interface-demo.md"
+  installed_skill_checked: true
+
+accepted_scope:
+  checklist:
+    - chat_first_flow
+    - director_room_collaboration
+    - professional_script
+    - dynamic_shot_design
+    - reference_pack_roles
+    - pre_generation_contracts
+    - image_prompt_summaries
+    - model_specific_video_prompts
+    - qa_retry_rules
+    - prompt_only_boundary
+    - assisted_generation_preflight
+    - installed_skill_behavior
+    - gstack_visual_dogfood
+    - council_adversarial_review_boundary
+    - thread_orchestration_cleanup
+  accepted_items:
+    - chat_first_flow
+
+unresolved_blockers:
+  items: []
+
+qa_gate:
+  status: pass
+  reasons:
+    - "Invalid fixture: accepted_items is intentionally incomplete."

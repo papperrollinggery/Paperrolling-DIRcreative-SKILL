@@ -1,0 +1,50 @@
+[
+  {
+    "case_id": "sora_first_frame_surface",
+    "base": "valid/minimal-character-scene-10s.json",
+    "adapter": "sora",
+    "capability_card_id": "sora_2_openai_videos_api",
+    "duration_sec": 8,
+    "attached_reference_count": 1,
+    "platform_slots": ["input_reference", "planning_scene_reference"],
+    "audio_route": "postproduction",
+    "expected_text": "The attached first-frame image",
+    "forbidden_text": ["@Image", "QA AND RETRY", "Look: none by design"]
+  },
+  {
+    "case_id": "runway_i2v_motion_surface",
+    "base": "valid/minimal-character-scene-10s.json",
+    "adapter": "runway",
+    "capability_card_id": "runway_gen_4_5_web",
+    "duration_sec": 10,
+    "attached_reference_count": 1,
+    "platform_slots": ["input_image", "planning_scene_reference"],
+    "audio_route": "postproduction",
+    "expected_text": "The input image",
+    "forbidden_text": ["@Image", "Look:", "QA AND RETRY"]
+  },
+  {
+    "case_id": "kling_multi_element_surface",
+    "base": "valid/multi-character-assets-15s.json",
+    "adapter": "kling",
+    "capability_card_id": "kling_video_3_0_official_guide",
+    "duration_sec": 15,
+    "attached_reference_count": 4,
+    "platform_slots": ["element_woman", "element_man", "scene_reference", "element_case"],
+    "audio_route": "native",
+    "expected_text": "Attached reference image 1",
+    "forbidden_text": ["@Image", "QA AND RETRY"]
+  },
+  {
+    "case_id": "veo_asset_reference_surface",
+    "base": "valid/minimal-character-scene-10s.json",
+    "adapter": "veo",
+    "capability_card_id": "veo_3_1_generate_001_vertex_api",
+    "duration_sec": 8,
+    "attached_reference_count": 2,
+    "platform_slots": ["asset_image_1", "asset_image_2"],
+    "audio_route": "postproduction",
+    "expected_text": "Attached reference image 1",
+    "forbidden_text": ["@Image", "Audio:", "QA AND RETRY"]
+  }
+]

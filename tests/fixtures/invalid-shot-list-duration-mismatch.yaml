@@ -1,0 +1,43 @@
+artifact:
+  artifact_id: invalid-shot-list-duration-mismatch
+  version: 1.0.0
+  status: fixture_invalid
+  owner_skill: shot-design
+
+shot_list:
+  project_title: "Invalid Duration Mismatch"
+  deliverable: "15s vertical test"
+  channel: "ai_short_film"
+  aspect_ratio: "9:16"
+  total_duration: "15s"
+  shots:
+    - shot_id: BAD01
+      duration: "4s"
+      purpose: "Open the route problem."
+      shot_size: "wide shot"
+      camera_angle: "eye level"
+      lens: "28mm"
+      camera_motion: "locked camera"
+      subject_action: "Worker enters the street."
+      blocking: "Worker starts frame left and stops near center."
+      audio: "rain ambience"
+    - shot_id: BAD02
+      duration: "4s"
+      purpose: "Show tool proof."
+      shot_size: "medium shot"
+      camera_angle: "low angle"
+      lens: "35mm"
+      camera_motion: "slow push"
+      subject_action: "Worker activates cleaning cart."
+      blocking: "Cart moves from foreground to midground."
+      audio: "motor hum"
+    - shot_id: BAD03
+      duration: "5s"
+      purpose: "Show route cleared."
+      shot_size: "medium wide"
+      camera_angle: "high angle"
+      lens: "50mm"
+      camera_motion: "small tilt"
+      subject_action: "Ambulance exits through the cleared lane."
+      blocking: "Ambulance moves background right to center."
+      audio: "distant siren"

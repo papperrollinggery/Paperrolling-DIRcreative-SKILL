@@ -1,0 +1,395 @@
+fixture_authority: none
+live_state_authority: false
+live_acceptance_authority: false
+host_attestation_authority: false
+
+artifact:
+  artifact_id: fog-route-cleaner-assisted-generation-v1
+  version: 1.0.0
+  status: needs_revision
+  owner_skill: generation-qa
+  source_artifact_ids:
+    - complete-idea-reference-prompt-plan-v1
+    - complete-idea-shot-list-v1
+
+run:
+  run_id: fog-route-cleaner-assisted-generation-2026-05-16
+  project_title: "Fog Route Cleaner"
+  source_example: examples/complete-idea-segmentation-test
+  authorization_source: real_user
+  visual_output_mode: assisted_generation
+  longform_generation_mode: single_sequence
+  image_generation_provider: chatgpt_image_gen
+  video_generation_provider: none
+  video_generated: false
+  user_lock_required_before_video: true
+
+human_review:
+  review_source: real_user
+  reviewed_at: "2026-05-16"
+  verdict: reject_for_revision
+  summary: "Current generated images cannot be locked because character continuity drifts, reference image roles are not explicit enough, and the storyboard board lacks professional shot-card density."
+  failure_ids:
+    - character_identity_reference_drift
+    - reference_asset_role_label_missing
+    - storyboard_information_density_too_low
+  required_fix:
+    - "Generate or import a character identity reference first, then lock it before deriving scene boards or clean video frames."
+    - "Each image must carry a large role label in the image itself and the artifact manifest: character reference, scene plus camera movement reference, lighting/material reference, storyboard/motion reference, clean first frame, or clean end frame."
+    - "The storyboard/motion board must show full shot-card data per shot: timecode, duration, shot size, lens, camera angle, camera support, camera movement start-to-end, subject blocking, foreground/midground/background, lighting, sound cue, transition, and model risk."
+
+v2_regeneration_strategy:
+  mode: sequential_gated_assisted_generation
+  principle: "Use fewer images with stronger ownership. Do not let multiple images independently redesign the same character or scene."
+  lock_order:
+    - character_identity_lock
+    - scene_geography_camera_fov_lock
+    - professional_storyboard_motion_page_lock
+    - selected_clean_frame_generation
+  required_core_assets:
+    - asset_id: v2_character_identity_reference
+      role: character_identity_reference
+      visible_role_label: "CHARACTER IDENTITY REFERENCE / 人物参考图 / NOT DIRECT VIDEO INPUT"
+      primary_job: "Lock the single sanitation worker identity, body proportion, wardrobe silhouette, protective gear, and cleaning equipment."
+      must_include:
+        - "front, side, back, and 3/4 action view of the same worker"
+        - "face shield, reflective municipal jacket, rubber gloves, cart handle, disinfectant nozzle"
+        - "material details without changing costume design"
+      must_not_include:
+        - "alternate worker designs"
+        - "new scene geography"
+        - "storyboard panels"
+        - "final cinematic shot composition"
+      downstream_rule: "All later images must inherit this identity and must not reinterpret face, body, costume, gear, or cart design."
+    - asset_id: v2_scene_geography_camera_fov_reference
+      role: scene_geography_camera_fov_reference
+      visible_role_label: "SCENE GEOGRAPHY + CAMERA FOV REFERENCE / 场景空间+镜头视场参考图 / PLANNING ONLY"
+      primary_job: "Lock one street, one route axis, ambulance position, zombie distance, lighting source direction, camera positions, and field-of-view wedges."
+      must_include:
+        - "wide or 360-degree panoramic street strip"
+        - "top-down route diagram"
+        - "S01-S06 camera positions"
+        - "field-of-view wedges for each shot"
+        - "worker path, cart path, ambulance path"
+        - "foreground/midground/background zones"
+      must_not_include:
+        - "alternate streets"
+        - "alternate ambulance positions"
+        - "new character costume designs"
+        - "decorative mood panels that contradict geography"
+      downstream_rule: "All later storyboards and clean frames must inherit route direction, vehicle position, light source, and camera axis from this atlas."
+    - asset_id: v2_professional_storyboard_motion_map
+      role: professional_storyboard_motion_map
+      visible_role_label: "PROFESSIONAL STORYBOARD + MOTION MAP / 详细分镜头+镜头运动图 / PLANNING ONLY"
+      primary_job: "Show the complete professional storyboard page for user shot review and prompt compilation."
+      per_shot_cell_required_fields:
+        - shot_id
+        - timecode
+        - duration
+        - shot_image_region
+        - detailed_frame_description
+        - shot_size
+        - focal_length
+        - camera_position
+        - camera_movement_start_end
+        - subject_blocking_start_end
+        - foreground_midground_background
+        - lighting_cue
+        - sound_description
+        - transition
+        - model_risk
+      must_not_include:
+        - "new character identity"
+        - "new scene geography"
+        - "generic one-line captions"
+      downstream_rule: "This page is planning-only. It informs timing, movement, sound, and risk; it is not a direct video frame."
+  optional_assets_after_locks:
+    - asset_id: v2_clean_first_frame
+      role: clean_first_frame
+      generation_condition: "Only after character and scene anchors pass user lock."
+      direct_video_input_after_lock: true
+    - asset_id: v2_clean_end_frame
+      role: clean_end_frame
+      generation_condition: "Only after character and scene anchors pass user lock."
+      direct_video_input_after_lock: true
+  consistency_rules:
+    character_consistency_required: true
+    scene_consistency_required: true
+    duplicate_visual_truth_forbidden: true
+    repeated_content_must_inherit_locked_source: true
+    batch_generate_all_assets_before_locks: false
+    asset_role_label_must_be_dominant_title: true
+
+v2_trial_attempts:
+  - attempt_id: v2-character-identity-reference-attempt-01
+    attempted_at: "2026-05-17"
+    asset_id: v2_character_identity_reference
+    generated_file: /Users/example-user/.codex/generated_images/00000000-0000-7000-8000-000000000001/ig_0ed0741c66e6a4d0016a0895bac5bc819a9c5affddde9e6f01.png
+    generated_file_availability: external_generated_image_missing_ok
+    status: rejected_for_revision
+    pre_generation_contract:
+      status: fail
+      existed_before_generation: false
+      image_generation_allowed: false
+      missing_or_failed_checks:
+        - dominant_title
+        - secondary_project_metadata
+        - title_hierarchy.role_label_largest
+        - title_hierarchy.project_title_secondary
+        - title_hierarchy.forbidden_largest_text
+        - prompt_lint.forbidden_poster_hierarchy_present
+      required_before_retry: true
+    post_generation_qa:
+      status: fail
+      reviewer: assistant
+      user_lock_request_allowed: false
+      checks:
+        role_label_exists: true
+        role_label_is_dominant_page_title: false
+        project_title_is_secondary_metadata: false
+        role_purity_clear: false
+        character_identity_consistency_visible: true
+        equipment_consistency_visible: true
+        direct_video_input_safe: false
+    direct_video_input: false
+    failure_ids:
+      - image_generation_called_without_pre_generation_contract
+      - reference_role_label_hierarchy_wrong
+    user_feedback: "The largest header reads as the film title. The image type should be the dominant title so the user immediately knows this is a character reference image."
+    required_fix:
+      - "Make `人物身份参考图 / CHARACTER IDENTITY REFERENCE` the largest title."
+      - "Move `Project: Fog Route Cleaner` to smaller secondary metadata."
+      - "Keep `NOT DIRECT VIDEO INPUT` visible near the role label."
+    next_action: regenerate_character_identity_reference_prompt
+
+assets:
+  - asset_id: frc_ref_01_character_equipment_board
+    role: identity_equipment_board
+    file_path: /Users/example-user/.codex/generated_images/00000000-0000-7000-8000-000000000001/ig_01ec9b764edb3c3f016a0889f7019c819aadc7cb76cda7c09c.png
+    file_availability: external_generated_image_missing_ok
+    generated_dimensions: "1672x941"
+    prompt_source: examples/complete-idea-segmentation-test/04-reference-prompt-plan.md
+    direct_video_input: false
+    direct_video_reason: "Dense identity/equipment board contains production-reference composition and may be misread as final frame layout."
+    allowed_use:
+      - human review
+      - identity lock
+      - equipment continuity
+      - secondary reference where model supports element references
+    forbidden_use:
+      - Kling first frame
+      - Runway first frame
+      - final video frame
+    role_label_required_in_image: "CHARACTER IDENTITY REFERENCE / 人物参考图 / NOT DIRECT VIDEO INPUT"
+    user_lock_status: rejected_for_revision
+    usable_for_next_step: false
+    rejection_reasons:
+      - character_identity_reference_drift
+      - reference_asset_role_label_missing
+  - asset_id: frc_ref_02_street_environment_board
+    role: environment_geography_board
+    file_path: /Users/example-user/.codex/generated_images/00000000-0000-7000-8000-000000000001/ig_01ec9b764edb3c3f016a088a8a60f0819a8f6ab9cfd7bb81e3.png
+    file_availability: external_generated_image_missing_ok
+    generated_dimensions: "1672x941"
+    prompt_source: examples/complete-idea-segmentation-test/04-reference-prompt-plan.md
+    direct_video_input: false
+    direct_video_reason: "Environment board is for geography, set dressing, and atmosphere; labels or panel logic can become unwanted video content."
+    allowed_use:
+      - human review
+      - street geography lock
+      - Seedance secondary environment reference
+      - Veo reference map description
+    forbidden_use:
+      - Kling first frame
+      - Runway first frame
+      - final video frame
+    role_label_required_in_image: "SCENE + CAMERA MOVEMENT REFERENCE / 场景+镜头位移参考图 / PLANNING ONLY"
+    user_lock_status: rejected_for_revision
+    usable_for_next_step: false
+    rejection_reasons:
+      - reference_asset_role_label_missing
+      - scene_camera_movement_label_missing
+  - asset_id: frc_ref_03_lighting_material_style_board
+    role: lighting_material_style_board
+    file_path: /Users/example-user/.codex/generated_images/00000000-0000-7000-8000-000000000001/ig_01ec9b764edb3c3f016a088ae36598819aa67e774e1664b826.png
+    file_availability: external_generated_image_missing_ok
+    generated_dimensions: "1536x1024"
+    prompt_source: examples/complete-idea-segmentation-test/04-reference-prompt-plan.md
+    direct_video_input: false
+    direct_video_reason: "Style board should guide color, texture, fog, and material behavior; it should not become a first frame."
+    allowed_use:
+      - human review
+      - lighting lock
+      - material lock
+      - secondary style reference
+    forbidden_use:
+      - Kling first frame
+      - Runway first frame
+      - final video frame
+    role_label_required_in_image: "LIGHTING + MATERIAL REFERENCE / 灯光材质参考图 / NOT DIRECT VIDEO INPUT"
+    user_lock_status: rejected_for_revision
+    usable_for_next_step: false
+    rejection_reasons:
+      - reference_asset_role_label_missing
+  - asset_id: frc_ref_04_storyboard_motion_board
+    role: storyboard_motion_board
+    file_path: /Users/example-user/.codex/generated_images/00000000-0000-7000-8000-000000000001/ig_01ec9b764edb3c3f016a088b3c704c819a89384432d25034a0.png
+    file_availability: external_generated_image_missing_ok
+    generated_dimensions: "1672x941"
+    prompt_source: examples/complete-idea-segmentation-test/04-reference-prompt-plan.md
+    direct_video_input: false
+    direct_video_reason: "Storyboard/motion board contains panels, camera movement notes, timing logic, and planning structure. It is planning-only."
+    allowed_use:
+      - human review
+      - edit planning
+      - motion planning
+      - prompt compiler reference
+    forbidden_use:
+      - Seedance primary final-image reference
+      - Kling first frame
+      - Runway first frame
+      - final video frame
+    role_label_required_in_image: "PROFESSIONAL STORYBOARD + MOTION MAP / 详细分镜头+镜头运动图 / PLANNING ONLY"
+    user_lock_status: rejected_for_revision
+    usable_for_next_step: false
+    rejection_reasons:
+      - reference_asset_role_label_missing
+      - storyboard_information_density_too_low
+  - asset_id: frc_clean_01_start_frame
+    role: clean_first_frame
+    shot_id: FRC01
+    file_path: /Users/example-user/.codex/generated_images/00000000-0000-7000-8000-000000000001/ig_01ec9b764edb3c3f016a088be12cc0819a9063e737d83f2d5a.png
+    file_availability: external_generated_image_missing_ok
+    generated_dimensions: "941x1672"
+    prompt_source: examples/complete-idea-segmentation-test/04-reference-prompt-plan.md
+    direct_video_input: true
+    direct_video_reason: "Clean text-free vertical frame can be used as first-frame input after user visual lock."
+    allowed_use:
+      - Kling first frame
+      - Runway first frame
+      - Seedance clean start reference
+      - Veo reference map clean start
+    forbidden_use:
+      - storyboard substitute
+      - character design board substitute
+    role_label_required_in_manifest: "CLEAN FIRST FRAME FOR I2V / 干净首帧 / DIRECT VIDEO CANDIDATE"
+    user_lock_status: rejected_for_revision
+    usable_for_next_step: false
+    rejection_reasons:
+      - character_identity_reference_drift
+  - asset_id: frc_clean_06_end_frame
+    role: clean_end_frame
+    shot_id: FRC06
+    file_path: /Users/example-user/.codex/generated_images/00000000-0000-7000-8000-000000000001/ig_01ec9b764edb3c3f016a088c5b22b4819a95b172637cf0b1a8.png
+    file_availability: external_generated_image_missing_ok
+    generated_dimensions: "941x1672"
+    prompt_source: examples/complete-idea-segmentation-test/04-reference-prompt-plan.md
+    direct_video_input: true
+    direct_video_reason: "Clean text-free vertical frame can be used as end-frame or final proof reference after user visual lock."
+    allowed_use:
+      - Kling end frame where supported
+      - Runway image-to-video ending test
+      - Seedance clean end reference
+      - Veo reference map clean end
+    forbidden_use:
+      - storyboard substitute
+      - character design board substitute
+    role_label_required_in_manifest: "CLEAN END FRAME FOR I2V / 干净尾帧 / DIRECT VIDEO CANDIDATE"
+    user_lock_status: rejected_for_revision
+    usable_for_next_step: false
+    rejection_reasons:
+      - character_identity_reference_drift
+
+model_handoff:
+  seedance:
+    blocked_by_human_review: true
+    recommended_mode: "hybrid multi-reference"
+    usable_assets:
+      - frc_ref_01_character_equipment_board
+      - frc_ref_02_street_environment_board
+      - frc_ref_03_lighting_material_style_board
+      - frc_ref_04_storyboard_motion_board
+      - frc_clean_01_start_frame
+      - frc_clean_06_end_frame
+    anti_misread_required: true
+    note: "Storyboard board must be described as planning-only; final output must not show boards, labels, arrows, or panels."
+  kling:
+    blocked_by_human_review: true
+    recommended_mode: "clean-frame I2V"
+    usable_assets:
+      - frc_clean_01_start_frame
+      - frc_clean_06_end_frame
+    forbidden_primary_assets:
+      - frc_ref_01_character_equipment_board
+      - frc_ref_02_street_environment_board
+      - frc_ref_03_lighting_material_style_board
+      - frc_ref_04_storyboard_motion_board
+    anti_misread_required: true
+  runway:
+    blocked_by_human_review: true
+    recommended_mode: "single-shot clean-frame I2V test"
+    usable_assets:
+      - frc_clean_01_start_frame
+      - frc_clean_06_end_frame
+    forbidden_primary_assets:
+      - frc_ref_04_storyboard_motion_board
+    anti_misread_required: true
+  veo:
+    blocked_by_human_review: true
+    recommended_mode: "structured text prompt plus reference map"
+    usable_assets:
+      - frc_ref_01_character_equipment_board
+      - frc_ref_02_street_environment_board
+      - frc_ref_03_lighting_material_style_board
+      - frc_clean_01_start_frame
+      - frc_clean_06_end_frame
+    anti_misread_required: true
+
+qa:
+  image_generation_authorized: true
+  real_files_exist: true
+  asset_count_is_six: true
+  dense_boards_not_direct_i2v: true
+  clean_frames_direct_i2v: true
+  clean_frames_text_free_policy_declared: true
+  video_generation_blocked_until_user_lock: true
+  no_video_generated: true
+  no_media_copied_into_examples: true
+  user_review_required: true
+  approved_for_video_prompt_test: false
+  character_consistency_passed: false
+  role_labels_passed: false
+  storyboard_density_passed: false
+  failures:
+    - character_identity_reference_drift
+    - reference_asset_role_label_missing
+    - storyboard_information_density_too_low
+
+next_user_decision:
+  question: "是否按 V2 标准重生成：先人物身份锁图，再场景+镜头位移图，再高密度分镜图，最后才生成干净首尾帧？"
+  options:
+    - "按 V2 标准重生成完整参考组"
+    - "只先重做人物身份参考图和高密度分镜图"
+    - "先不出图，只更新提示词和工作流"
+
+skill_run_receipt:
+  run_id: fog-route-cleaner-assisted-generation-2026-05-16
+  skill_id: generation-qa
+  input_artifacts:
+    - examples/complete-idea-segmentation-test/03-shot-list.yaml
+    - examples/complete-idea-segmentation-test/04-reference-prompt-plan.md
+  output_artifacts:
+    - tests/fixtures/runtime/runs/fog-route-cleaner-assisted-generation.yaml
+  decisions:
+    - "Real user authorized image generation."
+    - "Register generated references without copying media into examples."
+    - "Keep dense boards as planning/reference assets, not direct I2V frames."
+  unresolved_questions:
+    - "User must approve the V2 regeneration strategy before any generated image can be treated as locked."
+  qa_gate:
+    status: fail
+    reasons:
+      - "Generated files exist and are registered."
+      - "Real user rejected current candidates for identity drift, unclear role labeling, and insufficient storyboard density."
+      - "Video generation remains blocked until regenerated assets pass user lock."
+  next_recommended_skill: reference-image-planner

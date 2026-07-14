@@ -1,0 +1,460 @@
+artifact:
+  artifact_id: zombie-cleaner-video-prompt-manifest-v1
+  version: 1.0.0
+  source_artifact_ids:
+    - zombie-cleaner-shot-list-v1
+    - zombie-cleaner-reference-pack-plan-v1
+    - zombie-cleaner-image-prompt-manifest-v1
+    - zombie-cleaner-longform-reference-pack-v1
+  status: approved
+  owner_skill: video-model-adapter
+
+video_prompt_manifest:
+  project_title: "Wasteland Sanitation Route"
+  target_sequence_duration: "180s via 12x15s units"
+  longform_generation_mode: hybrid
+  visual_output_mode: prompt_only
+  selected_reference_strategy: hybrid
+  sequence_plan: "examples/zombie-cleaner-test/08-sequence-plan.yaml"
+  sequence_ids: [zc-seq-01, zc-seq-02, zc-seq-03, zc-seq-04, zc-seq-05, zc-seq-06, zc-seq-07, zc-seq-08, zc-seq-09, zc-seq-10, zc-seq-11, zc-seq-12]
+  reference_pack:
+    - "zc_image_01 worker identity"
+    - "zc_image_02 street sweeper vehicle"
+    - "zc_image_03 route geography"
+    - "zc_image_04 sequence order guidance only"
+
+capability_resolution:
+  registry_path: "docs/film-preproduction/sources/model-sources.yaml"
+  registry_version: "2.0.0"
+  selected_cards:
+    - capability_card_id: seedance_2_0_official_launch
+      model_key: seedance
+      version: "2.0"
+      status: current
+      provider_surface: "Seedance 2.0 launch product surfaces described by ByteDance Seed"
+      verified_on: "2026-07-10"
+      accessed_on: "2026-07-10"
+      evidence_level: S2
+      source_urls:
+        - "https://seed.bytedance.com/en/blog/seedance-2-0-official-launch"
+        - "https://arxiv.org/abs/2604.14148"
+      source_conflicts: []
+      access_mode: documented_product
+      execution_mode: manual_export
+      execution_verification_status: unverified
+      resolution_status: resolved
+    - capability_card_id: kling_video_3_0_official_guide
+      model_key: kling
+      version: "3.0"
+      status: current
+      provider_surface: "Kling AI VIDEO 3.0 product guide"
+      verified_on: "2026-07-10"
+      accessed_on: "2026-07-10"
+      evidence_level: S3
+      source_urls:
+        - "https://app.klingai.com/cn/quickstart/klingai-video-3-model-user-guide"
+      source_conflicts: []
+      access_mode: documented_product
+      execution_mode: manual_export
+      execution_verification_status: unverified
+      resolution_status: resolved
+    - capability_card_id: runway_gen_4_5_web
+      model_key: runway
+      version: "Gen-4.5"
+      status: current
+      provider_surface: "Runway web Gen-4.5 generation"
+      verified_on: "2026-07-10"
+      accessed_on: "2026-07-10"
+      evidence_level: S3
+      source_urls:
+        - "https://help.runwayml.com/hc/en-us/articles/46974685288467-Creating-with-Gen-4-5"
+        - "https://help.runwayml.com/hc/en-us/articles/42460036199443-Text-to-Video-Prompting-Guide"
+      source_conflicts: []
+      resolution_status: resolved
+    - capability_card_id: veo_3_1_generate_001_vertex_api
+      model_key: veo
+      version: "veo-3.1-generate-001"
+      status: current
+      provider_surface: "Vertex AI publisher model predictLongRunning API"
+      verified_on: "2026-07-11"
+      accessed_on: "2026-07-11"
+      evidence_level: S1
+      source_urls:
+        - "https://docs.cloud.google.com/vertex-ai/generative-ai/docs/models/veo/3-1-generate"
+        - "https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/veo-video-generation"
+        - "https://docs.cloud.google.com/vertex-ai/generative-ai/docs/release-notes"
+        - "https://cloud.google.com/blog/products/ai-machine-learning/veo-3-1-lite-and-a-new-veo-upscaling-capability-on-vertex-ai/"
+      source_conflicts:
+        - "The exact stable page says sound generation is not supported; family-level audio claims and the generic API URL do not authorize audio for this exact card."
+      resolution_status: resolved
+
+rights_gate:
+  status: unverified
+  conditions: []
+  source_asset_rights: "Prompt-only artifact; rights must be verified before any upload or generation."
+  likeness_authorization: unverified
+  voice_authorization: unverified
+  brand_or_character_authorization: unverified
+  music_or_audio_rights: unverified
+  provider_restrictions_checked: true
+  evidence_refs: []
+  generation_allowed: false
+
+audio_plan:
+  desired_audio:
+    dialogue: "none"
+    voiceover: "none"
+    music: "optional_postproduction"
+    ambience: "project_specific"
+    sound_effects:
+      - "See each model prompt."
+    silence: false
+  per_model_routes:
+    - model_key: seedance
+      capability_card_id: seedance_2_0_official_launch
+      generation_audio_route: postproduction
+      generate_audio_parameter: not_applicable
+      route_evidence:
+        - "Execution surface is documented-product/manual-export and remains unverified."
+      postproduction_handoff: "Export ambience and effects notes to editorial; do not claim native execution."
+    - model_key: kling
+      capability_card_id: kling_video_3_0_official_guide
+      generation_audio_route: postproduction
+      generate_audio_parameter: not_applicable
+      route_evidence:
+        - "Execution surface is documented-product/manual-export and remains unverified."
+      postproduction_handoff: "Export ambience and effects notes to editorial; do not claim native execution."
+    - model_key: runway
+      capability_card_id: runway_gen_4_5_web
+      generation_audio_route: postproduction
+      generate_audio_parameter: not_applicable
+      route_evidence:
+        - "Exact Gen-4.5 web card does not verify native audio."
+      postproduction_handoff: "Build dialogue, ambience, music, and effects in editorial."
+    - model_key: veo
+      capability_card_id: veo_3_1_generate_001_vertex_api
+      generation_audio_route: postproduction
+      generate_audio_parameter: not_applicable
+      route_evidence:
+        - "The exact stable model page marks sound generation as not supported; the generic API URL does not prove generateAudio for this card."
+      postproduction_handoff: "Build the declared dialogue, music, ambience, and effects as an editorial audio package."
+
+
+execution_capabilities:
+  image_generation:
+    available: false
+    provider: none
+    allowed_by_user: false
+  video_generation:
+    available: false
+    provider: none
+    allowed_by_user: false
+    external_upload_authorized: false
+    external_execution_state: instructions_only
+    external_execution_evidence: []
+  file_write:
+    available: true
+  browser_review:
+    available: false
+
+reference_map:
+  - ref_id: zc_image_01
+    file_or_generation_id: "prompt-ready from examples/zombie-cleaner-test/11-image-prompt-manifest.yaml"
+    role: "worker_identity_reference"
+    asset_output_status: prompt_ready
+    use_for: ["same worker face", "orange suit", "face shield", "clipboard behavior"]
+    do_not_use_for: ["animating character board", "adding military armor", "copying existing short film character"]
+    external_generation_instructions: "Generate or import the worker board before using it as visual truth."
+  - ref_id: zc_image_02
+    file_or_generation_id: "prompt-ready from examples/zombie-cleaner-test/11-image-prompt-manifest.yaml"
+    role: "vehicle_reference"
+    asset_output_status: prompt_ready
+    use_for: ["street sweeper geometry", "front brushes", "foam tank", "UNIT 47 decal"]
+    do_not_use_for: ["military vehicle", "clean sci-fi car", "changing brush shape"]
+    external_generation_instructions: "Generate or import the vehicle board before using it as visual truth."
+  - ref_id: zc_image_03
+    file_or_generation_id: "prompt-ready from examples/zombie-cleaner-test/11-image-prompt-manifest.yaml"
+    role: "route_environment_reference"
+    asset_output_status: prompt_ready
+    use_for: ["quarantine street", "flooded alley", "service lane", "recycling yard", "camera path"]
+    do_not_use_for: ["showing map labels", "showing arrows", "animating route board layout"]
+    external_generation_instructions: "Generate as planning board, then export text-free scene plates."
+  - ref_id: zc_image_04
+    file_or_generation_id: "prompt-ready from examples/zombie-cleaner-test/11-image-prompt-manifest.yaml"
+    role: "sequence_order_reference_only"
+    asset_output_status: prompt_ready
+    use_for: ["12 sequence order", "comic escalation", "audio spine", "transition planning"]
+    do_not_use_for: ["showing storyboard panels", "showing labels", "direct Kling or Runway first frame"]
+    external_generation_instructions: "Use as planning or compatible model guidance only; do not use as direct first frame."
+
+reference_bindings:
+  - model: seedance
+    capability_card_id: seedance_2_0_official_launch
+    version: "2.0"
+    status: current
+    provider_surface: "Seedance 2.0 launch product surfaces described by ByteDance Seed"
+    shot_id: SEQUENCE
+    ref_id: zc_image_01
+    upload_slot: "@image1"
+    role: secondary_reference
+    required_for_generation: true
+    prompt_file: "examples/zombie-cleaner-test/13-video-prompt-manifest.yaml#seedance"
+    risk_note: "Worker identity reference anchors face shield, orange suit, and municipal behavior."
+  - model: seedance
+    capability_card_id: seedance_2_0_official_launch
+    version: "2.0"
+    status: current
+    provider_surface: "Seedance 2.0 launch product surfaces described by ByteDance Seed"
+    shot_id: SEQUENCE
+    ref_id: zc_image_02
+    upload_slot: "@image2"
+    role: secondary_reference
+    required_for_generation: true
+    prompt_file: "examples/zombie-cleaner-test/13-video-prompt-manifest.yaml#seedance"
+    risk_note: "Vehicle reference anchors UNIT 47 sweeper geometry, brushes, foam tank, and decal."
+  - model: seedance
+    capability_card_id: seedance_2_0_official_launch
+    version: "2.0"
+    status: current
+    provider_surface: "Seedance 2.0 launch product surfaces described by ByteDance Seed"
+    shot_id: SEQUENCE
+    ref_id: zc_image_03
+    upload_slot: "@image3"
+    role: secondary_reference
+    required_for_generation: true
+    prompt_file: "examples/zombie-cleaner-test/13-video-prompt-manifest.yaml#seedance"
+    risk_note: "Route environment reference anchors geography and scene-plate continuity."
+  - model: seedance
+    capability_card_id: seedance_2_0_official_launch
+    version: "2.0"
+    status: current
+    provider_surface: "Seedance 2.0 launch product surfaces described by ByteDance Seed"
+    shot_id: SEQUENCE
+    ref_id: zc_image_04
+    upload_slot: "@image4"
+    role: planning_only
+    required_for_generation: false
+    prompt_file: "examples/zombie-cleaner-test/13-video-prompt-manifest.yaml#seedance"
+    risk_note: "Sequence order board must not appear as visible storyboard panels, labels, route maps, or timing text."
+  - model: kling
+    capability_card_id: kling_video_3_0_official_guide
+    version: "3.0"
+    status: current
+    provider_surface: "Kling AI VIDEO 3.0 product guide"
+    shot_id: ZC01-ZC12
+    ref_id: zc_image_02
+    upload_slot: "element reference only"
+    role: element_reference
+    required_for_generation: false
+    prompt_file: "examples/zombie-cleaner-test/13-video-prompt-manifest.yaml#kling"
+    risk_note: "Prompt-only vehicle board cannot be primary I2V input until text-free clean frames are generated/imported and user locked."
+  - model: runway
+    capability_card_id: runway_gen_4_5_web
+    version: "Gen-4.5"
+    status: current
+    provider_surface: "Runway web Gen-4.5 generation"
+    shot_id: ZC01-ZC12
+    ref_id: zc_image_01
+    upload_slot: "element reference only"
+    role: element_reference
+    required_for_generation: false
+    prompt_file: "examples/zombie-cleaner-test/13-video-prompt-manifest.yaml#runway"
+    risk_note: "Use worker traits only; do not use the labeled identity board as a direct first frame."
+  - model: veo
+    capability_card_id: veo_3_1_generate_001_vertex_api
+    version: "veo-3.1-generate-001"
+    status: current
+    provider_surface: "Vertex AI publisher model predictLongRunning API"
+    shot_id: SEQUENCE
+    ref_id: zc_image_04
+    upload_slot: "reference map sequence order"
+    role: planning_only
+    required_for_generation: false
+    prompt_file: "examples/zombie-cleaner-test/13-video-prompt-manifest.yaml#veo"
+    risk_note: "Structured prompt carries sequence order; board labels and route-map layout stay out of final video."
+
+model_prompts:
+  seedance:
+    enabled: true
+    operation: generate
+    capability_card_id: seedance_2_0_official_launch
+    version: "2.0"
+    status: current
+    provider_surface: "Seedance 2.0 launch product surfaces described by ByteDance Seed"
+    access_mode: documented_product
+    execution_mode: manual_export
+    execution_verification_status: unverified
+    desired_audio:
+      mode: planned_diegetic_audio
+    generation_audio_route: postproduction
+    rights_gate_status: unverified
+    transformation_contract:
+      preserve: []
+      change: []
+      forbidden_change: []
+      overlap_check: pass
+    best_for: "15s multi-shot sequence units with explicit image-role bindings."
+    prompt: |
+      REFERENCE MAP
+      @Image1 = sanitation worker identity and orange suit.
+      @Image2 = rusted street sweeper UNIT 47 and rotating brushes.
+      @Image3 = quarantine route geography and scene plates.
+      @Image4 = sequence order guidance only. Do not show or animate the board, labels, arrows, or panel layout.
+
+      TASK
+      Generate twelve 15-second clips for an original black-comedy atom-punk zombie short. Keep the same worker, same street sweeper, and same glowing green barrel. The worker follows a municipal cleanup route through a zombie quarantine district and accidentally cleans the block by using the street sweeper, foam sprayer, and recycling compactor.
+
+      AUDIO
+      No dialogue. Use engine rattle, warning jingle, brush scrape, zombie shuffle, Geiger clicks, compactor belt, and dawn ambience when supported.
+    reference_warning: "Storyboard and route boards are production guidance only; do not show or animate labels, arrows, grids, panels, or board layout."
+    audio_policy: "Native audio allowed only if selected Seedance path supports it; otherwise export as post audio plan."
+    risk_notes:
+      - "Longform continuity may drift if generated all at once."
+      - "Dense board may be misread without role binding."
+    retry_rules:
+      - "If board appears in output, remove zc_image_04 and use text sequence plan only."
+      - "If vehicle drifts, prioritize zc_image_02 and reduce crowd action."
+  kling:
+    enabled: true
+    operation: generate
+    capability_card_id: kling_video_3_0_official_guide
+    version: "3.0"
+    status: current
+    provider_surface: "Kling AI VIDEO 3.0 product guide"
+    access_mode: documented_product
+    execution_mode: manual_export
+    execution_verification_status: unverified
+    desired_audio:
+      mode: planned_diegetic_audio
+    generation_audio_route: postproduction
+    rights_gate_status: unverified
+    transformation_contract:
+      preserve: []
+      change: []
+      forbidden_change: []
+      overlap_check: pass
+    best_for: "Per-sequence image-to-video runs from clean start/end frames and element references."
+    prompt: |
+      Reference boards are planning guidance only; do not show or animate board labels, panels, arrows, route maps, grids, timing text, or layout.
+      Use a text-free clean first frame for the selected sequence. The same sanitation worker in an orange rubber suit operates the same rusted UNIT 47 street sweeper. Subject movement, background movement, and camera movement must match the first frame. Keep zombies slow, readable, and secondary to the worker and vehicle.
+    reference_warning: "Do not use zc_image_03 or zc_image_04 dense boards as direct first frames. Use clean start/end frames and element references."
+    audio_policy: "Visual-only generation preferred; add engine, jingle, zombie shuffle, Geiger, and compactor sounds in post."
+    risk_notes:
+      - "Direct first frame mismatch can change vehicle geometry."
+      - "Crowd action can overload the frame."
+    retry_rules:
+      - "If crowd breaks, reduce zombies to three foreground figures plus background silhouettes."
+      - "If vehicle changes, lock camera and animate brushes only."
+  runway:
+    enabled: true
+    operation: generate
+    generation_capability_card_id: runway_gen_4_5_web
+    edit_capability_card_id: ""
+    deprecated_card_ids_rejected:
+      - runway_gen_4_aleph_api_deprecated
+    version: "Gen-4.5"
+    status: current
+    provider_surface: "Runway web Gen-4.5 generation"
+    desired_audio:
+      mode: planned_diegetic_audio
+    generation_audio_route: postproduction
+    rights_gate_status: unverified
+    transformation_contract:
+      preserve: []
+      change: []
+      forbidden_change: []
+      overlap_check: pass
+    best_for: "Short single-beat motion tests from clean frames."
+    prompt: |
+      Reference boards are planning guidance only; do not show board labels, panels, arrows, route maps, grids, timing text, or layout.
+      The orange-suited sanitation worker drives the rusted street sweeper through a wet zombie quarantine street. The rotating brushes scrape water and debris while slow zombies shuffle behind. The camera tracks smoothly beside the vehicle. Keep the worker, vehicle, and glowing green barrel consistent.
+    reference_warning: "Use one clean image per run. Avoid dense boards, route maps, labels, and multi-sequence prompts."
+    audio_policy: "Silent visual-only generation; audio handled after edit."
+    risk_notes:
+      - "Multi-shot instructions can weaken motion clarity."
+      - "Negative prompt chains may create artifacts."
+    retry_rules:
+      - "Split into one run per sequence or per action beat."
+      - "Use one dominant action: drive, brush, foam, hook, belt, or exit."
+  veo:
+    enabled: true
+    operation: generate
+    capability_card_id: veo_3_1_generate_001_vertex_api
+    version: "veo-3.1-generate-001"
+    status: current
+    provider_surface: "Vertex AI publisher model predictLongRunning API"
+    source_conflicts:
+      - "The exact stable page says sound generation is not supported; keep the family/API ambiguity visible and use post-production audio."
+    desired_audio:
+      mode: planned_diegetic_audio
+    generation_audio_route: postproduction
+    generate_audio_parameter: not_applicable
+    rights_gate_status: unverified
+    transformation_contract:
+      preserve: []
+      change: []
+      forbidden_change: []
+      overlap_check: pass
+    best_for: "Structured sequence prompts with subject, action, scene, camera, lighting, style, and audio."
+    prompt: |
+      Reference boards are planning guidance only; do not show or animate board labels, panels, arrows, route maps, grids, timing text, or layout.
+      Subject: tired municipal sanitation worker in worn orange rubber suit, cracked clear face shield, black gloves, driving rusted street sweeper UNIT 47.
+      Action: follows a cleanup route through a zombie quarantine district, collects a glowing green barrel, herds zombies by accident, triggers a recycling compactor, and exits at dawn.
+      Scene: wet atom-punk city, flooded alley, service lane, recycling yard, clean dawn street.
+      Camera: 28mm ruined street wides, 35mm vehicle tracking, 85mm gross-comedy inserts, controlled top-down route references translated into live action.
+      Style: black comedy, civic apocalypse, sodium amber and sickly green glow, no graphic gore.
+      Audio: engine rattle, warning jingle, brush scrape, zombie shuffle, Geiger clicks, compactor belt, no dialogue.
+    reference_warning: "Reference boards guide identity, vehicle, route, and sequence order only; final video should be the cinematic scene."
+    audio_policy: "Post-production only for this exact stable card; preserve the structured audio plan for editorial."
+    risk_notes:
+      - "Complex 180s plan should be exported as sequence prompts."
+      - "Too many zombie subjects can reduce identity consistency."
+    retry_rules:
+      - "If continuity drifts, generate one 15s sequence at a time."
+      - "If audio is wrong, switch to visual-only export and post audio."
+
+universal_anti_misread_clause: |
+  Use storyboard/reference boards only as production guidance.
+  Do not show or animate the board, panels, text labels, arrows, grids, tables, route maps, timing text, or layout.
+  Generate the cinematic scene described by the shot list and sequence plan.
+
+qa:
+  video_prompt_gate: "pass"
+  missing_audio_policy: false
+  missing_reference_map: false
+  visual_output_mode_valid: true
+  capability_receipt_present: true
+  missing_generated_assets_blocked: true
+  longform_sequence_refs_valid: true
+  exact_capability_cards_resolved: true
+  deprecated_or_preview_aliases_rejected: true
+  rights_gate_passed: false
+  desired_audio_route_compatible: true
+  preserve_change_disjoint: true
+  storyboard_clean_frame_separation_valid: true
+  official_source_conflicts_preserved: true
+  conflicting_actions: []
+  model_prompts_differ_materially: true
+  reference_bindings_present: true
+  selected_reference_strategy_present: true
+  no_video_generated: true
+
+skill_run_receipt:
+  run_id: zombie-cleaner-video-prompt-manifest-2026-05-16
+  skill_id: video-model-adapter
+  input_artifacts:
+    - examples/zombie-cleaner-test/07-shot-list.yaml
+    - examples/zombie-cleaner-test/10-reference-pack-plan.yaml
+    - examples/zombie-cleaner-test/11-image-prompt-manifest.yaml
+    - examples/zombie-cleaner-test/12-longform-reference-pack.yaml
+  output_artifacts:
+    - examples/zombie-cleaner-test/13-video-prompt-manifest.yaml
+  decisions:
+    - "Export model-specific prompt strategies without generating video."
+  unresolved_questions:
+    - "Clean start frames remain external_pending until image generation is authorized."
+  qa_gate:
+    status: pass
+    reasons:
+      - "Reference map, anti-misread clause, audio policy, risk notes, retry rules, and mode receipts are present."
+  next_recommended_skill: generation-qa

@@ -1,0 +1,106 @@
+{
+  "spec_version": "1.0",
+  "view_id": "visual-direction-compare-inline",
+  "execution_context": "standalone_chat",
+  "controller": {"surface_owner": "dircreative", "user_facing": true},
+  "stage_gate": {"id": "visual_direction_02", "type": "visual_direction_gate", "status": "needs_user", "decision_owner": "user"},
+  "view": {"intent": "compare", "display_mode": "inline", "customer_stage_label": "视觉方向确认", "decision_prompt": "选择一套视觉方向，或说明要混合的部分。"},
+  "source_truth": {"artifacts": [{"artifact_id": "visual-direction-02", "version": "1.0.0", "sha256": "9999999999999999999999999999999999999999999999999999999999999999"}]},
+  "presentation": {
+    "fields": [
+      {"id": "current_stage", "label": "当前阶段", "value": "视觉方向确认", "classification": "presentation_only", "source_ref": null},
+      {
+        "id": "visual_board",
+        "label": "视觉方向板",
+        "value": {
+          "media_status": "当前没有已确认的参考图；色板与视觉规则来自创作方向，不展示伪造的情绪图。",
+          "directions": [
+            {
+              "id": "morning-touch",
+              "judgment": "最适合把产品放进可信关系，而不是把人物变成产品演示者。",
+              "impact": "人物肤色、产品哑光材质和左窗方向将成为后续连续性重点。",
+              "palette": [
+                {"label": "暖灰", "color": "#B9AA98"},
+                {"label": "奶油白", "color": "#E6DCCB"},
+                {"label": "窗影灰", "color": "#71807D"},
+                {"label": "木色", "color": "#8D6F55"}
+              ],
+              "lighting": "左窗自然侧光，低反差，肤色保持暖灰。",
+              "materials": ["哑光机身", "拉丝金属", "木纹", "针织触感"],
+              "optics": ["35–50mm", "近距离细节", "轻微手持", "浅景深克制"],
+              "allow": ["真实皮肤纹理", "动作停顿", "局部逆光"],
+              "avoid": ["塑料高光", "过度磨皮", "广告式推镜"]
+            },
+            {
+              "id": "graphic-ritual",
+              "judgment": "形式记忆最强，但需要把图形节奏限制在产品动作，避免覆盖人物关系。",
+              "impact": "俯拍几何、动作重复和色块一致性会成为后续主要控制项。",
+              "palette": [
+                {"label": "深石墨", "color": "#343739"},
+                {"label": "象牙白", "color": "#E9E4D8"},
+                {"label": "陶土红", "color": "#A95F49"},
+                {"label": "芥末黄", "color": "#C39A42"}
+              ],
+              "lighting": "均匀顶光配硬边轮廓，减少空间阴影干扰。",
+              "materials": ["纯色色块", "磨砂陶瓷", "整齐织物", "清晰金属边缘"],
+              "optics": ["俯拍 28–35mm", "固定机位", "对称构图", "节拍式切换"],
+              "allow": ["重复动作", "几何留白", "单点强调色"],
+              "avoid": ["杂乱背景", "随意手持", "多种强调色竞争"]
+            },
+            {
+              "id": "quiet-contrast",
+              "judgment": "反转记忆最强，但前后视觉转换必须服务于发现，而不是成为独立技巧。",
+              "impact": "冷暖转换、焦段变化和揭示时点需要在脚本与镜头表中精确对齐。",
+              "palette": [
+                {"label": "冷灰蓝", "color": "#667784"},
+                {"label": "深褐", "color": "#4C3F37"},
+                {"label": "暖琥珀", "color": "#C88748"},
+                {"label": "柔米白", "color": "#E3D7C5"}
+              ],
+              "lighting": "前段冷静低饱和，揭示后转为近距离暖侧光。",
+              "materials": ["前段低反射", "后段暖金属", "深色木纹", "柔软织物"],
+              "optics": ["前段 35mm 固定", "后段 65mm 近景", "一次明确推近", "景深逐步变浅"],
+              "allow": ["单次冷暖转换", "反应近景", "静默停顿"],
+              "avoid": ["多次色温跳变", "无动机变焦", "过黑阴影"]
+            }
+          ]
+        },
+        "classification": "source_bound",
+        "source_ref": "visual-direction-02#/visual_board"
+      }
+    ],
+    "options": [
+      {"id": "morning-touch", "label": "清晨触感", "summary": "自然侧光、低饱和暖灰、近距离材质与手部细节。", "tradeoff": "情绪可信，但需严格控制肤色和产品材质连续性。", "source_refs": ["visual-direction-02#/options/0"]},
+      {"id": "graphic-ritual", "label": "图形仪式", "summary": "俯拍构图、重复动作、清晰色块与节奏匹配。", "tradeoff": "识别度高，但人物情感更容易被形式削弱。", "source_refs": ["visual-direction-02#/options/1"]},
+      {"id": "quiet-contrast", "label": "克制反差", "summary": "前段冷静固定，揭示时切换暖色近景和更近焦段。", "tradeoff": "反转记忆强，但前后光线转换需要精确匹配。", "source_refs": ["visual-direction-02#/options/2"]}
+    ],
+    "recommendation": {"option_id": "morning-touch", "reason": "最能支撑人情证据方向，同时减少短时长内的形式解释。"},
+    "downstream_effects": [
+      {"stage": "visual_bible", "effect": "把所选色板、光线、材质和镜头语言转成连续性规则。"},
+      {"stage": "reference_pack", "effect": "按所选方向配置人物、产品材质和空间参考。"}
+    ]
+  },
+  "interactions": {
+    "local": ["select", "compare", "stage_revision_note"],
+    "actions": [
+      {"id": "adopt", "label": "采用这套视觉方向", "kind": "submit_selection", "target_gate_id": "visual_direction_02", "conversation_intent": "提交暂存视觉方向，请先核对当前进度和已确认的创意方向。"},
+      {"id": "mix", "label": "混合或修改", "kind": "request_mix", "target_gate_id": "visual_direction_02", "conversation_intent": "保持当前视觉方案不变，先询问我要混合的一个视觉维度。"}
+    ],
+    "max_actions": 2,
+    "deep_navigation": false,
+    "nested_scroll": false
+  },
+  "write_boundary": {
+    "preview_only": true,
+    "confirmation_required": true,
+    "writes_authoritative_state": false,
+    "write_owner": "dircreative",
+    "possible_write_targets": ["visual-bible", "co-creation-run.gates", "skill_run_receipt.decisions"],
+    "forbidden_claims": ["lock", "readiness", "acceptance", "completion", "generation_authorization"]
+  },
+  "fallback": {
+    "format": "table",
+    "required_visible_fields": ["current_stage", "decision_prompt", "options", "visual_board", "downstream_effects", "recommendation"],
+    "decision_question": "选择清晨触感、图形仪式、克制反差，还是说明要混合的部分？"
+  }
+}

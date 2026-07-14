@@ -1,0 +1,20 @@
+Asset role: CLEAN END FRAME
+Role purity: provide one text-free end-composition target for the final hold
+Inherited sources: PRODUCT IDENTITY REFERENCE, SCENE GEOGRAPHY + CAMERA FOV REFERENCE, LIGHTING + MATERIAL STYLE REFERENCE
+No visible title, no labels, no arrows, no panels, no grid, no logo, no watermark, no text.
+
+Canvas and composition:
+- 9:16 vertical portrait
+- Resolved three-quarter product angle with the entire silhouette inside the crop
+- Product is the primary read; mirror echo remains secondary
+- Clean negative space for post-production copy
+- Dark studio, smoky mirror, black reflective floor
+
+Capture and look:
+- Same axis and horizon as the opening frame
+- Normal product perspective, locked final camera, soft highlight roll-off
+- Textured black satin and lace, restrained burgundy edge light
+- Edge bloom and haze have receded to a clean hold
+- No human body, face, skin, hand, or wearer
+
+Finish as one stable final state with full product geometry readable, copy-safe negative space, no generated text, and no board residue.

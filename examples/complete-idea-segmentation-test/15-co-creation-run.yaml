@@ -1,0 +1,241 @@
+artifact:
+  artifact_id: complete-idea-co-creation-run-v1
+  version: 1.0.0
+  source_artifact_ids:
+    - complete-idea-chat-transcript-v1
+    - complete-idea-director-room-v1
+    - complete-idea-qa-retry-plan-v1
+  status: approved
+  owner_skill: co-creation-gate-runtime
+
+co_creation_run:
+  project_title: "Fog Route Cleaner"
+  version: "1.0.0"
+  run_type: dry_run_fixture
+  simulated_choices_allowed: true
+  real_user_co_creation_verified: false
+  visual_output_mode: prompt_only
+  longform_generation_mode: single_sequence
+  source_artifact_ids:
+    - examples/complete-idea-segmentation-test/01-complete-idea.md
+    - examples/complete-idea-segmentation-test/02-director-room-notes.md
+    - examples/complete-idea-segmentation-test/02-chat-transcript.md
+    - examples/complete-idea-segmentation-test/05-qa-retry-plan.md
+
+gate_policy:
+  required_gates:
+    - concept_options_gate
+    - story_approval_gate
+    - script_approval_gate
+    - shot_list_approval_gate
+    - visual_direction_gate
+    - visual_bible_approval_gate
+    - sequence_plan_gate
+    - global_reference_pack_gate
+    - sequence_reference_pack_gate
+    - clean_frame_gate
+    - video_prompt_gate
+  block_media_generation_until:
+    - clean_frame_gate
+    - video_prompt_gate
+
+gates:
+  - gate_id: complete-idea-gate-01
+    gate_type: concept_options_gate
+    status: skipped_with_risk
+    decision_source: simulated_fixture
+    options_presented:
+      - "Use the provided complete idea without broad brainstorm"
+      - "Still generate 3 alternate concepts"
+      - "Ask user to rewrite the idea first"
+    selected_option: "Use the provided complete idea without broad brainstorm"
+    rationale: "User explicitly supplied a complete idea and requested segmentation, not brainstorming."
+    downstream_artifacts:
+      - examples/complete-idea-segmentation-test/01-complete-idea.md
+    blocks: []
+    notes:
+      - "This skip is only valid because the user supplied title, duration, channel, tone, plot, and avoid list."
+  - gate_id: complete-idea-gate-02
+    gate_type: story_approval_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented:
+      - "Use route-clearing story as supplied"
+      - "Make it more heroic"
+      - "Make it more horror-driven"
+    selected_option: "Use route-clearing story as supplied"
+    rationale: "The supplied story has a clear civic task, visible obstacle, and humane payoff."
+    downstream_artifacts:
+      - examples/complete-idea-segmentation-test/02-chat-transcript.md
+      - examples/complete-idea-segmentation-test/02-director-room-notes.md
+    blocks: []
+    notes:
+      - "Simulated user approved story logic before shot segmentation."
+  - gate_id: complete-idea-gate-03
+    gate_type: script_approval_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented:
+      - "Six-beat no-dialogue 15s script"
+      - "Add radio VO"
+      - "Add title cards"
+    selected_option: "Six-beat no-dialogue 15s script"
+    rationale: "No-dialogue keeps the civic realism and avoids text/audio drift."
+    downstream_artifacts:
+      - examples/complete-idea-segmentation-test/02-chat-transcript.md
+    blocks: []
+    notes:
+      - "Simulated user approved six-beat timing."
+  - gate_id: complete-idea-gate-04
+    gate_type: shot_list_approval_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented:
+      - "Six-shot 15s segmentation"
+      - "Four-shot slower segmentation"
+      - "Eight-shot fast-cut segmentation"
+    selected_option: "Six-shot 15s segmentation"
+    rationale: "Six shots preserve setup, equipment proof, action, threat, release, and proof without overloading one generation."
+    downstream_artifacts:
+      - examples/complete-idea-segmentation-test/03-shot-list.yaml
+    blocks: []
+    notes:
+      - "Simulated user approved dynamic shot count."
+  - gate_id: complete-idea-gate-05
+    gate_type: visual_direction_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented:
+      - "Grounded municipal realism in blue-gray dawn fog"
+      - "Stylized zombie action"
+      - "Graphic poster-like PSA"
+    selected_option: "Grounded municipal realism in blue-gray dawn fog"
+    rationale: "Matches the user's humane, tense, non-heroic tone."
+    downstream_artifacts:
+      - examples/complete-idea-segmentation-test/04-reference-prompt-plan.md
+    blocks: []
+    notes:
+      - "Simulated user rejected action-horror and PSA exaggeration."
+  - gate_id: complete-idea-gate-06
+    gate_type: visual_bible_approval_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented:
+      - "Lock reflective jacket, disinfectant cart, foggy dawn street, no gore, restrained civic tone"
+      - "Make the scene darker and scarier"
+      - "Make the worker more heroic"
+    selected_option: "Lock reflective jacket, disinfectant cart, foggy dawn street, no gore, restrained civic tone"
+    rationale: "These locks protect story clarity and model safety."
+    downstream_artifacts:
+      - examples/complete-idea-segmentation-test/04-reference-prompt-plan.md
+    blocks: []
+    notes:
+      - "Simulated user approved visual locks before reference planning."
+  - gate_id: complete-idea-gate-07
+    gate_type: sequence_plan_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented:
+      - "Single 15s sequence with six shots"
+      - "Two 7.5s sequence packs"
+      - "One continuous 15s shot"
+    selected_option: "Single 15s sequence with six shots"
+    rationale: "One 15s sequence is enough for prompt-only planning; media tests can split by model."
+    downstream_artifacts:
+      - examples/complete-idea-segmentation-test/03-shot-list.yaml
+    blocks: []
+    notes:
+      - "No longform pack required."
+  - gate_id: complete-idea-gate-08
+    gate_type: global_reference_pack_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented:
+      - "V2 sequential pack: character identity reference + scene geography/camera FOV reference + professional storyboard/motion page, then optional clean start/end frames"
+      - "One dense master board only"
+      - "Clean frames only"
+    selected_option: "V2 sequential pack: character identity reference + scene geography/camera FOV reference + professional storyboard/motion page, then optional clean start/end frames"
+    rationale: "Prevents character and scene drift by locking single visual truth sources before any clean frames."
+    downstream_artifacts:
+      - examples/complete-idea-segmentation-test/04-reference-prompt-plan.md
+    blocks: []
+    notes:
+      - "Simulated user approved hybrid reference strategy."
+  - gate_id: complete-idea-gate-09
+    gate_type: sequence_reference_pack_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented:
+      - "Use one sequential V2 reference pack for the 15s sequence"
+      - "Split into setup and payoff packs"
+      - "Wait for generated boards before prompt export"
+    selected_option: "Use one sequential V2 reference pack for the 15s sequence"
+    rationale: "Single sequence pack is adequate only if identity, scene/FOV, and professional storyboard page are locked in order."
+    downstream_artifacts:
+      - examples/complete-idea-segmentation-test/04-reference-prompt-plan.md
+    blocks: []
+    notes:
+      - "Model-specific split can happen later in assisted generation."
+  - gate_id: complete-idea-gate-10
+    gate_type: clean_frame_gate
+    status: pending
+    decision_source: pending
+    options_presented:
+      - "Continue prompt-only"
+      - "Generate V2 character identity reference first"
+      - "Generate V2 scene geography/camera FOV reference after identity lock"
+      - "Generate professional storyboard/motion page after scene lock"
+      - "Import external clean frames"
+    selected_option: ""
+    rationale: "Media generation requires explicit user authorization."
+    downstream_artifacts:
+      - examples/complete-idea-segmentation-test/04-reference-prompt-plan.md
+    blocks:
+      - media_generation
+    notes:
+      - "Clean frames are planned but not generated."
+  - gate_id: complete-idea-gate-11
+    gate_type: video_prompt_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented:
+      - "Export Seedance/Kling/Runway/Veo prompt summaries in prompt-only mode"
+      - "Only prepare Runway S03 test"
+      - "Wait for generated clean frames before any video prompts"
+    selected_option: "Export Seedance/Kling/Runway/Veo prompt summaries in prompt-only mode"
+    rationale: "Prompt-only model planning is useful before any media is generated."
+    downstream_artifacts:
+      - examples/complete-idea-segmentation-test/04-reference-prompt-plan.md
+    blocks: []
+    notes:
+      - "Actual video generation remains blocked by clean_frame_gate."
+
+qa:
+  all_required_gates_present: true
+  simulated_choices_labeled: true
+  live_user_choices_required: true
+  pending_gates_block_media: true
+  no_creative_system_defaults: true
+  failures: []
+
+skill_run_receipt:
+  run_id: complete-idea-co-creation-run-2026-05-16
+  skill_id: co-creation-gate-runtime
+  input_artifacts:
+    - examples/complete-idea-segmentation-test/02-chat-transcript.md
+    - examples/complete-idea-segmentation-test/02-director-room-notes.md
+    - examples/complete-idea-segmentation-test/05-qa-retry-plan.md
+  output_artifacts:
+    - examples/complete-idea-segmentation-test/15-co-creation-run.yaml
+  decisions:
+    - "Use a complete-idea segmentation fixture to test non-brainstorming entry."
+    - "Run director-room as complete-idea validation, not broad concept invention."
+    - "Expose QA/retry rules before assisted image or video generation."
+    - "Keep clean-frame generation pending and media blocked."
+  unresolved_questions:
+    - "Real user should choose prompt-only, sequential V2 regeneration, or external locked references before one video model test."
+  qa_gate:
+    status: pass
+    reasons:
+      - "All gates exist, simulated choices are labeled, and media generation remains blocked."
+  next_recommended_skill: image-prompt-compiler

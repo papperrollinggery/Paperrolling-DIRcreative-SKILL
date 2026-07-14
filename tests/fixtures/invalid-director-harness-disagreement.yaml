@@ -1,0 +1,15 @@
+fixture_type: "invalid_disagreement"
+expected_failure_contains: "director-room disagreement d1 positions must be distinct"
+disagreements:
+  - disagreement_id: "d1"
+    topic: "atmosphere versus proof"
+    decision_pressure: "The opening cannot serve both equally."
+    positions:
+      - {role_id: "director", position: "Delay the reveal.", evidence_ref: "director.judgment"}
+      - {role_id: "director", position: "Delay the reveal.", evidence_ref: "director.judgment"}
+  - disagreement_id: "d2"
+    topic: "hold versus hook"
+    decision_pressure: "The first action needs a timing rule."
+    positions:
+      - {role_id: "cinematographer", position: "Hold one beat.", evidence_ref: "cinematographer.judgment"}
+      - {role_id: "editor", position: "Cut after the action reads.", evidence_ref: "editor.judgment"}

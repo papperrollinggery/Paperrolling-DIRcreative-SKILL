@@ -1,0 +1,296 @@
+fixture_authority: none
+live_state_authority: false
+live_acceptance_authority: false
+host_attestation_authority: false
+
+artifact:
+  artifact_id: project-agents-thread-dispatch-2026-06-26
+  version: 1.0.0
+  source_artifact_ids:
+    - docs/film-preproduction/thread-orchestration-protocol.md
+    - docs/film-preproduction/workspace-cleanliness-protocol.md
+    - docs/film-preproduction/project-agents-protocol.md
+  status: ready
+  owner_skill: dircreative
+
+run:
+  run_id: project-agents-thread-dispatch-2026-06-26
+  run_type: real_codex_threads_project_agents_support
+  main_controller_thread:
+    thread_id: "00000000-0000-7000-8000-00000000000c"
+    title: "DIRcreative project AGENTS support controller"
+    cwd: "/Users/example-user/work/DIR SKILL"
+    pinned: true
+    role: pinned_user_facing_controller
+  invalid_non_thread_delegations_excluded:
+    - thread_id: "00000000-0000-7000-8000-00000000000d"
+      reason: "subagent delegation; excluded from Codex Threads evidence"
+    - thread_id: "00000000-0000-7000-8000-00000000000e"
+      reason: "subagent delegation; excluded from Codex Threads evidence"
+    - thread_id: "00000000-0000-7000-8000-00000000000f"
+      reason: "subagent delegation; excluded from Codex Threads evidence"
+  disposable_workers_archived:
+    - thread_id: "00000000-0000-7000-8000-000000000012"
+      role: qa_review_worker
+      result: consumed
+      archived: true
+  isolated_worktree_workers_archived:
+    - thread_id: "00000000-0000-7000-8000-000000000010"
+      role: implementation_worker
+      original_worktree: "/Users/example-user/.codex/worktrees/ad14/DIR SKILL"
+      result: adopted_with_controller_enhancement
+      archived: true
+      worktree_removed: true
+    - thread_id: "00000000-0000-7000-8000-000000000011"
+      role: docs_worker
+      original_worktree: "/Users/example-user/.codex/worktrees/4302/DIR SKILL"
+      result: adopted_with_controller_enhancement
+      archived: true
+      worktree_removed: true
+  worktree_evidence:
+    command: "git worktree list --porcelain"
+    result_summary: "Only /Users/example-user/work/DIR SKILL on main was listed after worker archival."
+    unintended_worker_worktrees_present: false
+  cleanup_policy:
+    task_owned_worktrees_archived: true
+    unrelated_project_threads_archived: false
+    reason: "Only the three project AGENTS worker/reviewer threads were in scope."
+
+thread_dispatch_record:
+  record_id: "project-agents-thread-dispatch-2026-06-26"
+  version: "1.0.0"
+  project_title: "DIRcreative project-level AGENTS.md support"
+  main_controller_thread_id: "00000000-0000-7000-8000-00000000000c"
+  active_goal_summary: "Add safe project-level AGENTS.md generation, proposal, installation, audit, documentation, and validation support."
+  acceptance_standard: "Goal complete only after implementation is adopted, validation passes, worker cleanup is recorded, and no live-user-acceptance shortcut is claimed."
+  created_at: "2026-06-26"
+
+thread_class_policy:
+  allowed_thread_classes:
+    - pinned_user_facing_controller
+    - disposable_read_only_worker
+    - isolated_worktree_worker
+    - reusable_research_thread
+  default_user_facing_thread_class: pinned_user_facing_controller
+  same_directory_worker_default: read_only
+  substantive_output_default_thread_class: isolated_worktree_worker
+  read_only_worker_use: review_research_cold_review_only
+  main_controller_write_boundary: receipts_adoption_merge_rollback_validation_only
+  hidden_thread_state_is_truth: false
+
+thread_budget:
+  max_active_workers: 3
+  active_worker_count: 0
+  approval_required_above: 5
+  over_budget_reason: ""
+
+dispatches:
+  - thread_id: "00000000-0000-7000-8000-00000000000c"
+    thread_class: pinned_user_facing_controller
+    role: "CONTROL main-controller for dispatch, adoption, validation, cleanup, and final user report."
+    professional_identity: "main-controller delivery lead"
+    viewpoint: main-controller
+    read_scope:
+      - "repo files"
+      - ".dircreative/runs/"
+      - "Codex app thread status"
+      - "validation output"
+    write_scope: main_controller_only
+    worktree_path: "/Users/example-user/work/DIR SKILL"
+    allowed_actions:
+      - "write run receipts and adoption records"
+      - "adopt or reject worker diffs"
+      - "merge or enhance adopted worker changes"
+      - "run validation"
+      - "archive worker threads"
+      - "report user-facing status"
+    expected_output: "Adopted implementation/docs, validation output, cleanup evidence, and final report."
+    stop_condition: "Finish only after worker output is consumed, validation passes, and cleanup evidence is recorded."
+    cleanup_rule: keep_pinned
+    may_mark_goal_complete: false
+    output_status: consumed
+    findings_summary:
+      - "Controller adopted real Codex Thread outputs and excluded invalid subagent delegations."
+    adopted_into:
+      - "tests/fixtures/runtime/runs/project-agents-thread-dispatch-2026-06-26.yaml"
+      - "scripts/validate_project.py"
+      - "scripts/dircreative_project_agents.py"
+      - "scripts/dircreative_project_agents_audit.py"
+      - "docs/film-preproduction/project-agents-protocol.md"
+      - "skills/dircreative/SKILL.md"
+      - "README.md"
+    consumed_at: "2026-06-26"
+    cleanup_verified_by: main-controller
+    archived: false
+    pinned: true
+  - thread_id: "00000000-0000-7000-8000-000000000010"
+    thread_class: isolated_worktree_worker
+    role: "IMPLEMENTATION_WORKER"
+    professional_identity: "implementation worker for safe project AGENTS.md mechanism"
+    viewpoint: "script implementation and validation coverage"
+    read_scope:
+      - "scripts/"
+      - "tests/fixtures/"
+      - "skills/dircreative/SKILL.md"
+      - "README.md"
+      - "docs/film-preproduction/thread-orchestration-protocol.md"
+      - "docs/film-preproduction/workspace-cleanliness-protocol.md"
+      - "docs/film-preproduction/live-user-acceptance-gate.md"
+      - "docs/film-preproduction/live-chat-acceptance-runbook.md"
+    write_scope: isolated_worktree_only
+    worktree_path: "/Users/example-user/.codex/worktrees/ad14/DIR SKILL"
+    allowed_actions:
+      - "edit project AGENTS implementation scripts"
+      - "edit validation coverage"
+      - "run local validation commands"
+    expected_output: "Safe render/propose/install/audit implementation with tests."
+    stop_condition: "Patch and validation summary in isolated worktree; do not mark goal complete."
+    cleanup_rule: archive_after_adoption_or_rejection
+    may_mark_goal_complete: false
+    output_status: adopted
+    findings_summary:
+      - "Implemented default proposal mode, read-only audit, authorization-required active writes, no-overwrite guards, and validation coverage."
+      - "Follow-up fixed QA P1/P2: audit is informational by default and active writes require authorization evidence."
+    adopted_into:
+      - "scripts/dircreative_project_agents.py"
+      - "scripts/dircreative_project_agents_audit.py"
+      - "scripts/validate_project.py"
+      - "scripts/dircreative_release_gate.py"
+    consumed_at: "2026-06-26"
+    cleanup_verified_by: main-controller
+    archived: true
+    pinned: false
+  - thread_id: "00000000-0000-7000-8000-000000000011"
+    thread_class: isolated_worktree_worker
+    role: "DOCS_WORKER"
+    professional_identity: "documentation worker for project AGENTS.md protocol"
+    viewpoint: "operator-facing docs, root skill routing, README boundary"
+    read_scope:
+      - "README.md"
+      - "skills/dircreative/SKILL.md"
+      - "docs/film-preproduction/thread-orchestration-protocol.md"
+      - "docs/film-preproduction/workspace-cleanliness-protocol.md"
+      - "docs/film-preproduction/live-user-acceptance-gate.md"
+      - "docs/film-preproduction/live-chat-acceptance-runbook.md"
+      - "docs/film-preproduction/06-gstack-execution-goal.md"
+    write_scope: isolated_worktree_only
+    worktree_path: "/Users/example-user/.codex/worktrees/4302/DIR SKILL"
+    allowed_actions:
+      - "edit README"
+      - "edit root DIRcreative skill"
+      - "add or edit project AGENTS protocol docs"
+    expected_output: "Docs covering no-touch, propose, create, append, authorization, source of truth, creative lock order, generation prerequisites, thread rules, live acceptance, and validation commands."
+    stop_condition: "Docs patch and validation summary in isolated worktree; do not mark goal complete."
+    cleanup_rule: archive_after_adoption_or_rejection
+    may_mark_goal_complete: false
+    output_status: adopted
+    findings_summary:
+      - "Documented project AGENTS authorization boundary, source of truth, worker rules, live acceptance boundary, and validation commands."
+      - "Root skill now reads project-agents protocol before AGENTS operations."
+    adopted_into:
+      - "docs/film-preproduction/project-agents-protocol.md"
+      - "docs/film-preproduction/thread-orchestration-protocol.md"
+      - "skills/dircreative/SKILL.md"
+      - "README.md"
+    consumed_at: "2026-06-26"
+    cleanup_verified_by: main-controller
+    archived: true
+    pinned: false
+  - thread_id: "00000000-0000-7000-8000-000000000012"
+    thread_class: disposable_read_only_worker
+    role: "QA_REVIEW_WORKER"
+    professional_identity: "read-only cold reviewer"
+    viewpoint: "safety, no-overwrite boundary, validation coverage, thread compliance, live acceptance boundary"
+    read_scope:
+      - "full repo"
+      - "scripts/"
+      - "README.md"
+      - "skills/dircreative/SKILL.md"
+      - "docs/film-preproduction/"
+    write_scope: none
+    worktree_path: ""
+    allowed_actions:
+      - "read-only review"
+      - "report findings"
+      - "recommend adoption or rejection"
+    expected_output: "Severity-ordered cold-review findings only."
+    stop_condition: "Return final review report only; do not edit files or mark goal complete."
+    cleanup_rule: archive_after_consumed
+    may_mark_goal_complete: false
+    output_status: consumed
+    findings_summary:
+      - "P1 adopted: default audit must not require active AGENTS.md."
+      - "P1 adopted: active AGENTS.md writes require authorization evidence."
+      - "P2 adopted: proposal file remains explicit and inactive."
+      - "P2 adopted: dispatch record moved to existing schema and cleanup verified."
+      - "P3 adopted: release gate includes project AGENTS audit marker."
+    adopted_into:
+      - "scripts/dircreative_project_agents.py"
+      - "scripts/dircreative_project_agents_audit.py"
+      - "scripts/validate_project.py"
+      - "scripts/dircreative_release_gate.py"
+      - "tests/fixtures/runtime/runs/project-agents-thread-dispatch-2026-06-26.yaml"
+    consumed_at: "2026-06-26"
+    cleanup_verified_by: main-controller
+    archived: true
+    pinned: false
+
+worktree_audit:
+  command: "git worktree list --porcelain"
+  expected_main_worktree: "/Users/example-user/work/DIR SKILL"
+  unintended_worker_worktrees_present: false
+  stale_worker_checkout_present: false
+  checked_paths:
+    - "/Users/example-user/work/DIR SKILL"
+    - "/Users/example-user/.codex/worktrees/ad14/DIR SKILL"
+    - "/Users/example-user/.codex/worktrees/4302/DIR SKILL"
+  evidence_source: git
+
+completion_boundary:
+  live_user_acceptance_receipt_exists: false
+  release_gate_passed: false
+  objective_complete: false
+  completion_claim_allowed: false
+
+qa:
+  main_controller_pinned: true
+  disposable_workers_archived: true
+  stale_worker_threads_visible_for_project: false
+  unintended_worker_worktrees_present: false
+  worker_findings_reconciled_into_repo: true
+  one_pinned_main_controller: true
+  useful_findings_reconciled: true
+  no_hidden_thread_truth: true
+  no_unintended_worktrees: true
+  no_completion_claim: true
+  live_user_acceptance_written: false
+  objective_complete_claimed: false
+  failures: []
+
+skill_run_receipt:
+  run_id: project-agents-thread-dispatch-2026-06-26
+  skill_id: dircreative
+  input_artifacts:
+    - "codex_app.read_thread(00000000-0000-7000-8000-000000000010)"
+    - "codex_app.read_thread(00000000-0000-7000-8000-000000000011)"
+    - "codex_app.read_thread(00000000-0000-7000-8000-000000000012)"
+    - "git worktree list --porcelain"
+  output_artifacts:
+    - "tests/fixtures/runtime/runs/project-agents-thread-dispatch-2026-06-26.yaml"
+    - "scripts/dircreative_project_agents.py"
+    - "scripts/dircreative_project_agents_audit.py"
+    - "scripts/validate_project.py"
+    - "docs/film-preproduction/project-agents-protocol.md"
+    - "skills/dircreative/SKILL.md"
+    - "README.md"
+  decisions:
+    - "Excluded earlier subagent outputs from Codex Threads evidence."
+    - "Adopted implementation worker after QA-required authorization and default-audit fixes."
+    - "Enhanced the generated AGENTS.md section so a new Codex thread sees DIRcreative usage, source of truth, creative lock order, generation prerequisites, worker rules, live acceptance boundary, and validation commands."
+    - "Adopted docs worker protocol and root skill routing."
+    - "Archived all worker/reviewer threads and verified no worker worktrees remain."
+  unresolved_questions: []
+  qa_gate:
+    status: pass
+    reasons: []
+  next_recommended_skill: ""

@@ -1,0 +1,86 @@
+spec_version: "1.0"
+view_id: "example-stage-view"
+execution_context: "standalone_chat"
+controller:
+  surface_owner: "dircreative"
+  user_facing: true
+stage_gate:
+  id: "example_gate"
+  type: "concept_options_gate"
+  status: "needs_user"
+  decision_owner: "user"
+view:
+  intent: "compare"
+  display_mode: "inline"
+  customer_stage_label: "导演组创意方向"
+  decision_prompt: "请选择一个方向，或提出混合修改。"
+source_truth:
+  artifacts:
+    - artifact_id: "example-concept-package"
+      version: "1.0.0"
+      sha256: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+presentation:
+  fields:
+    - id: "current_stage"
+      label: "当前阶段"
+      value: "导演组创意方向"
+      classification: "presentation_only"
+      source_ref: null
+  options:
+    - id: "direction-a"
+      label: "方向 A"
+      summary: "可供用户判断的创意摘要。"
+      tradeoff: "明确说明制作与传播权衡。"
+      source_refs:
+        - "example-concept-package#/options/0"
+    - id: "direction-b"
+      label: "方向 B"
+      summary: "第二个可比较的创意摘要。"
+      tradeoff: "说明不同的制作与传播权衡。"
+      source_refs:
+        - "example-concept-package#/options/1"
+  recommendation:
+    option_id: "direction-a"
+    reason: "用生产判断解释建议，不代替用户选择。"
+  downstream_effects:
+    - stage: "story"
+      effect: "选择后会改变故事结构，但在确认前不会写入。"
+interactions:
+  local:
+    - "select"
+  actions:
+    - id: "adopt"
+      label: "采用这个方向"
+      kind: "submit_selection"
+      target_gate_id: "example_gate"
+      conversation_intent: "提交暂存选择，请先核对当前项目进度和后续影响。"
+    - id: "revise"
+      label: "混合或修改"
+      kind: "request_revision"
+      target_gate_id: "example_gate"
+      conversation_intent: "保持当前方案不变，先提出一个关键修改问题。"
+  max_actions: 2
+  deep_navigation: false
+  nested_scroll: false
+write_boundary:
+  preview_only: true
+  confirmation_required: true
+  writes_authoritative_state: false
+  write_owner: "dircreative"
+  possible_write_targets:
+    - "co-creation-run.gates"
+    - "skill_run_receipt.decisions"
+  forbidden_claims:
+    - "lock"
+    - "readiness"
+    - "acceptance"
+    - "completion"
+    - "generation_authorization"
+fallback:
+  format: "table"
+  required_visible_fields:
+    - "current_stage"
+    - "decision_prompt"
+    - "options"
+    - "downstream_effects"
+  decision_question: "请选择方向 A，或说明要修改的关键点。"

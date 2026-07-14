@@ -1,0 +1,81 @@
+{
+  "spec_version": "1.0",
+  "view_id": "director-concept-compare",
+  "execution_context": "standalone_chat",
+  "controller": {"surface_owner": "dircreative", "user_facing": true},
+  "stage_gate": {"id": "concept_options_01", "type": "concept_options_gate", "status": "needs_user", "decision_owner": "user"},
+  "view": {"intent": "compare", "display_mode": "inline", "customer_stage_label": "导演组创意方向", "decision_prompt": "这支短片最想让观众记住什么？"},
+  "source_truth": {"artifacts": [{"artifact_id": "director-room-01", "version": "1.0.0", "sha256": "2222222222222222222222222222222222222222222222222222222222222222"}]},
+  "presentation": {
+    "fields": [{"id": "current_stage", "label": "当前阶段", "value": "导演组创意方向", "classification": "presentation_only", "source_ref": null}],
+    "options": [
+      {
+        "id": "emotional-echo",
+        "label": "情感回响",
+        "summary": "先让观众相信两个人的关系，再让旧物和产品成为彼此理解的证据。",
+        "tradeoff": "情绪最可信，但依赖自然表演和动作停顿；产品出现需要克制。",
+        "details": [
+          {"id": "strength", "label": "最强记忆", "value": "多年未见仍记得对方习惯的关系证据"},
+          {"id": "risk", "label": "主要风险", "value": "表演不自然会削弱整条故事"},
+          {"id": "fit", "label": "更适合", "value": "希望观众记住人物与品牌温度"},
+          {"id": "impact", "label": "后续影响", "value": "故事和镜头优先保留动作回应、停顿和触感近景"}
+        ],
+        "source_refs": ["director-room-01#/options/0"]
+      },
+      {
+        "id": "product-memory",
+        "label": "产品记忆",
+        "summary": "让旧物贯穿过去和现在，成为故事最清楚的视觉线索和产品记忆点。",
+        "tradeoff": "信息最明确，但品牌和旧物过重时，人物关系会显得像功能说明。",
+        "details": [
+          {"id": "strength", "label": "最强记忆", "value": "同一件旧物连接两段时间与产品用途"},
+          {"id": "risk", "label": "主要风险", "value": "产品感过强会压缩人物情绪"},
+          {"id": "fit", "label": "更适合", "value": "需要观众快速记住产品和故事道具"},
+          {"id": "impact", "label": "后续影响", "value": "脚本和镜头会加强旧物出现、产品材质和动作因果"}
+        ],
+        "source_refs": ["director-room-01#/options/1"]
+      },
+      {
+        "id": "visual-impact",
+        "label": "视觉冲击",
+        "summary": "利用时空呼应、构图重复和强烈画面转场，让重逢瞬间形成视觉记忆。",
+        "tradeoff": "传播性最强，但短时长内用于形式的空间越多，人物情绪铺垫越少。",
+        "details": [
+          {"id": "strength", "label": "最强记忆", "value": "过去与现在构图呼应的重逢瞬间"},
+          {"id": "risk", "label": "主要风险", "value": "形式过强会让情绪和产品都变成陪衬"},
+          {"id": "fit", "label": "更适合", "value": "需要强首屏传播和明确视觉钩子"},
+          {"id": "impact", "label": "后续影响", "value": "故事和分镜会优先设计时空匹配、画面转场和节奏峰值"}
+        ],
+        "source_refs": ["director-room-01#/options/2"]
+      }
+    ],
+    "recommendation": {"option_id": "emotional-echo", "reason": "“多年未见”本身已经提供强戏剧资源，先把关系拍可信，再让产品进入，整体最稳。"},
+    "downstream_effects": [
+      {"stage": "story", "effect": "按当前选择重排故事信息和情绪重点。"},
+      {"stage": "shot", "effect": "按当前选择调整镜头密度、细节和转场方式。"}
+    ]
+  },
+  "interactions": {
+    "local": ["select", "compare", "stage_revision_note"],
+    "actions": [
+      {"id": "adopt", "label": "采用这个方向", "kind": "submit_selection", "target_gate_id": "concept_options_01", "conversation_intent": "提交暂存方向，请先核对当前进度和后续影响。"},
+      {"id": "mix", "label": "混合或修改", "kind": "request_mix", "target_gate_id": "concept_options_01", "conversation_intent": "保持当前方案不变，先询问一个关键混合点。"}
+    ],
+    "max_actions": 2,
+    "deep_navigation": false,
+    "nested_scroll": false
+  },
+  "write_boundary": {
+    "preview_only": true,
+    "confirmation_required": true,
+    "writes_authoritative_state": false,
+    "write_owner": "dircreative",
+    "possible_write_targets": ["co-creation-run.gates", "skill_run_receipt.decisions"],
+    "forbidden_claims": ["lock", "readiness", "acceptance", "completion", "generation_authorization"]
+  },
+  "fallback": {
+    "format": "table",
+    "required_visible_fields": ["current_stage", "decision_prompt", "options", "downstream_effects", "recommendation"],
+    "decision_question": "选择情感回响、产品记忆、视觉冲击，还是说明要混合的部分？"
+  }
+}

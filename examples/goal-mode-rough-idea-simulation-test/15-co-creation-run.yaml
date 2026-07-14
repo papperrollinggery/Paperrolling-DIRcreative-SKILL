@@ -1,0 +1,183 @@
+co_creation_run:
+  run_id: goal-mode-rough-idea-simulation-2026-05-17
+  project_title: "Goal Mode Midnight Broth Cup Simulation"
+  run_type: dry_run_fixture
+  visual_output_mode: prompt_only
+  longform_generation_mode: single_sequence
+  simulated_choices_allowed: true
+  real_user_co_creation_verified: false
+  live_user_acceptance_receipt_written: false
+  source_artifacts:
+    - docs/film-preproduction/goal-mode-simulation-protocol.md
+    - examples/goal-mode-rough-idea-simulation-test/01-chat-transcript.md
+
+gate_policy:
+  required_gates:
+    - concept_options_gate
+    - story_approval_gate
+    - script_approval_gate
+    - shot_list_approval_gate
+    - visual_direction_gate
+    - visual_bible_approval_gate
+    - sequence_plan_gate
+    - global_reference_pack_gate
+    - sequence_reference_pack_gate
+    - clean_frame_gate
+    - video_prompt_gate
+  simulation_policy:
+    continue_without_manual_numeric_choices: true
+    mark_every_automatic_choice_as: simulated_fixture
+    real_user_acceptance_forbidden: true
+
+gates:
+  - gate_id: goal_rough_concept_options
+    gate_type: concept_options_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented:
+      - "Last Light At The Desk"
+      - "Platform Warmth"
+      - "Night Driver Pause"
+    selected_option: "Last Light At The Desk"
+    rationale: "Best 15-second product clarity and strongest one-location reference structure."
+    blocks: []
+  - gate_id: goal_rough_story_approval
+    gate_type: story_approval_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented:
+      - "Use five-beat office recovery story"
+      - "Add a second character reaction"
+      - "Make it pure product tabletop"
+    selected_option: "Use five-beat office recovery story"
+    rationale: "Keeps the ad human while preserving product readability."
+    blocks: []
+  - gate_id: goal_rough_script_approval
+    gate_type: script_approval_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented:
+      - "Dialogue-free 15-second script"
+      - "Add one voiceover line"
+      - "Add copy throughout"
+    selected_option: "Dialogue-free 15-second script"
+    rationale: "Visual proof and practical sound carry the product without cluttering the frame."
+    blocks: []
+  - gate_id: goal_rough_shot_list_approval
+    gate_type: shot_list_approval_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented:
+      - "Five 3-second shots"
+      - "Three 5-second shots"
+      - "One continuous 15-second shot"
+    selected_option: "Five 3-second shots"
+    rationale: "Five shots protect setup, activation, steam, human payoff, and product memory."
+    blocks: []
+  - gate_id: goal_rough_visual_direction
+    gate_type: visual_direction_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented:
+      - "Warm practical food realism with slight neo-noir office contrast"
+      - "Graphic high-energy snack commercial"
+      - "Minimal Japanese tabletop film"
+    selected_option: "Warm practical food realism with slight neo-noir office contrast"
+    rationale: "Matches the user's warm cinematic requirement while keeping the product clear."
+    blocks: []
+  - gate_id: goal_rough_visual_bible
+    gate_type: visual_bible_approval_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented:
+      - "Lock ivory cup, red seal, copper lid, blue/amber office light"
+      - "Make the palette cleaner and more tabletop"
+      - "Make the office darker and more noir"
+    selected_option: "Lock ivory cup, red seal, copper lid, blue/amber office light"
+    rationale: "This lock protects product consistency, lighting continuity, and material truth."
+    blocks: []
+  - gate_id: goal_rough_sequence_plan
+    gate_type: sequence_plan_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented:
+      - "Single 15-second sequence with five shots"
+      - "Three separate 5-second clips"
+      - "One continuous tabletop take"
+    selected_option: "Single 15-second sequence with five shots"
+    rationale: "A 15-second ad can stay one sequence while still using clean frames selectively."
+    blocks: []
+  - gate_id: goal_rough_global_reference_pack
+    gate_type: global_reference_pack_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented:
+      - "Product board + office/FOV board + lighting/material/style board + storyboard/motion board + clean frames deferred"
+      - "One dense master board"
+      - "Clean frames only"
+    selected_option: "Product board + office/FOV board + lighting/material/style board + storyboard/motion board + clean frames deferred"
+    rationale: "Separate roles prevent reference conflict and video-model misread."
+    blocks: []
+  - gate_id: goal_rough_sequence_reference_pack
+    gate_type: sequence_reference_pack_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented:
+      - "Use one reference pack for the full 15-second ad"
+      - "Split activation and payoff packs"
+      - "Wait for generated references before prompt export"
+    selected_option: "Use one reference pack for the full 15-second ad"
+    rationale: "One short sequence should inherit the same product and office anchors."
+    blocks: []
+  - gate_id: goal_rough_clean_frame_gate
+    gate_type: clean_frame_gate
+    status: pending
+    decision_source: pending
+    options_presented:
+      - "Authorize product identity board first"
+      - "Stay prompt-only"
+      - "Import external clean frames"
+    selected_option: ""
+    rationale: "Goal-mode simulation cannot authorize real image generation."
+    blocks:
+      - media_generation
+  - gate_id: goal_rough_video_prompt_gate
+    gate_type: video_prompt_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented:
+      - "Export Seedance, Kling, Runway, and Veo prompt summaries only"
+      - "Test Seedance immediately"
+      - "Generate video from storyboard board"
+    selected_option: "Export Seedance, Kling, Runway, and Veo prompt summaries only"
+    rationale: "Prompt-only keeps model adapters visible without unapproved media."
+    blocks: []
+
+qa:
+  all_required_gates_present: true
+  simulated_choices_labeled: true
+  live_user_choices_required: true
+  pending_gates_block_media: true
+  no_creative_system_defaults: true
+  goal_mode_does_not_wait_for_manual_choices: true
+  rough_idea_path_covered: true
+  live_acceptance_receipt_written: false
+
+skill_run_receipt:
+  run_id: goal-mode-rough-idea-simulation-2026-05-17
+  skill_id: co-creation-gate-runtime
+  input_artifacts:
+    - docs/film-preproduction/goal-mode-simulation-protocol.md
+    - examples/goal-mode-rough-idea-simulation-test/01-chat-transcript.md
+  output_artifacts:
+    - examples/goal-mode-rough-idea-simulation-test/15-co-creation-run.yaml
+  decisions:
+    - "Represent rough-idea goal-mode chat dogfood as dry_run_fixture gates."
+    - "Leave clean_frame_gate pending because media generation still needs real authorization."
+  unresolved_questions:
+    - "Real user acceptance is still required before goal completion."
+  qa_gate:
+    status: pass
+    reasons:
+      - "All automatic choices are simulated_fixture and media generation remains blocked."
+  next_recommended_skill: checkpoint

@@ -1,0 +1,95 @@
+story_package:
+  project_title: ""
+  channel: ""
+  target_duration: ""
+  aspect_ratio: ""
+
+source_bindings:
+  fact_ids: []
+  source_evidence_ids: []
+  inference_ids: []
+
+concept:
+  concept_author_id: ""
+  logline: ""
+  theme: ""
+  premise: ""
+  protagonist: ""
+  goal: ""
+  obstacle: ""
+  stakes: ""
+  ending_type: ""
+  specific_dependencies:
+    - dependency_id: ""
+      description: ""
+  substitutability_check:
+    alternatives:
+      - alternative_id: ""
+        subject: ""
+        proximity_reason: ""
+    selected_alternative_id: ""
+    swap_subject: ""
+    before_swap: ""
+    after_swap: ""
+    still_works_without_rewrite: "undecided"
+    broken_dependency_ids: []
+    verdict: "pending"
+    independent_reviewer:
+      reviewer_id: ""
+      reviewer_role: ""
+      independent_from_concept_author: false
+      review_status: "pending"
+
+outline:
+  beats:
+    - beat_id: ""
+      title: ""
+      story_function: ""
+      visible_action: ""
+      emotional_shift: ""
+      duration_estimate: ""
+      source_fact_ids: []
+      source_inference_ids: []
+
+treatment:
+  prose: ""
+  visual_tone: ""
+  pacing: ""
+  sound_intent: ""
+
+script:
+  scenes:
+    - scene_id: ""
+      slugline: ""
+      action: ""
+      dialogue: []
+      voiceover: []
+      sound_notes: []
+
+copy_execution:
+  audience_facing_text: ""
+  claim_ids_used: []
+  evidence_ids_used: []
+  voice_profile_status: "pending"
+  dir_professional_judgment_status: "pending"
+  de_ai_fidelity_status: "pending"
+  manual_craft_status: "pending"
+  humanizer_review_status: "not_run"
+  ai_trace_clusters: []
+
+script_breakdown:
+  characters: []
+  locations: []
+  props: []
+  wardrobe: []
+  makeup_hair: []
+  vehicles: []
+  vfx: []
+  sfx: []
+  music: []
+  special_requirements: []
+
+review:
+  story_gate: ""
+  open_questions: []
+  revision_notes: []

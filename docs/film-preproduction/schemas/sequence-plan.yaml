@@ -1,0 +1,92 @@
+sequence_plan:
+  project_title: ""
+  version: "1.0.0"
+  target_duration_sec: 180
+  channel: ""
+  source_artifact_ids: []
+  longform_generation_mode: "hybrid | stepwise | batch"
+  visual_output_mode: "prompt_only | assisted_generation | external_generation"
+
+generation_unit_policy:
+  target_unit_sec: 15
+  min_unit_sec: 5
+  max_unit_sec: 15
+  allow_multi_shot_inside_unit: true
+  split_when:
+    - "dialogue sync is critical"
+    - "identity drifts"
+    - "product proof must be exact"
+    - "camera move overloads one generation"
+
+execution_capabilities:
+  image_generation:
+    available: false
+    provider: "none | openai_imagegen | external | unknown"
+    allowed_by_user: false
+  video_generation:
+    available: false
+    provider: "none | seedance | kling | runway | veo | external | unknown"
+    allowed_by_user: false
+  file_write:
+    available: true
+  browser_review:
+    available: false
+
+user_gates:
+  sequence_plan_gate:
+    required: true
+    status: "pending | approved | needs_revision"
+  global_visual_lock_gate:
+    required: true
+    status: "pending | approved | needs_revision"
+  per_sequence_gate_policy: "required | optional | skipped_with_risk"
+  batch_skip_per_sequence_gate: false
+  accepted_risk: []
+
+global_continuity_anchors:
+  identity: []
+  product_or_prop: []
+  wardrobe: []
+  locations: []
+  palette_lighting: []
+  lens_camera: []
+  audio: []
+
+sequences:
+  - sequence_id: ""
+    duration_sec: 15
+    generation_units: 1
+    dramatic_function: ""
+    shots: []
+    continuity_anchors: []
+    required_reference_pack_id: ""
+    clean_start_frame_required: true
+    clean_end_frame_required: false
+    user_gate:
+      required: true
+      status: "pending | approved | needs_revision"
+    edit_handoff:
+      incoming_transition: ""
+      outgoing_transition: ""
+      audio_handoff: ""
+      retry_priority: "low | medium | high"
+
+qa:
+  duration_matches_target: false
+  sequence_units_within_model_limit: false
+  global_anchors_present: false
+  user_gates_match_mode: false
+  prompt_only_supported: false
+  failures: []
+
+skill_run_receipt:
+  run_id: ""
+  skill_id: "sequence-planner"
+  input_artifacts: []
+  output_artifacts: []
+  decisions: []
+  unresolved_questions: []
+  qa_gate:
+    status: "pass | fail | needs_user"
+    reasons: []
+  next_recommended_skill: "longform-reference-planner"

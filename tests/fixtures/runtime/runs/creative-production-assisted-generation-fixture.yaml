@@ -1,0 +1,90 @@
+fixture_authority: none
+live_state_authority: false
+live_acceptance_authority: false
+host_attestation_authority: false
+
+artifact:
+  artifact_id: creative-production-assisted-generation-fixture-v1
+  version: 1
+  status: reviewed
+  owner_skill: image-prompt-compiler
+  created_at: "2026-06-15"
+  updated_at: "2026-06-15"
+  source_artifact_ids:
+    - live-user-sim-noodle-reference-pack-v1
+    - live-user-sim-noodle-image-prompt-manifest-v1
+
+creative_production_adapter:
+  run_id: cp-assisted-generation-fixture-2026-06-15
+  run_type: dry_run_fixture
+  visual_output_mode: assisted_generation
+  creative_production_path: Ads
+  plugin_role: deep_generation_and_review_adapter
+  user_authorization:
+    explicit: true
+    prompt_or_statement: "模拟用户选择: 授权生成已过合同的首张产品身份候选图。"
+    decision_source: simulated_fixture
+    real_user_authorization: false
+  dircreative_gate_state:
+    story_locked: true
+    script_locked: true
+    shot_list_locked: true
+    visual_bible_locked: true
+    reference_pack_locked: true
+    pre_generation_contract_status: pass
+    earliest_unresolved_gate: live_user_lock
+  review_surface:
+    primary: render_moodboard_board_widget
+    runDirectory: outputs/dircreative-cp-fixture/no-real-run
+    streamPath: outputs/dircreative-cp-fixture/no-real-run/data/stream.json
+    widget_is_truth_source: false
+    html_or_local_url_is_truth_source: false
+  generated_candidates:
+    - asset_id: noodle-product-identity-reference-candidate-01
+      asset_role: PRODUCT IDENTITY REFERENCE
+      source_prompt_contract_status: pass
+      asset_output_status: generated_candidate
+      generated_file: simulated-only-no-file
+      qa_status: pass
+      user_lock_status: pending
+      allowed_next_actions:
+        - user_lock
+        - reject
+        - retry_one_variable
+      blocked_next_actions:
+        - video_prompt_as_locked_truth
+        - live_acceptance
+  truth_source:
+    source_of_truth: dircreative_artifacts
+    writeback_required: true
+    writeback_targets:
+      - tests/fixtures/runtime/runs/creative-production-assisted-generation-fixture.yaml
+      - examples/live-user-sim-noodle/10-image-prompt-manifest.yaml
+      - examples/live-user-sim-noodle/12-qa-retry-plan.md
+  qa:
+    pre_generation_contract_checked: true
+    widget_not_truth_source: true
+    generated_candidate_not_user_locked: true
+    self_qa_before_user_lock: true
+    simulated_fixture_not_live_acceptance: true
+    no_real_media_generated: true
+    real_user_co_creation_verified: false
+  skill_run_receipt:
+    run_id: cp-assisted-generation-fixture-2026-06-15
+    skill_id: image-prompt-compiler
+    input_artifacts:
+      - examples/live-user-sim-noodle/09-reference-pack-plan.yaml
+      - examples/live-user-sim-noodle/10-image-prompt-manifest.yaml
+    output_artifacts:
+      - tests/fixtures/runtime/runs/creative-production-assisted-generation-fixture.yaml
+    decisions:
+      - "Creative Production is allowed only as a deep generation and review adapter after DIRcreative gates pass."
+      - "render_moodboard_board_widget is the review surface, not the source of truth."
+      - "Generated candidate remains pending until QA and user lock."
+    unresolved_questions:
+      - "Real user has not accepted or locked this candidate."
+    qa_gate:
+      status: pass
+      reasons:
+        - "Fixture proves the adapter receipt shape without generating media."
+    next_recommended_skill: generation-qa

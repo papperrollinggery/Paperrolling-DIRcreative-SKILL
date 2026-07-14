@@ -1,0 +1,806 @@
+project:
+  name: Paperrolling-DIRcreative-SKILL
+  active_phase: none
+  contract_version: 2
+
+foundation_artifacts:
+  chat_visualization_contract:
+    status: implemented_p0_verified
+    scope_note: Versioned presentation and writeback-receipt contracts, source/write boundaries, fallback behavior, user-facing stage surfaces, current-selection synchronization, customer-language leak rejection, real PNG candidate review, no-media and illustrative-media boundaries, project-root path confinement, evidence-bound source/authorization/channel status, responsive browser audit, and read-only confirmation echo are implemented. DIR-to-ADCO projection, formal local install, installed-package parity, installed validation, and browser dogfood pass. Remote release and final live-user acceptance remain separate gates.
+    files:
+      - docs/film-preproduction/chat-inline-visualization-interface.md
+      - docs/film-preproduction/schemas/chat-visualization-spec.schema.json
+      - docs/film-preproduction/schemas/chat-visualization-spec.template.yaml
+      - docs/film-preproduction/schemas/chat-visualization-writeback.schema.json
+      - skills/dircreative/assets/visualizations/stage-surface-registry.json
+      - scripts/dircreative_visualization_spec.py
+      - scripts/dircreative_visualization_audit.py
+      - scripts/dircreative_visualization_render.py
+      - scripts/dircreative_visualization_dogfood.py
+      - scripts/dircreative_visualization_browser_audit.cjs
+      - scripts/dircreative_visualization_writeback.py
+      - scripts/dircreative_visualization_adco_audit.py
+      - tests/fixtures/chat-visualization/
+  prompt_production_system_p0_p1:
+    status: implemented_pending_live_acceptance
+    scope_note: User-directed executable prompt-system upgrade; external generation, formal install, release, and live acceptance remain out of scope or unverified.
+    files:
+      - docs/film-preproduction/schemas/prompt-ir.schema.json
+      - scripts/dircreative_prompt_compiler.py
+      - scripts/dircreative_prompt_fixture_audit.py
+      - tests/fixtures/prompt-system/
+      - docs/film-preproduction/prompt-authoring-standard-v1.md
+      - docs/film-preproduction/prompt-qa-and-incident-runbook-v1.md
+  prompt_style_system:
+    status: completed
+    scope_note: User-directed research insertion; does not change active_phase.
+    files:
+      - docs/film-preproduction/research/image-prompt-style-system.md
+      - docs/film-preproduction/schemas/image-prompt-style-config.schema.json
+      - docs/film-preproduction/templates/image-prompt-style-config.template.json
+      - docs/film-preproduction/prompt-pattern-registry.json
+  skill_integration_architecture:
+    status: completed
+    scope_note: User-directed Goal-mode planning insert; does not change active_phase.
+    files:
+      - docs/film-preproduction/05-skill-integration-architecture.md
+      - docs/film-preproduction/schemas/skill-orchestration.yaml
+  gstack_execution_goal:
+    status: completed
+    scope_note: Full execution target for gstack/Goal continuation; does not change active_phase.
+    files:
+      - docs/film-preproduction/06-gstack-execution-goal.md
+
+global_rules:
+  - Do not skip phases.
+  - Do not create image or video assets until a phase explicitly allows it.
+  - Do not treat the prompt compiler as the whole product.
+  - Every phase must end with verification.
+  - Every phase must preserve structured artifact contracts.
+  - Commit only scoped, verified changes.
+  - README.md and docs/film-preproduction/04-goal-mode-handoff.md may be updated during phase transitions to reflect the new active phase.
+
+verification:
+  yaml_parse: ruby -e 'require "yaml"; Dir["docs/film-preproduction/**/*.yaml"].each { |f| YAML.load_file(f); puts "ok #{f}" }'
+  placeholder_scan: rg -n 'TB[D]|TO[D]O|待[定]|占[位]|x[x]x|FIX[ME]' .
+  status_check: git status --short
+
+phases:
+  - id: phase_a_goal_contract_layer
+    name: Goal-ready contract layer
+    status: completed
+    purpose: Make the repo readable and executable by Goal-mode and gstack-driven workers.
+    inputs:
+      - README.md
+      - docs/film-preproduction/01-system-plan.md
+      - docs/film-preproduction/02-execution-roadmap.md
+      - docs/film-preproduction/03-office-hours-optimization-plan.md
+    outputs:
+      - docs/film-preproduction/04-goal-mode-handoff.md
+      - docs/film-preproduction/05-skill-integration-architecture.md
+      - docs/film-preproduction/phase-contracts.yaml
+      - README.md
+      - docs/film-preproduction/02-execution-roadmap.md
+    allowed_edits:
+      - README.md
+      - docs/film-preproduction/02-execution-roadmap.md
+      - docs/film-preproduction/03-office-hours-optimization-plan.md
+      - docs/film-preproduction/04-goal-mode-handoff.md
+      - docs/film-preproduction/05-skill-integration-architecture.md
+      - docs/film-preproduction/06-gstack-execution-goal.md
+      - docs/film-preproduction/phase-contracts.yaml
+      - docs/film-preproduction/schemas/skill-orchestration.yaml
+      - docs/film-preproduction/README.md
+    non_goals:
+      - Continue cyber-courier story development.
+      - Write image prompts.
+      - Write video prompts.
+      - Generate images or videos.
+      - Build frontend.
+      - Package skills.
+    done_when:
+      - Phase contracts exist for all phases.
+      - README points to Goal-mode handoff.
+      - Roadmap status names Phase A as complete and Phase B as next.
+      - Verification commands pass.
+    next_phase: phase_b_story_fixture_completion
+
+  - id: phase_b_story_fixture_completion
+    name: Story fixture completion
+    status: completed
+    purpose: Continue the cyber-courier example from selected concept into story package.
+    inputs:
+      - examples/cyber-courier/01-idea-intake.md
+      - examples/cyber-courier/02-director-room-notes.md
+      - examples/cyber-courier/03-concept-options.md
+      - examples/cyber-courier/04-selected-concept.md
+      - docs/film-preproduction/schemas/story-package.yaml
+      - docs/film-preproduction/research/channel-playbooks.md
+    outputs:
+      - examples/cyber-courier/05-logline.md
+      - examples/cyber-courier/06-beat-sheet.md
+      - examples/cyber-courier/07-treatment.md
+      - examples/cyber-courier/08-story-review.md
+    allowed_edits:
+      - examples/cyber-courier/05-logline.md
+      - examples/cyber-courier/06-beat-sheet.md
+      - examples/cyber-courier/07-treatment.md
+      - examples/cyber-courier/08-story-review.md
+      - docs/film-preproduction/02-execution-roadmap.md
+      - docs/film-preproduction/04-goal-mode-handoff.md
+      - README.md
+      - docs/film-preproduction/phase-contracts.yaml
+    non_goals:
+      - Write script.
+      - Write shot list.
+      - Write image prompts.
+      - Write video prompts.
+    done_when:
+      - Logline, beat sheet, treatment, and story review exist.
+      - Story review says whether Phase C can proceed.
+      - No image or video prompt files are created.
+    next_phase: phase_c_script_and_breakdown_fixture
+
+  - id: phase_c_script_and_breakdown_fixture
+    name: Script and breakdown fixture
+    status: completed
+    purpose: Turn approved treatment into script and production breakdown.
+    inputs:
+      - examples/cyber-courier/05-logline.md
+      - examples/cyber-courier/06-beat-sheet.md
+      - examples/cyber-courier/07-treatment.md
+      - examples/cyber-courier/08-story-review.md
+      - docs/film-preproduction/schemas/story-package.yaml
+      - docs/film-preproduction/research/audio-design-notes.md
+    outputs:
+      - examples/cyber-courier/09-script.md
+      - examples/cyber-courier/10-script-breakdown.yaml
+      - examples/cyber-courier/11-asset-requirements.md
+      - examples/cyber-courier/12-audio-policy.md
+    allowed_edits:
+      - examples/cyber-courier/09-script.md
+      - examples/cyber-courier/10-script-breakdown.yaml
+      - examples/cyber-courier/11-asset-requirements.md
+      - examples/cyber-courier/12-audio-policy.md
+      - docs/film-preproduction/02-execution-roadmap.md
+      - docs/film-preproduction/phase-contracts.yaml
+    non_goals:
+      - Write shot list.
+      - Write image prompts.
+      - Write video prompts.
+    done_when:
+      - Script has scene/action/dialogue or explicit no-dialogue policy.
+      - Breakdown lists characters, locations, props, wardrobe, sound, and special requirements.
+      - Audio policy separates image prompt notes, video prompt audio, and post-production audio.
+    next_phase: phase_d_shot_design_fixture
+
+  - id: phase_d_shot_design_fixture
+    name: Shot design fixture
+    status: completed
+    purpose: Turn script into professional shot plan.
+    inputs:
+      - examples/cyber-courier/09-script.md
+      - examples/cyber-courier/10-script-breakdown.yaml
+      - examples/cyber-courier/12-audio-policy.md
+      - docs/film-preproduction/schemas/shot-list.yaml
+      - docs/film-preproduction/research/film-production-glossary.md
+    outputs:
+      - examples/cyber-courier/13-shot-list.yaml
+      - examples/cyber-courier/14-camera-plan.md
+      - examples/cyber-courier/15-blocking-plan.md
+      - examples/cyber-courier/16-shot-qa.md
+    allowed_edits:
+      - examples/cyber-courier/13-shot-list.yaml
+      - examples/cyber-courier/14-camera-plan.md
+      - examples/cyber-courier/15-blocking-plan.md
+      - examples/cyber-courier/16-shot-qa.md
+      - docs/film-preproduction/02-execution-roadmap.md
+      - docs/film-preproduction/phase-contracts.yaml
+    non_goals:
+      - Write image prompts.
+      - Write video prompts.
+      - Generate visual boards.
+    done_when:
+      - Every shot has duration, purpose, shot size, angle, lens, camera motion, subject action, blocking, and audio fields.
+      - Shot QA confirms no overloaded shot.
+      - YAML outputs parse.
+    next_phase: phase_e_visual_bible_reference_pack
+
+  - id: phase_e_visual_bible_reference_pack
+    name: Visual bible and reference pack
+    status: completed
+    purpose: Define visual continuity and image pack roles before prompt writing.
+    inputs:
+      - examples/cyber-courier/13-shot-list.yaml
+      - examples/cyber-courier/14-camera-plan.md
+      - examples/cyber-courier/15-blocking-plan.md
+      - docs/film-preproduction/schemas/visual-bible.yaml
+      - docs/film-preproduction/research/storyboard-reference-analysis.md
+    outputs:
+      - examples/cyber-courier/17-visual-bible.md
+      - examples/cyber-courier/18-reference-pack-plan.yaml
+      - examples/cyber-courier/19-image-layout-spec.md
+    allowed_edits:
+      - examples/cyber-courier/17-visual-bible.md
+      - examples/cyber-courier/18-reference-pack-plan.yaml
+      - examples/cyber-courier/19-image-layout-spec.md
+      - docs/film-preproduction/02-execution-roadmap.md
+      - docs/film-preproduction/phase-contracts.yaml
+    non_goals:
+      - Generate images.
+      - Write final video prompts.
+    done_when:
+      - Reference pack roles are explicit.
+      - Single-board vs multi-image decision is justified.
+      - Layout spec protects panel size and readability.
+    next_phase: phase_f_image_prompt_compiler_design
+
+  - id: phase_f_image_prompt_compiler_design
+    name: Image prompt compiler design
+    status: completed
+    purpose: Compile visual bible and reference pack plan into image generation prompts.
+    inputs:
+      - examples/cyber-courier/17-visual-bible.md
+      - examples/cyber-courier/18-reference-pack-plan.yaml
+      - examples/cyber-courier/19-image-layout-spec.md
+      - docs/film-preproduction/schemas/image-prompt-manifest.yaml
+      - docs/film-preproduction/research/image-prompt-style-system.md
+      - docs/film-preproduction/schemas/image-prompt-style-config.schema.json
+      - docs/film-preproduction/templates/image-prompt-style-config.template.json
+      - docs/film-preproduction/prompt-pattern-registry.json
+    outputs:
+      - examples/cyber-courier/20-image-prompt-manifest.yaml
+      - examples/cyber-courier/prompts/image_01_character_board.txt
+      - examples/cyber-courier/prompts/image_02_environment_board.txt
+      - examples/cyber-courier/prompts/image_03_prop_board.txt
+      - examples/cyber-courier/prompts/image_04_storyboard_board.txt
+      - examples/cyber-courier/prompts/image_05_style_board.txt
+    allowed_edits:
+      - examples/cyber-courier/20-image-prompt-manifest.yaml
+      - examples/cyber-courier/prompts/
+      - docs/film-preproduction/02-execution-roadmap.md
+      - docs/film-preproduction/phase-contracts.yaml
+    non_goals:
+      - Generate images.
+      - Write model-specific video prompts.
+    done_when:
+      - Every prompt has role, layout, exact text labels, avoid list, and QA notes.
+      - Prompt manifest maps images to downstream reference roles.
+      - Every prompt has a JSON style config with selected pattern ids.
+      - Art-directed layout policy and surface integrity guard are present.
+    next_phase: phase_g_video_model_adapters
+
+  - id: phase_g_video_model_adapters
+    name: Video model adapters
+    status: completed
+    purpose: Convert shot list and reference pack into Seedance, Kling, Runway, and Veo prompts.
+    inputs:
+      - examples/cyber-courier/13-shot-list.yaml
+      - examples/cyber-courier/18-reference-pack-plan.yaml
+      - examples/cyber-courier/20-image-prompt-manifest.yaml
+      - docs/film-preproduction/schemas/video-prompt-manifest.yaml
+      - docs/film-preproduction/research/model-adapter-notes.md
+      - docs/film-preproduction/research/audio-design-notes.md
+    outputs:
+      - examples/cyber-courier/21-video-prompt-manifest.yaml
+      - examples/cyber-courier/prompts/video_seedance.txt
+      - examples/cyber-courier/prompts/video_kling.txt
+      - examples/cyber-courier/prompts/video_runway.txt
+      - examples/cyber-courier/prompts/video_veo.txt
+      - examples/cyber-courier/22-model-adapter-risk-notes.md
+    allowed_edits:
+      - examples/cyber-courier/21-video-prompt-manifest.yaml
+      - examples/cyber-courier/prompts/video_seedance.txt
+      - examples/cyber-courier/prompts/video_kling.txt
+      - examples/cyber-courier/prompts/video_runway.txt
+      - examples/cyber-courier/prompts/video_veo.txt
+      - examples/cyber-courier/22-model-adapter-risk-notes.md
+      - docs/film-preproduction/02-execution-roadmap.md
+      - docs/film-preproduction/phase-contracts.yaml
+    non_goals:
+      - Generate videos.
+      - Build frontend.
+    done_when:
+      - Four model prompts differ materially.
+      - Every prompt has reference map and audio policy.
+      - Anti-misread clause exists where storyboard/reference board is used.
+    next_phase: phase_h_skill_packaging
+
+  - id: phase_h_skill_packaging
+    name: Skill packaging
+    status: completed
+    purpose: Convert stable workflow modules into reusable local skills.
+    inputs:
+      - docs/film-preproduction/01-system-plan.md
+      - docs/film-preproduction/phase-contracts.yaml
+      - docs/film-preproduction/research/
+      - docs/film-preproduction/schemas/
+      - docs/film-preproduction/05-skill-integration-architecture.md
+      - docs/film-preproduction/schemas/skill-orchestration.yaml
+      - docs/film-preproduction/prompt-pattern-registry.json
+      - docs/film-preproduction/templates/
+      - examples/cyber-courier/
+    outputs:
+      - skills/dircreative/SKILL.md
+      - skills/dircreative/idea-intake/SKILL.md
+      - skills/dircreative/director-room/SKILL.md
+      - skills/dircreative/story-development/SKILL.md
+      - skills/dircreative/script-treatment/SKILL.md
+      - skills/dircreative/script-breakdown/SKILL.md
+      - skills/dircreative/shot-design/SKILL.md
+      - skills/dircreative/visual-bible/SKILL.md
+      - skills/dircreative/reference-image-planner/SKILL.md
+      - skills/dircreative/image-prompt-compiler/SKILL.md
+      - skills/dircreative/video-model-adapter/SKILL.md
+      - skills/dircreative/generation-qa/SKILL.md
+      - skills/dircreative/learn/SKILL.md
+      - skills/dircreative/update/SKILL.md
+      - skills/dircreative/checkpoint/SKILL.md
+      - .dircreative/state/current.json
+      - .dircreative/checkpoints/
+      - .dircreative/runs/
+      - scripts/validate_project.py
+      - docs/film-preproduction/qa/qa-checklist.md
+      - docs/film-preproduction/qa/failure-taxonomy.yaml
+      - docs/film-preproduction/qa/retry-rules.md
+      - docs/film-preproduction/sources/model-sources.yaml
+      - docs/film-preproduction/sources/prompt-sources.yaml
+      - examples/cyber-courier/23-generation-qa-template.yaml
+      - examples/product-ad-raincoat/
+    allowed_edits:
+      - skills/
+      - .dircreative/
+      - scripts/
+      - docs/film-preproduction/qa/
+      - docs/film-preproduction/sources/
+      - examples/cyber-courier/23-generation-qa-template.yaml
+      - examples/product-ad-raincoat/
+      - docs/film-preproduction/02-execution-roadmap.md
+      - docs/film-preproduction/phase-contracts.yaml
+    non_goals:
+      - Publish plugin.
+      - Generate production images/videos.
+    done_when:
+      - Each skill has narrow input/output contract.
+      - No skill owns the entire pipeline.
+      - Each skill cites the research and schema files it depends on.
+      - Each skill writes skill_run_receipt metadata.
+      - Root skill has update, learn, and checkpoint routing.
+      - Validation script checks required artifacts, manifests, prompt registry references, and skill citations.
+      - QA checklist, failure taxonomy, retry rules, and source registries exist.
+      - At least one advertising/product fixture exists for channel-fit validation.
+    next_phase: phase_i_wysiwyg_workbench_plan
+
+  - id: phase_i_wysiwyg_workbench_plan
+    name: WYSIWYG workbench plan
+    status: completed
+    purpose: Design the future frontend after artifact contracts are stable.
+    inputs:
+      - docs/film-preproduction/phase-contracts.yaml
+      - docs/film-preproduction/schemas/
+      - docs/film-preproduction/qa/
+      - skills/dircreative/
+      - examples/cyber-courier/
+      - examples/product-ad-raincoat/
+    outputs:
+      - docs/film-preproduction/workbench-product-spec.md
+      - docs/film-preproduction/workbench-data-flow.md
+      - docs/film-preproduction/workbench-interface-plan.md
+    allowed_edits:
+      - docs/film-preproduction/workbench-product-spec.md
+      - docs/film-preproduction/workbench-data-flow.md
+      - docs/film-preproduction/workbench-interface-plan.md
+      - scripts/validate_project.py
+      - docs/film-preproduction/02-execution-roadmap.md
+      - docs/film-preproduction/phase-contracts.yaml
+    non_goals:
+      - Implement frontend.
+      - Add dependencies.
+    done_when:
+      - Workbench plan maps UI views to artifact IDs and versions.
+      - User locking and regeneration flow are specified.
+      - Prompt provenance is traceable.
+    next_phase: phase_j_model_safe_reference_pack_policy
+
+  - id: phase_j_model_safe_reference_pack_policy
+    name: Model-safe reference pack policy
+    status: completed
+    purpose: Add model-aware reference pack contracts so compact boards remain useful without confusing video models.
+    inputs:
+      - docs/film-preproduction/research/README.md
+      - docs/film-preproduction/research/model-adapter-notes.md
+      - docs/film-preproduction/sources/model-sources.yaml
+      - docs/film-preproduction/qa/
+      - skills/dircreative/reference-image-planner/SKILL.md
+      - skills/dircreative/video-model-adapter/SKILL.md
+      - examples/cyber-courier/18-reference-pack-plan.yaml
+      - examples/product-ad-raincoat/07-reference-pack-plan.yaml
+    outputs:
+      - docs/film-preproduction/research/model-reference-behavior.md
+      - docs/film-preproduction/reference-locking-policy.md
+      - docs/film-preproduction/schemas/reference-pack-manifest.yaml
+      - docs/film-preproduction/qa/qa-checklist.md
+      - docs/film-preproduction/qa/failure-taxonomy.yaml
+      - docs/film-preproduction/qa/retry-rules.md
+      - docs/film-preproduction/sources/model-sources.yaml
+      - skills/dircreative/reference-image-planner/SKILL.md
+      - skills/dircreative/video-model-adapter/SKILL.md
+      - examples/cyber-courier/18-reference-pack-plan.yaml
+      - examples/product-ad-raincoat/07-reference-pack-plan.yaml
+      - scripts/validate_project.py
+    allowed_edits:
+      - docs/film-preproduction/research/model-reference-behavior.md
+      - docs/film-preproduction/reference-locking-policy.md
+      - docs/film-preproduction/schemas/reference-pack-manifest.yaml
+      - docs/film-preproduction/qa/qa-checklist.md
+      - docs/film-preproduction/qa/failure-taxonomy.yaml
+      - docs/film-preproduction/qa/retry-rules.md
+      - docs/film-preproduction/sources/model-sources.yaml
+      - skills/dircreative/reference-image-planner/SKILL.md
+      - skills/dircreative/video-model-adapter/SKILL.md
+      - examples/cyber-courier/18-reference-pack-plan.yaml
+      - examples/product-ad-raincoat/07-reference-pack-plan.yaml
+      - scripts/validate_project.py
+      - README.md
+      - docs/film-preproduction/02-execution-roadmap.md
+      - docs/film-preproduction/04-goal-mode-handoff.md
+      - docs/film-preproduction/phase-contracts.yaml
+    non_goals:
+      - Generate reference images.
+      - Generate videos.
+      - Implement frontend.
+      - Add external VLM dependencies.
+    done_when:
+      - Reference pack manifest schema exists.
+      - Model behavior policy distinguishes Seedance, Kling, Runway, Veo, and TapNow-style canvas flows.
+      - Reference locking policy defines user decision gates and stale downstream artifacts.
+      - Cyber Courier and RainLock fixtures include model-safe reference pack manifests.
+      - QA and retry docs include dense-board, clean-frame, role-conflict, and model-budget failures.
+      - Validation script checks reference pack manifests and model safety policy.
+    next_phase: phase_k_longform_capability_aware_reference_workflow
+
+  - id: phase_k_longform_capability_aware_reference_workflow
+    name: Longform and capability-aware reference workflow
+    status: completed
+    purpose: Make DIRcreative handle 60s, 90s, and 180s workflows and remain useful when no image generation tool is available.
+    inputs:
+      - docs/film-preproduction/research/README.md
+      - docs/film-preproduction/reference-locking-policy.md
+      - docs/film-preproduction/schemas/reference-pack-manifest.yaml
+      - docs/film-preproduction/schemas/image-prompt-manifest.yaml
+      - docs/film-preproduction/schemas/video-prompt-manifest.yaml
+      - skills/dircreative/reference-image-planner/SKILL.md
+      - skills/dircreative/image-prompt-compiler/SKILL.md
+      - skills/dircreative/video-model-adapter/SKILL.md
+      - examples/product-ad-raincoat/
+    outputs:
+      - docs/film-preproduction/longform-decomposition-policy.md
+      - docs/film-preproduction/capability-aware-generation-policy.md
+      - docs/film-preproduction/schemas/sequence-plan.yaml
+      - docs/film-preproduction/schemas/longform-reference-pack.yaml
+      - docs/film-preproduction/schemas/reference-pack-manifest.yaml
+      - docs/film-preproduction/schemas/image-prompt-manifest.yaml
+      - docs/film-preproduction/schemas/video-prompt-manifest.yaml
+      - skills/dircreative/sequence-planner/SKILL.md
+      - skills/dircreative/longform-reference-planner/SKILL.md
+      - skills/dircreative/edit-assembly-planner/SKILL.md
+      - skills/dircreative/reference-image-planner/SKILL.md
+      - skills/dircreative/image-prompt-compiler/SKILL.md
+      - skills/dircreative/video-model-adapter/SKILL.md
+      - skills/dircreative/generation-qa/SKILL.md
+      - docs/film-preproduction/qa/qa-checklist.md
+      - docs/film-preproduction/qa/failure-taxonomy.yaml
+      - docs/film-preproduction/qa/retry-rules.md
+      - docs/film-preproduction/sources/model-sources.yaml
+      - examples/product-ad-raincoat/10-sequence-plan.yaml
+      - examples/product-ad-raincoat/11-longform-reference-pack.yaml
+      - scripts/validate_project.py
+    allowed_edits:
+      - docs/film-preproduction/longform-decomposition-policy.md
+      - docs/film-preproduction/capability-aware-generation-policy.md
+      - docs/film-preproduction/schemas/sequence-plan.yaml
+      - docs/film-preproduction/schemas/longform-reference-pack.yaml
+      - docs/film-preproduction/schemas/reference-pack-manifest.yaml
+      - docs/film-preproduction/schemas/image-prompt-manifest.yaml
+      - docs/film-preproduction/schemas/video-prompt-manifest.yaml
+      - docs/film-preproduction/reference-locking-policy.md
+      - docs/film-preproduction/qa/
+      - docs/film-preproduction/sources/model-sources.yaml
+      - skills/dircreative/
+      - examples/cyber-courier/18-reference-pack-plan.yaml
+      - examples/cyber-courier/20-image-prompt-manifest.yaml
+      - examples/cyber-courier/21-video-prompt-manifest.yaml
+      - examples/product-ad-raincoat/
+      - scripts/validate_project.py
+      - README.md
+      - docs/film-preproduction/02-execution-roadmap.md
+      - docs/film-preproduction/04-goal-mode-handoff.md
+      - docs/film-preproduction/phase-contracts.yaml
+    non_goals:
+      - Generate images.
+      - Generate videos.
+      - Implement frontend.
+      - Add external generation dependencies.
+      - Publish plugin.
+    done_when:
+      - Longform policy explains 15s, 60s, 90s, and 180s workflows.
+      - Capability policy defines prompt_only, assisted_generation, and external_generation.
+      - Reference, image, and video manifests include visual output mode, execution capabilities, and asset output status.
+      - Skills support prompt-only, assisted, and external generation modes without assuming media files exist.
+      - RainLock fixture demonstrates a 180s hybrid sequence plan and longform reference pack.
+      - QA and retry rules cover missing visual output mode, missing asset output status, unauthorized assisted generation, missing longform sequence plan, overloaded sequence pack, batch risk, and missing external instructions.
+      - Validation script checks Phase K contracts and fixtures.
+    next_phase: phase_l_zombie_cleaner_e2e_fixture
+
+  - id: phase_l_zombie_cleaner_e2e_fixture
+    name: Zombie Cleaner E2E fixture
+    status: completed
+    purpose: Add a public-reference-inspired original 180s genre short fixture to test the full DIRcreative workflow in prompt-only mode.
+    inputs:
+      - user suggestion to reference the online Zombie Scavenger short as a benchmark
+      - docs/film-preproduction/longform-decomposition-policy.md
+      - docs/film-preproduction/capability-aware-generation-policy.md
+      - docs/film-preproduction/schemas/sequence-plan.yaml
+      - docs/film-preproduction/schemas/longform-reference-pack.yaml
+    outputs:
+      - examples/zombie-cleaner-test/00-source-study.md
+      - examples/zombie-cleaner-test/01-idea-intake.md
+      - examples/zombie-cleaner-test/02-director-room-notes.md
+      - examples/zombie-cleaner-test/03-concept-options.md
+      - examples/zombie-cleaner-test/04-selected-concept.md
+      - examples/zombie-cleaner-test/05-story-package.md
+      - examples/zombie-cleaner-test/06-script.md
+      - examples/zombie-cleaner-test/07-shot-list.yaml
+      - examples/zombie-cleaner-test/08-sequence-plan.yaml
+      - examples/zombie-cleaner-test/09-visual-bible.md
+      - examples/zombie-cleaner-test/10-reference-pack-plan.yaml
+      - examples/zombie-cleaner-test/11-image-prompt-manifest.yaml
+      - examples/zombie-cleaner-test/12-longform-reference-pack.yaml
+      - examples/zombie-cleaner-test/13-video-prompt-manifest.yaml
+      - scripts/validate_project.py
+    allowed_edits:
+      - examples/zombie-cleaner-test/
+      - scripts/validate_project.py
+      - README.md
+      - examples/README.md
+      - docs/film-preproduction/02-execution-roadmap.md
+      - docs/film-preproduction/04-goal-mode-handoff.md
+      - docs/film-preproduction/phase-contracts.yaml
+    non_goals:
+      - Copy the referenced short film's story, shots, or character design.
+      - Generate images.
+      - Generate videos.
+      - Implement frontend.
+    done_when:
+      - Fixture documents public-reference boundary.
+      - Original story, script, shot list, sequence plan, visual bible, reference pack, image prompts, longform pack, and video prompts exist.
+      - Fixture remains prompt_only with no media assets.
+      - Validation script checks the fixture.
+    next_phase: phase_m_optimization_baseline_safety
+
+  - id: phase_m_optimization_baseline_safety
+    name: Optimization baseline safety and phase legalization
+    status: completed
+    purpose: Protect the dirty worktree, preserve existing Phase L, and create a legal optimization lane for film-grade, commercial-grade, Creative Production, Goal autorun, and live acceptance work.
+    inputs:
+      - git status --short
+      - README.md
+      - docs/film-preproduction/current-project-progress.md
+      - docs/film-preproduction/phase-contracts.yaml
+    outputs:
+      - docs/film-preproduction/phase-contracts.yaml
+      - docs/film-preproduction/current-project-progress.md
+      - README.md
+    allowed_edits:
+      - README.md
+      - docs/film-preproduction/current-project-progress.md
+      - docs/film-preproduction/phase-contracts.yaml
+    non_goals:
+      - Reset, revert, or overwrite existing dirty worktree changes.
+      - Generate images or videos.
+      - Implement a full frontend workbench.
+    done_when:
+      - Existing Phase L remains intact.
+      - New optimization phases are represented without duplicate phase IDs.
+      - Current dirty worktree is acknowledged as protected existing work.
+    next_phase: phase_n_film_commercial_quality_gate
+
+  - id: phase_n_film_commercial_quality_gate
+    name: Film-grade and commercial-grade quality gate
+    status: completed
+    purpose: Make DIRcreative quality auditable beyond prompt formatting by checking story, commercial proof, director-room tradeoffs, shot density, continuity, and QA retry readiness.
+    inputs:
+      - docs/film-preproduction/customer-visible-production-gates.md
+      - docs/film-preproduction/director-room-council-protocol.md
+      - docs/film-preproduction/qa/failure-taxonomy.yaml
+      - docs/film-preproduction/qa/retry-rules.md
+      - examples/product-ad-raincoat/
+      - examples/live-user-sim-noodle/
+    outputs:
+      - docs/film-preproduction/film-commercial-quality-standard.md
+      - scripts/dircreative_quality_audit.py
+      - docs/film-preproduction/qa/failure-taxonomy.yaml
+      - docs/film-preproduction/qa/retry-rules.md
+      - scripts/validate_project.py
+      - scripts/dircreative_readiness_audit.py
+      - scripts/dircreative_objective_audit.py
+      - scripts/dircreative_goal_audit.py
+      - scripts/dircreative_release_gate.py
+    allowed_edits:
+      - docs/film-preproduction/film-commercial-quality-standard.md
+      - docs/film-preproduction/qa/
+      - scripts/dircreative_quality_audit.py
+      - scripts/validate_project.py
+      - scripts/dircreative_readiness_audit.py
+      - scripts/dircreative_objective_audit.py
+      - scripts/dircreative_goal_audit.py
+      - scripts/dircreative_release_gate.py
+      - README.md
+      - docs/film-preproduction/current-project-progress.md
+      - docs/film-preproduction/phase-contracts.yaml
+    non_goals:
+      - Replace existing prompt manifest validation.
+      - Generate images or videos.
+    done_when:
+      - Quality standard exists.
+      - "`python3 scripts/dircreative_quality_audit.py` reports `QUALITY_AUDIT: PASS`."
+      - Quality audit is wired into validation, readiness, objective, goal, and release gates.
+    next_phase: phase_o_creative_production_deep_generation_adapter
+
+  - id: phase_o_creative_production_deep_generation_adapter
+    name: Creative Production deep generation adapter
+    status: completed
+    purpose: Connect Creative Production as an optional deep generation and review adapter after DIRcreative story, shot, reference, and pre-generation gates pass.
+    inputs:
+      - docs/film-preproduction/capability-aware-generation-policy.md
+      - docs/film-preproduction/customer-visible-production-gates.md
+      - skills/dircreative/SKILL.md
+      - skills/dircreative/image-prompt-compiler/SKILL.md
+      - skills/dircreative/video-model-adapter/SKILL.md
+      - skills/dircreative/generation-qa/SKILL.md
+    outputs:
+      - docs/film-preproduction/creative-production-integration.md
+      - tests/fixtures/runtime/runs/creative-production-assisted-generation-fixture.yaml
+      - scripts/dircreative_creative_production_audit.py
+      - tests/fixtures/invalid-creative-production-pre-gate.yaml
+      - tests/fixtures/invalid-creative-production-widget-truth.yaml
+      - tests/fixtures/invalid-creative-production-unreviewed-lock.yaml
+    allowed_edits:
+      - docs/film-preproduction/creative-production-integration.md
+      - tests/fixtures/runtime/runs/creative-production-assisted-generation-fixture.yaml
+      - scripts/dircreative_creative_production_audit.py
+      - tests/fixtures/invalid-creative-production-*.yaml
+      - skills/dircreative/
+      - scripts/validate_project.py
+      - scripts/dircreative_release_gate.py
+      - docs/film-preproduction/phase-contracts.yaml
+    non_goals:
+      - Treat Creative Production widgets, HTML, temporary screenshots, or local URLs as DIRcreative truth.
+      - Generate real media during Goal dry-run.
+    done_when:
+      - Creative Production adapter contract exists.
+      - Valid CP fixture passes and negative CP fixtures fail.
+      - "`python3 scripts/dircreative_creative_production_audit.py` reports `CREATIVE_PRODUCTION_AUDIT: PASS`."
+    next_phase: phase_p_goal_autorun_completion
+
+  - id: phase_p_goal_autorun_completion
+    name: Goal autorun completion dry-run
+    status: completed
+    purpose: Prove Goal mode can run rough idea, complete idea, commercial product ad, Creative Production preflight, and QA without waiting for manual choices.
+    inputs:
+      - docs/film-preproduction/goal-mode-simulation-protocol.md
+      - docs/film-preproduction/chat-co-creation-interface.md
+      - docs/film-preproduction/creative-production-integration.md
+      - examples/goal-mode-simulation-test/
+      - examples/goal-mode-rough-idea-simulation-test/
+    outputs:
+      - docs/film-preproduction/goal-autorun-completion-protocol.md
+      - examples/goal-mode-autorun-commercial-cp-test/01-chat-transcript.md
+      - examples/goal-mode-autorun-commercial-cp-test/15-co-creation-run.yaml
+      - scripts/dircreative_goal_autorun_audit.py
+      - tests/fixtures/invalid-goal-autorun-live-acceptance.yaml
+    allowed_edits:
+      - docs/film-preproduction/goal-autorun-completion-protocol.md
+      - examples/goal-mode-autorun-commercial-cp-test/
+      - scripts/dircreative_goal_autorun_audit.py
+      - tests/fixtures/invalid-goal-autorun-live-acceptance.yaml
+      - scripts/validate_project.py
+      - scripts/dircreative_readiness_audit.py
+      - scripts/dircreative_objective_audit.py
+      - scripts/dircreative_goal_audit.py
+      - scripts/dircreative_release_gate.py
+      - skills/dircreative/SKILL.md
+      - docs/film-preproduction/phase-contracts.yaml
+    non_goals:
+      - Generate media.
+      - Write live-user-acceptance.yaml.
+      - Mark Goal complete from simulated choices.
+    done_when:
+      - Autorun transcript covers required paths.
+      - Every user confirmation point has a simulated choice.
+      - CP preflight is included without execution.
+      - "`python3 scripts/dircreative_goal_autorun_audit.py` reports `GOAL_AUTORUN_AUDIT: PASS`."
+    next_phase: phase_q_live_acceptance_closure_boundary
+
+  - id: phase_q_live_acceptance_closure_boundary
+    name: Live acceptance closure boundary
+    status: completed
+    purpose: Keep final completion tied to explicit real user acceptance even after quality, Creative Production, and Goal autorun audits pass.
+    inputs:
+      - docs/film-preproduction/live-user-acceptance-gate.md
+      - docs/film-preproduction/live-chat-acceptance-runbook.md
+      - docs/film-preproduction/templates/live-user-acceptance.template.yaml
+      - scripts/dircreative_goal_audit.py
+      - scripts/dircreative_objective_audit.py
+    outputs:
+      - docs/film-preproduction/live-chat-acceptance-runbook.md
+      - docs/film-preproduction/live-user-acceptance-gate.md
+      - scripts/dircreative_goal_audit.py
+      - scripts/dircreative_objective_audit.py
+      - docs/film-preproduction/current-project-progress.md
+      - README.md
+    allowed_edits:
+      - docs/film-preproduction/live-chat-acceptance-runbook.md
+      - docs/film-preproduction/live-user-acceptance-gate.md
+      - scripts/dircreative_goal_audit.py
+      - scripts/dircreative_objective_audit.py
+      - docs/film-preproduction/current-project-progress.md
+      - README.md
+      - docs/film-preproduction/phase-contracts.yaml
+    non_goals:
+      - Convert Goal autorun, CP review, generated candidates, release gate, or terminal output into live acceptance.
+    done_when:
+      - Real acceptance runbook can include CP review surface as evidence but requires explicit user acceptance.
+      - "Goal audit still reports `GOAL_COMPLETE: NO` without live-user-acceptance.yaml."
+      - Release gate includes quality, CP, and Goal autorun audits.
+    next_phase: phase_r_runtime_and_craft_capability_upgrade
+
+  - id: phase_r_runtime_and_craft_capability_upgrade
+    name: Runtime truth and professional craft capability upgrade
+    status: in_progress
+    purpose: Add current-first runtime governance, automatic director-room routing, executable role harnesses, current model/prompt evidence, source-derived client copy, presentation routing, and behavior-level evaluation without weakening ADCO ownership boundaries.
+    inputs:
+      - user reports that director-room mode does not always auto-activate
+      - user reports that role prompts lack functional harness requirements
+      - user reports stale community-derived prompt and creative patterns
+      - DIR_SELF_AUDIT_RECEIPT from the current main-controller task
+      - skills/dircreative/
+      - docs/film-preproduction/sources/
+      - docs/film-preproduction/research/
+      - docs/film-preproduction/adco-integration-contract.md
+    outputs:
+      - docs/film-preproduction/runtime-state-governance.md
+      - docs/film-preproduction/schemas/runtime-state.schema.json
+      - docs/film-preproduction/templates/runtime-state.template.json
+      - scripts/dircreative_state_audit.py
+      - docs/film-preproduction/director-room-routing.md
+      - docs/film-preproduction/schemas/director-role-harness.yaml
+      - scripts/dircreative_director_harness_audit.py
+      - refreshed model and prompt source evidence
+      - creative, copy, image, video, layout, and presentation capability routing
+      - behavior-level positive and negative evaluations
+      - release, install, post-install, and ADCO bilateral receipts
+    allowed_edits:
+      - .gitignore
+      - README.md
+      - docs/film-preproduction/
+      - skills/dircreative/
+      - scripts/
+      - tests/fixtures/
+      - examples/
+      - .dircreative/runs/
+    non_goals:
+      - Merge DIRcreative and ADCO into one skill.
+      - Let DIRcreative own ADCO current truth, PPT, FinalDelivery, or send readiness.
+      - Claim real client acceptance from fixture or forward-test output.
+      - Generate real client media without an explicit work- and asset-bound authorization.
+      - Treat GitHub prompt libraries or local skill names as current capability proof.
+    done_when:
+      - Automatic routing selects full council, targeted professional pass, or lightweight mode without requiring users to name roles.
+      - Every director-room role has typed inputs, outputs, evidence, quality gate, handoff, forbidden actions, and recovery contract.
+      - Runtime state audit separates current integrity from isolated legacy debt and validates migration, disk, thread, authorization, and storage lifecycle.
+      - Model and prompt guidance is source-tiered, date-bound, capability-aware, and covered by behavior evaluations.
+      - Client-facing copy uses source-derived voice plus a bounded de-AI repair gate; presentation routing distinguishes editable and image-based decks.
+      - Fresh Codex Thread forward tests and independent cold reviews find no blocking P0 or P1.
+      - Main is committed and pushed without force, a new formal release is published, the installed package matches source, and ADCO bilateral compatibility passes.
+    next_phase: none

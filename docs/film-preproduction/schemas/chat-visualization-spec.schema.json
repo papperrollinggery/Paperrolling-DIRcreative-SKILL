@@ -1,0 +1,298 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://paperrolling.example/dircreative/chat-visualization-spec.schema.json",
+  "title": "DIRcreative Chat Visualization Spec",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "spec_version",
+    "view_id",
+    "execution_context",
+    "controller",
+    "stage_gate",
+    "view",
+    "source_truth",
+    "presentation",
+    "interactions",
+    "write_boundary",
+    "fallback"
+  ],
+  "properties": {
+    "spec_version": {"const": "1.0"},
+    "view_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{2,127}$"},
+    "execution_context": {"enum": ["standalone_chat", "orchestrated_worker"]},
+    "controller": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["surface_owner", "user_facing"],
+      "properties": {
+        "surface_owner": {"enum": ["dircreative", "ad-creative-orchestrator"]},
+        "user_facing": {"type": "boolean"}
+      }
+    },
+    "stage_gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "status", "decision_owner"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "type": {
+          "enum": [
+            "idea_intake_gate",
+            "concept_options_gate",
+            "story_approval_gate",
+            "script_approval_gate",
+            "shot_list_approval_gate",
+            "visual_direction_gate",
+            "visual_bible_approval_gate",
+            "sequence_plan_gate",
+            "global_reference_pack_gate",
+            "sequence_reference_pack_gate",
+            "clean_frame_gate",
+            "video_prompt_gate",
+            "generation_qa_gate",
+            "retry_gate",
+            "acceptance_gate",
+            "checkpoint_gate"
+          ]
+        },
+        "status": {"enum": ["pending", "needs_user", "blocked", "simulated"]},
+        "decision_owner": {"enum": ["user", "simulated_fixture", "controller"]}
+      }
+    },
+    "view": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["intent", "display_mode", "customer_stage_label", "decision_prompt"],
+      "properties": {
+        "intent": {"enum": ["confirm", "compare", "inspect", "timeline", "graph", "qa"]},
+        "display_mode": {"enum": ["inline", "fullscreen", "fallback"]},
+        "customer_stage_label": {"type": "string", "minLength": 1, "maxLength": 80},
+        "decision_prompt": {"type": "string", "minLength": 1, "maxLength": 240}
+      }
+    },
+    "source_truth": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifacts"],
+      "properties": {
+        "artifacts": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/artifact"}
+        }
+      }
+    },
+    "presentation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fields", "options", "downstream_effects"],
+      "properties": {
+        "fields": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/field"}
+        },
+        "options": {
+          "type": "array",
+          "maxItems": 3,
+          "items": {"$ref": "#/$defs/option"}
+        },
+        "recommendation": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": ["option_id", "reason"],
+          "properties": {
+            "option_id": {"type": "string", "minLength": 1},
+            "reason": {"type": "string", "minLength": 1}
+          }
+        },
+        "previews": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 3,
+          "items": {"$ref": "#/$defs/preview"}
+        },
+        "downstream_effects": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["stage", "effect"],
+            "properties": {
+              "stage": {"type": "string", "minLength": 1},
+              "effect": {"type": "string", "minLength": 1}
+            }
+          }
+        }
+      }
+    },
+    "interactions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["local", "actions", "max_actions", "deep_navigation", "nested_scroll"],
+      "properties": {
+        "local": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"enum": ["select", "compare", "expand", "filter", "stage_revision_note"]}
+        },
+        "actions": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 2,
+          "items": {"$ref": "#/$defs/action"}
+        },
+        "max_actions": {"const": 2},
+        "deep_navigation": {"const": false},
+        "nested_scroll": {"const": false}
+      }
+    },
+    "write_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "preview_only",
+        "confirmation_required",
+        "writes_authoritative_state",
+        "write_owner",
+        "possible_write_targets",
+        "forbidden_claims"
+      ],
+      "properties": {
+        "preview_only": {"const": true},
+        "confirmation_required": {"const": true},
+        "writes_authoritative_state": {"const": false},
+        "write_owner": {"enum": ["dircreative", "ad-creative-orchestrator"]},
+        "possible_write_targets": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "forbidden_claims": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"enum": ["lock", "readiness", "acceptance", "completion", "generation_authorization"]}
+        }
+      }
+    },
+    "fallback": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["format", "required_visible_fields", "decision_question"],
+      "properties": {
+        "format": {"enum": ["markdown", "table", "mermaid"]},
+        "required_visible_fields": {
+          "type": "array",
+          "minItems": 4,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "decision_question": {"type": "string", "minLength": 1}
+      }
+    }
+  },
+  "$defs": {
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifact_id", "version", "sha256"],
+      "properties": {
+        "artifact_id": {"type": "string", "minLength": 1},
+        "version": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "path": {"type": "string", "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+"},
+        "evidence_path": {"type": "string", "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+\\.json$"},
+        "mime_type": {"enum": ["image/png", "image/jpeg", "image/webp", "image/svg+xml"]},
+        "review_classification": {"enum": ["real_candidate", "illustrative_placeholder"]},
+        "lifecycle_status": {"enum": ["current", "stale", "superseded"]},
+        "source_status": {"enum": ["confirmed", "unconfirmed"]},
+        "authorization_status": {"enum": ["confirmed", "unconfirmed", "not_applicable"]},
+        "channel_fit_status": {"enum": ["confirmed", "unconfirmed", "not_applicable"]},
+        "source_evidence_ref": {"type": "string", "minLength": 3},
+        "authorization_evidence_ref": {"type": "string", "minLength": 3},
+        "channel_fit_evidence_ref": {"type": "string", "minLength": 3}
+      }
+    },
+    "preview": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifact_id", "option_id", "label", "alt", "caption", "annotations"],
+      "properties": {
+        "artifact_id": {"type": "string", "minLength": 1},
+        "option_id": {"type": "string", "minLength": 1},
+        "label": {"type": "string", "minLength": 1, "maxLength": 80},
+        "alt": {"type": "string", "minLength": 1, "maxLength": 240},
+        "caption": {"type": "string", "minLength": 1, "maxLength": 500},
+        "annotations": {
+          "type": "array",
+          "maxItems": 5,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["region", "note"],
+            "properties": {
+              "region": {"type": "string", "minLength": 1, "maxLength": 80},
+              "note": {"type": "string", "minLength": 1, "maxLength": 240}
+            }
+          }
+        }
+      }
+    },
+    "field": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label", "value", "classification", "source_ref"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "label": {"type": "string", "minLength": 1, "maxLength": 80},
+        "value": {},
+        "classification": {"enum": ["source_bound", "presentation_only"]},
+        "source_ref": {"type": ["string", "null"]}
+      }
+    },
+    "option": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label", "summary", "tradeoff", "source_refs"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "label": {"type": "string", "minLength": 1, "maxLength": 80},
+        "summary": {"type": "string", "minLength": 1},
+        "tradeoff": {"type": "string", "minLength": 1},
+        "details": {
+          "type": "array",
+          "maxItems": 6,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "label", "value"],
+            "properties": {
+              "id": {"type": "string", "minLength": 1},
+              "label": {"type": "string", "minLength": 1, "maxLength": 80},
+              "value": {"type": "string", "minLength": 1, "maxLength": 500}
+            }
+          }
+        },
+        "source_refs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label", "kind", "target_gate_id", "conversation_intent"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "label": {"type": "string", "minLength": 1, "maxLength": 80},
+        "kind": {"enum": ["submit_selection", "request_revision", "request_mix", "request_fullscreen", "retry_smallest", "stop", "pause_prompt_only"]},
+        "target_gate_id": {"type": "string", "minLength": 1},
+        "conversation_intent": {"type": "string", "minLength": 1, "maxLength": 1000}
+      }
+    }
+  }
+}

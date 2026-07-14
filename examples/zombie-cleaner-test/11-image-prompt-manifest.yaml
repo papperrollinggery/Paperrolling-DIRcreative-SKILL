@@ -1,0 +1,428 @@
+artifact:
+  artifact_id: zombie-cleaner-image-prompt-manifest-v1
+  version: 1.0.0
+  source_artifact_ids:
+    - zombie-cleaner-reference-pack-plan-v1
+    - zombie-cleaner-visual-bible-v1
+  status: approved
+  owner_skill: image-prompt-compiler
+
+image_prompt_manifest:
+  project_title: "Wasteland Sanitation Route"
+  generation_target: "longform_reference_pack"
+  image_model: "GPT Image / Image2 compatible"
+  authoring_mode: "json_first"
+  visual_output_mode: "prompt_only"
+  longform_generation_mode: "hybrid"
+  sequence_plan: "examples/zombie-cleaner-test/08-sequence-plan.yaml"
+  style_system:
+    style_schema: "docs/film-preproduction/schemas/image-prompt-style-config.schema.json"
+    pattern_registry: "docs/film-preproduction/prompt-pattern-registry.json"
+    selected_pattern_ids:
+      - art_directed_asymmetric_layout_v1
+      - json_config_prompt_v1
+      - surface_integrity_guard_v1
+      - multi_panel_identity_lock_v1
+  global_style_locks:
+    - "atom-punk municipal apocalypse"
+    - "black comedy without graphic gore"
+    - "orange sanitation suit, green barrel glow, amber hazard lights"
+    - "wet asphalt and rusted civic machinery"
+  global_avoid:
+    - "copying Zombie Scavenger"
+    - "generic zombie poster"
+    - "military squad"
+    - "fake microtext"
+    - "overloaded equal grid"
+    - "excessive gore"
+
+capability_resolution:
+  registry_path: "docs/film-preproduction/sources/model-sources.yaml"
+  registry_version: "2.0.0"
+  capability_card_id: gpt_image_2_openai_api
+  version: "gpt-image-2"
+  status: current
+  provider_surface: "OpenAI Image API and Responses API image_generation tool"
+  verified_on: "2026-07-10"
+  accessed_on: "2026-07-10"
+  evidence_level: S1
+  source_urls:
+    - "https://developers.openai.com/api/docs/guides/image-generation"
+  source_conflicts: []
+  access_mode: api
+  execution_mode: api
+  execution_verification_status: unverified
+  resolution_status: resolved
+
+rights_gate:
+  status: unverified
+  conditions: []
+  source_asset_rights: "Prompt-only artifact; rights must be verified before generation."
+  likeness_authorization: unverified
+  brand_or_character_authorization: unverified
+  provider_restrictions_checked: true
+  evidence_refs: []
+  generation_allowed: false
+
+audio_intent:
+  desired_audio: downstream_metadata_only
+  generation_audio_route: not_applicable
+  prohibited_in_image_prompt: true
+
+
+execution_capabilities:
+  image_generation:
+    available: false
+    provider: none
+    allowed_by_user: false
+    external_upload_authorized: false
+    external_execution_state: instructions_only
+    external_execution_evidence: []
+  video_generation:
+    available: false
+    provider: none
+    allowed_by_user: false
+  file_write:
+    available: true
+  browser_review:
+    available: false
+
+images:
+  - image_id: zc_image_01
+    operation: generate
+    capability_card_id: gpt_image_2_openai_api
+    source_references: []
+    rights:
+      status: unverified
+      evidence_refs: []
+    transformation_contract:
+      preserve: []
+      change: []
+      allow_incidental_change: []
+      forbidden_change: []
+      overlap_check: pass
+    type: "character_design_board"
+    purpose: "Lock sanitation worker identity, wardrobe, expression, and props."
+    sequence_id: "global"
+    input_dependencies:
+      story_package: "examples/zombie-cleaner-test/05-story-package.md"
+      shot_list: "examples/zombie-cleaner-test/07-shot-list.yaml"
+      visual_bible: "examples/zombie-cleaner-test/09-visual-bible.md"
+      sequence_plan: "examples/zombie-cleaner-test/08-sequence-plan.yaml"
+      reference_pack_manifest: "examples/zombie-cleaner-test/10-reference-pack-plan.yaml"
+    layout:
+      aspect_ratio: "16:9"
+      sections:
+        - "large full-body worker hero"
+        - "face shield close-up"
+        - "clipboard and rubber stamp"
+        - "glove, boot, and suit material callouts"
+      density: "medium, readable"
+      readability_rules:
+        - "hero worker must dominate"
+        - "labels are short and large"
+        - "support views remain large enough for identity lock"
+    asset_output:
+      status: prompt_ready
+      prompt_file: "examples/zombie-cleaner-test/11-image-prompt-manifest.yaml#zc_image_01"
+      generated_file: ""
+      external_instructions: "Generate externally or with authorized image generation before locking hero identity."
+      source_tool: none
+      user_lock_status: pending
+    style_config:
+      config_id: zc_character_board_v1
+      image_type: character_design_board
+      source_patterns: [art_directed_asymmetric_layout_v1, json_config_prompt_v1, surface_integrity_guard_v1, multi_panel_identity_lock_v1]
+      art_direction_policy:
+        non_negotiables:
+          - "do not use a generic model sheet"
+          - "do not use evenly distributed panels unless a small technical detail strip requires it"
+          - "composition must feel art-directed, intentional, and slightly asymmetric"
+        placement_rule: "large worker pose anchors the board; props and material details support identity."
+      quality_and_artifact_control:
+        surface_integrity_guard:
+          required: ["matte orange rubber suit", "clear cracked face shield", "coherent gloves and boots", "complete body geometry"]
+          avoid: ["plastic toy look", "fish-scale texture", "fake tiny labels", "warped hands"]
+        transparent_background: false
+      self_update:
+        registry_pattern_ids: [art_directed_asymmetric_layout_v1, surface_integrity_guard_v1, multi_panel_identity_lock_v1]
+        qa_observations: []
+    prompt: |
+      Pre-generation contract:
+      Largest title on the page: CHARACTER IDENTITY REFERENCE / SANITATION WORKER BOARD
+      Smaller metadata only: Project: Wasteland Sanitation Route
+      Do not make Wasteland Sanitation Route the largest title.
+      Direct video input policy: NOT DIRECT VIDEO INPUT; use this board only to lock worker identity, protective suit, face shield, gloves, and route-form props.
+
+      {
+        "artifact": "cinematic character design board for a wasteland sanitation worker",
+        "layout_policy": "art-directed asymmetric production board, no generic equal grid",
+        "hero": "tired municipal cleanup worker in worn orange rubber suit, cracked clear face shield, black gloves, utility boots, calm bureaucratic expression",
+        "support_panels": ["face shield close-up", "clipboard and rubber stamp", "glove and sleeve material", "boot and wet asphalt contact"],
+        "text_labels": ["WORKER ID", "ORANGE SUIT", "FACE SHIELD", "ROUTE FORM"],
+        "style": "atom-punk zombie cleanup comedy, wet asphalt, amber hazard light, green biohazard glow"
+      }
+    exact_text_labels: ["WORKER ID", "ORANGE SUIT", "FACE SHIELD", "ROUTE FORM"]
+    avoid: ["superhero armor", "military helmet", "copying existing short film character", "graphic gore"]
+    qa:
+      role_clear: true
+      text_readable: true
+      panels_large_enough: true
+      continuity_locks_present: true
+      output_mode_supported: true
+      asset_output_status_present: true
+      video_model_safe: true
+      capability_card_resolved: true
+      rights_gate_passed: false
+      preserve_change_disjoint: true
+      source_reference_present_for_edit: true
+      optional_qa_macro_not_forced: true
+  - image_id: zc_image_02
+    operation: generate
+    capability_card_id: gpt_image_2_openai_api
+    source_references: []
+    rights:
+      status: unverified
+      evidence_refs: []
+    transformation_contract:
+      preserve: []
+      change: []
+      allow_incidental_change: []
+      forbidden_change: []
+      overlap_check: pass
+    type: "vehicle_product_board"
+    purpose: "Lock street sweeper vehicle geometry, front brushes, foam tank, and hazard lights."
+    sequence_id: "global"
+    input_dependencies:
+      story_package: "examples/zombie-cleaner-test/05-story-package.md"
+      shot_list: "examples/zombie-cleaner-test/07-shot-list.yaml"
+      visual_bible: "examples/zombie-cleaner-test/09-visual-bible.md"
+      sequence_plan: "examples/zombie-cleaner-test/08-sequence-plan.yaml"
+      reference_pack_manifest: "examples/zombie-cleaner-test/10-reference-pack-plan.yaml"
+    layout:
+      aspect_ratio: "16:9"
+      sections: ["large side view", "front brush macro", "foam tank detail", "UNIT 47 decal and hazard lights"]
+      density: "medium, vehicle-readable"
+      readability_rules: ["vehicle silhouette must be clear", "brush geometry must not collapse", "labels are short"]
+    asset_output:
+      status: prompt_ready
+      prompt_file: "examples/zombie-cleaner-test/11-image-prompt-manifest.yaml#zc_image_02"
+      generated_file: ""
+      external_instructions: "Generate externally or with authorized image generation before locking vehicle reference."
+      source_tool: none
+      user_lock_status: pending
+    style_config:
+      config_id: zc_vehicle_board_v1
+      image_type: vehicle_product_board
+      source_patterns: [art_directed_asymmetric_layout_v1, json_config_prompt_v1, surface_integrity_guard_v1, multi_panel_identity_lock_v1]
+      art_direction_policy:
+        non_negotiables: ["do not use a clean sci-fi vehicle", "do not use a generic product grid", "make vehicle geometry production-readable"]
+        placement_rule: "side silhouette dominates; brush and foam details support action clarity."
+      quality_and_artifact_control:
+        surface_integrity_guard:
+          required: ["coherent rusted metal", "complete rotating brush assembly", "readable hazard lights", "stable vehicle proportions"]
+          avoid: ["melting geometry", "toy car look", "random machine parts", "fake microtext"]
+        transparent_background: false
+      self_update:
+        registry_pattern_ids: [art_directed_asymmetric_layout_v1, surface_integrity_guard_v1, multi_panel_identity_lock_v1]
+        qa_observations: []
+    prompt: |
+      Pre-generation contract:
+      Largest title on the page: VEHICLE / EQUIPMENT REFERENCE BOARD
+      Smaller metadata only: Project: Wasteland Sanitation Route
+      Do not make Wasteland Sanitation Route the largest title.
+      Direct video input policy: NOT DIRECT VIDEO INPUT; use this board only to lock UNIT 47 geometry, brush assembly, foam tank, lights, and material behavior.
+
+      {
+        "artifact": "vehicle reference board for rusted municipal street sweeper UNIT 47",
+        "layout_policy": "large side silhouette with intentional macro support panels",
+        "vehicle": "battered atom-punk street sweeper, oversized rotating front brushes, patched foam tank, amber hazard lights, municipal decals",
+        "support_panels": ["front brush macro", "foam tank pipes", "dashboard warning light", "wet tire and asphalt"],
+        "text_labels": ["UNIT 47", "BRUSHES", "FOAM TANK", "HAZARD LIGHT"],
+        "style": "wet rusted machinery, blue pre-dawn haze, sodium amber light"
+      }
+    exact_text_labels: ["UNIT 47", "BRUSHES", "FOAM TANK", "HAZARD LIGHT"]
+    avoid: ["clean sci-fi car", "tank", "weaponized military vehicle", "unreadable decals"]
+    qa:
+      role_clear: true
+      text_readable: true
+      panels_large_enough: true
+      continuity_locks_present: true
+      output_mode_supported: true
+      asset_output_status_present: true
+      video_model_safe: true
+      capability_card_resolved: true
+      rights_gate_passed: false
+      preserve_change_disjoint: true
+      source_reference_present_for_edit: true
+      optional_qa_macro_not_forced: true
+  - image_id: zc_image_03
+    operation: generate
+    capability_card_id: gpt_image_2_openai_api
+    source_references: []
+    rights:
+      status: unverified
+      evidence_refs: []
+    transformation_contract:
+      preserve: []
+      change: []
+      allow_incidental_change: []
+      forbidden_change: []
+      overlap_check: pass
+    type: "environment_camera_board"
+    purpose: "Lock route geography and camera path for the quarantine district."
+    sequence_id: "global"
+    input_dependencies:
+      story_package: "examples/zombie-cleaner-test/05-story-package.md"
+      shot_list: "examples/zombie-cleaner-test/07-shot-list.yaml"
+      visual_bible: "examples/zombie-cleaner-test/09-visual-bible.md"
+      sequence_plan: "examples/zombie-cleaner-test/08-sequence-plan.yaml"
+      reference_pack_manifest: "examples/zombie-cleaner-test/10-reference-pack-plan.yaml"
+    layout:
+      aspect_ratio: "16:9"
+      sections: ["large quarantine street plate", "flooded alley plate", "recycling yard plate", "simple route map"]
+      density: "high but readable"
+      readability_rules: ["route arrows must be large", "scene plates must be usable for clean exports", "no tiny notes"]
+    asset_output:
+      status: prompt_ready
+      prompt_file: "examples/zombie-cleaner-test/11-image-prompt-manifest.yaml#zc_image_03"
+      generated_file: ""
+      external_instructions: "Generate as planning board, then create separate text-free scene plates for direct I2V."
+      source_tool: none
+      user_lock_status: pending
+    style_config:
+      config_id: zc_environment_board_v1
+      image_type: environment_camera_board
+      source_patterns: [art_directed_asymmetric_layout_v1, json_config_prompt_v1, surface_integrity_guard_v1]
+      art_direction_policy:
+        non_negotiables: ["do not make a random mood collage", "route geography must be clear", "labels must not be used in direct first frames"]
+        placement_rule: "large street plate dominates; map and yard plate support route logic."
+      quality_and_artifact_control:
+        surface_integrity_guard:
+          required: ["wet asphalt reflections", "distinct alley depth", "readable recycling yard belt", "coherent ruined storefronts"]
+          avoid: ["noisy rain speckles", "collapsed buildings", "fake unreadable signage", "purple neon overload"]
+        transparent_background: false
+      self_update:
+        registry_pattern_ids: [art_directed_asymmetric_layout_v1, surface_integrity_guard_v1]
+        qa_observations: []
+    prompt: |
+      Pre-generation contract:
+      Largest title on the page: SCENE GEOGRAPHY + CAMERA FOV REFERENCE
+      Smaller metadata only: Project: Wasteland Sanitation Route
+      Do not make Wasteland Sanitation Route the largest title.
+      Direct video input policy: PLANNING ONLY; use this board to lock route geography, camera notes, location sequence, and field-of-view planning.
+
+      {
+        "artifact": "environment and camera route board for Wasteland Sanitation Route",
+        "layout_policy": "one large street plate plus readable route map and two support locations",
+        "locations": ["quarantine street", "flooded alley with glowing barrel", "service lane", "recycling yard compactor"],
+        "camera_notes": ["28mm street wide", "35mm vehicle tracking", "top-down route map for planning only"],
+        "text_labels": ["ROUTE", "BARREL", "YARD", "EXIT"],
+        "style": "pre-dawn blue haze, sodium amber hazard lights, green barrel glow, wet black asphalt"
+      }
+    exact_text_labels: ["ROUTE", "BARREL", "YARD", "EXIT"]
+    avoid: ["wide clean city plaza", "military base", "tiny map text", "directly animating floor plan"]
+    qa:
+      role_clear: true
+      text_readable: true
+      panels_large_enough: true
+      continuity_locks_present: true
+      output_mode_supported: true
+      asset_output_status_present: true
+      video_model_safe: true
+      capability_card_resolved: true
+      rights_gate_passed: false
+      preserve_change_disjoint: true
+      source_reference_present_for_edit: true
+      optional_qa_macro_not_forced: true
+  - image_id: zc_image_04
+    operation: generate
+    capability_card_id: gpt_image_2_openai_api
+    source_references: []
+    rights:
+      status: unverified
+      evidence_refs: []
+    transformation_contract:
+      preserve: []
+      change: []
+      allow_incidental_change: []
+      forbidden_change: []
+      overlap_check: pass
+    type: "storyboard_motion_board"
+    purpose: "Lock twelve 15s sequence beats, escalation, transitions, and audio spine."
+    sequence_id: "global"
+    input_dependencies:
+      story_package: "examples/zombie-cleaner-test/05-story-package.md"
+      shot_list: "examples/zombie-cleaner-test/07-shot-list.yaml"
+      visual_bible: "examples/zombie-cleaner-test/09-visual-bible.md"
+      sequence_plan: "examples/zombie-cleaner-test/08-sequence-plan.yaml"
+      reference_pack_manifest: "examples/zombie-cleaner-test/10-reference-pack-plan.yaml"
+    layout:
+      aspect_ratio: "16:9"
+      sections: ["four large act panels", "twelve beat strip", "audio spine", "model warnings"]
+      density: "medium-high but sequence-readable"
+      readability_rules: ["sequence numbers must be readable", "board is production guidance only", "panels must not be tiny"]
+    asset_output:
+      status: prompt_ready
+      prompt_file: "examples/zombie-cleaner-test/11-image-prompt-manifest.yaml#zc_image_04"
+      generated_file: ""
+      external_instructions: "Generate only for human review or compatible model guidance; never use as direct Kling/Runway first frame."
+      source_tool: none
+      user_lock_status: pending
+    style_config:
+      config_id: zc_storyboard_board_v1
+      image_type: storyboard_motion_board
+      source_patterns: [art_directed_asymmetric_layout_v1, json_config_prompt_v1, surface_integrity_guard_v1]
+      art_direction_policy:
+        non_negotiables: ["do not use a generic thumbnail grid", "act panels must guide hierarchy", "include clear guidance-only warning"]
+        placement_rule: "four act panels larger than twelve small beat labels."
+      quality_and_artifact_control:
+        surface_integrity_guard:
+          required: ["clear action panels", "readable labels", "stable worker and vehicle shapes"]
+          avoid: ["tiny panels", "fake microtext", "literal final-video board layout"]
+        transparent_background: false
+      self_update:
+        registry_pattern_ids: [art_directed_asymmetric_layout_v1]
+        qa_observations: []
+    prompt: |
+      Pre-generation contract:
+      Largest title on the page: PROFESSIONAL STORYBOARD + MOTION MAP
+      Smaller metadata only: Project: Wasteland Sanitation Route
+      Do not make Wasteland Sanitation Route the largest title.
+      Direct video input policy: PLANNING ONLY; this storyboard board is not a direct video frame.
+      Storyboard density requirement: each beat or shot cell must include timecode, duration, shot image region, detailed frame description, shot size, focal length, camera position, camera movement start/end, subject blocking, sound or audio cue, transition, and model risk.
+
+      {
+        "artifact": "twelve-beat director storyboard board for a 180s AI zombie comedy short",
+        "layout_policy": "four large act panels plus readable twelve-beat strip, not a generic grid",
+        "beats": ["route begins", "barrel reveal", "brush herding", "barrel chase", "foam malfunction", "route loop", "barrel danger", "yard stall", "stamp trigger", "belt action", "dawn cleanup", "overtime joke"],
+        "text_labels": ["REF ONLY", "ZC01", "ZC04", "ZC08", "ZC12"],
+        "warning": "production guidance only, do not animate board layout",
+        "style": "black comedy action storyboard, atom-punk civic apocalypse"
+      }
+    exact_text_labels: ["REF ONLY", "ZC01", "ZC04", "ZC08", "ZC12"]
+    avoid: ["copying existing short film shots", "tiny unreadable frames", "literal storyboard in final video"]
+    qa:
+      role_clear: true
+      text_readable: true
+      panels_large_enough: true
+      continuity_locks_present: true
+      output_mode_supported: true
+      asset_output_status_present: true
+      video_model_safe: true
+      capability_card_resolved: true
+      rights_gate_passed: false
+      preserve_change_disjoint: true
+      source_reference_present_for_edit: true
+      optional_qa_macro_not_forced: true
+
+handoff_notes:
+  reference_map_names:
+    - zc_image_01: "worker identity reference"
+    - zc_image_02: "street sweeper vehicle reference"
+    - zc_image_03: "environment and camera route reference"
+    - zc_image_04: "storyboard order reference only"
+  external_generation_instructions:
+    - "Mode is prompt_only; no generated image files exist in this fixture."
+    - "Generate externally or with authorized assisted_generation, then update asset_output before direct video use."
+  video_adapter_warning: "Do not animate board layouts, labels, route arrows, timing text, or storyboard panels."

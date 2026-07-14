@@ -1,0 +1,35 @@
+{
+  "spec_version": "1.0",
+  "view_id": "invalid-visible-backstage-term",
+  "execution_context": "standalone_chat",
+  "controller": {"surface_owner": "dircreative", "user_facing": true},
+  "stage_gate": {"id": "concept_options_02", "type": "concept_options_gate", "status": "needs_user", "decision_owner": "user"},
+  "view": {"intent": "confirm", "display_mode": "inline", "customer_stage_label": "创意方向", "decision_prompt": "是否确认这个 artifact 写回？"},
+  "source_truth": {"artifacts": [{"artifact_id": "concept-02", "version": "1.0.0", "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"}]},
+  "presentation": {
+    "fields": [{"id": "current_stage", "label": "当前阶段", "value": "创意方向", "classification": "presentation_only", "source_ref": null}],
+    "options": [],
+    "recommendation": null,
+    "downstream_effects": [{"stage": "story", "effect": "确认后进入故事。"}]
+  },
+  "interactions": {
+    "local": [],
+    "actions": [{"id": "confirm", "label": "确认", "kind": "submit_selection", "target_gate_id": "concept_options_02", "conversation_intent": "确认当前方向。"}],
+    "max_actions": 2,
+    "deep_navigation": false,
+    "nested_scroll": false
+  },
+  "write_boundary": {
+    "preview_only": true,
+    "confirmation_required": true,
+    "writes_authoritative_state": false,
+    "write_owner": "dircreative",
+    "possible_write_targets": ["concept"],
+    "forbidden_claims": ["lock", "readiness", "acceptance", "completion", "generation_authorization"]
+  },
+  "fallback": {
+    "format": "markdown",
+    "required_visible_fields": ["current_stage", "decision_prompt", "downstream_effects"],
+    "decision_question": "是否确认？"
+  }
+}

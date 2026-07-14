@@ -1,0 +1,100 @@
+artifact:
+  artifact_id: cyber-courier-generation-qa-template-v1
+  version: 1.0.0
+  source_artifact_ids:
+    - cyber-courier-image-prompt-manifest-v1
+    - cyber-courier-video-prompt-manifest-v1
+  status: approved
+  owner_skill: generation-qa
+  created_at: "2026-05-14"
+  locked_by_user: false
+
+qa_report:
+  project_title: "Cyber Courier: The Alley Accepts The Package"
+  artifact_under_review: "generated_image_or_video_run"
+  reviewer_role: "continuity_qa"
+  status: "template"
+
+gates:
+  story_gate:
+    passed: true
+    findings:
+      - "Conflict, emotional turn, and visualized beats already approved upstream."
+  script_gate:
+    passed: true
+    findings:
+      - "No-dialogue suspense policy and post-production audio plan are explicit."
+  shot_gate:
+    passed: true
+    findings:
+      - "Shot list contains duration, purpose, shot size, angle, lens, motion, action, blocking, and audio."
+  visual_bible_gate:
+    passed: true
+    findings:
+      - "Identity, alley geography, prop state, lighting, and material rules are locked."
+  image_prompt_gate:
+    passed: true
+    findings:
+      - "Image prompts are JSON-first and include art-directed layout, exact labels, material truth, and pattern IDs."
+  video_prompt_gate:
+    passed: true
+    findings:
+      - "Seedance, Kling, Runway, and Veo prompts use separate adapter strategies."
+  generation_qa_gate:
+    passed: false
+    findings:
+      - "Fill after reviewing generated outputs."
+
+review_fields:
+  image_generation:
+    character_identity_match: "unreviewed"
+    wardrobe_match: "unreviewed"
+    prop_state_match: "unreviewed"
+    alley_geography_match: "unreviewed"
+    text_labels_readable: "unreviewed"
+    material_surface_integrity: "unreviewed"
+    board_layout_art_directed: "unreviewed"
+  video_generation:
+    reference_board_not_animated: "unreviewed"
+    shot_order_preserved: "unreviewed"
+    camera_motion_match: "unreviewed"
+    subject_action_match: "unreviewed"
+    audio_policy_match: "unreviewed"
+    continuity_drift: "unreviewed"
+    model_specific_failure: "unreviewed"
+
+failure_types:
+  weak_story_idea: false
+  generic_script: false
+  vague_visual_direction: false
+  overloaded_shot: false
+  unusable_reference_image_plan: false
+  generic_grid_board_layout: false
+  fish_scale_material_artifact: false
+  image_prompt_missing_json_style_config: false
+  storyboard_board_misread_by_video_model: false
+  copied_video_prompt_across_models: false
+  missing_audio_policy: false
+  model_specific_motion_failure: false
+  continuity_drift: false
+
+required_fixes: []
+retry_instruction: "After generation review, map each failure to docs/film-preproduction/qa/retry-rules.md and revise the smallest upstream artifact."
+next_step: "generation-qa"
+
+skill_run_receipt:
+  run_id: cyber-courier-generation-qa-template-2026-05-14
+  skill_id: generation-qa
+  input_artifacts:
+    - examples/cyber-courier/20-image-prompt-manifest.yaml
+    - examples/cyber-courier/21-video-prompt-manifest.yaml
+  output_artifacts:
+    - examples/cyber-courier/23-generation-qa-template.yaml
+  decisions:
+    - "Generation QA remains a template because real image/video generation is outside the authorized boundary."
+  unresolved_questions: []
+  qa_gate:
+    status: pass
+    reasons:
+      - "Template covers required generation failure classes and retry routing."
+  next_recommended_skill: learn

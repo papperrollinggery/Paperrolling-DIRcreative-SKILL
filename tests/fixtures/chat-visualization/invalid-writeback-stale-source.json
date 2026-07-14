@@ -1,0 +1,60 @@
+{
+  "receipt_version": "dircreative.chat-visualization-writeback@1.0",
+  "receipt_id": "writeback-stale-source",
+  "execution_context": "standalone_chat",
+  "controller": {
+    "write_owner": "dircreative",
+    "recorded_by": "dircreative",
+    "user_facing": true
+  },
+  "source_view": {
+    "spec_path": "tests/fixtures/chat-visualization/valid-director-compare-inline.json",
+    "spec_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "view_id": "director-concept-compare",
+    "gate_id": "concept_options_01"
+  },
+  "conversation_intent": {
+    "action_id": "adopt",
+    "action_kind": "submit_selection",
+    "selected_option_id": "human-proof",
+    "submitted_text": "采用人情证据方向。",
+    "decision_source": "real_user",
+    "user_confirmation_id": "fixture-user-message-stale"
+  },
+  "gate_result": {
+    "status": "approved",
+    "selected_option_id": "human-proof",
+    "rationale": "此回执故意绑定旧来源。",
+    "conflict": null
+  },
+  "artifact_writes": [
+    {
+      "artifact_id": "selected-concept-01",
+      "label": "已选创意方向",
+      "path": "tests/fixtures/chat-visualization/writeback-project/artifacts/selected-concept.json",
+      "change_kind": "created",
+      "before_sha256": null,
+      "after_sha256": "cf0702bbc2e52b4b21e8dbd9306994b85fbccd1731d33ec3293243342cc3482c"
+    }
+  ],
+  "lock_effects": {
+    "created": ["创意方向：人情证据"],
+    "preserved": []
+  },
+  "downstream_effects": {
+    "stale": [],
+    "preserved": [],
+    "blocked": ["开始生成图片或视频素材"]
+  },
+  "next_stage": {
+    "id": "story_approval_gate",
+    "label": "故事",
+    "status": "ready"
+  },
+  "authority": {
+    "visual_action_wrote_state": false,
+    "controller_revalidated_source": true,
+    "artifact_hashes_verified": true,
+    "generation_authorized": false
+  }
+}

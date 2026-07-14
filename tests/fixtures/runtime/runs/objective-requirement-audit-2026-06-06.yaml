@@ -1,0 +1,130 @@
+fixture_authority: none
+live_state_authority: false
+live_acceptance_authority: false
+host_attestation_authority: false
+
+artifact:
+  artifact_id: objective-requirement-audit-2026-06-06
+  version: 1.0.0
+  source_artifact_ids:
+    - thread-orchestration-cleanup-2026-06-06
+    - back-door-light-visual-package-assisted-generation
+    - production-demo-retrospective
+    - council-adversarial-review
+    - thread-orchestration-protocol
+    - ai-video-prompt-community-lessons
+  status: needs_user
+  owner_skill: dircreative
+
+run:
+  run_id: objective-requirement-audit-2026-06-06
+  run_type: requirement_by_requirement_goal_audit
+  audit_scope: "Full active DIRcreative Goal objective, not a narrowed technical-readiness subtask."
+  audit_date: "2026-06-06"
+  authoritative_completion_standard:
+    requires_live_acceptance_receipt: true
+    required_receipt: ".dircreative/runs/live-user-acceptance.yaml"
+    required_audit_result: "OBJECTIVE_COMPLETE: YES"
+    current_result: "OBJECTIVE_COMPLETE: NO"
+    completion_claim_allowed: false
+  current_thread_evidence:
+    main_controller_thread_id: "00000000-0000-7000-8000-000000000002"
+    visible_dircreative_threads_after_cleanup:
+      - "00000000-0000-7000-8000-000000000002"
+    worker_query_result: []
+    git_worktree_result: "Only /Users/example-user/work/DIR SKILL on main was listed."
+  requirement_matrix:
+    - requirement: "Correct the previous premature Goal completion behavior."
+      evidence:
+        - "docs/film-preproduction/live-user-acceptance-gate.md"
+        - "docs/film-preproduction/thread-orchestration-protocol.md"
+        - "scripts/dircreative_objective_audit.py --require-installed"
+      status: satisfied_for_technical_readiness
+      limitation: "Overall Goal remains incomplete until real user acceptance exists."
+    - requirement: "Clean failed or duplicate Codex worker threads used for this DIRcreative run."
+      evidence:
+        - "tests/fixtures/runtime/runs/thread-orchestration-cleanup-2026-06-06.yaml"
+        - "codex_app.list_threads(query='DIRcreative')"
+        - "codex_app.list_threads(query='worker')"
+        - "git worktree list --porcelain"
+      status: satisfied_for_current_run
+      limitation: "Unrelated project and automation threads were intentionally left untouched."
+    - requirement: "Define thread role, pinning, disposable, reusable, and cleanup rules in the skill."
+      evidence:
+        - "docs/film-preproduction/thread-orchestration-protocol.md"
+        - "docs/film-preproduction/research/thread-orchestration-community-lessons.md"
+        - "skills/dircreative/SKILL.md"
+      status: satisfied_for_technical_readiness
+      limitation: "Future thread use still requires main-controller discipline at runtime."
+    - requirement: "Review production demo failures and mature the skill before more demo generation."
+      evidence:
+        - "docs/film-preproduction/production-demo-retrospective.md"
+        - "tests/fixtures/runtime/runs/back-door-light-visual-package-assisted-generation.yaml"
+        - "docs/film-preproduction/qa/failure-taxonomy.yaml"
+        - "docs/film-preproduction/qa/retry-rules.md"
+      status: satisfied_for_technical_readiness
+      limitation: "The creative demo itself remains needs_revision."
+    - requirement: "Use council adversarial review from user, film expert, product manager, skill developer, and code researcher viewpoints."
+      evidence:
+        - "docs/film-preproduction/council-adversarial-review.md"
+        - "scripts/dircreative_council_audit.py"
+        - "skills/dircreative/story-development/SKILL.md"
+        - "skills/dircreative/script-treatment/SKILL.md"
+        - "skills/dircreative/shot-design/SKILL.md"
+        - "skills/dircreative/image-prompt-compiler/SKILL.md"
+      status: satisfied_for_technical_readiness
+      limitation: "A future live acceptance run must still exercise this with the user."
+    - requirement: "Use public/community research without copying platform-specific behavior."
+      evidence:
+        - "docs/film-preproduction/research/thread-orchestration-community-lessons.md"
+        - "docs/film-preproduction/research/ai-video-prompt-community-lessons.md"
+        - "docs/film-preproduction/production-prompt-discipline.md"
+        - "docs/film-preproduction/council-adversarial-review.md"
+      status: satisfied_for_technical_readiness
+      limitation: "Research remains platform-neutral and does not install or connect external MCPs."
+    - requirement: "Improve prompt and storyboard structure, including material choice, character design, camera, paths, and professional shot-card text."
+      evidence:
+        - "docs/film-preproduction/production-prompt-discipline.md"
+        - "docs/film-preproduction/production-demo-retrospective.md"
+        - "skills/dircreative/image-prompt-compiler/SKILL.md"
+        - "skills/dircreative/shot-design/SKILL.md"
+      status: satisfied_for_technical_readiness
+      limitation: "No new generated media is treated as accepted."
+    - requirement: "Do not mark complete unless objective audit reports OBJECTIVE_COMPLETE: YES or real user acceptance is completed."
+      evidence:
+        - "scripts/dircreative_objective_audit.py --require-installed"
+        - "docs/film-preproduction/templates/live-user-acceptance.template.yaml"
+      status: incomplete_by_design
+      limitation: ".dircreative/runs/live-user-acceptance.yaml is absent."
+
+qa:
+  requirement_by_requirement_audit_written: true
+  live_user_acceptance_receipt_exists: false
+  objective_technical_readiness_expected: true
+  objective_complete_expected: false
+  completion_claim_allowed: false
+  goal_should_remain_active: true
+  failures:
+    - "real_user_acceptance_missing"
+
+skill_run_receipt:
+  run_id: objective-requirement-audit-2026-06-06
+  skill_id: dircreative
+  input_artifacts:
+    - "active Goal objective"
+    - "codex_app.list_threads(query='DIRcreative')"
+    - "git worktree list --porcelain"
+    - "scripts/dircreative_objective_audit.py --require-installed"
+  output_artifacts:
+    - "tests/fixtures/runtime/runs/objective-requirement-audit-2026-06-06.yaml"
+  decisions:
+    - "Keep the full Goal objective intact."
+    - "Treat technical readiness as insufficient for completion."
+    - "Leave the Goal active because real user acceptance is missing."
+  unresolved_questions:
+    - "Run the real chat acceptance pass with the user."
+  qa_gate:
+    status: needs_user
+    reasons:
+      - "The objective still requires live user acceptance before completion."
+  next_recommended_skill: dircreative-co-creation-gate-runtime

@@ -1,0 +1,12 @@
+fixture:
+  fixture_id: invalid-creative-copy-deck-source-sample-provenance
+  description: Reject a real-copy sample missing any required provenance field.
+  expectation: reject
+  mutations:
+    - operation: remove
+      path: project.copy_development.source_samples.0.source_ref
+  expected_failure_ids:
+    - copy_execution_status_inconsistent
+    - copy_source_samples_missing
+    - copy_voice_profile_missing
+  expected_review_ids: []

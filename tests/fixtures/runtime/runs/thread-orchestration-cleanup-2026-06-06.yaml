@@ -1,0 +1,223 @@
+fixture_authority: none
+live_state_authority: false
+live_acceptance_authority: false
+host_attestation_authority: false
+
+artifact:
+  artifact_id: thread-orchestration-cleanup-2026-06-06
+  version: 1.0.0
+  source_artifact_ids:
+    - docs/film-preproduction/thread-orchestration-protocol.md
+    - docs/film-preproduction/council-adversarial-review.md
+    - docs/film-preproduction/research/thread-orchestration-community-lessons.md
+  status: needs_user
+  owner_skill: dircreative
+
+run:
+  run_id: thread-orchestration-cleanup-2026-06-06
+  run_type: real_thread_cleanup_record
+  main_controller_thread:
+    thread_id: "00000000-0000-7000-8000-000000000002"
+    title: "DIRcreative prompt discipline 主控 Goal"
+    cwd: "/Users/example-user/work/DIR SKILL"
+    pinned: true
+    role: pinned_user_facing_controller
+  disposable_workers_archived:
+    - thread_id: "00000000-0000-7000-8000-000000000003"
+      role: read_only_council_worker_user_film_product
+      result: consumed
+      archived: true
+    - thread_id: "00000000-0000-7000-8000-000000000004"
+      role: read_only_council_worker_skill_code
+      result: consumed
+      archived: true
+  thread_list_evidence:
+    query: "DIRcreative"
+    visible_project_threads_after_cleanup:
+      - "00000000-0000-7000-8000-000000000002"
+    query_worker_result: []
+  worktree_evidence:
+    command: "git worktree list --porcelain"
+    result_summary: "Only /Users/example-user/work/DIR SKILL on main was listed."
+    unintended_worker_worktrees_present: false
+  cleanup_policy:
+    unrelated_project_threads_archived: false
+    reason: "Only current DIRcreative disposable workers were in scope; unrelated project and automation threads were left untouched."
+
+thread_dispatch_record:
+  record_id: "thread-dispatch-record-2026-06-06"
+  version: "1.0.0"
+  project_title: "DIRcreative prompt discipline 主控 Goal"
+  main_controller_thread_id: "00000000-0000-7000-8000-000000000002"
+  active_goal_summary: "Prompt discipline, council adversarial review, thread orchestration, cleanup, and live acceptance boundary hardening."
+  acceptance_standard: "OBJECTIVE_COMPLETE: YES only after real live-user acceptance"
+  created_at: "2026-06-06"
+
+thread_class_policy:
+  allowed_thread_classes:
+    - pinned_user_facing_controller
+    - disposable_read_only_worker
+    - isolated_worktree_worker
+    - reusable_research_thread
+  default_user_facing_thread_class: pinned_user_facing_controller
+  same_directory_worker_default: read_only
+  substantive_output_default_thread_class: isolated_worktree_worker
+  read_only_worker_use: review_research_cold_review_only
+  main_controller_write_boundary: receipts_adoption_merge_rollback_validation_only
+  hidden_thread_state_is_truth: false
+
+thread_budget:
+  max_active_workers: 3
+  active_worker_count: 0
+  approval_required_above: 5
+  over_budget_reason: ""
+
+dispatches:
+  - thread_id: "00000000-0000-7000-8000-000000000002"
+    thread_class: pinned_user_facing_controller
+    role: "Live user conversation, active Goal, dispatch, worker adoption, validation, cleanup, and acceptance judgment."
+    professional_identity: "main-controller delivery lead"
+    viewpoint: main-controller
+    read_scope:
+      - "repo files"
+      - ".dircreative/runs/"
+      - "validation output"
+      - "Codex app thread list"
+    write_scope: main_controller_only
+    worktree_path: "/Users/example-user/work/DIR SKILL"
+    allowed_actions:
+      - "write run receipts and adoption records"
+      - "adopt or reject worker diffs"
+      - "merge or rollback adopted worker changes"
+      - "validation"
+      - "worker cleanup"
+      - "user-facing status"
+    expected_output: "dispatch record, adoption or rejection record, receipts, validation output, and user-facing status"
+    stop_condition: "report only after worker findings are reconciled, validation passes, and cleanup evidence is recorded"
+    cleanup_rule: keep_pinned
+    may_mark_goal_complete: false
+    output_status: consumed
+    findings_summary:
+      - "Main-controller thread remains the only visible DIRcreative thread."
+    adopted_into:
+      - "docs/film-preproduction/thread-orchestration-protocol.md"
+      - "tests/fixtures/runtime/runs/thread-orchestration-cleanup-2026-06-06.yaml"
+    consumed_at: "2026-06-06"
+    cleanup_verified_by: "main-controller"
+    archived: false
+    pinned: true
+  - thread_id: "00000000-0000-7000-8000-000000000003"
+    thread_class: disposable_read_only_worker
+    role: "Council review from user, film expert, and product manager viewpoints."
+    professional_identity: "user / professional film expert / product manager review lane"
+    viewpoint: "user / professional film expert / product manager"
+    read_scope:
+      - "skills/dircreative/SKILL.md"
+      - "docs/film-preproduction/production-demo-retrospective.md"
+      - "docs/film-preproduction/production-prompt-discipline.md"
+      - "docs/film-preproduction/shot-language-standard.md"
+    write_scope: none
+    worktree_path: ""
+    allowed_actions:
+      - "read-only critique"
+      - "adopt/reject recommendation"
+    expected_output: "adopt/reject critique list"
+    stop_condition: "return critique list only; stop before edits, receipts, or completion claims"
+    cleanup_rule: archive_after_consumed
+    may_mark_goal_complete: false
+    output_status: consumed
+    findings_summary:
+      - "Add intent routing, dramatic pressure card, scene beat card, and visible shot-card template."
+    adopted_into:
+      - "docs/film-preproduction/production-demo-retrospective.md"
+      - "skills/dircreative/story-development/SKILL.md"
+      - "skills/dircreative/script-treatment/SKILL.md"
+      - "skills/dircreative/shot-design/SKILL.md"
+    consumed_at: "2026-06-06"
+    cleanup_verified_by: "main-controller"
+    archived: true
+    pinned: false
+  - thread_id: "00000000-0000-7000-8000-000000000004"
+    thread_class: disposable_read_only_worker
+    role: "Council review from Skill developer and code researcher viewpoints."
+    professional_identity: "skill developer / code researcher review lane"
+    viewpoint: "skill developer / code researcher"
+    read_scope:
+      - "scripts/validate_project.py"
+      - "docs/film-preproduction/thread-orchestration-protocol.md"
+      - "docs/film-preproduction/qa/failure-taxonomy.yaml"
+      - "docs/film-preproduction/qa/retry-rules.md"
+    write_scope: none
+    worktree_path: ""
+    allowed_actions:
+      - "read-only critique"
+      - "validation-gap recommendation"
+    expected_output: "adopt/reject critique list"
+    stop_condition: "return critique list only; stop before edits, receipts, or completion claims"
+    cleanup_rule: archive_after_consumed
+    may_mark_goal_complete: false
+    output_status: consumed
+    findings_summary:
+      - "Add material_selection_missing and thread_control_incomplete to taxonomy/retry; wire sub-skills and validation."
+    adopted_into:
+      - "docs/film-preproduction/qa/failure-taxonomy.yaml"
+      - "docs/film-preproduction/qa/retry-rules.md"
+      - "scripts/validate_project.py"
+    consumed_at: "2026-06-06"
+    cleanup_verified_by: "main-controller"
+    archived: true
+    pinned: false
+
+worktree_audit:
+  command: "git worktree list --porcelain"
+  expected_main_worktree: "/Users/example-user/work/DIR SKILL"
+  unintended_worker_worktrees_present: false
+  stale_worker_checkout_present: false
+  checked_paths:
+    - "/Users/example-user/work/DIR SKILL"
+  evidence_source: git
+
+completion_boundary:
+  live_user_acceptance_receipt_exists: false
+  release_gate_passed: true
+  objective_complete: false
+  completion_claim_allowed: false
+
+qa:
+  main_controller_pinned: true
+  disposable_workers_archived: true
+  stale_worker_threads_visible_for_project: false
+  unintended_worker_worktrees_present: false
+  worker_findings_reconciled_into_repo: true
+  one_pinned_main_controller: true
+  useful_findings_reconciled: true
+  no_hidden_thread_truth: true
+  no_unintended_worktrees: true
+  no_completion_claim: true
+  live_user_acceptance_written: false
+  objective_complete_claimed: false
+  failures: []
+
+skill_run_receipt:
+  run_id: thread-orchestration-cleanup-2026-06-06
+  skill_id: dircreative
+  input_artifacts:
+    - "codex_app.list_threads(query='DIRcreative')"
+    - "codex_app.list_threads(query='worker')"
+    - "git worktree list --porcelain"
+  output_artifacts:
+    - "tests/fixtures/runtime/runs/thread-orchestration-cleanup-2026-06-06.yaml"
+    - "docs/film-preproduction/thread-orchestration-protocol.md"
+    - "docs/film-preproduction/research/thread-orchestration-community-lessons.md"
+  decisions:
+    - "Pin the main-controller thread for the current DIRcreative Goal."
+    - "Archive disposable read-only workers after their findings are consumed."
+    - "Leave unrelated project and automation threads untouched."
+    - "Keep OBJECTIVE_COMPLETE: NO until live acceptance exists."
+  unresolved_questions:
+    - "Real user acceptance remains pending."
+  qa_gate:
+    status: needs_user
+    reasons:
+      - "Thread cleanup is complete for this run, but the overall project still needs live user acceptance."
+  next_recommended_skill: dircreative-co-creation-gate-runtime

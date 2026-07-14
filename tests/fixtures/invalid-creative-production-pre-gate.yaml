@@ -1,0 +1,19 @@
+creative_production_adapter:
+  run_id: invalid-cp-pre-gate
+  visual_output_mode: assisted_generation
+  creative_production_path: Ads
+  user_authorization:
+    explicit: true
+    decision_source: real_user
+  dircreative_gate_state:
+    story_locked: false
+    script_locked: true
+    shot_list_locked: true
+    reference_pack_locked: true
+    pre_generation_contract_status: pass
+  review_surface:
+    primary: render_moodboard_board_widget
+    widget_is_truth_source: false
+  generated_candidates: []
+  qa:
+    no_real_media_generated: true

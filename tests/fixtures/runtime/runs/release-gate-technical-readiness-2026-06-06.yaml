@@ -1,0 +1,74 @@
+fixture_authority: none
+live_state_authority: false
+live_acceptance_authority: false
+host_attestation_authority: false
+
+artifact:
+  artifact_id: release-gate-technical-readiness-2026-06-06
+  version: 1.0.0
+  source_artifact_ids:
+    - objective-requirement-audit-2026-06-06
+    - thread-orchestration-cleanup-2026-06-06
+    - live-user-acceptance-template-v1
+  status: needs_user
+  owner_skill: dircreative
+
+run:
+  run_id: release-gate-technical-readiness-2026-06-06
+  run_type: release_gate_technical_readiness
+  command: "python3 scripts/dircreative_release_gate.py"
+  result: "RELEASE_GATE: PASS"
+  installed_target: "/Users/example-user/.skillshub/dircreative"
+  technical_readiness:
+    repo_validation: pass
+    installed_skill_validation: pass
+    installed_parity: pass
+    readiness_audit: pass
+    visual_dogfood_pages: pass
+    council_audit: pass
+    chat_surface_order_audit: pass
+    diff_whitespace_check: pass
+    acceptance_preflight: pass
+  completion_boundary:
+    goal_completion_audit: "GOAL_COMPLETE: NO"
+    objective_completion_audit: "OBJECTIVE_COMPLETE: NO"
+    live_receipt_absent: true
+    receipt_creation_allowed: false
+    completion_claim_allowed: false
+    next_required_action: "run a real chat acceptance pass; do not treat goal-mode simulation as user approval"
+  thread_state_after_release_gate:
+    dircreative_visible_threads:
+      - "00000000-0000-7000-8000-000000000002"
+    worker_threads_visible_for_project: []
+    unintended_worker_worktrees_present: false
+
+qa:
+  release_gate_passed: true
+  technical_readiness_passed: true
+  objective_complete: false
+  live_user_acceptance_recorded: false
+  goal_should_remain_active: true
+  failures:
+    - "real_user_acceptance_missing"
+
+skill_run_receipt:
+  run_id: release-gate-technical-readiness-2026-06-06
+  skill_id: dircreative
+  input_artifacts:
+    - "scripts/dircreative_release_gate.py"
+    - "scripts/dircreative_council_audit.py"
+    - "scripts/dircreative_objective_audit.py --require-installed"
+    - "docs/film-preproduction/templates/live-user-acceptance.template.yaml"
+  output_artifacts:
+    - "tests/fixtures/runtime/runs/release-gate-technical-readiness-2026-06-06.yaml"
+  decisions:
+    - "Record release gate PASS as technical readiness only."
+    - "Do not create live-user-acceptance.yaml."
+    - "Do not mark the active Goal complete."
+  unresolved_questions:
+    - "Real chat acceptance pass still needs the user."
+  qa_gate:
+    status: needs_user
+    reasons:
+      - "Release gate passed, but objective completion remains blocked by missing real user acceptance."
+  next_recommended_skill: dircreative-co-creation-gate-runtime

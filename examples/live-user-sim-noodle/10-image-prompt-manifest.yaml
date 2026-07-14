@@ -1,0 +1,551 @@
+artifact:
+  artifact_id: noodle-image-prompt-manifest-v1
+  version: 1.0.0
+  source_artifact_ids:
+    - noodle-reference-pack-plan-v1
+    - noodle-visual-bible-v1
+  status: approved
+  owner_skill: image-prompt-compiler
+  locked_by_user: false
+
+image_prompt_manifest:
+  project_title: "Midnight Broth Cup"
+  generation_target: "advertising_reference_pack"
+  image_model: "GPT Image / Image2 compatible"
+  authoring_mode: "json_first"
+  visual_output_mode: "prompt_only"
+  longform_generation_mode: "single_sequence"
+  sequence_plan: ""
+  style_system:
+    style_schema: "docs/film-preproduction/schemas/image-prompt-style-config.schema.json"
+    pattern_registry: "docs/film-preproduction/prompt-pattern-registry.json"
+    selected_pattern_ids:
+      - art_directed_asymmetric_layout_v1
+      - json_config_prompt_v1
+      - surface_integrity_guard_v1
+      - multi_panel_identity_lock_v1
+  global_style_locks:
+    - "warm practical food realism"
+    - "late-night office neo-noir contrast"
+    - "ivory cup, red seal, copper lid edge"
+    - "natural broth, steam, and noodle texture"
+    - "required lighting/material/style board before ad image generation"
+  global_avoid:
+    - "generic equal grid"
+    - "fake tiny typography"
+    - "plastic food"
+    - "explosive steam"
+    - "over-sharpened noodle texture"
+
+capability_resolution:
+  registry_path: "docs/film-preproduction/sources/model-sources.yaml"
+  registry_version: "2.0.0"
+  capability_card_id: gpt_image_2_openai_api
+  version: "gpt-image-2"
+  status: current
+  provider_surface: "OpenAI Image API and Responses API image_generation tool"
+  verified_on: "2026-07-10"
+  accessed_on: "2026-07-10"
+  evidence_level: S1
+  source_urls:
+    - "https://developers.openai.com/api/docs/guides/image-generation"
+  source_conflicts: []
+  access_mode: api
+  execution_mode: api
+  execution_verification_status: unverified
+  resolution_status: resolved
+
+rights_gate:
+  status: unverified
+  conditions: []
+  source_asset_rights: "Prompt-only artifact; rights must be verified before generation."
+  likeness_authorization: unverified
+  brand_or_character_authorization: unverified
+  provider_restrictions_checked: true
+  evidence_refs: []
+  generation_allowed: false
+
+audio_intent:
+  desired_audio: downstream_metadata_only
+  generation_audio_route: not_applicable
+  prohibited_in_image_prompt: true
+
+
+execution_capabilities:
+  image_generation:
+    available: false
+    provider: none
+    allowed_by_user: false
+    external_upload_authorized: false
+    external_execution_state: instructions_only
+    external_execution_evidence: []
+  video_generation:
+    available: false
+    provider: none
+    allowed_by_user: false
+  file_write:
+    available: true
+  browser_review:
+    available: false
+
+images:
+  - image_id: noodle_image_01
+    operation: generate
+    capability_card_id: gpt_image_2_openai_api
+    source_references: []
+    rights:
+      status: unverified
+      evidence_refs: []
+    transformation_contract:
+      preserve: []
+      change: []
+      allow_incidental_change: []
+      forbidden_change: []
+      overlap_check: pass
+    type: "product_identity_board"
+    purpose: "Lock cup identity, red seal, lid edge, broth, noodles, steam, and hand scale."
+    sequence_id: "noodle-seq-01"
+    input_dependencies:
+      story_package: "examples/live-user-sim-noodle/05-story-package.md"
+      shot_list: "examples/live-user-sim-noodle/07-shot-list.yaml"
+      visual_bible: "examples/live-user-sim-noodle/08-visual-bible.md"
+      sequence_plan: ""
+      reference_pack_manifest: "examples/live-user-sim-noodle/09-reference-pack-plan.yaml"
+    layout:
+      aspect_ratio: "16:9"
+      sections:
+        - "large hero cup three-quarter view"
+        - "red seal tab macro"
+        - "broth and noodle macro"
+        - "steam material study"
+      density: "medium, product-readable"
+      readability_rules:
+        - "cup label must be readable"
+        - "macro food panels must not become noisy texture"
+        - "support panels stay large"
+    asset_output:
+      status: prompt_ready
+      prompt_file: "examples/live-user-sim-noodle/10-image-prompt-manifest.yaml#noodle_image_01"
+      generated_file: ""
+      external_instructions: "Run this prompt externally or in authorized assisted_generation before locking product identity."
+      source_tool: none
+      user_lock_status: pending
+    style_config:
+      config_id: noodle_product_identity_board_v1
+      image_type: product_identity_board
+      source_patterns:
+        - art_directed_asymmetric_layout_v1
+        - json_config_prompt_v1
+        - surface_integrity_guard_v1
+        - multi_panel_identity_lock_v1
+      art_direction_policy:
+        non_negotiables:
+          - "do not use a generic product grid"
+          - "do not evenly distribute panels unless readability requires it"
+          - "composition must feel art-directed, intentional, and slightly asymmetric"
+        placement_rule: "hero cup dominates; material proof panels support product truth."
+      quality_and_artifact_control:
+        surface_integrity_guard:
+          required:
+            - "matte paper cup"
+            - "clean readable red seal tab"
+            - "natural broth and noodles"
+            - "soft layered steam"
+          avoid:
+            - "plastic broth"
+            - "over-sharpened noodle mesh"
+            - "random color spots"
+            - "warped label"
+        transparent_background: false
+      self_update:
+        registry_pattern_ids:
+          - art_directed_asymmetric_layout_v1
+          - surface_integrity_guard_v1
+          - multi_panel_identity_lock_v1
+        qa_observations: []
+    prompt: |
+      Pre-generation contract:
+      Largest title on the page: PRODUCT IDENTITY REFERENCE
+      Smaller metadata only: Project: Midnight Broth Cup
+      Do not make Midnight Broth Cup the largest title.
+      Direct video input policy: NOT DIRECT VIDEO INPUT; use this board to lock cup shape, red seal, lid edge, broth, noodles, steam, and hand scale.
+
+      {
+        "artifact": "cinematic product identity board for Midnight Broth Cup",
+        "canvas": "16:9 landscape production board",
+        "layout_policy": "art-directed, intentional, slightly asymmetric, no generic equal grid",
+        "hero": "ivory self-heating noodle cup, red seal band, copper foil lid edge, clean black vertical label reading MIDNIGHT BROTH",
+        "support_panels": ["red seal tab macro", "warm broth and noodle macro", "soft steam study", "hand scale reference"],
+        "text_labels": ["RED SEAL", "HOT BROTH", "SOFT STEAM", "MIDNIGHT SIZE"],
+        "material_truth": "matte paper cup, clear broth, natural noodles, soft layered steam, no plastic food",
+        "style": "premium late-night office food realism with blue monitor and amber desk-lamp contrast"
+      }
+    exact_text_labels:
+      - "RED SEAL"
+      - "HOT BROTH"
+      - "SOFT STEAM"
+      - "MIDNIGHT SIZE"
+    avoid:
+      - "generic snack ad"
+      - "messy noodles"
+      - "fake tiny typography"
+      - "explosive steam"
+    qa:
+      role_clear: true
+      text_readable: true
+      panels_large_enough: true
+      continuity_locks_present: true
+      output_mode_supported: true
+      asset_output_status_present: true
+      video_model_safe: true
+      capability_card_resolved: true
+      rights_gate_passed: false
+      preserve_change_disjoint: true
+      source_reference_present_for_edit: true
+      optional_qa_macro_not_forced: true
+
+  - image_id: noodle_image_02
+    operation: generate
+    capability_card_id: gpt_image_2_openai_api
+    source_references: []
+    rights:
+      status: unverified
+      evidence_refs: []
+    transformation_contract:
+      preserve: []
+      change: []
+      allow_incidental_change: []
+      forbidden_change: []
+      overlap_check: pass
+    type: "environment_camera_board"
+    purpose: "Lock office desk environment, lighting, actor blocking, and usable clean-frame crops."
+    sequence_id: "noodle-seq-01"
+    input_dependencies:
+      story_package: "examples/live-user-sim-noodle/05-story-package.md"
+      shot_list: "examples/live-user-sim-noodle/07-shot-list.yaml"
+      visual_bible: "examples/live-user-sim-noodle/08-visual-bible.md"
+      sequence_plan: ""
+      reference_pack_manifest: "examples/live-user-sim-noodle/09-reference-pack-plan.yaml"
+    layout:
+      aspect_ratio: "9:16"
+      sections:
+        - "large clean N01 desk start frame"
+        - "N04 sip frame"
+        - "N05 product end frame"
+      density: "low-medium, first-frame usable"
+      readability_rules:
+        - "large frame must be text-free enough for clean crop"
+        - "desk geography must be clear"
+    asset_output:
+      status: prompt_ready
+      prompt_file: "examples/live-user-sim-noodle/10-image-prompt-manifest.yaml#noodle_image_02"
+      generated_file: ""
+      external_instructions: "Run this prompt externally, then crop clean N01 and N05 frames without labels."
+      source_tool: none
+      user_lock_status: pending
+    style_config:
+      config_id: noodle_environment_camera_board_v1
+      image_type: environment_camera_board
+      source_patterns:
+        - art_directed_asymmetric_layout_v1
+        - json_config_prompt_v1
+        - surface_integrity_guard_v1
+      art_direction_policy:
+        non_negotiables:
+          - "do not make a generic lifestyle collage"
+          - "large first frame must dominate"
+          - "support frames must feel intentionally placed"
+        placement_rule: "large desk start frame, two smaller production-use support frames."
+      quality_and_artifact_control:
+        surface_integrity_guard:
+          required:
+            - "clear desk geography"
+            - "distinct monitor blue and lamp amber layers"
+            - "natural hand and cup scale"
+          avoid:
+            - "collapsed office background"
+            - "random food stains"
+            - "unreadable fake UI"
+        transparent_background: false
+      self_update:
+        registry_pattern_ids:
+          - art_directed_asymmetric_layout_v1
+          - surface_integrity_guard_v1
+        qa_observations: []
+    prompt: |
+      Pre-generation contract:
+      Largest title on the page: SCENE GEOGRAPHY + CAMERA FOV REFERENCE / OFFICE ENVIRONMENT BOARD
+      Smaller metadata only: Project: Midnight Broth Cup
+      Do not make Midnight Broth Cup the largest title.
+      Direct video input policy: PLANNING ONLY; use this board to lock desk geography, actor blocking, lighting direction, and clean-frame crop candidates.
+
+      {
+        "artifact": "vertical office environment and camera reference board",
+        "canvas": "9:16 image-to-video friendly",
+        "layout_policy": "large clean first frame dominates; support frames are asymmetrically placed, not a generic grid",
+        "subject": "late-night office worker with dark overshirt, ivory noodle cup beside keyboard, rainy city window behind",
+        "frames": ["N01 desk fatigue start", "N04 first sip close", "N05 product end frame"],
+        "text_labels": ["DESK START", "FIRST SIP", "HERO CUP"],
+        "lighting": "blue monitor light, warm desk lamp, rainy city bokeh",
+        "avoid": "fake UI, messy food, crowded office, unreadable tiny labels"
+      }
+    exact_text_labels:
+      - "DESK START"
+      - "FIRST SIP"
+      - "HERO CUP"
+    avoid:
+      - "crowded office"
+      - "fake software interface"
+      - "generic stock office"
+    qa:
+      role_clear: true
+      text_readable: true
+      panels_large_enough: true
+      continuity_locks_present: true
+      output_mode_supported: true
+      asset_output_status_present: true
+      video_model_safe: true
+      capability_card_resolved: true
+      rights_gate_passed: false
+      preserve_change_disjoint: true
+      source_reference_present_for_edit: true
+      optional_qa_macro_not_forced: true
+
+  - image_id: noodle_image_03
+    operation: generate
+    capability_card_id: gpt_image_2_openai_api
+    source_references: []
+    rights:
+      status: unverified
+      evidence_refs: []
+    transformation_contract:
+      preserve: []
+      change: []
+      allow_incidental_change: []
+      forbidden_change: []
+      overlap_check: pass
+    type: "style_material_board"
+    purpose: "Lock lighting, palette, material truth, steam softness, and texture artifact guards."
+    sequence_id: "noodle-seq-01"
+    input_dependencies:
+      story_package: "examples/live-user-sim-noodle/05-story-package.md"
+      shot_list: "examples/live-user-sim-noodle/07-shot-list.yaml"
+      visual_bible: "examples/live-user-sim-noodle/08-visual-bible.md"
+      sequence_plan: ""
+      reference_pack_manifest: "examples/live-user-sim-noodle/09-reference-pack-plan.yaml"
+    layout:
+      aspect_ratio: "16:9"
+      sections:
+        - "blue monitor versus amber lamp lighting key"
+        - "matte ivory paper cup material"
+        - "clear broth and noodle texture guard"
+        - "soft layered steam study"
+      density: "medium, style-readable"
+      readability_rules:
+        - "material panels must stay large"
+        - "labels are planning notes only"
+        - "board is not a direct I2V frame"
+    asset_output:
+      status: prompt_ready
+      prompt_file: "examples/live-user-sim-noodle/10-image-prompt-manifest.yaml#noodle_image_03"
+      generated_file: ""
+      external_instructions: "Run this prompt externally or in authorized assisted_generation before locking lighting/material/style."
+      source_tool: none
+      user_lock_status: pending
+    style_config:
+      config_id: noodle_style_material_board_v1
+      image_type: style_material_board
+      source_patterns:
+        - art_directed_asymmetric_layout_v1
+        - json_config_prompt_v1
+        - surface_integrity_guard_v1
+      art_direction_policy:
+        non_negotiables:
+          - "do not make a generic mood board"
+          - "do not use evenly distributed swatches unless readability requires it"
+          - "composition must feel art-directed and intentional"
+        placement_rule: "lighting key dominates; material proof panels support food and packaging truth."
+      quality_and_artifact_control:
+        surface_integrity_guard:
+          required:
+            - "soft layered steam"
+            - "clear broth"
+            - "natural noodles"
+            - "matte paper cup"
+          avoid:
+            - "fish-scale noodle texture"
+            - "over-sharpened steam noise"
+            - "plastic cup sheen"
+            - "random color speckles"
+        transparent_background: false
+      self_update:
+        registry_pattern_ids:
+          - art_directed_asymmetric_layout_v1
+          - surface_integrity_guard_v1
+        qa_observations: []
+    prompt: |
+      Pre-generation contract:
+      Largest title on the page: LIGHTING + MATERIAL STYLE REFERENCE
+      Smaller metadata only: Project: Midnight Broth Cup
+      Do not make Midnight Broth Cup the largest title.
+      Direct video input policy: PLANNING ONLY; use this board to lock palette, cup material, broth, noodle texture, steam softness, and artifact guards.
+
+      {
+        "artifact": "lighting material style board for Midnight Broth Cup ad",
+        "canvas": "16:9 landscape production board",
+        "layout_policy": "art-directed material board, intentional hierarchy, no generic equal grid",
+        "lighting_key": "blue monitor light balanced with warm amber desk lamp and soft steam glow",
+        "material_panels": ["matte ivory paper cup", "clear hot broth", "natural noodle texture", "soft layered steam"],
+        "text_labels": ["BLUE SCREEN", "AMBER LAMP", "MATTE CUP", "SOFT STEAM"],
+        "artifact_guard": "avoid fish-scale noodle texture, excessive sharpening, color spots, noise, cracks, collapse, and distortion",
+        "style": "warm practical food realism with slight neo-noir office contrast"
+      }
+    exact_text_labels:
+      - "BLUE SCREEN"
+      - "AMBER LAMP"
+      - "MATTE CUP"
+      - "SOFT STEAM"
+    avoid:
+      - "generic mood board"
+      - "plastic food"
+      - "over-sharpened noodle texture"
+      - "random noise"
+    qa:
+      role_clear: true
+      text_readable: true
+      panels_large_enough: true
+      continuity_locks_present: true
+      output_mode_supported: true
+      asset_output_status_present: true
+      video_model_safe: true
+      capability_card_resolved: true
+      rights_gate_passed: false
+      preserve_change_disjoint: true
+      source_reference_present_for_edit: true
+      optional_qa_macro_not_forced: true
+
+  - image_id: noodle_image_04
+    operation: generate
+    capability_card_id: gpt_image_2_openai_api
+    source_references: []
+    rights:
+      status: unverified
+      evidence_refs: []
+    transformation_contract:
+      preserve: []
+      change: []
+      allow_incidental_change: []
+      forbidden_change: []
+      overlap_check: pass
+    type: "storyboard_motion_board"
+    purpose: "Show five-shot order, timing, camera motion, and audio cue notes for video prompt compilation."
+    sequence_id: "noodle-seq-01"
+    input_dependencies:
+      story_package: "examples/live-user-sim-noodle/05-story-package.md"
+      shot_list: "examples/live-user-sim-noodle/07-shot-list.yaml"
+      visual_bible: "examples/live-user-sim-noodle/08-visual-bible.md"
+      sequence_plan: ""
+      reference_pack_manifest: "examples/live-user-sim-noodle/09-reference-pack-plan.yaml"
+    layout:
+      aspect_ratio: "16:9"
+      sections:
+        - "five large shot panels"
+        - "duration strip"
+        - "camera motion arrows"
+        - "audio cue notes"
+      density: "medium, readable timing board"
+      readability_rules:
+        - "shot labels and timing notes must be readable"
+        - "board is guidance only, not final video content"
+    asset_output:
+      status: prompt_ready
+      prompt_file: "examples/live-user-sim-noodle/10-image-prompt-manifest.yaml#noodle_image_04"
+      generated_file: ""
+      external_instructions: "Use for planning and Seedance/Veo guidance only; avoid direct Kling/Runway first-frame use."
+      source_tool: none
+      user_lock_status: pending
+    style_config:
+      config_id: noodle_storyboard_motion_board_v1
+      image_type: storyboard_motion_board
+      source_patterns:
+        - art_directed_asymmetric_layout_v1
+        - json_config_prompt_v1
+        - surface_integrity_guard_v1
+        - multi_panel_identity_lock_v1
+      art_direction_policy:
+        non_negotiables:
+          - "do not use evenly spaced generic storyboard boxes"
+          - "composition must feel like a production board with intentional emphasis"
+        placement_rule: "N03 steam and N05 product payoff get slightly larger panel weight."
+      quality_and_artifact_control:
+        surface_integrity_guard:
+          required:
+            - "clear shot order"
+            - "stable cup identity"
+            - "readable motion notes"
+          avoid:
+            - "tiny illegible text"
+            - "panel borders merging into scene"
+            - "distorted cup label"
+        transparent_background: false
+      self_update:
+        registry_pattern_ids:
+          - art_directed_asymmetric_layout_v1
+          - multi_panel_identity_lock_v1
+        qa_observations: []
+    prompt: |
+      Pre-generation contract:
+      Largest title on the page: PROFESSIONAL STORYBOARD + MOTION MAP
+      Smaller metadata only: Project: Midnight Broth Cup
+      Do not make Midnight Broth Cup the largest title.
+      Direct video input policy: PLANNING ONLY; this storyboard board is not a direct video frame.
+      Storyboard density requirement: each shot must include timecode, duration, shot image region, detailed frame description, shot size, focal length, camera position, camera movement start/end, subject blocking, sound or audio cue, transition, and model risk.
+
+      {
+        "artifact": "cinematic storyboard motion board for a 15-second vertical noodle cup ad",
+        "canvas": "16:9 production board",
+        "layout_policy": "art-directed asymmetric storyboard, no generic equal grid",
+        "shots": ["N01 3s desk fatigue slow push", "N02 3s red seal macro locked camera", "N03 3s steam tilt", "N04 3s first sip dolly in", "N05 3s hero cup locked frame"],
+        "text_labels": ["N01 DESK", "N02 SEAL", "N03 STEAM", "N04 SIP", "N05 HERO"],
+        "motion_notes": "show camera arrows and short audio cue notes, but keep panels large and readable",
+        "style": "high-end production board for AI video generation planning"
+      }
+    exact_text_labels:
+      - "N01 DESK"
+      - "N02 SEAL"
+      - "N03 STEAM"
+      - "N04 SIP"
+      - "N05 HERO"
+    avoid:
+      - "generic storyboard grid"
+      - "tiny timing notes"
+      - "conflicting cup designs"
+    qa:
+      role_clear: true
+      text_readable: true
+      panels_large_enough: true
+      continuity_locks_present: true
+      output_mode_supported: true
+      asset_output_status_present: true
+      video_model_safe: true
+      capability_card_resolved: true
+      rights_gate_passed: false
+      preserve_change_disjoint: true
+      source_reference_present_for_edit: true
+      optional_qa_macro_not_forced: true
+
+skill_run_receipt:
+  run_id: noodle-image-prompt-manifest-2026-05-16
+  skill_id: image-prompt-compiler
+  input_artifacts:
+    - examples/live-user-sim-noodle/09-reference-pack-plan.yaml
+  output_artifacts:
+    - examples/live-user-sim-noodle/10-image-prompt-manifest.yaml
+  decisions:
+    - "Write JSON-first prompts, including the required lighting/material/style board, but do not call image generation."
+  unresolved_questions: []
+  qa_gate:
+    status: pass
+    reasons:
+      - "Every image prompt has role, layout, exact labels, style config, and artifact guard."
+  next_recommended_skill: video-model-adapter

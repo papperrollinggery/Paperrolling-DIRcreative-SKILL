@@ -1,0 +1,14 @@
+co_creation_run:
+  run_id: invalid-goal-autorun-live-acceptance
+  run_type: dry_run_fixture
+  visual_output_mode: assisted_generation
+  longform_generation_mode: single_sequence
+  simulated_choices_allowed: true
+  real_user_co_creation_verified: true
+  live_user_acceptance_receipt_written: true
+  real_media_generated: false
+  creative_production_preflight_included: true
+qa:
+  simulated_choices_labeled: true
+  no_real_media_generated: true
+  live_acceptance_not_claimed: false

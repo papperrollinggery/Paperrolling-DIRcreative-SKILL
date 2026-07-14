@@ -1,0 +1,15 @@
+fixture:
+  fixture_id: invalid-creative-copy-deck-copy-status
+  description: Reject empty audience copy and a copy_execution status that contradicts the validated pipeline.
+  expectation: reject
+  mutations:
+    - operation: replace
+      path: story_package.copy_execution.audience_facing_text
+      value: ""
+    - operation: replace
+      path: story_package.copy_execution.voice_profile_status
+      value: pending
+  expected_failure_ids:
+    - copy_audience_text_missing
+    - copy_execution_status_inconsistent
+  expected_review_ids: []

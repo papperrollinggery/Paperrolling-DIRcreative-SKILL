@@ -1,0 +1,50 @@
+{
+  "spec_version": "1.0",
+  "view_id": "image-prompt-handoff",
+  "execution_context": "standalone_chat",
+  "controller": {"surface_owner": "dircreative", "user_facing": true},
+  "stage_gate": {"id": "clean_frame_01", "type": "clean_frame_gate", "status": "needs_user", "decision_owner": "user"},
+  "view": {"intent": "confirm", "display_mode": "inline", "customer_stage_label": "出图执行建议", "decision_prompt": "先保留提示词，还是调整首张测试图方案？"},
+  "source_truth": {
+    "artifacts": [
+      {"artifact_id": "image-prompt-manifest-01", "version": "1.1.0", "sha256": "8888888888888888888888888888888888888888888888888888888888888888"},
+      {"artifact_id": "reference-pack-01", "version": "1.0.0", "sha256": "9999999999999999999999999999999999999999999999999999999999999999"}
+    ]
+  },
+  "presentation": {
+    "fields": [
+      {"id": "current_stage", "label": "当前阶段", "value": "出图执行建议", "classification": "presentation_only", "source_ref": null},
+      {"id": "prompt_intent", "label": "提示词目标", "value": "先制作一张无文字产品身份测试图，验证轮廓与材质。", "classification": "source_bound", "source_ref": "image-prompt-manifest-01#/items/0/intent"},
+      {"id": "inherited_references", "label": "沿用的视觉设定", "value": ["产品轮廓", "产品材质", "中性背景"], "classification": "source_bound", "source_ref": "reference-pack-01#/locked_inputs"},
+      {"id": "selected_model", "label": "模型状态", "value": "未选择执行模型；当前只准备提示词。", "classification": "source_bound", "source_ref": "image-prompt-manifest-01#/execution/model_status"},
+      {"id": "generation_boundary", "label": "生成边界", "value": "当前只交付提示词摘要；未授权调用图像生成工具。", "classification": "source_bound", "source_ref": "image-prompt-manifest-01#/execution/boundary"},
+      {"id": "qa_target", "label": "首轮 QA", "value": "轮廓、材质、比例和品类误读风险。", "classification": "source_bound", "source_ref": "image-prompt-manifest-01#/qa/target"}
+    ],
+    "options": [],
+    "recommendation": null,
+    "downstream_effects": [{"stage": "video_prompt", "effect": "只有生成或导入且 QA 通过的干净帧，才可能成为视频模型直接输入。"}]
+  },
+  "interactions": {
+    "local": ["expand"],
+    "actions": [
+      {"id": "stay-prompt-only", "label": "保留提示词", "kind": "pause_prompt_only", "target_gate_id": "clean_frame_01", "conversation_intent": "只保留当前提示词，不调用图像生成工具。"},
+      {"id": "revise-plan", "label": "调整首图方案", "kind": "request_revision", "target_gate_id": "clean_frame_01", "conversation_intent": "保持现有方案不变，询问一个首张测试图调整点。"}
+    ],
+    "max_actions": 2,
+    "deep_navigation": false,
+    "nested_scroll": false
+  },
+  "write_boundary": {
+    "preview_only": true,
+    "confirmation_required": true,
+    "writes_authoritative_state": false,
+    "write_owner": "dircreative",
+    "possible_write_targets": ["image-prompt-manifest", "skill_run_receipt.decisions"],
+    "forbidden_claims": ["lock", "readiness", "acceptance", "completion", "generation_authorization"]
+  },
+  "fallback": {
+    "format": "markdown",
+    "required_visible_fields": ["current_stage", "decision_prompt", "prompt_intent", "inherited_references", "selected_model", "generation_boundary", "qa_target", "downstream_effects"],
+    "decision_question": "保留当前提示词，还是先调整首张测试图方案？"
+  }
+}

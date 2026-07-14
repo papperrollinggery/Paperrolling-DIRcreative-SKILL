@@ -1,0 +1,21 @@
+fixture:
+  fixture_id: invalid-creative-copy-deck-editability
+  description: Reject codex-ppt when the user has not accepted full-slide image editability limits.
+  expectation: reject
+  mutations:
+    - operation: replace
+      path: deck_narrative_spec.delivery_route.selected_route
+      value: codex-ppt
+    - operation: replace
+      path: deck_narrative_spec.delivery_route.editable_ppt_required
+      value: false
+    - operation: replace
+      path: deck_narrative_spec.delivery_route.element_level_editability
+      value: not_available
+    - operation: replace
+      path: deck_narrative_spec.delivery_route.codex_ppt.user_accepted_full_slide_images
+      value: false
+  expected_failure_ids:
+    - deck_noneditable_route_without_consent
+    - deck_qa_status_invalid
+  expected_review_ids: []

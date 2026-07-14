@@ -1,0 +1,95 @@
+client_film_gate_contract:
+  project_title: "Invalid Missing VO"
+  target_duration_sec: 60
+  gate_status:
+    story: pass
+    script: pass
+    shot: pass
+    asset_reference: pass
+    prompt_generation: pending
+    client_language: pass
+  client_visible_text_blocks:
+    - "客户看到的是完整故事，不是流程文字。"
+  story_gate:
+    customer_readable_story_preview:
+      - "朋友们围绕旧相册和旅行箱重新聚到一起，每一件礼物都推动一次回忆。"
+      - "结尾把新的船票放回箱子里，让十年的关系变成下一次出发。"
+    preserved_brief_requirements:
+      - "保留相册、旅行箱、朋友道具。"
+    omitted_requirements_without_user_removal: []
+    prop_ellipsis_rule:
+      source_has_ellipsis: false
+      expansions: []
+  script_gate:
+    target_duration_sec: 60
+    time_budget:
+      total_sec: 60
+      sections: []
+    vo_budget:
+      total_words_estimate: 0
+      lines: []
+  shot_gate:
+    story_sections_count: 12
+    rhythm_points_count: 30
+    shots:
+      - shot_id: S01
+        start_sec: 0
+        end_sec: 2
+        shot_size: "CU"
+        camera_position: "front"
+        camera_movement: "push"
+        subject_action: "opens album"
+        emotional_function: "starts memory"
+        props_characters: ["album"]
+        asset_source: "existing"
+        vertical_framing: "center safe"
+        reference_motion: "hand opens album"
+    storyboard_pages:
+      - page_id: SB01
+        image_count: 4
+        image_aspect_ratio: "9:16"
+        crop_policy: "crop_safe_no_stretch"
+        min_image_width_px: 900
+        caption_standard:
+          story_first: true
+          camera_second: true
+          source_or_confirmation_last: true
+  asset_reference_gate:
+    user_claims_existing_browser_images: false
+    browser_or_local_intake:
+      completed: false
+      inspected_sources: []
+      blocked_reason: ""
+    per_shot_asset_contract:
+      - shot_id: S01
+        source_decision: existing_grok_image
+        source_status: available
+        use_case: ppt_storyboard
+        usage_page: "page 1"
+        blocker: ""
+    reference_video_music:
+      reference_motion_notes: []
+      reference_videos: []
+      music_tracks:
+        - source: "candidate"
+          usage: "warm build"
+          lock_status: needs_license_review
+  prompt_generation:
+    status: pending
+    input_gates_locked:
+      story: true
+      script: false
+      shot: false
+      asset_reference: false
+    prompts: []
+  acceptance_boundary:
+    validation_scope: structural_contract_only
+    structural_pass_not_client_deliverable: true
+    structural_pass_not_copy_quality: true
+    structural_pass_not_visual_quality: true
+    structural_pass_not_asset_authorization: true
+    structural_pass_not_live_acceptance: true
+qa:
+  client_film_gate_contract: fail
+  failures:
+    - script_depth_insufficient

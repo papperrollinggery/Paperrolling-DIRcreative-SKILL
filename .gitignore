@@ -1,0 +1,14 @@
+.DS_Store
+node_modules/
+dist/
+build/
+.env
+.env.*
+*.log
+tmp/
+generated/
+.gstack/
+__pycache__/
+*.py[cod]
+dist/
+.release-work/

@@ -1,0 +1,14 @@
+fixture_type: "explicit_threads_simulated"
+expected_failure_contains:
+  - "explicit true Threads cannot use simulated or orchestrated fallback"
+  - "simulated role passes require explicit_true_threads_requested false"
+open_questions: []
+execution:
+  context: "standalone_chat"
+  mode: "simulated_role_passes_fallback"
+  explicit_true_threads_requested: true
+  standalone_small_gate: true
+  durable_artifact_work: false
+  nested_dispatch: false
+  fallback_reason: "The tool was unavailable."
+  thread_records: []

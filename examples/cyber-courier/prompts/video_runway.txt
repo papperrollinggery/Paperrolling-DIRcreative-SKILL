@@ -1,0 +1,57 @@
+# Runway Video Prompt Pack
+
+Best use: one strong still image into a short single-shot motion run. Split the 15-second sequence into separate shot runs and stitch in editing.
+
+Selected strategy for this test: hybrid.
+Clean frames currently planned for SH01, SH03, and SH05. For a fully controlled Runway pass, generate additional clean first frames for SH02 and SH04.
+
+Runway prompt style: motion-focused, positive, simple. Let the input image define identity, composition, lighting, and style.
+
+## Reference Map
+
+Use image_01 for courier identity, image_02 for alley geography, image_03 for package state, and image_05 for lighting style. Use image_04 only as planning guidance for shot order.
+
+Primary clean frame slots:
+- SH01: image_06_clean_sh01
+- SH03: image_07_clean_sh03
+- SH05: image_08_clean_sh05
+
+Anti-misread: Reference boards are planning guidance only. The generated clip should show the cinematic scene, not the board layout.
+
+## SH01 Motion Prompt
+
+The subject makes a small hesitant weight shift at the alley entrance while rain falls steadily and neon reflections ripple across the wet pavement. The camera remains locked off.
+
+Audio policy: silent visual-only generation; post-production audio planned.
+
+## SH02 Motion Prompt
+
+Reference strategy: no dedicated clean frame in the hybrid pack. Generate a SH02 clean first frame before Runway if the all-reference test drifts.
+
+The subject walks slowly forward into the alley and tightens one hand around the delivery bag strap. The camera tracks behind the subject with a slow, steady movement. Rain and steam move naturally in the background.
+
+Audio policy: silent visual-only generation; post-production audio planned.
+
+## SH03 Motion Prompt
+
+The sealed package inside the bag stays still as a thin red scanner pulse gently turns on and reflects on the black fabric. The camera holds a static macro view.
+
+Audio policy: silent visual-only generation; scanner beep added in post.
+
+## SH04 Motion Prompt
+
+Reference strategy: no dedicated clean frame in the hybrid pack. Generate a SH04 clean first frame before Runway if face/performance consistency matters.
+
+The subject looks down, then slowly raises his gaze toward the far door. His expression shifts into restrained dread. The camera slowly pushes closer.
+
+Audio policy: silent visual-only generation; sparse ambience added in post.
+
+## SH05 Motion Prompt
+
+The subject stands still before the sealed metal door as the intercom panel lights up and rain continues falling. Red glow reflects in the puddle near his feet. The camera remains locked off.
+
+Audio policy: silent visual-only generation; relay click and rain added in post.
+
+## Assembly Note
+
+Use each shot as a separate short run. Keep the same courier, red jacket, black delivery bag, and alley geography across all runs through consistent references and first frames.

@@ -1,0 +1,488 @@
+{
+  "schema_version": "1.1.0",
+  "fixture_id": "seedance-mirror-turn-10s",
+  "project": {
+    "title": "Mirror Turn",
+    "intended_use": "10-second vertical product advertisement",
+    "safety_boundary": "product-only display object; no human body, face, skin, or sexual performance",
+    "source_of_truth": "current locked reference pack plus this Prompt IR"
+  },
+  "output": {
+    "aspect_ratio": "9:16",
+    "target_duration_sec": 10,
+    "generation_unit_sec": 10,
+    "text_policy": "post_only",
+    "visual_output_mode": "prompt_only"
+  },
+  "intake": {
+    "read_before_regenerate": true,
+    "source_precedence": [
+      "user_locked_project_assets",
+      "confirmed_project_truth",
+      "unlocked_generated_candidate",
+      "generic_model_knowledge"
+    ],
+    "reuse_or_derive_policy": "Use the existing reference pack as the source truth. Derive only the final model prompt; do not recreate the product or scene from prose.",
+    "supplied_assets": [
+      {
+        "asset_id": "asset_01_product_identity",
+        "source_kind": "project_file",
+        "source_locator": "outputs/reference-pack/01-wardrobe-product-identity-reference.png",
+        "source_hash": "335985efefb16b7f222d3ea62c80e169aece3581caa516ae8d8e66331129e0ca",
+        "source_authorization": "project_owned",
+        "role": "identity",
+        "locked": true,
+        "lock_evidence": "user_locked_reference_pack",
+        "reuse_action": "direct_reference",
+        "inherits_from": [],
+        "preserve": ["product silhouette", "black satin and lace construction", "hardware and strap geometry", "product-only safety boundary"],
+        "may_change": [],
+        "do_not_copy_or_animate": ["board labels", "arrows", "layout panels"],
+        "downstream_slots": ["@Image 3"]
+      },
+      {
+        "asset_id": "asset_02_scene_fov",
+        "source_kind": "project_file",
+        "source_locator": "outputs/reference-pack/02-scene-geography-camera-fov-reference.png",
+        "source_hash": "b82ebe0bb8bce8e7888ab693098353e90c6623a106f4d7c72821f1bdbf12b3e1",
+        "source_authorization": "project_owned",
+        "role": "scene_fov",
+        "locked": true,
+        "lock_evidence": "user_locked_reference_pack",
+        "reuse_action": "planning_only",
+        "inherits_from": [],
+        "preserve": ["mirror position", "floor reflection", "camera axis", "vertical depth"],
+        "may_change": [],
+        "do_not_copy_or_animate": ["FOV wedges", "labels", "arrows", "atlas panels"],
+        "downstream_slots": ["@Image 4"]
+      },
+      {
+        "asset_id": "asset_03_style_material",
+        "source_kind": "project_file",
+        "source_locator": "outputs/reference-pack/03-lighting-material-style-reference.png",
+        "source_hash": "9b4f39317b9ab493620b63ed23b8a797d20e4aeebc20643325c58269631c443f",
+        "source_authorization": "project_owned",
+        "role": "style_material",
+        "locked": true,
+        "lock_evidence": "user_locked_reference_pack",
+        "reuse_action": "planning_only",
+        "inherits_from": ["asset_01_product_identity"],
+        "preserve": ["black-level separation", "deep burgundy edge light", "satin highlight behavior", "lace texture"],
+        "may_change": [],
+        "do_not_copy_or_animate": ["style board labels", "swatches", "reference panels"],
+        "downstream_slots": ["@Image 5"]
+      },
+      {
+        "asset_id": "asset_04_storyboard_motion",
+        "source_kind": "project_file",
+        "source_locator": "outputs/reference-pack/04-professional-storyboard-motion-map.png",
+        "source_hash": "d2532ebae6c55dd747c14769aa10dc07112a547785ece670da79d0614d0c71d1",
+        "source_authorization": "project_owned",
+        "role": "storyboard_motion",
+        "locked": true,
+        "lock_evidence": "user_locked_reference_pack",
+        "reuse_action": "planning_only",
+        "inherits_from": ["asset_01_product_identity", "asset_02_scene_fov"],
+        "preserve": ["shot order", "camera direction", "motion rhythm", "transition intent"],
+        "may_change": [],
+        "do_not_copy_or_animate": ["storyboard cells", "text", "arrows", "timing labels", "borders"],
+        "downstream_slots": ["@Image 6"]
+      },
+      {
+        "asset_id": "asset_05_clean_start",
+        "source_kind": "project_file",
+        "source_locator": "outputs/reference-pack/05-s01-clean-first-frame.png",
+        "source_hash": "f98c1b316b789b54027da7ef3b998e44df8a07b6d792cd0ae198e7a027b685b3",
+        "source_authorization": "project_owned",
+        "role": "clean_start",
+        "locked": true,
+        "lock_evidence": "user_locked_reference_pack",
+        "reuse_action": "direct_reference",
+        "inherits_from": ["asset_01_product_identity", "asset_02_scene_fov", "asset_03_style_material"],
+        "preserve": ["opening composition", "product geometry", "mirror position", "negative space", "no visible text"],
+        "may_change": ["time-based motion only"],
+        "do_not_copy_or_animate": ["nothing; this is the direct opening visual anchor"],
+        "downstream_slots": ["@Image 1"]
+      },
+      {
+        "asset_id": "asset_06_clean_end",
+        "source_kind": "project_file",
+        "source_locator": "outputs/reference-pack/06-s03-clean-end-frame.png",
+        "source_hash": "da24de961bcb44bd36d46370ec5a4b42e112b6b568d58d79b8d4c1f3dac90dad",
+        "source_authorization": "project_owned",
+        "role": "clean_end",
+        "locked": true,
+        "lock_evidence": "user_locked_reference_pack",
+        "reuse_action": "direct_reference",
+        "inherits_from": ["asset_01_product_identity", "asset_02_scene_fov", "asset_03_style_material"],
+        "preserve": ["final three-quarter angle", "mirror relationship", "clean negative space", "no visible text"],
+        "may_change": ["arrival motion before the final hold"],
+        "do_not_copy_or_animate": ["nothing; use only as the end-composition target"],
+        "downstream_slots": ["@Image 2"]
+      }
+    ]
+  },
+  "references": [
+    {
+      "platform_slot": "@Image 1",
+      "asset_id": "asset_05_clean_start",
+      "role": "clean first frame; direct visual anchor for opening state",
+      "direct_input_policy": "allowed",
+      "attached_to_run": true,
+      "required_for_shot": true,
+      "preserve": ["exact opening composition", "product identity", "mirror geometry"],
+      "anti_misread": ["do not add titles, labels, borders, or a storyboard panel"]
+    },
+    {
+      "platform_slot": "@Image 2",
+      "asset_id": "asset_06_clean_end",
+      "role": "clean end-composition target; guide only",
+      "direct_input_policy": "conditional",
+      "attached_to_run": true,
+      "required_for_shot": true,
+      "preserve": ["final angle", "mirror relationship", "negative space"],
+      "anti_misread": ["do not paste as visible split screen", "do not jump to the end before the turn"]
+    },
+    {
+      "platform_slot": "@Image 3",
+      "asset_id": "asset_01_product_identity",
+      "role": "product identity and material reference",
+      "direct_input_policy": "conditional",
+      "attached_to_run": true,
+      "required_for_shot": true,
+      "preserve": ["silhouette", "satin/lace construction", "hardware"],
+      "anti_misread": ["do not animate board labels", "do not create a human wearer"]
+    },
+    {
+      "platform_slot": "@Image 4",
+      "asset_id": "asset_02_scene_fov",
+      "role": "scene geography and camera-axis planning reference",
+      "direct_input_policy": "planning_only",
+      "attached_to_run": false,
+      "required_for_shot": false,
+      "preserve": ["mirror", "floor", "axis", "depth"],
+      "anti_misread": ["do not show FOV wedges, arrows, or atlas panels"]
+    },
+    {
+      "platform_slot": "@Image 5",
+      "asset_id": "asset_03_style_material",
+      "role": "lighting and material planning reference",
+      "direct_input_policy": "planning_only",
+      "attached_to_run": false,
+      "required_for_shot": false,
+      "preserve": ["burgundy edge light", "black-level control", "surface response"],
+      "anti_misread": ["do not reproduce swatches or labels"]
+    },
+    {
+      "platform_slot": "@Image 6",
+      "asset_id": "asset_04_storyboard_motion",
+      "role": "shot order, timing, camera path, transition planning reference",
+      "direct_input_policy": "planning_only",
+      "attached_to_run": false,
+      "required_for_shot": false,
+      "preserve": ["shot rhythm", "motion logic", "transition intent"],
+      "anti_misread": ["do not animate storyboard cells, arrows, grids, or text"]
+    }
+  ],
+  "entities": [
+    {
+      "entity_id": "product_display",
+      "external_name": "the black satin and lace product display",
+      "entity_type": "product",
+      "reference_asset_ids": ["asset_01_product_identity", "asset_05_clean_start", "asset_06_clean_end"],
+      "immutable": ["silhouette", "satin and lace construction", "strap geometry", "hardware", "proportions"],
+      "starting_state": "motionless in the opening three-quarter composition",
+      "screen_position": "centered with protected negative space"
+    }
+  ],
+  "global_locks": {
+    "identity": ["black satin and lace product-only display object", "no human body, face, skin, hand, or wearer"],
+    "product_or_prop": ["same garment construction, strap geometry, lace edge, hardware, and proportions throughout"],
+    "scene": ["dark studio, smoky mirror, black reflective floor, stable camera axis"],
+    "composition_axis": ["vertical 9:16, clean central product read, negative space for post copy at the end"],
+    "palette_material": ["black, deep burgundy accent, restrained neutral reflections", "retain satin and lace texture"],
+    "lens_grammar": ["controlled product cinematography; one main camera move per shot"],
+    "audio_spine": ["no dialogue or voiceover; tactile foley and low mechanical room tone only"]
+  },
+  "composition": {
+    "visual_center": "The product silhouette and the satin highlight are the first read; the mirror echo is secondary.",
+    "subject_hierarchy": "Product first, material detail second, mirror reflection third, environment last.",
+    "foreground_midground_background": "Foreground: controlled edge reflection; midground: product-only display object; background: smoky mirror and dark studio.",
+    "negative_space": "Preserve clean lower-right and final-side space for post-production copy; keep the product away from the crop edge.",
+    "movement_room": "Leave lateral room for the 45-degree turn and a small camera pull-back without cropping the silhouette.",
+    "leading_lines_occlusion_parallax": "Use mirror edge and floor reflection as leading lines; one controlled foreground reflection may briefly mask the transition.",
+    "balance_symmetry": "Start nearly centered and stable; shift to a restrained three-quarter asymmetry only when the object turn begins.",
+    "perspective_depth": "Shallow but readable depth; mirror reflection recedes behind the product and never becomes a second subject.",
+    "screen_direction": "Turn and camera travel preserve the same left-to-right spatial logic.",
+    "narrative_purpose": "Move from controlled identity to material discovery to a confident final reveal."
+  },
+  "render_look": {
+    "lighting": {
+      "condition": "Dark studio with a narrow deep-burgundy edge source entering from camera-left and a soft neutral fill at low level.",
+      "effect": "Separate the black satin from the background while preserving lace texture and mirror depth.",
+      "intensity": "subtle"
+    },
+    "optics": {
+      "condition": "A practical highlight may graze the lens edge during the material reveal.",
+      "lens_family": "spherical",
+      "filtration": "subtle diffusion",
+      "physical_behavior": "Very soft local bloom and restrained veiling glare only at the edge highlight; no full-frame wash, no fake horizontal streak.",
+      "intensity": "subtle"
+    },
+    "atmosphere": {
+      "condition": "Sparse haze is visible only where the edge light crosses the dark studio air.",
+      "medium": "haze",
+      "density_scale": "low density, large-scale studio depth; never opaque",
+      "light_path_visibility": "short, soft directional falloff; no generic god rays",
+      "movement": "almost static, with only imperceptible air drift",
+      "intensity": "subtle"
+    },
+    "grade": {
+      "condition": "Neutral balance first, then a controlled dark fashion grade.",
+      "white_balance_anchor": "neutral black and neutral mirror reflection before the burgundy accent",
+      "contrast_gamma": "moderate contrast with lifted shadow separation, not crushed blacks",
+      "black_level": "deep but textured; retain satin and lace detail",
+      "highlight_rolloff": "soft roll-off on satin highlights and mirror reflections",
+      "saturation_density": "low overall saturation with dense black and restrained burgundy",
+      "palette_separation": "burgundy edge light separated from neutral-black product body",
+      "grain_halation": "very fine grain and only local highlight halation if the edge practical triggers it",
+      "intensity": "subtle"
+    },
+    "preserve": ["product readability", "black satin detail", "lace texture", "mirror geometry", "vertical crop safety"],
+    "exit_or_continuity": "Edge bloom and haze remain subtle through the reveal and fall back before the final clean hold; grade stays continuous across all shots."
+  },
+  "shot_blocks": [
+    {
+      "shot_id": "S01",
+      "time_start": "00.00",
+      "time_end": "02.50",
+      "story_beat": "controlled identity hook",
+      "emotional_or_attention_beat": "quiet certainty; the eye settles on the silhouette",
+      "entity_actions": [
+        {
+          "owner_entity_id": "product_display",
+          "initial_state": "motionless in the opening three-quarter composition",
+          "trigger": "the camera begins its restrained move",
+          "path": "remain physically still while the viewing angle changes",
+          "physical_consequence": "the satin highlight shifts slightly without changing geometry",
+          "final_state": "the silhouette and satin highlight are clearly readable"
+        }
+      ],
+      "subject_action": {
+        "initial_state": "Product-only display object is still in the opening three-quarter composition.",
+        "trigger": "The first low mechanical pulse begins.",
+        "path": "No subject travel; only a minimal natural fabric settle.",
+        "final_state": "Silhouette and satin highlight are clearly readable."
+      },
+      "object_action": {
+        "initial_state": "Display object and product are stable.",
+        "trigger": "Camera begins the move.",
+        "path": "No independent object rotation.",
+        "physical_consequence": "Satin highlight shifts slightly with the camera angle.",
+        "final_state": "Product geometry remains unchanged."
+      },
+      "environment_action": {
+        "initial_state": "Dark mirror studio with stable reflection.",
+        "response": "A restrained burgundy edge reflection breathes at low intensity.",
+        "final_state": "Mirror and floor remain spatially consistent."
+      },
+      "camera": {
+        "shot_size": "medium three-quarter product shot",
+        "angle_height_axis": "eye-level display-object height, three-quarter angle, axis locked",
+        "lens_feel_reason": "normal product perspective with enough depth for mirror geometry; avoid wide-angle distortion",
+        "support": "locked dolly or stabilized slider",
+        "start_target": "outer silhouette and mirror edge",
+        "path": "slow 20-centimeter axial creep-in",
+        "end_target": "satin highlight and upper lace edge",
+        "speed_easing": "near-static start, gentle ease-in, no acceleration spike",
+        "focus": "hold silhouette, then settle on satin highlight without a visible focus hunt",
+        "motivation": "invite attention and establish material before the reveal"
+      },
+      "composition_state": "Centered, stable, controlled negative space; product is the dominant read.",
+      "look_delta": "Local edge bloom is inactive unless the practical highlight crosses the lens edge.",
+      "audio_cues": ["low room tone", "single soft low-frequency pulse at 00.10", "barely audible fabric settle at 01.30"],
+      "transition_in": "Opening hold from black with no graphic overlay.",
+      "transition_out": "Specular match cut on the satin highlight into S02.",
+      "continuity_locks": ["identity", "mirror axis", "black-level detail", "no human presence"]
+    },
+    {
+      "shot_id": "S02",
+      "time_start": "02.50",
+      "time_end": "05.50",
+      "story_beat": "material discovery",
+      "emotional_or_attention_beat": "curiosity moves from silhouette to tactile detail",
+      "entity_actions": [
+        {
+          "owner_entity_id": "product_display",
+          "initial_state": "fixed in the same orientation and construction",
+          "trigger": "the lateral camera move reaches the material plane",
+          "path": "remain still while reflections travel from satin to lace and hardware",
+          "physical_consequence": "satin reflection changes continuously while lace stays matte",
+          "final_state": "lace edge, strap, satin weave, and hardware remain legible and unchanged"
+        }
+      ],
+      "subject_action": {
+        "initial_state": "Product remains the same object and orientation.",
+        "trigger": "Specular highlight bridges into the close view.",
+        "path": "No garment redesign; only the camera reveals the surface.",
+        "final_state": "Lace edge, strap, satin weave, and hardware are legible."
+      },
+      "object_action": {
+        "initial_state": "Product structure is fixed.",
+        "trigger": "Camera slider passes laterally.",
+        "path": "Hardware remains fixed while reflections travel across the surface.",
+        "physical_consequence": "Satin reflection changes continuously; lace remains matte and textured.",
+        "final_state": "No new parts, no missing parts, no morphing."
+      },
+      "environment_action": {
+        "initial_state": "Mirror reflection stays behind the material detail.",
+        "response": "A soft practical reflection enters the far edge and produces a small controlled highlight response.",
+        "final_state": "The light exits before it can wash the frame."
+      },
+      "camera": {
+        "shot_size": "macro insert / close material detail",
+        "angle_height_axis": "slightly below material plane, axis parallel to the product edge",
+        "lens_feel_reason": "macro-like compression for texture separation without distorting hardware",
+        "support": "short stabilized lateral slider",
+        "start_target": "satin highlight",
+        "path": "slow 12-centimeter lateral glide from satin to lace edge and hardware",
+        "end_target": "single metal detail at the moment of the sound tick",
+        "speed_easing": "constant, tactile, no whip or orbit",
+        "focus": "one deliberate rack from satin to lace/hardware around 04.20",
+        "motivation": "turn the viewer's attention into material proof"
+      },
+      "composition_state": "Asymmetrical material frame with foreground reflection as a controlled edge layer; no subject crop.",
+      "look_delta": "Subtle diffusion and local halation appear only at the edge practical; bokeh is small and tied to two distant point lights.",
+      "audio_cues": ["close fabric texture from 02.70", "tiny hardware tick at 04.20", "short high-frequency specular accent at 02.50"],
+      "transition_in": "Specular match cut from S01.",
+      "transition_out": "Rack-focus bridge from hardware highlight back to the full silhouette.",
+      "continuity_locks": ["same product construction", "same black/burgundy palette", "same axis", "no text"]
+    },
+    {
+      "shot_id": "S03",
+      "time_start": "05.50",
+      "time_end": "10.00",
+      "story_beat": "confident final reveal",
+      "emotional_or_attention_beat": "the controlled object becomes a resolved hero image",
+      "entity_actions": [
+        {
+          "owner_entity_id": "product_display",
+          "initial_state": "stable in the established three-quarter state",
+          "trigger": "the turntable engages at 05.60",
+          "path": "rotate once around the vertical axis by approximately 45 degrees with gentle ease-in and no wobble",
+          "physical_consequence": "mirror and floor reflections track the same rotation",
+          "final_state": "settled in the final three-quarter composition before the clean hold"
+        }
+      ],
+      "subject_action": {
+        "initial_state": "Product-only display object is in the established three-quarter state.",
+        "trigger": "Low mechanical rotation begins at 05.60.",
+        "path": "Rotate the display object around its vertical axis approximately 45 degrees, smooth and mechanically plausible.",
+        "final_state": "Final three-quarter angle closely matches the end-composition target and holds for 01.20 seconds."
+      },
+      "object_action": {
+        "initial_state": "Turntable/display support is stable.",
+        "trigger": "Mechanical motor engages.",
+        "path": "One continuous vertical-axis rotation; no wobble, no extra rotation, no part separation.",
+        "physical_consequence": "Mirror reflection and satin highlight track the rotation; floor reflection shifts with the same geometry.",
+        "final_state": "Object settles completely before the final hold."
+      },
+      "environment_action": {
+        "initial_state": "Mirror and haze are stable.",
+        "response": "Reflection follows the object while the haze remains low density; no new rays or particles appear.",
+        "final_state": "Clean dark negative space remains available for post copy."
+      },
+      "camera": {
+        "shot_size": "medium hero three-quarter product shot",
+        "angle_height_axis": "eye-level display-object height, same axis and horizon as the opening shot",
+        "lens_feel_reason": "normal perspective keeps proportions stable during the 45-degree turn",
+        "support": "locked-off camera with a small controlled pull-back",
+        "start_target": "full product silhouette",
+        "path": "begin locked, then ease into a 15-centimeter pull-back while the object turns",
+        "end_target": "final silhouette with clean negative space",
+        "speed_easing": "slow motor ease-in, constant middle, soft ease-out before 08.80",
+        "focus": "hold the product sharp; no focus shift during the turn",
+        "motivation": "reveal the resolved angle and create a post-copy-safe ending"
+      },
+      "composition_state": "Shift from centered stability to restrained three-quarter asymmetry; preserve safe negative space and full silhouette.",
+      "look_delta": "No new filter; edge glow recedes by 08.80 and the grade returns to a clean textured hold.",
+      "audio_cues": ["low mechanical turn from 05.60", "subtle stereo movement following the turntable", "audio tail falls toward silence from 08.80"],
+      "transition_in": "Rack-focus bridge into the full product silhouette.",
+      "transition_out": "Clean hold to post-production copy; no generated text.",
+      "continuity_locks": ["same product identity", "same mirror geometry", "same palette", "no human presence", "no generated text"]
+    }
+  ],
+  "audio_plan": {
+    "dialogue": "none",
+    "voiceover": "none",
+    "ambience": "low dark studio room tone with restrained mirror-space air",
+    "music": "none; no recognizable melody or copyrighted music",
+    "foley": "soft fabric settle and close material texture",
+    "sfx": "one small hardware tick and a low mechanical turntable sound",
+    "silence": "leave the final 1.20 seconds nearly silent with a short natural tail",
+    "generation_route": "postproduction",
+    "perspective": "close foley in S02; centered mechanical source in S03; no voice"
+  },
+  "transition_plan": [
+    {
+      "boundary": "S01_to_S02",
+      "visual_bridge": "same satin specular highlight becomes the first pixel of the material close-up",
+      "audio_bridge": "short high-frequency accent with no musical melody",
+      "continuity_state": "product identity, axis, palette, and lighting direction remain unchanged",
+      "risk": "model may make a hard cut or invent a second product"
+    },
+    {
+      "boundary": "S02_to_S03",
+      "visual_bridge": "rack focus from hardware highlight back to the full silhouette",
+      "audio_bridge": "hardware tick decays into the mechanical turntable sound",
+      "continuity_state": "same display object, mirror, floor, and product construction",
+      "risk": "model may jump to the end frame or rotate the product too far"
+    }
+  ],
+  "capability": {
+    "capability_card_id": "seedance_2_0_official_launch",
+    "model_key": "seedance",
+    "version": "2.0",
+    "provider_surface": "Seedance 2.0 launch product surfaces described by ByteDance Seed",
+    "access_mode": "documented_product",
+    "execution_mode": "manual_export",
+    "execution_verification_status": "unverified",
+    "native_audio_route": "not_used; postproduction handoff"
+  },
+  "generation_plan": {
+    "selected_adapter": "seedance",
+    "units": [
+      {
+        "unit_id": "opening_to_hero",
+        "time_start": "00.00",
+        "time_end": "10.00",
+        "shot_ids": ["S01", "S02", "S03"],
+        "incoming_handoff_key": "locked_opening_product_state",
+        "outgoing_handoff_key": "locked_final_product_state",
+        "incoming_state": "product display motionless in the locked opening composition",
+        "outgoing_state": "product display settled at the final three-quarter angle with clean negative space",
+        "audio_handoff": "all designed audio remains in the post-production cue sheet"
+      }
+    ]
+  },
+  "qa": {
+    "structural_score": 100,
+    "status": "passed",
+    "pass_signals": [
+      "all six supplied assets read and hash-registered",
+      "only three direct references are attached; planning boards remain internal",
+      "ten-second timeline contains three shot blocks and observable state changes",
+      "every shot has one dominant subject action and one dominant camera action",
+      "composition, camera, sound, transition, and conditional four-layer Look are present",
+      "compiled terminal prompt contains no internal shot or asset labels"
+    ],
+    "failure_ids": [],
+    "retry_rules": [
+      "change only reference binding if a board label appears",
+      "change only camera rotation if product geometry drifts",
+      "change only optics/look if highlight bloom washes the satin",
+      "change only audio route if native audio is unstable"
+    ],
+    "next_action": "Export the final prompt for manual Seedance 2.0 use; no external generation has been executed."
+  }
+}

@@ -1,0 +1,13 @@
+fixture:
+  fixture_id: invalid-creative-copy-deck-ai-trace-metadata
+  description: Reject stale diagnostic and execution metadata while keeping the detected AI trace itself review-only.
+  expectation: reject
+  mutations:
+    - operation: replace
+      path: story_package.copy_execution.audience_facing_text
+      value: "此外，值得注意的是，这不仅是一次更新，而且标志着一次深刻变化。"
+  expected_failure_ids:
+    - copy_ai_trace_metadata_inconsistent
+    - copy_execution_status_inconsistent
+  expected_review_ids:
+    - copy_ai_trace_cluster_review

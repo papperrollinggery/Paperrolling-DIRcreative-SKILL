@@ -1,0 +1,35 @@
+eval_fixture:
+  id: E2
+  rule: "Desired audio must route through an exact supported native/reference/preserve/post path."
+  expected_error_id: E2_AUDIO_ROUTE_MISMATCH
+  negative_cases:
+    - expected_error_id: E2_AUDIO_ROUTE_MISMATCH
+      case:
+        audio_plan:
+          capability_card_id: runway_gen_4_5_web
+          desired_audio: full_native_audio
+          generation_audio_route: native
+          postproduction_handoff: ""
+    - expected_error_id: E2_AUDIO_ROUTE_MISMATCH
+      case:
+        audio_plan:
+          capability_card_id: veo_3_1_generate_001_vertex_api
+          desired_audio: dialogue_music_and_effects
+          generation_audio_route: native_configurable
+          postproduction_handoff: ""
+  positive_controls:
+    - audio_plan:
+        capability_card_id: runway_gen_4_5_web
+        desired_audio: dialogue_music_and_effects
+        generation_audio_route: postproduction
+        postproduction_handoff: "Editorial audio package with dialogue, music, ambience, and effects stems."
+    - audio_plan:
+        capability_card_id: veo_3_1_generate_001_vertex_api
+        desired_audio: dialogue_music_and_effects
+        generation_audio_route: postproduction
+        postproduction_handoff: "Editorial audio package; stable Veo audio is unresolved on the exact endpoint."
+    - audio_plan:
+        capability_card_id: veo_3_1_lite_generate_001_vertex_api
+        desired_audio: dialogue_music_and_effects
+        generation_audio_route: native
+        postproduction_handoff: ""

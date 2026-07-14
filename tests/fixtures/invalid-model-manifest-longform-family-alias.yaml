@@ -1,0 +1,9 @@
+contract_fixture:
+  id: longform-family-alias
+  validator: longform_target
+  expected_error_contains: "family alias"
+  negative:
+    model_family: seedance
+    capability_card_id: seedance
+  positive_control:
+    capability_card_id: seedance_2_0_official_launch

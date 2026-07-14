@@ -1,0 +1,57 @@
+client_film_gate_contract:
+  project_title: "Invalid Missing Shot Timecode"
+  target_duration_sec: 15
+  gate_status:
+    story: pass
+    script: pass
+    shot: pass
+    asset_reference: pending
+    prompt_generation: pending
+    client_language: pass
+  client_visible_text_blocks:
+    - "这版先讲清楚朋友如何从旧相册回到今天的庆祝场景。"
+  shot_gate:
+    story_sections_count: 3
+    rhythm_points_count: 5
+    shots:
+      - shot_id: S01
+        start_sec: 0
+        end_sec: 3
+        shot_size: "CU"
+        camera_position: "over-shoulder"
+        camera_movement: "locked on album, then small tilt to face"
+        subject_action: "opens album"
+        emotional_function: "starts the first memory"
+        props_characters: ["album", "main character"]
+        asset_source: "existing_grok_image"
+        vertical_framing: "album lower third, face in upper third"
+        reference_motion: "hand opens album in one clean beat"
+    storyboard_pages:
+      - page_id: SB01
+        image_count: 4
+        image_aspect_ratio: "9:16"
+        crop_policy: "crop_safe_no_stretch"
+        min_image_width_px: 900
+        caption_standard:
+          story_first: true
+          camera_second: true
+          source_or_confirmation_last: true
+  prompt_generation:
+    status: pending
+    input_gates_locked:
+      story: true
+      script: true
+      shot: false
+      asset_reference: false
+    prompts: []
+  acceptance_boundary:
+    validation_scope: structural_contract_only
+    structural_pass_not_client_deliverable: true
+    structural_pass_not_copy_quality: true
+    structural_pass_not_visual_quality: true
+    structural_pass_not_asset_authorization: true
+    structural_pass_not_live_acceptance: true
+qa:
+  client_film_gate_contract: fail
+  failures:
+    - missing_shot_timecode

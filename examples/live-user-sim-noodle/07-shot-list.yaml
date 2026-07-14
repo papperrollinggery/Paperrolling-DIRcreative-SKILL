@@ -1,0 +1,333 @@
+artifact:
+  artifact_id: noodle-shot-list-v1
+  version: 1.0.0
+  source_artifact_ids:
+    - noodle-script-v1
+  status: approved
+  owner_skill: shot-design
+
+shot_list:
+  project_title: "Midnight Broth Cup"
+  deliverable: "15s vertical product ad"
+  channel: "commercial_product_film"
+  aspect_ratio: "9:16"
+  total_duration: "15s"
+  professional_standard: "docs/film-preproduction/shot-language-standard.md"
+  shots:
+    - shot_id: N01
+      timecode: "00:00-00:03"
+      duration: "3s"
+      story_beat: "Late-night need state"
+      narrative_purpose: "Open with a human problem and place the unopened product as the available solution."
+      shot_type: "hook / need-state establishing shot"
+      shot_size: "medium wide vertical desk shot"
+      camera_angle: "eye-level from the monitor side, slightly behind the worker's shoulder"
+      lens: "28mm wide-angle equivalent"
+      lens_reason: "Wide enough to hold worker, desk geography, city window, and unopened cup in one vertical frame."
+      camera_support: "slider or slow digital dolly, stable and controlled"
+      camera_motion: "slow dolly-in from the glowing monitor edge toward the cup on the right third, ending with the cup readable but not heroic yet"
+      focus: "deep enough to keep the worker silhouette and noodle cup legible; monitor text stays soft"
+      composition: "monitor glow foreground left, worker midground left third, ivory cup foreground right third, city lights background"
+      subject_action: "Worker rubs one eye, pauses over the keyboard, and glances toward the unopened cup without touching it."
+      blocking:
+        start_position: "Worker seated left third; cup unopened on desk right third beside keyboard."
+        end_position: "Worker remains seated; attention shifts from screen to cup."
+        path: "No body travel; only hand-to-eye movement and small head turn toward cup."
+        eyeline: "Screen to cup."
+        screen_direction: "Attention moves left-to-right across the frame."
+        axis_note: "Desk axis runs monitor-left to cup-right; keep product on screen-right through the sequence."
+      scene:
+        location: "Late-night office desk by city window"
+        foreground: "Monitor edge, keyboard corner, ivory noodle cup"
+        midground: "Tired worker in chair"
+        background: "Soft city window lights and dark office depth"
+        weather: "Night exterior, no visible rain required"
+        lighting: "Cool monitor key from left, weak amber desk lamp from right"
+      continuity:
+        characters:
+          - "worker_01"
+        props:
+          - "midnight_broth_cup_unopened"
+          - "keyboard"
+          - "desk_lamp"
+        wardrobe:
+          - "simple late-office shirt or knit, no logo"
+        state_locks:
+          - "cup sealed and unopened"
+          - "red seal tab visible but not pulled"
+          - "screen content unreadable"
+      audio:
+        dialogue: []
+        voiceover: []
+        ambience:
+          - "low office HVAC"
+          - "distant elevator motor"
+        sfx:
+          - "soft keyboard idle click"
+        foley:
+          - "hand brushing face"
+        music: "none at open"
+        silence: "no dialogue"
+      transition_in: "cut from black"
+      transition_out: "straight cut to macro product activation"
+      model_notes:
+        seedance: "Can be part of the 15s multi-shot flow; use product identity board to keep cup shape and red seal stable."
+        kling: "Use a clean text-free first frame if generating this shot alone; prompt subject movement, background stillness, and camera push separately."
+        runway: "Strong single-beat I2V candidate from a clean desk frame; avoid adding extra actions beyond eye rub and glance."
+        veo: "Use structured subject/action/scene/camera/audio sections; keep packaging text minimal in video prompt."
+    - shot_id: N02
+      timecode: "00:03-00:06"
+      duration: "3s"
+      story_beat: "Product activation"
+      narrative_purpose: "Show the self-heating mechanism as a clear, tactile product proof."
+      shot_type: "macro proof insert"
+      shot_size: "ECU / macro insert"
+      camera_angle: "slight high angle"
+      lens: "85mm macro"
+      lens_reason: "Macro compression makes the red seal tab, lid texture, and heat indicator feel tactile."
+      camera_support: "locked tripod macro"
+      camera_motion: "locked-off camera remains still while the hand pulls the tab diagonally from lower-left to upper-right"
+      focus: "focus locked on red seal tab first, then tiny rack focus to the amber heat indicator"
+      composition: "cup lid fills frame, red tab on diagonal, heat indicator upper-right, no background clutter"
+      subject_action: "Hand pinches the red seal tab, pulls once, and the heat indicator changes from dull red to amber."
+      blocking:
+        start_position: "Cup lid centered; fingers enter from lower-left edge."
+        end_position: "Seal tab lifted toward upper-right; indicator visible and amber."
+        path: "Single diagonal pull across the lid."
+        eyeline: "No face; object-only insert."
+        screen_direction: "Motion lower-left to upper-right."
+        axis_note: "Keep cup orientation consistent with N01: seal band remains on viewer-facing side."
+      scene:
+        location: "Same office desk, macro view"
+        foreground: "Fingertips and red seal tab"
+        midground: "Cup lid and heat indicator"
+        background: "Soft blue monitor glow, fully defocused"
+        weather: "Interior"
+        lighting: "Amber desk-lamp edge highlight on lid, cool blue fill from monitor"
+      continuity:
+        characters:
+          - "worker_01_partial_hand"
+        props:
+          - "midnight_broth_cup_opening"
+          - "red_seal_tab"
+          - "amber_heat_indicator"
+        wardrobe: []
+        state_locks:
+          - "seal changes from intact to pulled"
+          - "indicator becomes amber only after pull"
+          - "cup label not fully visible in macro"
+      audio:
+        dialogue: []
+        voiceover: []
+        ambience:
+          - "low office hum under macro detail"
+        sfx:
+          - "adhesive seal peel"
+          - "soft heat click"
+        foley:
+          - "fingertip grip on paper tab"
+        music: "low warm pad can begin after click"
+        silence: "no dialogue"
+      transition_in: "straight cut from N01"
+      transition_out: "match cut from amber indicator to rising steam"
+      model_notes:
+        seedance: "Critical product-state shot; bind product identity reference and prevent seal geometry drift."
+        kling: "Best generated as a separate clean macro I2V shot; subject movement is one tab pull, no extra hand gestures."
+        runway: "Keep motion-only prompt short: tab pull, indicator glow, no camera move."
+        veo: "Can describe heat activation causally but avoid impossible mechanical transformation beyond indicator warming."
+    - shot_id: N03
+      timecode: "00:06-00:09"
+      duration: "3s"
+      story_beat: "Warmth becomes visible"
+      narrative_purpose: "Translate the benefit into appetite, steam, and material truth."
+      shot_type: "food texture / steam insert"
+      shot_size: "CU product food detail"
+      camera_angle: "three-quarter top view"
+      lens: "50mm"
+      lens_reason: "Normal lens keeps the cup natural while showing broth, noodles, and steam without macro distortion."
+      camera_support: "tripod head with restrained tilt"
+      camera_motion: "gentle tilt-up from broth surface to steam plume, ending against the dark office background"
+      focus: "shallow depth of field on noodle surface, then soft focus rides the steam edge"
+      composition: "cup lower third, steam column center, blue monitor glow behind, amber rim light on broth"
+      subject_action: "Steam lifts naturally from clean broth and noodles; a spoon edge briefly disturbs the surface."
+      blocking:
+        start_position: "Cup open and low in frame; spoon rests just outside right edge."
+        end_position: "Steam occupies center frame; spoon edge touches broth once."
+        path: "Steam rises upward; spoon movement enters and exits right edge."
+        eyeline: "No face; viewer attention follows steam upward."
+        screen_direction: "Vertical upward motion."
+        axis_note: "Cup remains screen-right product anchor from earlier shots."
+      scene:
+        location: "Same desk, close product detail"
+        foreground: "Cup rim and noodle strands"
+        midground: "Steam and broth surface"
+        background: "Defocused monitor blue and dark office negative space"
+        weather: "Interior"
+        lighting: "Amber rim on broth, cool blue backlight through steam"
+      continuity:
+        characters: []
+        props:
+          - "opened_midnight_broth_cup"
+          - "spoon"
+        wardrobe: []
+        state_locks:
+          - "cup is now open"
+          - "broth looks clean, hot, and natural"
+          - "steam is soft, not smoky or explosive"
+      audio:
+        dialogue: []
+        voiceover: []
+        ambience:
+          - "office hum lowered"
+        sfx:
+          - "soft steam"
+        foley:
+          - "small spoon touch against cup rim"
+        music: "warm pad continues quietly"
+        silence: "no dialogue"
+      transition_in: "match cut from heat indicator glow"
+      transition_out: "cut on spoon touch to human payoff"
+      model_notes:
+        seedance: "Use style/material board to prevent plastic noodles or noisy steam."
+        kling: "Clean frame should contain no labels; motion is steam rise and slight spoon touch."
+        runway: "Good single-shot I2V; keep prompt almost entirely about steam and subtle spoon motion."
+        veo: "Explicitly separate visual steam from audio steam cue."
+    - shot_id: N04
+      timecode: "00:09-00:12"
+      duration: "3s"
+      story_beat: "Human reset"
+      narrative_purpose: "Show the emotional result: warmth restores focus without overacting."
+      shot_type: "performance reaction"
+      shot_size: "MCU with cup foreground"
+      camera_angle: "eye level"
+      lens: "50mm"
+      lens_reason: "Natural perspective keeps the reaction believable while holding cup scale in foreground."
+      camera_support: "small slider dolly or stabilized handheld with almost no shake"
+      camera_motion: "subtle dolly-in from chest framing to tighter face-and-cup composition"
+      focus: "focus starts on cup rim, then racks gently to worker eyes after the sip"
+      composition: "cup foreground lower center, worker face upper third, monitor glow behind face, window edge as depth cue"
+      subject_action: "Worker lifts the cup, takes one quiet sip, shoulders drop, and eyes refocus toward the screen."
+      blocking:
+        start_position: "Worker holds cup near chest; elbows close to body."
+        end_position: "Cup lowers slightly; worker's gaze returns to the monitor."
+        path: "Cup moves from chest to mouth and down; shoulders relax downward."
+        eyeline: "Cup to screen."
+        screen_direction: "Small upward cup motion, then gaze returns left toward monitor."
+        axis_note: "Keep monitor-left / cup-right relationship established in N01."
+      scene:
+        location: "Same desk, worker performance angle"
+        foreground: "Cup rim and steam"
+        midground: "Worker face and hands"
+        background: "Monitor glow, city window edge, dark office"
+        weather: "Interior night"
+        lighting: "Warm cup/desk light under face, cool monitor rim, soft city bokeh"
+      continuity:
+        characters:
+          - "worker_01"
+        props:
+          - "opened_midnight_broth_cup"
+        wardrobe:
+          - "same late-office clothing"
+        state_locks:
+          - "reaction is restrained relief, not exaggerated happiness"
+          - "cup remains same shape and ivory/red identity"
+          - "steam still visible but not covering face"
+      audio:
+        dialogue: []
+        voiceover: []
+        ambience:
+          - "office room tone softens"
+        sfx:
+          - "quiet sip"
+        foley:
+          - "hands around paper cup"
+        music: "warm pad opens slightly"
+        silence: "no spoken line"
+      transition_in: "cut from steam insert"
+      transition_out: "cut on relaxed breath to hero packshot"
+      model_notes:
+        seedance: "Reference actor identity only if locked; otherwise prompt performance restraint and cup continuity."
+        kling: "Use clean MCU first frame; subject movement is sip and shoulder relaxation only."
+        runway: "Avoid adding dialogue or exaggerated facial acting; motion should be micro-performance."
+        veo: "Audio policy should specify no dialogue, ambience plus sip."
+    - shot_id: N05
+      timecode: "00:12-00:15"
+      duration: "3s"
+      story_beat: "Memory frame"
+      narrative_purpose: "End with a clean product recall frame and one readable claim."
+      shot_type: "hero packshot / end card"
+      shot_size: "CU product packshot"
+      camera_angle: "low desk level"
+      lens: "70mm"
+      lens_reason: "Short telephoto compresses city bokeh and makes the cup feel premium without warping packaging."
+      camera_support: "locked tripod"
+      camera_motion: "locked-off hero frame; only steam and small city bokeh movement"
+      focus: "sharp focus on cup label and lid edge; background city lights shallow and soft"
+      composition: "cup centered slightly right, label readable, spoon and laptop edge provide scale, city window bokeh behind"
+      subject_action: "Cup remains still on the desk while soft steam rises vertically."
+      blocking:
+        start_position: "Cup already placed as hero object near desk edge."
+        end_position: "Cup remains still; steam continues; no hand enters frame."
+        path: "No object movement except steam."
+        eyeline: "No character; viewer attention holds on label and steam."
+        screen_direction: "Steam moves upward; product stays locked."
+        axis_note: "Final product side faces camera; preserve red seal band orientation from previous shots."
+      scene:
+        location: "Office desk by city window"
+        foreground: "Laptop edge, spoon, desk surface"
+        midground: "Midnight Broth Cup hero packshot"
+        background: "City window lights and dark office"
+        weather: "Interior night"
+        lighting: "Warm key from desk lamp, cool blue edge from monitor, soft city bokeh"
+      continuity:
+        characters: []
+        props:
+          - "opened_midnight_broth_cup_hero"
+          - "spoon"
+          - "laptop_edge"
+        wardrobe: []
+        state_locks:
+          - "front label readable only in clean/product frame"
+          - "no extra text beyond approved end copy"
+          - "steam natural and soft"
+      audio:
+        dialogue: []
+        voiceover: []
+        ambience:
+          - "office hum fading"
+        sfx:
+          - "distant elevator bell"
+        foley: []
+        music: "warm pad resolves"
+        silence: "no dialogue"
+      transition_in: "straight cut from reaction"
+      transition_out: "hold to end"
+      model_notes:
+        seedance: "Use as final shot in multi-shot flow; bind product identity board strongly."
+        kling: "Clean end frame can be used as final frame or standalone product I2V."
+        runway: "Good single clean product frame; animate steam only."
+        veo: "Use explicit end-card copy in prompt only if target workflow supports reliable text."
+
+qa:
+  all_required_fields_present: true
+  professional_shot_language: true
+  no_overloaded_shots: true
+  product_benefit_visible: true
+  audio_policy_present: true
+  generation_boundary: "No real video generated."
+
+skill_run_receipt:
+  run_id: noodle-shot-list-2026-05-16
+  skill_id: shot-design
+  input_artifacts:
+    - examples/live-user-sim-noodle/06-script.md
+  output_artifacts:
+    - examples/live-user-sim-noodle/07-shot-list.yaml
+  decisions:
+    - "Use five three-second shots for a complete 15-second prompt-only run."
+  unresolved_questions: []
+  qa_gate:
+    status: pass
+    reasons:
+      - "Every shot has duration, purpose, shot size, angle, lens, motion, action, blocking, and audio."
+  next_recommended_skill: visual-bible

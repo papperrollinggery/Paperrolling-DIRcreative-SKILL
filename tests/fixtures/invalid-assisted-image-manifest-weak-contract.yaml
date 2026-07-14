@@ -1,0 +1,138 @@
+artifact:
+  artifact_id: invalid-assisted-image-manifest-weak-contract
+  version: 0.1.0
+  source_artifact_ids:
+    - regression-test
+  status: draft
+  owner_skill: image-prompt-compiler
+  locked_by_user: false
+
+image_prompt_manifest:
+  project_title: "Fog Route Cleaner"
+  generation_target: "advertising_reference_pack"
+  image_model: "GPT Image / Image2 compatible"
+  authoring_mode: "json_first"
+  visual_output_mode: "assisted_generation"
+  longform_generation_mode: "single_sequence"
+  sequence_plan: ""
+  style_system:
+    style_schema: "docs/film-preproduction/schemas/image-prompt-style-config.schema.json"
+    pattern_registry: "docs/film-preproduction/prompt-pattern-registry.json"
+    selected_pattern_ids:
+      - art_directed_asymmetric_layout_v1
+      - json_config_prompt_v1
+      - surface_integrity_guard_v1
+
+execution_capabilities:
+  image_generation:
+    available: true
+    provider: image_gen
+    allowed_by_user: true
+  video_generation:
+    available: false
+    provider: none
+    allowed_by_user: false
+  file_write:
+    available: true
+
+images:
+  - image_id: invalid_image_weak_contract_01
+    type: "character_identity_reference"
+    purpose: "Regression fixture: a pass contract with poster title hierarchy must still fail."
+    sequence_id: "regression-seq-01"
+    input_dependencies:
+      story_package: "tests/fixtures/invalid-assisted-image-manifest-weak-contract.yaml"
+      shot_list: "tests/fixtures/invalid-assisted-image-manifest-weak-contract.yaml"
+      visual_bible: "tests/fixtures/invalid-assisted-image-manifest-weak-contract.yaml"
+      sequence_plan: ""
+      reference_pack_manifest: "tests/fixtures/invalid-assisted-image-manifest-weak-contract.yaml"
+    layout:
+      aspect_ratio: "16:9"
+      sections:
+        - "large character front view"
+        - "side view"
+      density: "medium"
+      readability_rules:
+        - "role label must be readable"
+    direct_video_input:
+      allowed: false
+      model_slots: []
+      frame_role: planning_only
+      shot_id: ""
+    pre_generation_contract:
+      status: pass
+      asset_id: invalid_image_weak_contract_01
+      asset_role: character_identity_reference
+      dominant_title: "FOG ROUTE CLEANER"
+      secondary_project_metadata: ""
+      title_hierarchy:
+        role_label_largest: false
+        project_title_secondary: false
+        forbidden_largest_text: []
+      role_purity:
+        primary_job: ""
+        must_not_do: []
+      inheritance:
+        character_identity_source: ""
+        scene_geography_source: ""
+      direct_video_input_policy:
+        allowed: true
+        reason: ""
+      prompt_lint:
+        exact_role_label_present: false
+        title_hierarchy_instruction_present: false
+        forbidden_poster_hierarchy_present: false
+        no_unowned_scene_or_character_redesign: false
+      image_generation_allowed: true
+    asset_output:
+      status: prompt_ready
+      prompt_file: "tests/fixtures/invalid-assisted-image-manifest-weak-contract.yaml#invalid_image_weak_contract_01"
+      generated_file: ""
+      external_instructions: ""
+      source_tool: image_gen
+      user_lock_status: pending
+    style_config:
+      config_id: invalid_character_identity_reference_weak_contract_v1
+      image_type: character_identity_reference
+      source_patterns:
+        - art_directed_asymmetric_layout_v1
+        - json_config_prompt_v1
+        - surface_integrity_guard_v1
+      art_direction_policy:
+        non_negotiables:
+          - "do not use a generic product grid"
+          - "composition must feel art-directed, intentional, and slightly asymmetric"
+        placement_rule: "role label must dominate the page."
+      quality_and_artifact_control:
+        surface_integrity_guard:
+          required:
+            - "complete natural materials"
+          avoid:
+            - "fish-scale texture"
+      self_update:
+        registry_pattern_ids:
+          - art_directed_asymmetric_layout_v1
+          - surface_integrity_guard_v1
+        qa_observations: []
+    prompt: |
+      {
+        "artifact": "character identity reference",
+        "canvas": "16:9 landscape production board",
+        "layout_policy": "art-directed, intentional, slightly asymmetric, no generic equal grid",
+        "hero": "single character identity reference board",
+        "text_labels": ["CHARACTER IDENTITY REFERENCE"],
+        "material_truth": "clean fabric and skin material",
+        "style": "cinematic realism"
+      }
+    exact_text_labels:
+      - "CHARACTER IDENTITY REFERENCE"
+    avoid:
+      - "poster title hierarchy"
+    qa:
+      role_clear: true
+      text_readable: true
+      panels_large_enough: true
+      continuity_locks_present: true
+      output_mode_supported: true
+      asset_output_status_present: true
+      video_model_safe: true

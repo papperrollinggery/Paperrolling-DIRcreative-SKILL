@@ -1,0 +1,114 @@
+{
+  "schema_version": "1.0.0",
+  "fixture_id": "seedance-mirror-turn-10s",
+  "audit_scope": "prompt and workflow structure only; no pixels or external generation",
+  "weights": {
+    "video_prompt": {
+      "reference_binding": 12,
+      "timeline": 12,
+      "camera_composition": 16,
+      "subject_object_environment": 13,
+      "look_stack": 12,
+      "audio": 10,
+      "transition_vfx": 8,
+      "continuity_negative": 8,
+      "capability_output": 4,
+      "qa_retry": 5
+    },
+    "image_prompt": {
+      "pre_generation_contract": 13,
+      "visual_decomposition": 17,
+      "layout_composition": 18,
+      "camera_look_material": 17,
+      "reference_consistency": 15,
+      "text_policy": 10,
+      "negative_qa": 10
+    },
+    "workflow": {
+      "source_truth_lock_order": 12,
+      "asset_intake_reuse": 13,
+      "material_model_gate": 12,
+      "user_confirmation": 13,
+      "capability_rights_execution": 12,
+      "artifact_hash_traceability": 13,
+      "self_qa_before_lock": 10,
+      "failure_retry_evidence": 10,
+      "live_acceptance_receipt": 5
+    }
+  },
+  "scores": {
+    "video_prompt": {
+      "score": 100,
+      "status": "compiler_validated",
+      "evidence": [
+        "examples/seedance-mirror-turn-10s/prompts/video_seedance_2_0.txt",
+        "examples/seedance-mirror-turn-10s/prompt-ir.json"
+      ]
+    },
+    "image_prompt": {
+      "score": 92,
+      "status": "prompt_ready",
+      "evidence": [
+        "examples/seedance-mirror-turn-10s/prompts/image_01_product_identity.txt",
+        "examples/seedance-mirror-turn-10s/prompts/image_02_scene_fov.txt",
+        "examples/seedance-mirror-turn-10s/prompts/image_03_style_material.txt",
+        "examples/seedance-mirror-turn-10s/prompts/image_04_storyboard_motion.txt",
+        "examples/seedance-mirror-turn-10s/prompts/image_05_clean_start.txt",
+        "examples/seedance-mirror-turn-10s/prompts/image_06_clean_end.txt"
+      ]
+    },
+    "workflow": {
+      "score": 91,
+      "status": "prompt_only_ready",
+      "evidence": [
+        "examples/seedance-mirror-turn-10s/prompt-ir.json",
+        "examples/seedance-mirror-turn-10s/qa/prompt-score.json"
+      ]
+    }
+  },
+  "receipt": {
+    "task_id": "seedance-mirror-turn-10s",
+    "source_truth_ids": [
+      "asset_01_product_identity",
+      "asset_02_scene_fov",
+      "asset_03_style_material",
+      "asset_04_storyboard_motion",
+      "asset_05_clean_start",
+      "asset_06_clean_end"
+    ],
+    "selected_model": "seedance 2.0",
+    "capability_card_id": "seedance_2_0_official_launch",
+    "generation_route": "prompt_only",
+    "artifact_ids": [
+      "prompt-ir.json",
+      "video_seedance_2_0.txt",
+      "image_01_product_identity.txt",
+      "image_02_scene_fov.txt",
+      "image_03_style_material.txt",
+      "image_04_storyboard_motion.txt",
+      "image_05_clean_start.txt",
+      "image_06_clean_end.txt"
+    ],
+    "artifact_hashes": [
+    "44949c1ae70b9bc05b5b9dcbfc1fdb19cec055f9e08f8bbf84b85e88ad49d7d3",
+      "117420751d9aab0d7ec22b700bbeda5072f91546aae180454d1075d54b10402c",
+    "dfc3aa8a81a17a46f4593a582b1afc97c9e8140f7af4edce00a3ceb9c7957a0b",
+    "0071884f4d281eeabe8f8176f3d00b71189d4ce5a36ec851efa50e535a79c84a",
+    "64671f8817234a17d5f906d40e052d317824c89152c018909c654ef627400024",
+    "507d1f1dee09539b3f127cff2726d9c57d5a81decd98fa9dd627c17e0b1c663a",
+    "ebd650c9029f7ec96d74086c646b04e54d3e864984ee4bc91ca5ab00f82e5590",
+    "b83990bc6050f9d61359fcbb1b19a4223791a43f36ef9b69bf456c0af9373262"
+    ],
+    "qa_status": "passed",
+    "qa_scope": "Draft 2020-12 schema, semantic continuity, contract-coverage scoring, compiler, terminal-surface, capability-card resolution, and artifact-hash audit; the score is structural coverage, not external generation quality; external generation not executed",
+    "user_decision": "locked_reference_pack_prompt_ready",
+    "live_acceptance": "pending",
+    "next_action": "Manual Seedance 2.0 generation may be performed only after external upload authorization; return candidate, self-QA, and user lock/revise decision.",
+    "unverified": [
+      "external Seedance generation",
+      "generated pixels and audio",
+      "TapNow upload execution",
+      "Seedance 2.5 or 30-second capability"
+    ]
+  }
+}

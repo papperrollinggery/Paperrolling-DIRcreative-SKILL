@@ -1,0 +1,64 @@
+contract_fixture:
+  id: image-item-qa-and-overlap-truth
+  validator: image_item
+  negative_cases:
+    - expected_error_contains: "transformation overlap"
+      case:
+        capability_card_id: gpt_image_2_openai_api
+        manifest_rights: &manifest_rights
+          status: unverified
+          evidence_refs: []
+          generation_allowed: false
+        image:
+          image_id: overlapping-image
+          capability_card_id: gpt_image_2_openai_api
+          operation: generate
+          source_references: []
+          rights: {status: unverified, evidence_refs: []}
+          transformation_contract:
+            preserve: [subject_identity]
+            change: [subject_identity]
+            allow_incidental_change: []
+            forbidden_change: []
+            overlap_check: pass
+          qa: &truthful_qa
+            capability_card_resolved: true
+            rights_gate_passed: false
+            preserve_change_disjoint: true
+            source_reference_present_for_edit: true
+            optional_qa_macro_not_forced: true
+    - expected_error_contains: "lying QA field rights_gate_passed"
+      case:
+        capability_card_id: gpt_image_2_openai_api
+        manifest_rights: *manifest_rights
+        image:
+          image_id: lying-qa-image
+          capability_card_id: gpt_image_2_openai_api
+          operation: generate
+          source_references: []
+          rights: {status: unverified, evidence_refs: []}
+          transformation_contract:
+            preserve: []
+            change: []
+            allow_incidental_change: []
+            forbidden_change: []
+            overlap_check: pass
+          qa:
+            <<: *truthful_qa
+            rights_gate_passed: true
+  positive_control:
+    capability_card_id: gpt_image_2_openai_api
+    manifest_rights: *manifest_rights
+    image:
+      image_id: truthful-image
+      capability_card_id: gpt_image_2_openai_api
+      operation: generate
+      source_references: []
+      rights: {status: unverified, evidence_refs: []}
+      transformation_contract:
+        preserve: []
+        change: []
+        allow_incidental_change: []
+        forbidden_change: []
+        overlap_check: pass
+      qa: *truthful_qa

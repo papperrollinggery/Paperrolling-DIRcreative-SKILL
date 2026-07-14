@@ -1,0 +1,14 @@
+fixture_type: "role_list_only"
+expected_failure_contains: "director-room result missing discussion_rounds"
+director_room_result:
+  role_cards:
+    producer: "注意渠道和时长。"
+    creative_director: "做得更有记忆点。"
+    director: "镜头应该更有情绪。"
+    screenwriter: "故事需要一个转折。"
+    cinematographer: "注意光线和机位。"
+    production_designer: "场景要有风格。"
+    editor: "节奏要更快。"
+    sound_designer: "音乐要有感染力。"
+    model_prompt_engineer: "注意模型风险。"
+    continuity_qa: "注意连续性。"

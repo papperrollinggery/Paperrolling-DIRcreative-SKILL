@@ -1,0 +1,18 @@
+fixture_type: "role_contract_section_not_mapping"
+expected_failure_contains:
+  - "role producer evidence_and_tools must be a mapping"
+  - "role producer quality_gate must be a mapping"
+  - "role producer handoff must be a mapping"
+  - "role producer failure_and_retry must be a mapping"
+roles:
+  producer:
+    responsibilities: ["Constrain the brief to an executable production scope."]
+    trigger_conditions: ["The request entered the director room."]
+    inputs: ["project brief"]
+    outputs: ["scope recommendation"]
+    evidence_and_tools: "A non-empty string must not bypass the typed evidence contract."
+    professional_judgment: ["Can the stated duration carry the required proof?"]
+    prohibited_actions: ["Do not invent a budget."]
+    quality_gate: ["A list must not bypass the typed quality gate contract."]
+    handoff: "A string must not bypass the typed handoff contract."
+    failure_and_retry: ["A list must not bypass the typed retry contract."]

@@ -1,0 +1,152 @@
+artifact:
+  artifact_id: zombie-cleaner-shot-list-v1
+  version: 1.0.0
+  source_artifact_ids:
+    - zombie-cleaner-script-v1
+  status: approved
+  owner_skill: shot-design
+
+shots:
+  - shot_id: ZC01
+    duration: "15s"
+    purpose: "Establish quarantine district and absurdly normal sanitation route."
+    shot_size: "wide establishing to medium cab insert"
+    camera_angle: "low street-level angle, then eye-level cab insert"
+    lens: "28mm wide, 50mm insert"
+    camera_motion: "slow push as sweeper enters, hard cut to clipboard insert"
+    subject_action: "street sweeper rolls into a dead block; worker circles pickup address"
+    blocking: "sweeper enters from frame left, worker isolated inside cab, no zombies foreground yet"
+    audio: "distant siren, engine rattle, paper clipboard, warning light buzz"
+  - shot_id: ZC02
+    duration: "15s"
+    purpose: "Reveal glowing barrel objective and first zombie attraction."
+    shot_size: "medium alley reveal and prop close-up"
+    camera_angle: "slightly high angle over flooded alley"
+    lens: "35mm alley, 85mm glowing barrel insert"
+    camera_motion: "creeping dolly toward barrel pulse"
+    subject_action: "barrel glows under tarp; first zombies turn toward sweeper jingle"
+    blocking: "barrel deep center, zombies enter from side alleys, sweeper stays background"
+    audio: "Geiger clicks, wet footsteps, distant sweeper jingle"
+  - shot_id: ZC03
+    duration: "15s"
+    purpose: "Show the worker using the street sweeper as survival tool."
+    shot_size: "medium tracking with brush macro insert"
+    camera_angle: "waist-height lateral track"
+    lens: "35mm track, 85mm brush insert"
+    camera_motion: "lateral tracking beside sweeper"
+    subject_action: "worker lowers rotating brushes; zombies shuffle into a line"
+    blocking: "sweeper foreground, zombies stagger parallel, brush path creates corridor"
+    audio: "hydraulic lever, brush scrape, comic jingle, zombie groans"
+  - shot_id: ZC04
+    duration: "15s"
+    purpose: "Escalate with barrel rolling away and route becoming chase."
+    shot_size: "wide downhill lane with barrel insert"
+    camera_angle: "slanted low angle"
+    lens: "28mm wide, 50mm barrel"
+    camera_motion: "tilted chase move downhill"
+    subject_action: "barrel rolls loose; worker accelerates; zombies follow the glow"
+    blocking: "barrel leads, sweeper follows, zombies trail in messy line"
+    audio: "barrel clank, engine rev, rising Geiger rhythm"
+  - shot_id: ZC05
+    duration: "15s"
+    purpose: "Foam malfunction creates comic clean corridor."
+    shot_size: "medium windshield and exterior foam burst"
+    camera_angle: "front-mounted vehicle angle"
+    lens: "24mm mounted, 50mm reaction"
+    camera_motion: "shaky vehicle mount, then locked reaction"
+    subject_action: "foam sprayer bursts; worker wipes windshield and keeps route"
+    blocking: "foam fills midground, zombies slip behind sweeper, worker remains calm"
+    audio: "sprayer cough, foam blast, muffled zombie thuds"
+  - shot_id: ZC06
+    duration: "15s"
+    purpose: "Midpoint: worker understands the machine can herd zombies."
+    shot_size: "overhead path board translated into live action"
+    camera_angle: "high crane-like angle"
+    lens: "35mm"
+    camera_motion: "top-down drift following sweeper path"
+    subject_action: "sweeper loops around a traffic island and redirects zombie crowd"
+    blocking: "clear S-shaped route, barrel ahead, zombies pulled into ordered path"
+    audio: "jingle repeats, zombie crowd rhythm, brush motor"
+  - shot_id: ZC07
+    duration: "15s"
+    purpose: "Prop danger: barrel almost contaminates the cab."
+    shot_size: "tight prop and face inserts"
+    camera_angle: "low insert, then straight-on face close-up"
+    lens: "85mm"
+    camera_motion: "snap rack focus from barrel glow to worker eyes"
+    subject_action: "barrel slams against sweeper step; worker hooks it with broom pole"
+    blocking: "barrel bottom frame, worker arm enters, zombies blurred behind"
+    audio: "metal slam, Geiger spike, breath through mask"
+  - shot_id: ZC08
+    duration: "15s"
+    purpose: "Vehicle failure before final yard."
+    shot_size: "wide yard entrance and dashboard insert"
+    camera_angle: "low gate silhouette"
+    lens: "28mm wide, 50mm dashboard"
+    camera_motion: "push through recycling yard gate, then static dashboard warning"
+    subject_action: "sweeper stalls by compactor belt; worker checks dead ignition"
+    blocking: "compactor belt right, barrel center, zombies closing left"
+    audio: "engine stall, warning buzzer dying, belt chain creak"
+  - shot_id: ZC09
+    duration: "15s"
+    purpose: "Bureaucratic gag triggers final mechanism."
+    shot_size: "hand insert and medium worker"
+    camera_angle: "straight tabletop angle on form, then medium profile"
+    lens: "50mm insert, 35mm profile"
+    camera_motion: "locked insert, then whip to compactor belt"
+    subject_action: "worker stamps hazard form; compactor belt powers on"
+    blocking: "barrel on cart, form foreground, belt wakes in background"
+    audio: "rubber stamp, electrical clunk, belt motor rising"
+  - shot_id: ZC10
+    duration: "15s"
+    purpose: "Zombie crowd follows glow onto belt while worker saves barrel."
+    shot_size: "wide action tableau"
+    camera_angle: "slightly elevated three-quarter"
+    lens: "35mm"
+    camera_motion: "controlled dolly with belt movement"
+    subject_action: "zombies step onto belt; worker hooks barrel clear"
+    blocking: "zombies move right on belt, worker pulls barrel left, sweeper behind"
+    audio: "belt grind, zombie shuffle, hook scrape, rising jingle"
+  - shot_id: ZC11
+    duration: "15s"
+    purpose: "Dawn payoff: district is clean by accident."
+    shot_size: "wide clean street and hero close-up"
+    camera_angle: "eye-level dawn wide"
+    lens: "35mm wide, 50mm close-up"
+    camera_motion: "slow sunrise reveal"
+    subject_action: "worker loads barrel into sweeper and checks route completed"
+    blocking: "clean street stretches behind hero, sweeper parked center"
+    audio: "dawn birds, fading siren, paper checklist"
+  - shot_id: ZC12
+    duration: "15s"
+    purpose: "Final joke and sequelable ending."
+    shot_size: "paper insert to departing wide"
+    camera_angle: "top-down slip insert, rear wide"
+    lens: "50mm insert, 28mm wide"
+    camera_motion: "insert hold, then reverse tracking as sweeper exits"
+    subject_action: "automated slip denies overtime; worker pockets it and drives to next block"
+    blocking: "paper foreground, worker hand, sweeper exits toward ruined sunrise"
+    audio: "printer chirp, engine restart, jingle fades into next block"
+
+qa:
+  shot_gate: "pass"
+  no_overloaded_shots: true
+  duration_total_sec: 180
+  model_safe_units: true
+  audio_policy_present: true
+
+skill_run_receipt:
+  run_id: zombie-cleaner-shot-list-2026-05-16
+  skill_id: shot-design
+  input_artifacts:
+    - examples/zombie-cleaner-test/06-script.md
+  output_artifacts:
+    - examples/zombie-cleaner-test/07-shot-list.yaml
+  decisions:
+    - "Use 12 shots of 15s each to align with longform sequence policy."
+  unresolved_questions: []
+  qa_gate:
+    status: pass
+    reasons:
+      - "Every shot has duration, purpose, shot size, angle, lens, camera motion, subject action, blocking, and audio."
+  next_recommended_skill: sequence-planner

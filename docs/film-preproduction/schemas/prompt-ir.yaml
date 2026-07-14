@@ -1,0 +1,189 @@
+# Prompt IR v1.1 authoring template
+#
+# Machine validation source:
+#   docs/film-preproduction/schemas/prompt-ir.schema.json
+# Compiler and terminal-surface gate:
+#   scripts/dircreative_prompt_compiler.py
+#
+# This YAML file is an authoring template, not the executable schema. Internal IDs,
+# paths, hashes, capability evidence, QA, and retry history never enter the compiled
+# terminal prompt. Only the selected adapter's attached references and observable
+# creative instructions are compiled.
+
+schema_version: "1.1.0"
+fixture_id: ""
+project:
+  title: ""
+  intended_use: ""
+  safety_boundary: ""
+  source_of_truth: ""
+output:
+  aspect_ratio: ""
+  target_duration_sec: null
+  generation_unit_sec: null
+  text_policy: "no_text | exact_text | post_only"
+  visual_output_mode: "prompt_only | assisted_generation | external_generation"
+intake:
+  read_before_regenerate: true
+  source_precedence: []
+  supplied_assets:
+    - asset_id: ""
+      source_kind: "user_upload | client_file | conversation_media | project_file | generated_candidate"
+      source_locator: ""
+      source_hash: ""
+      source_authorization: "user_provided | project_owned | unknown"
+      role: "identity | scene_fov | style_material | storyboard_motion | clean_start | clean_end | product_detail | motion | audio | ambiguous"
+      locked: false
+      reuse_action: "direct_reference | edit | derive | planning_only | unresolved"
+      preserve: []
+      may_change: []
+      do_not_copy_or_animate: []
+      downstream_slots: []
+references:
+  - platform_slot: ""
+    asset_id: ""
+    role: ""
+    direct_input_policy: "allowed | conditional | planning_only"
+    attached_to_run: false
+    required_for_shot: false
+    preserve: []
+    anti_misread: []
+entities:
+  - entity_id: ""
+    external_name: ""
+    entity_type: "person | character | product | prop | vehicle | animal | environment_hardware"
+    reference_asset_ids: []
+    immutable: []
+    starting_state: ""
+    screen_position: ""
+    owner_entity_id: ""
+global_locks:
+  identity: []
+  product_or_prop: []
+  scene: []
+  composition_axis: []
+  palette_material: []
+  lens_grammar: []
+  audio_spine: []
+composition:
+  visual_center: ""
+  subject_hierarchy: ""
+  foreground_midground_background: ""
+  negative_space: ""
+  movement_room: ""
+  leading_lines_occlusion_parallax: ""
+  balance_symmetry: ""
+  perspective_depth: ""
+  screen_direction: ""
+  narrative_purpose: ""
+render_look:
+  lighting:
+    condition: ""
+    effect: ""
+    intensity: "none | subtle | moderate | strong"
+  optics:
+    condition: ""
+    lens_family: "spherical | anamorphic | macro | telephoto | unspecified"
+    filtration: "none | diffusion | nd | streak | other"
+    physical_behavior: ""
+    intensity: "none | subtle | moderate | strong"
+  atmosphere:
+    condition: ""
+    medium: "none | haze | fog | smoke | dust | rain | other"
+    density_scale: ""
+    light_path_visibility: ""
+    movement: ""
+    intensity: "none | subtle | moderate | strong"
+  grade:
+    condition: ""
+    white_balance_anchor: ""
+    contrast_gamma: ""
+    black_level: ""
+    highlight_rolloff: ""
+    saturation_density: ""
+    palette_separation: ""
+    grain_halation: ""
+    intensity: "none | subtle | moderate | strong"
+  preserve: []
+  exit_or_continuity: ""
+shot_blocks:
+  - shot_id: "" # internal only
+    time_start: ""
+    time_end: ""
+    story_beat: ""
+    emotional_or_attention_beat: ""
+    entity_actions:
+      - owner_entity_id: ""
+        target_entity_id: ""
+        initial_state: ""
+        trigger: ""
+        path: ""
+        physical_consequence: ""
+        final_state: ""
+    environment_action:
+      initial_state: ""
+      response: ""
+      final_state: ""
+    camera:
+      shot_size: ""
+      angle_height_axis: ""
+      lens_feel_reason: ""
+      support: ""
+      start_target: ""
+      path: ""
+      end_target: ""
+      speed_easing: ""
+      focus: ""
+      motivation: ""
+    composition_state: ""
+    look_delta: ""
+    audio_cues:
+      - time: ""
+        kind: "dialogue | voiceover | ambience | music | foley | sfx | silence"
+        speaker_entity_id: ""
+        source_entity_id: ""
+        cue: ""
+        perspective: ""
+    transition_in: ""
+    transition_out: ""
+    continuity_locks: []
+audio_plan:
+  dialogue: ""
+  voiceover: ""
+  ambience: ""
+  music: ""
+  foley: ""
+  sfx: ""
+  silence: ""
+  generation_route: "native | reference_audio | postproduction | none | unresolved"
+transition_plan:
+  - boundary: "" # internal only
+    visual_bridge: ""
+    audio_bridge: ""
+    continuity_state: ""
+    risk: ""
+capability:
+  capability_card_id: ""
+  model_key: "gpt_image | sora | seedance | kling | runway | veo | generic"
+  version: ""
+  provider_surface: ""
+  execution_verification_status: "verified | unverified | not_applicable"
+generation_plan:
+  selected_adapter: "gpt_image | sora | seedance | kling | runway | veo | generic"
+  units:
+    - unit_id: ""
+      time_start: ""
+      time_end: ""
+      shot_ids: []
+      incoming_handoff_key: ""
+      outgoing_handoff_key: ""
+      incoming_state: ""
+      outgoing_state: ""
+      audio_handoff: ""
+qa: # internal only; never compiled into terminal prompt
+  structural_score: null
+  status: "pending | passed | failed | unverified"
+  pass_signals: []
+  failure_ids: []
+  retry_rules: []
+  next_action: ""

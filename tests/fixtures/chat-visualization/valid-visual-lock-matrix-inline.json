@@ -1,0 +1,47 @@
+{
+  "spec_version": "1.0",
+  "view_id": "visual-lock-matrix-inline",
+  "execution_context": "standalone_chat",
+  "controller": {"surface_owner": "dircreative", "user_facing": true},
+  "stage_gate": {"id": "visual_bible_03", "type": "visual_bible_approval_gate", "status": "needs_user", "decision_owner": "user"},
+  "view": {"intent": "graph", "display_mode": "inline", "customer_stage_label": "视觉连续性确认", "decision_prompt": "这些人物、材质、空间和光线设定是否足够？"},
+  "source_truth": {"artifacts": [{"artifact_id": "visual-bible-03", "version": "1.0.0", "sha256": "abababababababababababababababababababababababababababababababab"}]},
+  "presentation": {
+    "fields": [
+      {"id": "current_stage", "label": "当前阶段", "value": "视觉圣经确认", "classification": "presentation_only", "source_ref": null},
+      {"id": "locks", "label": "视觉连续性", "value": [
+        {"dimension": "人物身份", "value": "父亲 50 岁、灰蓝衬衫；女儿 24 岁、米色针织衫", "status": "已定义", "risk": "脸型和年龄最容易跨镜头漂移"},
+        {"dimension": "产品材质", "value": "哑光暖白机身、拉丝金属旋钮", "status": "已定义", "risk": "高光过强会被误读为塑料"},
+        {"dimension": "厨房空间", "value": "左窗、中央岛台、产品位于人物之间", "status": "已定义", "risk": "反打镜头必须保持窗向和轴线"},
+        {"dimension": "光线", "value": "清晨自然侧光，室内仅柔和补光", "status": "需确认", "risk": "色温变化会削弱关系连续性"},
+        {"dimension": "关键道具", "value": "旧马克杯、木托盘、早餐盘", "status": "已定义", "risk": "马克杯位置承担故事转折"}
+      ], "classification": "source_bound", "source_ref": "visual-bible-03#/locks"}
+    ],
+    "options": [],
+    "recommendation": null,
+    "downstream_effects": [{"stage": "reference_pack", "effect": "确认后只为容易变化的内容准备参考图，不重复制作已经明确的内容。"}]
+  },
+  "interactions": {
+    "local": ["expand"],
+    "actions": [
+      {"id": "approve", "label": "连续性设定足够", "kind": "submit_selection", "target_gate_id": "visual_bible_03", "conversation_intent": "提交视觉连续性确认，请先核对所有设定和漂移风险。"},
+      {"id": "revise", "label": "修改一个视觉设定", "kind": "request_revision", "target_gate_id": "visual_bible_03", "conversation_intent": "保持当前视觉方案不变，先询问我要修改的一个视觉维度。"}
+    ],
+    "max_actions": 2,
+    "deep_navigation": false,
+    "nested_scroll": false
+  },
+  "write_boundary": {
+    "preview_only": true,
+    "confirmation_required": true,
+    "writes_authoritative_state": false,
+    "write_owner": "dircreative",
+    "possible_write_targets": ["visual-bible", "co-creation-run.gates", "skill_run_receipt.decisions"],
+    "forbidden_claims": ["lock", "readiness", "acceptance", "completion", "generation_authorization"]
+  },
+  "fallback": {
+    "format": "table",
+    "required_visible_fields": ["current_stage", "decision_prompt", "locks", "downstream_effects"],
+    "decision_question": "这些视觉设定足够，还是要修改其中一项？"
+  }
+}

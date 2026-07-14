@@ -1,0 +1,29 @@
+artifact:
+  artifact_id: invalid-shot-list-low-information-density
+  version: 1.0.0
+  status: fixture_invalid
+  owner_skill: shot-design
+
+shot_list:
+  project_title: "Invalid Low Density Shot List"
+  channel: "vertical short ad"
+  target_duration: "15s"
+  aspect_ratio: "9:16"
+  shot_count: 1
+  shots:
+    - shot_id: BAD01
+      duration: "3s"
+      narrative_purpose: "Show the product."
+      shot_size: "CU"
+      camera_angle: "front"
+      lens: "50mm"
+      camera_motion: "slow push in"
+      subject_action: "worker drinks"
+      blocking: "worker sits at desk"
+      audio: "office sound"
+
+qa:
+  shot_gate: "fail"
+  storyboard_information_density_ok: false
+  failures:
+    - storyboard_information_density_too_low

@@ -1,0 +1,599 @@
+director_role_harness:
+  schema_version: "1.0.0"
+  version: "1.0"
+  owner_skill: "dircreative/director-room"
+  purpose: "Automatically turn a non-trivial film-preproduction request into a bounded director-room council with auditable professional handoffs."
+
+  routing:
+    default_route: "lightweight"
+    role_naming_required: false
+    user_instruction: "Do not ask the user to name Producer, Director, or any other seat before starting the council."
+    decision_order:
+      - id: "absolute_non_creation_exception"
+        rule: "Apply only an explicit non-creation exception before creative routing; a request that says not to create and only to explain stays lightweight."
+        route: "lightweight"
+      - id: "complex_multi_artifact_request"
+        rule: "When a film-preproduction request asks for two or more distinct output groups, route the overall intent to director_room before evaluating incidental words such as title or one line."
+        route: "director_room"
+      - id: "bounded_lightweight_request"
+        rule: "After complex-intent evaluation, apply bounded typed exceptions for commentary, courses, distribution, explanation-only work, and line edits, plus generic rewrite, translation, proofreading, title-only, one-line copy, and single-question signals."
+        route: "lightweight"
+      - id: "non_trivial_creative_request"
+        rule: "Route to director_room when a film-preproduction domain signal and an artifact-creation intent both appear."
+        route: "director_room"
+      - id: "default"
+        rule: "If the request does not ask for a multi-disciplinary creative artifact, answer on the lightweight path and do not manufacture a council."
+        route: "lightweight"
+    creative_domain_signals:
+      - "广告片"
+      - "宣传片"
+      - "品牌视频"
+      - "短视频"
+      - "产品视频"
+      - "TVC"
+      - "commercial film"
+      - "电影"
+      - "短片"
+      - "film"
+      - "storyboard"
+      - "分镜"
+      - "脚本"
+      - "剧本"
+      - "script"
+      - "视觉创意"
+      - "创意方向"
+      - "品牌故事"
+      - "视觉方向"
+      - "visual concept"
+      - "视觉风格"
+      - "拍摄"
+      - "镜头"
+      - "shot list"
+      - "shot plan"
+      - "brand video"
+      - "promo video"
+      - "short-form video"
+    artifact_creation_intent_signals:
+      - "创作"
+      - "设计"
+      - "策划"
+      - "制作"
+      - "做"
+      - "做一支"
+      - "做一个"
+      - "写一支"
+      - "写一个"
+      - "写完整"
+      - "写"
+      - "规划"
+      - "开发"
+      - "评审"
+      - "优化"
+      - "拍一支"
+      - "拍一条"
+      - "拍摄一支"
+      - "拍摄一条"
+      - "规划镜头"
+      - "输出镜头"
+      - "develop"
+      - "create"
+      - "design"
+      - "plan"
+      - "write"
+    lightweight_intent_signals:
+      - "改写"
+      - "润色"
+      - "翻译"
+      - "校对"
+      - "纠错"
+      - "摘要"
+      - "一句话"
+      - "一句"
+      - "单句"
+      - "标题"
+      - "rewrite"
+      - "proofread"
+      - "translate"
+    single_point_question_signals:
+      - "是什么"
+      - "多长"
+      - "多少钱"
+      - "是否"
+      - "吗"
+      - "？"
+      - "what is"
+      - "how long"
+      - "how much"
+    complex_intent_policy:
+      schema_version: "1.0.0"
+      priority: "before_generic_lightweight_signals"
+      minimum_distinct_artifact_groups: 2
+      artifact_groups:
+        concept_direction: ["创意方向", "视觉方向", "concept direction", "visual direction"]
+        story_script: ["完整脚本", "脚本", "剧本", "script", "story treatment"]
+        storyboard: ["分镜", "storyboard"]
+        shot_plan: ["镜头清单", "镜头设计", "拍摄镜头", "shot list", "shot plan"]
+        production_plan: ["拍摄方案", "拍摄计划", "production plan"]
+        title_copy: ["标题", "一句文案", "一句话文案", "slogan", "tagline"]
+    typed_lightweight_exceptions:
+      schema_version: "1.0.0"
+      rules:
+        - exception_id: "film_commentary"
+          all_of: ["电影", "评论"]
+          priority: "bounded"
+          route: "lightweight"
+          rationale: "A film commentary request creates editorial prose, not a film-preproduction artifact."
+        - exception_id: "local_script_line_optimization"
+          all_of: ["脚本", "第三句", "优化"]
+          priority: "bounded"
+          route: "lightweight"
+          rationale: "A bounded line-level edit does not need a multi-disciplinary council."
+        - exception_id: "film_review"
+          all_of: ["电影", "影评"]
+          priority: "bounded"
+          route: "lightweight"
+          rationale: "Film criticism is editorial prose rather than film-preproduction creation."
+        - exception_id: "film_course"
+          all_of: ["拍摄", "课程"]
+          priority: "bounded"
+          route: "lightweight"
+          rationale: "A course question asks for learning or explanation, not a production artifact."
+        - exception_id: "film_distribution"
+          all_of: ["短片", "发行"]
+          priority: "bounded"
+          route: "lightweight"
+          rationale: "Distribution advice is outside the director-room creation gate."
+        - exception_id: "shot_explanation"
+          all_of: ["解释", "镜头"]
+          priority: "bounded"
+          route: "lightweight"
+          rationale: "Explanation of an existing shot remains a bounded knowledge request."
+        - exception_id: "explicit_non_creation"
+          all_of: ["不要创作", "只解释"]
+          priority: "absolute_non_creation"
+          route: "lightweight"
+          rationale: "An explicit non-creation instruction must not be converted into a creative council."
+        - exception_id: "explicit_non_creation_en"
+          all_of: ["do not create", "explain"]
+          priority: "absolute_non_creation"
+          route: "lightweight"
+          rationale: "An English explicit non-creation instruction must not be converted into a creative council."
+    behavior_cases:
+      - id: "auto_advertising_film"
+        request: "为一款雨衣策划一支 30 秒广告片，要有创意方向、脚本和分镜。"
+        expected_route: "director_room"
+        expected_stage: "阶段: 导演组会议"
+        role_names_supplied_by_user: false
+      - id: "auto_film_story"
+        request: "帮我开发一个关于夜班司机的电影短片故事和视觉创意。"
+        expected_route: "director_room"
+        expected_stage: "阶段: 导演组会议"
+        role_names_supplied_by_user: false
+      - id: "auto_storyboard"
+        request: "请设计一份 15 秒产品分镜，先判断故事和镜头节奏。"
+        expected_route: "director_room"
+        expected_stage: "阶段: 导演组会议"
+        role_names_supplied_by_user: false
+      - id: "auto_script"
+        request: "为这个品牌写一份可拍摄的广告片脚本并给出视觉方向。"
+        expected_route: "director_room"
+        expected_stage: "阶段: 导演组会议"
+        role_names_supplied_by_user: false
+      - id: "lightweight_rewrite"
+        request: "把这句广告片文案润色一下：下雨也不收场。"
+        expected_route: "lightweight"
+        expected_stage: "轻量响应"
+        role_names_supplied_by_user: false
+      - id: "lightweight_single_question"
+        request: "广告片通常多长？"
+        expected_route: "lightweight"
+        expected_stage: "轻量响应"
+        role_names_supplied_by_user: false
+      - id: "lightweight_film_commentary"
+        request: "帮我写一个电影评论。"
+        expected_route: "lightweight"
+        expected_stage: "轻量响应"
+        role_names_supplied_by_user: false
+      - id: "auto_brand_story_visual_direction"
+        request: "我要开发一个有创意的品牌故事和视觉方向。"
+        expected_route: "director_room"
+        expected_stage: "阶段: 导演组会议"
+        role_names_supplied_by_user: false
+      - id: "lightweight_local_script_line_optimization"
+        request: "优化脚本第三句。"
+        expected_route: "lightweight"
+        expected_stage: "轻量响应"
+        role_names_supplied_by_user: false
+      - id: "auto_professional_storyboard_review"
+        request: "请对这支广告片的专业分镜进行评审，判断镜头、节奏和连续性。"
+        expected_route: "director_room"
+        expected_stage: "阶段: 导演组会议"
+        role_names_supplied_by_user: false
+      - id: "auto_professional_script_storyboard_optimization"
+        request: "请专业优化这支广告片的脚本和分镜"
+        expected_route: "director_room"
+        expected_stage: "阶段: 导演组会议"
+        role_names_supplied_by_user: false
+      - id: "auto_promotional_video"
+        request: "为城市更新项目策划一支宣传片，输出创意方向、完整脚本和分镜。"
+        expected_route: "director_room"
+        expected_stage: "阶段: 导演组会议"
+        role_names_supplied_by_user: false
+      - id: "auto_brand_video"
+        request: "给这个香氛品牌做一条品牌视频，先设计脚本、分镜和拍摄镜头。"
+        expected_route: "director_room"
+        expected_stage: "阶段: 导演组会议"
+        role_names_supplied_by_user: false
+      - id: "auto_short_form_video"
+        request: "创作一条 30 秒短视频，给出故事脚本、分镜和镜头节奏。"
+        expected_route: "director_room"
+        expected_stage: "阶段: 导演组会议"
+        role_names_supplied_by_user: false
+      - id: "auto_shooting_plan"
+        request: "规划一次新品拍摄，输出拍摄方案、镜头清单和场面调度重点。"
+        expected_route: "director_room"
+        expected_stage: "阶段: 导演组会议"
+        role_names_supplied_by_user: false
+      - id: "auto_shot_design"
+        request: "为这个产品设计一组可拍摄镜头和 shot list，判断景别、运动与连续性。"
+        expected_route: "director_room"
+        expected_stage: "阶段: 导演组会议"
+        role_names_supplied_by_user: false
+      - id: "auto_complex_intent_with_incidental_title_and_line"
+        request: "做一支品牌宣传片，包含创意方向、完整脚本、分镜和拍摄镜头，最后顺带给一个标题和一句文案。"
+        expected_route: "director_room"
+        expected_stage: "阶段: 导演组会议"
+        role_names_supplied_by_user: false
+      - id: "auto_optimization_with_incidental_title_tagline_copy"
+        request: "请专业优化这支广告片的脚本和分镜，并顺带给标题、tagline 和一句文案。"
+        expected_route: "director_room"
+        expected_stage: "阶段: 导演组会议"
+        role_names_supplied_by_user: false
+      - id: "auto_complex_course_promo_over_bounded_exception"
+        request: "为电影拍摄课程做一支宣传片，包含完整脚本、分镜和拍摄镜头。"
+        expected_route: "director_room"
+        expected_stage: "阶段: 导演组会议"
+        role_names_supplied_by_user: false
+      - id: "lightweight_film_review"
+        request: "给这部电影写一篇影评。"
+        expected_route: "lightweight"
+        expected_stage: "轻量响应"
+        role_names_supplied_by_user: false
+      - id: "lightweight_film_course"
+        request: "解释一下这门电影拍摄课程主要教什么。"
+        expected_route: "lightweight"
+        expected_stage: "轻量响应"
+        role_names_supplied_by_user: false
+      - id: "lightweight_distribution"
+        request: "这部短片发行通常要准备哪些材料？"
+        expected_route: "lightweight"
+        expected_stage: "轻量响应"
+        role_names_supplied_by_user: false
+      - id: "lightweight_shot_explanation"
+        request: "解释这支品牌视频的镜头为什么这么拍。"
+        expected_route: "lightweight"
+        expected_stage: "轻量响应"
+        role_names_supplied_by_user: false
+      - id: "lightweight_explicit_non_creation"
+        request: "不要创作广告片、脚本或分镜，只解释它们的区别。"
+        expected_route: "lightweight"
+        expected_stage: "轻量响应"
+        role_names_supplied_by_user: false
+      - id: "lightweight_explicit_non_creation_en"
+        request: "Explain why this ad film is 15 seconds; do not create anything."
+        expected_route: "lightweight"
+        expected_stage: "轻量响应"
+        role_names_supplied_by_user: false
+
+  council_execution:
+    entry_stage: "阶段: 导演组会议"
+    default_lanes:
+      - lane_id: "creative_story_lane"
+        seats: ["creative_director", "director", "screenwriter"]
+      - lane_id: "production_image_lane"
+        seats: ["producer", "cinematographer", "production_designer", "editor", "sound_designer"]
+      - lane_id: "model_continuity_lane"
+        seats: ["model_prompt_engineer", "continuity_qa"]
+    execution_rule: "Use bounded lanes for substantive standalone work. Explicit true Codex Threads require real thread, dispatch, receipt, adoption, and cleanup evidence. An orchestrated_worker never opens nested lanes."
+    thread_unavailable_policy:
+      explicit_true_threads_requested:
+        outcome: "TOOL_BLOCKED"
+        simulated_fallback_allowed: false
+        required_mode_when_available: "codex_thread_role_lanes"
+        required_evidence: ["lane_id", "thread_id", "thread_class", "dispatch_record", "worker_receipt", "adoption_decision", "cleanup_status"]
+      ordinary_fallback:
+        outcome: "simulated_role_passes_fallback"
+        allowed_execution_context: "standalone_chat"
+        small_chat_only_gate: true
+        durable_artifact_work_allowed: false
+        explicit_true_threads_requested: false
+        fallback_reason_required: true
+    execution_context_policy:
+      standalone_chat:
+        controller_owns_dispatch_adoption_cleanup: true
+      orchestrated_worker:
+        nested_dispatch_allowed: false
+        only_handoff_selected_subskill: true
+        open_questions_required: true
+        controller_owns_adoption_cleanup: "adco"
+    output_contract:
+      role_cards_required: true
+      discussion_rounds_required: true
+      disagreements_required: true
+      arbitration_required: true
+      resolution_notes_required: true
+      user_facing_options_required: true
+      user_confirmation_required: true
+      open_questions_required: true
+      typed_role_cards_required: true
+      final_direction_locked_before_user_choice: false
+      minimum_role_cards: 10
+      minimum_disagreements: 2
+      minimum_user_facing_options: 2
+      maximum_user_facing_options: 3
+      prohibited_shortcuts:
+        - "A role-name list without a craft judgment."
+        - "A unanimous summary that hides the useful tradeoff."
+        - "A recommendation without a ruling, downstream production rule, and one user decision question."
+    retry_contract:
+      on_missing_role_judgment: "Return only the missing seat card and preserve accepted upstream locks."
+      on_missing_disagreement: "Pressure-test the smallest relevant tradeoff before producing options."
+      on_unresolvable_conflict: "Expose the tradeoff, keep the concept unlocked, and ask one bounded user question."
+      on_unsafe_or_unverified_model_claim: "Mark the claim as unverified, remove it from the recommendation, and request source evidence."
+
+  canonical_council_result:
+    path: "docs/film-preproduction/schemas/director-room.yaml"
+    root_key: "director_room.canonical_example"
+    schema_version: "2.0.0"
+
+  roles:
+    producer:
+      responsibilities:
+        - "Translate the brief into channel, duration, deliverable, production-scope, and commercial-risk constraints."
+      trigger_conditions:
+        - "The request is routed to director_room."
+        - "The brief contains a channel, duration, budget, delivery-version, or product objective constraint."
+      inputs: ["project brief", "channel assumption", "duration target", "product or brand constraints"]
+      outputs: ["scope recommendation", "channel-fit tradeoff", "production risks", "deliverable boundary"]
+      evidence_and_tools:
+        evidence_required: ["channel assumptions", "stated duration", "known delivery constraints"]
+        tools_or_sources: ["research/channel-playbooks.md", "project brief", "phase contracts"]
+      professional_judgment: ["Can the promise be understood in the available duration without hiding the product or story turn?"]
+      prohibited_actions: ["Do not invent a budget, platform rule, or client approval.", "Do not replace story judgment with a generic feasibility warning."]
+      quality_gate:
+        pass_conditions: ["Names one executable scope and one concrete production tradeoff."]
+        fail_when: ["Only repeats the brief or gives a generic risk list."]
+      handoff:
+        to: ["creative_director", "director", "editor", "continuity_qa"]
+        required_fields: ["channel_fit", "scope_constraints", "deliverable_recommendation", "risks"]
+        stop_condition: "Stop when an unresolved commercial constraint needs a user decision."
+      failure_and_retry:
+        failure_signals: ["scope is too broad for duration", "delivery priority is unknown"]
+        smallest_retry: "Revise the scope recommendation only; keep the stated creative premise unchanged."
+        stop_when: "A real budget or platform commitment is required."
+
+    creative_director:
+      responsibilities:
+        - "Create distinct concept territories, emotional hooks, and visual metaphors that serve the brief rather than a generic style label."
+      trigger_conditions:
+        - "The request is routed to director_room."
+        - "A concept, brand taste, genre, or visual-creativity choice is still open."
+      inputs: ["project brief", "producer constraints", "brand or genre cues", "known user locks"]
+      outputs: ["concept options", "emotional hook", "visual hook", "forbidden-cliche guidance"]
+      evidence_and_tools:
+        evidence_required: ["brief language", "brand/product locks", "channel context"]
+        tools_or_sources: ["research/channel-playbooks.md", "reference analysis", "professional-agent-voice-standard.md"]
+      professional_judgment: ["Does each option create a memorable premise that can survive the channel and duration constraint?"]
+      prohibited_actions: ["Do not select a final direction before the user gate.", "Do not use 'cinematic' or mood adjectives as a substitute for an idea."]
+      quality_gate:
+        pass_conditions: ["Offers at least one executable hook with a stated tradeoff and avoid boundary."]
+        fail_when: ["Options differ only by color, genre label, or vague mood."]
+      handoff:
+        to: ["director", "screenwriter", "production_designer", "model_prompt_engineer"]
+        required_fields: ["core_concept", "emotional_hook", "visual_hook", "concept_options"]
+        stop_condition: "Stop when the concept depends on an unknown brand or audience lock."
+      failure_and_retry:
+        failure_signals: ["generic concept", "brand fit unclear", "no visualizable hook"]
+        smallest_retry: "Replace only the weak concept territory while keeping the locked brief facts."
+        stop_when: "The user must choose between incompatible brand positions."
+
+    director:
+      responsibilities:
+        - "Convert the selected concept territory into scene intent, performance, blocking, and camera motivation."
+      trigger_conditions:
+        - "The request is routed to director_room."
+        - "The brief requires an on-screen story, protagonist, product behavior, or emotional turn."
+      inputs: ["concept options", "scope constraints", "product or character locks", "channel duration"]
+      outputs: ["director statement", "performance notes", "blocking notes", "camera strategy"]
+      evidence_and_tools:
+        evidence_required: ["story premise", "duration target", "visible subject or product role"]
+        tools_or_sources: ["research/film-production-glossary.md", "schemas/shot-list.yaml", "customer-visible-production-gates.md"]
+      professional_judgment: ["What must the audience see and feel before the edit moves on, and why does the camera move?"]
+      prohibited_actions: ["Do not write a full shot list at this gate.", "Do not prescribe decorative camera moves without story motivation."]
+      quality_gate:
+        pass_conditions: ["States an emotional turn, blocking logic, and one camera motivation."]
+        fail_when: ["Uses only visual adjectives or leaves the subject action undefined."]
+      handoff:
+        to: ["screenwriter", "cinematographer", "editor", "sound_designer"]
+        required_fields: ["director_statement", "performance_notes", "blocking_notes", "camera_strategy"]
+        stop_condition: "Stop when character, product use, or safety boundaries are unknown."
+      failure_and_retry:
+        failure_signals: ["scene intent is unclear", "camera motion is ornamental"]
+        smallest_retry: "Revise the scene-intent beat only; preserve the chosen concept territory."
+        stop_when: "A change would alter the user-owned premise."
+
+    screenwriter:
+      responsibilities:
+        - "Protect conflict, beat logic, copy/voice policy, and a readable ending action before script treatment starts."
+      trigger_conditions:
+        - "The request is routed to director_room."
+        - "The user requests a story, script, dialogue, voiceover, or storyboard with narrative content."
+      inputs: ["concept options", "director intent", "channel duration", "product or character locks"]
+      outputs: ["logline candidates", "conflict notes", "character notes", "dialogue or VO policy"]
+      evidence_and_tools:
+        evidence_required: ["subject of desire", "obstacle or pressure", "duration constraint"]
+        tools_or_sources: ["schemas/story-package.yaml", "research/channel-playbooks.md", "film-commercial-quality-standard.md"]
+      professional_judgment: ["Can the story establish pressure, turn, and consequence within the format without relying on explanatory copy?"]
+      prohibited_actions: ["Do not deliver a final timed script before the user chooses a direction.", "Do not solve missing conflict with motivational slogans."]
+      quality_gate:
+        pass_conditions: ["Names a conflict, turn, and audio/copy policy tied to duration."]
+        fail_when: ["The story is only a mood montage or requires unstated backstory."]
+      handoff:
+        to: ["director", "editor", "sound_designer", "story-development"]
+        required_fields: ["logline_candidates", "conflict_notes", "character_notes", "dialogue_or_vo_notes"]
+        stop_condition: "Stop when the protagonist, product claim, or ending choice requires user approval."
+      failure_and_retry:
+        failure_signals: ["weak story idea", "script depth insufficient", "unreadable duration"]
+        smallest_retry: "Rewrite the single missing beat or conflict note, not the whole concept set."
+        stop_when: "The correction changes the selected direction."
+
+    cinematographer:
+      responsibilities:
+        - "Define shot grammar, lens/light logic, camera movement, and continuity implications for the recommended directions."
+      trigger_conditions:
+        - "The request is routed to director_room."
+        - "A visual concept, storyboard, or film script requires screen language."
+      inputs: ["director intent", "concept options", "production design cues", "duration and channel constraints"]
+      outputs: ["shot-language recommendation", "lens strategy", "lighting strategy", "camera-motion notes"]
+      evidence_and_tools:
+        evidence_required: ["subject action", "scene geography", "intended channel or aspect"]
+        tools_or_sources: ["research/film-production-glossary.md", "shot-language-standard.md", "schemas/shot-list.yaml"]
+      professional_judgment: ["Which framing, light, and movement make the story legible while preserving continuity and production feasibility?"]
+      prohibited_actions: ["Do not promise a lens, camera, or lighting capability that has no source truth.", "Do not reduce the contribution to 'cinematic lighting'."]
+      quality_gate:
+        pass_conditions: ["Connects shot grammar to a story beat and one continuity or model risk."]
+        fail_when: ["Lists equipment or style names without a screen purpose."]
+      handoff:
+        to: ["director", "production_designer", "editor", "model_prompt_engineer"]
+        required_fields: ["shot_language", "lens_strategy", "lighting_strategy", "camera_motion_notes"]
+        stop_condition: "Stop when the scene geography or subject identity is not locked enough to judge continuity."
+      failure_and_retry:
+        failure_signals: ["camera move lacks motivation", "lighting conflicts with product readability"]
+        smallest_retry: "Correct the one contested shot-language rule."
+        stop_when: "A new reference or user visual lock is required."
+
+    production_designer:
+      responsibilities:
+        - "Define environment, props, wardrobe, material logic, palette, and product staging so the world supports the story."
+      trigger_conditions:
+        - "The request is routed to director_room."
+        - "The concept needs a location, product identity, character look, or visual-world choice."
+      inputs: ["concept options", "product or character locks", "director intent", "cinematography notes"]
+      outputs: ["environment notes", "prop notes", "wardrobe notes", "color palette", "material boundaries"]
+      evidence_and_tools:
+        evidence_required: ["product silhouette or character facts", "scene function", "avoid constraints"]
+        tools_or_sources: ["schemas/visual-bible.yaml", "research/image-prompt-style-system.md", "prompt-pattern-registry.json"]
+      professional_judgment: ["What material and environment choices make the premise believable without rewriting the product category or character identity?"]
+      prohibited_actions: ["Do not turn a product identity reference into a full ad scene.", "Do not introduce unapproved logos, labels, or category-changing props."]
+      quality_gate:
+        pass_conditions: ["Names a functional world rule, a material/palette decision, and an avoid boundary."]
+        fail_when: ["Provides only a moodboard adjective list or breaks a product lock."]
+      handoff:
+        to: ["cinematographer", "model_prompt_engineer", "continuity_qa", "visual-bible"]
+        required_fields: ["environment_notes", "prop_notes", "wardrobe_notes", "color_palette"]
+        stop_condition: "Stop when product identity, brand assets, or human strategy remains unknown."
+      failure_and_retry:
+        failure_signals: ["product category drift", "world has no story function", "forbidden cliche"]
+        smallest_retry: "Correct the one prop, material, or palette rule causing drift."
+        stop_when: "The user must lock product identity or brand assets."
+
+    editor:
+      responsibilities:
+        - "Protect hook timing, shot count, transition logic, cutdown viability, and the pace of the emotional turn."
+      trigger_conditions:
+        - "The request is routed to director_room."
+        - "The brief includes a duration, social channel, cutdown, montage, or storyboard requirement."
+      inputs: ["producer scope", "director intent", "screenwriter beats", "cinematography notes"]
+      outputs: ["pacing notes", "transition notes", "shot-count recommendation", "cutdown risks"]
+      evidence_and_tools:
+        evidence_required: ["duration target", "hook requirement", "story turn"]
+        tools_or_sources: ["research/channel-playbooks.md", "schemas/shot-list.yaml", "film-commercial-quality-standard.md"]
+      professional_judgment: ["What information must land in the first moments, and where must the edit reserve time for the turn and ending?"
+      ]
+      prohibited_actions: ["Do not approve a slow reveal that defeats the channel hook without naming the tradeoff.", "Do not invent a final edit before story lock."]
+      quality_gate:
+        pass_conditions: ["States a timing tradeoff, shot-count range, and transition rule."]
+        fail_when: ["Pacing advice is not tied to duration or a narrative beat."]
+      handoff:
+        to: ["director", "screenwriter", "sound_designer", "shot-design"]
+        required_fields: ["pacing_notes", "transition_notes", "shot_count_recommendation"]
+        stop_condition: "Stop when the duration or delivery priority is unknown."
+      failure_and_retry:
+        failure_signals: ["hook too late", "shot count overload", "cutdown loses story turn"]
+        smallest_retry: "Adjust only the timing or shot-count recommendation."
+        stop_when: "A new narrative structure must be chosen."
+
+    sound_designer:
+      responsibilities:
+        - "Set dialogue, voiceover, music, ambience, sound-effect, and silence policy as story and product evidence."
+      trigger_conditions:
+        - "The request is routed to director_room."
+        - "The concept contains dialogue, voiceover, music, performance rhythm, or a product-action cue."
+      inputs: ["screenwriter notes", "director intent", "editor pacing", "channel and duration"]
+      outputs: ["audio policy", "dialogue or VO notes", "ambience and SFX plan", "music or silence rule"]
+      evidence_and_tools:
+        evidence_required: ["audio objective", "timing beats", "dialogue intelligibility need"]
+        tools_or_sources: ["research/audio-design-notes.md", "research/model-adapter-notes.md", "film-production glossary"]
+      professional_judgment: ["Does audio reveal story, product proof, or an emotional turn without competing with the edit or overstating unsupported model capability?"]
+      prohibited_actions: ["Do not claim a model has audio support without source evidence.", "Do not add music as filler when silence carries the beat."]
+      quality_gate:
+        pass_conditions: ["Defines a purposeful audio hierarchy and one timing interaction with the edit."]
+        fail_when: ["Lists generic music moods or leaves dialogue policy ambiguous."]
+      handoff:
+        to: ["screenwriter", "editor", "model_prompt_engineer", "script-treatment"]
+        required_fields: ["audio_policy", "dialogue", "voiceover", "ambience", "sfx", "music", "silence"]
+        stop_condition: "Stop when licensing, language, or voice identity needs a user or account decision."
+      failure_and_retry:
+        failure_signals: ["dialogue masked by music", "unsupported audio claim", "audio has no story function"]
+        smallest_retry: "Correct the one audio layer that conflicts with the story beat."
+        stop_when: "The correction requires real casting, licensing, or model-capability authorization."
+
+    model_prompt_engineer:
+      responsibilities:
+        - "Translate creative choices into reference-pack structure, prompt constraints, and model-risk warnings without generating prompts prematurely."
+      trigger_conditions:
+        - "The request is routed to director_room."
+        - "The brief requests visuals, storyboards, reference images, image prompts, video prompts, or model testing."
+      inputs: ["concept options", "director and cinematography notes", "production-design locks", "known model capability evidence"]
+      outputs: ["reference-pack implications", "adapter risks", "prompt-structure constraints", "model interpretation warnings"]
+      evidence_and_tools:
+        evidence_required: ["source-backed model constraints", "identity/product locks", "reference role boundaries"]
+        tools_or_sources: ["schemas/image-prompt-manifest.yaml", "schemas/video-prompt-manifest.yaml", "production-prompt-discipline.md", "capability-aware-generation-policy.md"]
+      professional_judgment: ["Which reference roles and prompt constraints preserve the direction while reducing model misread and continuity drift?"]
+      prohibited_actions: ["Do not claim unverified model facts.", "Do not write final prompts or authorize generation before upstream gates pass."]
+      quality_gate:
+        pass_conditions: ["States reference-pack role separation, one model risk, and one lock that must survive downstream prompting."]
+        fail_when: ["Offers a universal model prompt or treats a moodboard as direct video input."]
+      handoff:
+        to: ["production_designer", "continuity_qa", "reference-image-planner"]
+        required_fields: ["target_models", "reference_pack_implications", "adapter_risks"]
+        stop_condition: "Stop when model capability or real generation authorization is absent."
+      failure_and_retry:
+        failure_signals: ["model misread risk", "reference role collision", "unverified model fact"]
+        smallest_retry: "Correct the single reference role or prompt constraint at risk."
+        stop_when: "A source verification or user authorization is required."
+
+    continuity_qa:
+      responsibilities:
+        - "Expose contradictions, identity/product/scene locks, stale downstream artifacts, and the next QA gate before direction lock."
+      trigger_conditions:
+        - "The request is routed to director_room."
+        - "Any concept, product, character, scene, reference, or model decision can create downstream drift."
+      inputs: ["all role outputs", "known user locks", "project brief", "QA taxonomy"]
+      outputs: ["missing decisions", "contradictions", "required locks", "downstream QA gates"]
+      evidence_and_tools:
+        evidence_required: ["role-card claims", "source truth locks", "unresolved questions"]
+        tools_or_sources: ["schemas/qa-report.yaml", "qa/failure-taxonomy.yaml", "qa/retry-rules.md", "co-creation gate state"]
+      professional_judgment: ["Can the proposed recommendation pass downstream story, visual, reference, and model QA without silently changing a locked fact?"]
+      prohibited_actions: ["Do not silently resolve a user-owned contradiction.", "Do not declare client readiness, generation readiness, or final direction lock."]
+      quality_gate:
+        pass_conditions: ["Names remaining locks, at least one contradiction or explicit no-conflict finding, and the next QA boundary."]
+        fail_when: ["Treats discussion agreement as evidence that continuity is safe."]
+      handoff:
+        to: ["director-room controller", "story-development", "reference-image-planner", "generation-qa"]
+        required_fields: ["missing_decisions", "contradictions", "required_locks"]
+        stop_condition: "Stop when a conflict requires the user's concept choice."
+      failure_and_retry:
+        failure_signals: ["identity drift risk", "product lock missing", "story contradiction", "stale downstream artifact"]
+        smallest_retry: "Return the smallest upstream owner and one correction request."
+        stop_when: "The next correction needs a real user decision or external evidence."

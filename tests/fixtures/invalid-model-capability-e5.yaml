@@ -1,0 +1,22 @@
+eval_fixture:
+  id: E5
+  rule: "Storyboard/motion boards remain planning-only; literal frame slots use separate clean frames."
+  expected_error_id: E5_BOARD_BOUND_AS_CLEAN_FRAME
+  negative:
+    requires_direct_frame: true
+    bindings:
+      - ref_id: board-01
+        asset_role: professional_storyboard_motion_map
+        reference_mode: first_frame
+        direct_input_allowed: true
+  positive_control:
+    requires_direct_frame: true
+    bindings:
+      - ref_id: board-01
+        asset_role: professional_storyboard_motion_map
+        reference_mode: planning_only
+        direct_input_allowed: false
+      - ref_id: frame-01
+        asset_role: clean_first_frame
+        reference_mode: first_frame
+        direct_input_allowed: true

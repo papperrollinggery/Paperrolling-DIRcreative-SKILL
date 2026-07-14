@@ -1,0 +1,138 @@
+{
+  "registry_version": "1.0",
+  "spec_contract": "dircreative.chat-visualization@1.0",
+  "surfaces": [
+    {
+      "surface_id": "stage-context-strip",
+      "skill_id": "chat-facilitator",
+      "gate_types": ["idea_intake_gate", "concept_options_gate", "story_approval_gate", "script_approval_gate", "shot_list_approval_gate", "visual_direction_gate", "visual_bible_approval_gate", "global_reference_pack_gate", "sequence_reference_pack_gate", "video_prompt_gate", "generation_qa_gate", "checkpoint_gate"],
+      "intent": "inspect",
+      "preferred_mode": "inline",
+      "minimum_visible_fields": ["current_stage", "locked_stages", "next_stage", "active_blocker"],
+      "primary_action_kinds": ["submit_selection", "request_revision", "retry_smallest", "stop"],
+      "secondary_action_kinds": ["request_mix", "request_fullscreen", "pause_prompt_only"],
+      "fallback": "markdown"
+    },
+    {
+      "surface_id": "confirmation-echo",
+      "skill_id": "co-creation-gate-runtime",
+      "gate_types": ["concept_options_gate", "story_approval_gate", "script_approval_gate", "shot_list_approval_gate", "visual_direction_gate", "visual_bible_approval_gate", "sequence_plan_gate", "global_reference_pack_gate", "sequence_reference_pack_gate", "clean_frame_gate", "video_prompt_gate"],
+      "intent": "confirm",
+      "preferred_mode": "inline",
+      "minimum_visible_fields": ["user_choice", "confirmation_result", "production_judgment", "what_continues", "what_needs_review", "what_comes_next"],
+      "primary_action_kinds": ["submit_selection"],
+      "secondary_action_kinds": ["request_revision"],
+      "fallback": "markdown"
+    },
+    {
+      "surface_id": "director-concept-comparison",
+      "skill_id": "director-room",
+      "gate_types": ["concept_options_gate"],
+      "intent": "compare",
+      "preferred_mode": "inline",
+      "minimum_visible_fields": ["hook", "emotional_engine", "visual_signature", "tradeoff", "recommendation", "downstream_effects"],
+      "primary_action_kinds": ["submit_selection"],
+      "secondary_action_kinds": ["request_mix", "request_revision"],
+      "fallback": "table"
+    },
+    {
+      "surface_id": "story-curve",
+      "skill_id": "story-development",
+      "gate_types": ["story_approval_gate"],
+      "intent": "timeline",
+      "preferred_mode": "inline",
+      "minimum_visible_fields": ["beginning", "turn", "proof", "ending", "emotion_curve", "hook_curve", "brand_presence", "annotations", "downstream_effects"],
+      "primary_action_kinds": ["submit_selection"],
+      "secondary_action_kinds": ["request_revision"],
+      "fallback": "mermaid"
+    },
+    {
+      "surface_id": "script-timing-bands",
+      "skill_id": "script-treatment",
+      "gate_types": ["script_approval_gate"],
+      "intent": "timeline",
+      "preferred_mode": "inline",
+      "minimum_visible_fields": ["time_bands", "dialogue", "voiceover", "audio", "duration_budget", "overrun"],
+      "primary_action_kinds": ["submit_selection"],
+      "secondary_action_kinds": ["request_revision"],
+      "fallback": "table"
+    },
+    {
+      "surface_id": "shot-rhythm-timeline",
+      "skill_id": "shot-design",
+      "gate_types": ["shot_list_approval_gate", "sequence_plan_gate"],
+      "intent": "timeline",
+      "preferred_mode": "inline_or_fullscreen",
+      "minimum_visible_fields": ["timecode", "duration", "shot_size", "movement", "action", "audio", "risk"],
+      "primary_action_kinds": ["submit_selection"],
+      "secondary_action_kinds": ["request_revision", "request_fullscreen"],
+      "fallback": "table"
+    },
+    {
+      "surface_id": "visual-lock-matrix",
+      "skill_id": "visual-bible",
+      "gate_types": ["visual_direction_gate", "visual_bible_approval_gate"],
+      "intent": "graph",
+      "preferred_mode": "inline_or_fullscreen",
+      "minimum_visible_fields": ["identity", "environment", "props", "wardrobe", "light", "material", "drift_risks"],
+      "primary_action_kinds": ["submit_selection"],
+      "secondary_action_kinds": ["request_revision", "request_fullscreen"],
+      "fallback": "table"
+    },
+    {
+      "surface_id": "reference-asset-role-graph",
+      "skill_id": "reference-image-planner",
+      "gate_types": ["global_reference_pack_gate", "sequence_reference_pack_gate", "clean_frame_gate"],
+      "intent": "graph",
+      "preferred_mode": "inline_or_fullscreen",
+      "minimum_visible_fields": ["asset_id", "role", "status", "shot_binding", "planning_only", "direct_video_input"],
+      "primary_action_kinds": ["submit_selection"],
+      "secondary_action_kinds": ["request_revision", "request_fullscreen"],
+      "fallback": "mermaid"
+    },
+    {
+      "surface_id": "image-prompt-handoff-summary",
+      "skill_id": "image-prompt-compiler",
+      "gate_types": ["clean_frame_gate"],
+      "intent": "confirm",
+      "preferred_mode": "inline",
+      "minimum_visible_fields": ["prompt_intent", "inherited_references", "selected_model", "generation_boundary", "qa_target"],
+      "primary_action_kinds": ["pause_prompt_only", "submit_selection"],
+      "secondary_action_kinds": ["request_revision"],
+      "fallback": "markdown"
+    },
+    {
+      "surface_id": "video-route-capability-comparison",
+      "skill_id": "video-model-adapter",
+      "gate_types": ["video_prompt_gate"],
+      "intent": "compare",
+      "preferred_mode": "inline",
+      "minimum_visible_fields": ["exact_model", "duration", "reference_slots", "audio", "evidence_status", "route_risk"],
+      "primary_action_kinds": ["submit_selection", "pause_prompt_only"],
+      "secondary_action_kinds": ["request_revision"],
+      "fallback": "table"
+    },
+    {
+      "surface_id": "qa-candidate-delta-comparison",
+      "skill_id": "generation-qa",
+      "gate_types": ["generation_qa_gate", "retry_gate"],
+      "intent": "qa",
+      "preferred_mode": "inline_or_fullscreen",
+      "minimum_visible_fields": ["candidate", "passed_locks", "failed_locks", "blocker", "smallest_retry", "preserved_artifacts"],
+      "primary_action_kinds": ["retry_smallest", "stop"],
+      "secondary_action_kinds": ["request_fullscreen"],
+      "fallback": "table"
+    },
+    {
+      "surface_id": "checkpoint-current-state",
+      "skill_id": "checkpoint",
+      "gate_types": ["checkpoint_gate"],
+      "intent": "inspect",
+      "preferred_mode": "inline",
+      "minimum_visible_fields": ["current_stage", "locks", "stale_artifacts", "unresolved_decision", "next_action"],
+      "primary_action_kinds": ["submit_selection"],
+      "secondary_action_kinds": ["pause_prompt_only"],
+      "fallback": "markdown"
+    }
+  ]
+}

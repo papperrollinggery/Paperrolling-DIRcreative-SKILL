@@ -1,0 +1,11 @@
+fixture:
+  fixture_id: invalid-creative-copy-deck-self-reviewed-concept
+  description: Reject a substitutability review performed by the concept author despite a true independence flag.
+  expectation: reject
+  mutations:
+    - operation: replace
+      path: story_package.concept.substitutability_check.independent_reviewer.reviewer_id
+      value: concept-author-01
+  expected_failure_ids:
+    - creative_concept_substitutable
+  expected_review_ids: []

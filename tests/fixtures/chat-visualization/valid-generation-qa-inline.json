@@ -1,0 +1,144 @@
+{
+  "spec_version": "1.0",
+  "view_id": "generation-qa-compare",
+  "execution_context": "standalone_chat",
+  "controller": {"surface_owner": "dircreative", "user_facing": true},
+  "stage_gate": {"id": "generation_qa_01", "type": "generation_qa_gate", "status": "needs_user", "decision_owner": "user"},
+  "view": {"intent": "qa", "display_mode": "inline", "customer_stage_label": "QA 与重试规则", "decision_prompt": "按最小失败项重试，还是停止当前路线？"},
+  "source_truth": {"artifacts": [
+    {"artifact_id": "qa-report-01", "version": "1.0.0", "sha256": "9722e40215d790bd1b95058c6ca3bac718482224838397c5a3f25ef8d16318ee", "evidence_path": "tests/fixtures/chat-visualization/assets/qa-report-01.json", "lifecycle_status": "current"},
+    {"artifact_id": "candidate-index-01", "version": "1.0.0", "sha256": "c6bf76ed0420cea289122190f3acf47bc7a21cadf514d32b8d500213575a0d03", "evidence_path": "tests/fixtures/chat-visualization/assets/candidate-index-01.json", "lifecycle_status": "current"},
+    {"artifact_id": "candidate-a-preview", "version": "fixture-1", "sha256": "b7b04250f0370dc6fc622d13342023e1158dea6a3381cfa26ed2e60fa296b9c2", "path": "tests/fixtures/chat-visualization/assets/verified-candidate-a.png", "mime_type": "image/png", "review_classification": "real_candidate", "lifecycle_status": "current", "source_status": "confirmed", "authorization_status": "confirmed", "channel_fit_status": "confirmed", "source_evidence_ref": "candidate-index-01#/candidates/0/source", "authorization_evidence_ref": "candidate-index-01#/candidates/0/authorization", "channel_fit_evidence_ref": "qa-report-01#/candidates/0/channel_fit"},
+    {"artifact_id": "candidate-b-preview", "version": "fixture-1", "sha256": "712ff9d244a0103ef33124f1b5cb1a2f0adee06d27dd82180078bc62e1324b76", "path": "tests/fixtures/chat-visualization/assets/verified-candidate-b.png", "mime_type": "image/png", "review_classification": "real_candidate", "lifecycle_status": "current", "source_status": "confirmed", "authorization_status": "confirmed", "channel_fit_status": "confirmed", "source_evidence_ref": "candidate-index-01#/candidates/1/source", "authorization_evidence_ref": "candidate-index-01#/candidates/1/authorization", "channel_fit_evidence_ref": "qa-report-01#/candidates/1/channel_fit"}
+  ]},
+  "presentation": {
+    "previews": [
+      {"artifact_id": "candidate-a-preview", "option_id": "candidate-a", "label": "候选 A", "alt": "暖色厨房中两个人物围绕桌面产品形成三角构图的本地 PNG 测试候选", "caption": "本地 PNG 测试候选；来源、授权与渠道适配证据已绑定。", "annotations": [{"region": "画面中心", "note": "产品与人物关系清楚，适合检查构图判断。"}, {"region": "人物手部", "note": "最小重试应绑定到这个局部区域。"}]},
+      {"artifact_id": "candidate-b-preview", "option_id": "candidate-b", "label": "候选 B", "alt": "偏冷厨房中两个人物与桌面产品形成较紧构图的本地 PNG 测试候选", "caption": "本地 PNG 测试候选；来源、授权与渠道适配证据已绑定。", "annotations": [{"region": "产品旋钮", "note": "方向差异是当前 QA 的阻塞。"}, {"region": "右侧人物", "note": "画面更紧，留白更少。"}]}
+    ],
+    "fields": [
+      {"id": "current_stage", "label": "当前阶段", "value": "QA 与重试规则", "classification": "presentation_only", "source_ref": null},
+      {"id": "blocker", "label": "当前阻塞", "value": "角色手部连续性", "classification": "source_bound", "source_ref": "qa-report-01#/smallest_failure"},
+      {"id": "passed_locks", "label": "保持一致", "value": ["人物身份", "厨房空间", "产品材质", "镜头构图"], "classification": "source_bound", "source_ref": "qa-report-01#/passed_locks"},
+      {"id": "failed_locks", "label": "需要修正", "value": ["末段手部姿态"], "classification": "source_bound", "source_ref": "qa-report-01#/failed_locks"},
+      {"id": "smallest_retry", "label": "最小重试", "value": "只重做候选 A 的 4.2–5.0 秒手部动作，不改镜头和材质。", "classification": "source_bound", "source_ref": "qa-report-01#/smallest_retry"},
+      {"id": "preserved_artifacts", "label": "继续沿用", "value": ["候选 A 前 4.2 秒", "人物身份参考", "产品材质设定", "音频计划"], "classification": "source_bound", "source_ref": "qa-report-01#/preserved_artifacts"},
+      {
+        "id": "qa_delta",
+        "label": "候选差异",
+        "value": {
+          "media_status": "当前显示已绑定来源、授权与渠道证据的本地 PNG 测试候选。",
+          "candidates": [
+            {
+              "id": "candidate-a",
+              "label": "候选 A",
+              "judgment": "主体、构图和产品均可保留；失败集中在最后 0.8 秒手部连续性。",
+              "blocker": "4.2–5.0 秒手部姿态跳变",
+              "retry": "只重做最后 0.8 秒动作",
+              "preserve": "前 4.2 秒、人物身份、厨房空间、产品材质和声音计划",
+              "action_label": "只重做手部动作",
+              "conversation_intent": "请求只重做候选 A 最后 0.8 秒的手部动作，并保留此前通过的内容。"
+            },
+            {
+              "id": "candidate-b",
+              "label": "候选 B",
+              "judgment": "人物身份可用，但产品朝向与确认设定相反，无法只修一个局部动作。",
+              "blocker": "产品方向错误并影响共同动作",
+              "retry": "重做完整镜头并重新绑定产品参考",
+              "preserve": "人物身份参考、厨房空间和声音计划",
+              "action_label": "重做完整镜头",
+              "conversation_intent": "请求重做候选 B 完整镜头，重新绑定产品方向，同时保留人物身份、厨房空间和声音计划。"
+            }
+          ],
+          "dimensions": [
+            {
+              "id": "composition",
+              "label": "构图",
+              "target": "父女与产品保持三角关系",
+              "results": {
+                "candidate-a": {"status": "pass", "value": "关系清楚，留白稳定"},
+                "candidate-b": {"status": "pass", "value": "关系成立，画面略紧"}
+              }
+            },
+            {
+              "id": "identity",
+              "label": "人物身份",
+              "target": "脸型、年龄与服装连续",
+              "results": {
+                "candidate-a": {"status": "pass", "value": "父女身份一致"},
+                "candidate-b": {"status": "pass", "value": "父女身份一致"}
+              }
+            },
+            {
+              "id": "product_direction",
+              "label": "产品方向",
+              "target": "旋钮朝向人物内侧",
+              "results": {
+                "candidate-a": {"status": "pass", "value": "方向正确"},
+                "candidate-b": {"status": "fail", "value": "方向完全相反"}
+              }
+            },
+            {
+              "id": "material",
+              "label": "产品材质",
+              "target": "暖白哑光与拉丝金属",
+              "results": {
+                "candidate-a": {"status": "pass", "value": "材质保持一致"},
+                "candidate-b": {"status": "warn", "value": "金属高光偏硬"}
+              }
+            },
+            {
+              "id": "hands",
+              "label": "手部动作",
+              "target": "握持和交接连续",
+              "results": {
+                "candidate-a": {"status": "fail", "value": "末段姿态跳变"},
+                "candidate-b": {"status": "pass", "value": "动作连续"}
+              }
+            },
+            {
+              "id": "light",
+              "label": "光线",
+              "target": "左窗柔光与暖灰肤色",
+              "results": {
+                "candidate-a": {"status": "pass", "value": "方向与肤色稳定"},
+                "candidate-b": {"status": "warn", "value": "末段肤色偏冷"}
+              }
+            }
+          ]
+        },
+        "classification": "source_bound",
+        "source_ref": "qa-report-01#/candidate_delta"
+      }
+    ],
+    "options": [
+      {"id": "candidate-a", "label": "候选 A", "summary": "构图与动作通过，手部连续性失败。", "tradeoff": "只需重做末段动作。", "source_refs": ["candidate-a-preview#/image", "candidate-index-01#/candidates/0", "qa-report-01#/candidates/0"]},
+      {"id": "candidate-b", "label": "候选 B", "summary": "身份稳定，但产品方向错误。", "tradeoff": "需要重做完整镜头。", "source_refs": ["candidate-b-preview#/image", "candidate-index-01#/candidates/1", "qa-report-01#/candidates/1"]}
+    ],
+    "recommendation": {"option_id": "candidate-a", "reason": "保留已经通过的内容，只重试末段手部动作。"},
+    "downstream_effects": [{"stage": "retry", "effect": "只使当前失败片段失效，保留已通过镜头。"}]
+  },
+  "interactions": {
+    "local": ["select", "compare", "expand"],
+    "actions": [
+      {"id": "retry", "label": "只重做手部动作", "kind": "retry_smallest", "target_gate_id": "generation_qa_01", "conversation_intent": "请求只重做末段手部动作，并保留已经通过的内容。"},
+      {"id": "stop", "label": "停止当前路线", "kind": "stop", "target_gate_id": "generation_qa_01", "conversation_intent": "停止当前路线，不更改已经确认的内容。"}
+    ],
+    "max_actions": 2,
+    "deep_navigation": false,
+    "nested_scroll": false
+  },
+  "write_boundary": {
+    "preview_only": true,
+    "confirmation_required": true,
+    "writes_authoritative_state": false,
+    "write_owner": "dircreative",
+    "possible_write_targets": ["qa-report", "retry-receipt"],
+    "forbidden_claims": ["lock", "readiness", "acceptance", "completion", "generation_authorization"]
+  },
+  "fallback": {
+    "format": "table",
+    "required_visible_fields": ["current_stage", "decision_prompt", "options", "qa_delta", "downstream_effects", "blocker"],
+    "decision_question": "重试候选 A 的最小失败项，还是停止当前路线？"
+  }
+}

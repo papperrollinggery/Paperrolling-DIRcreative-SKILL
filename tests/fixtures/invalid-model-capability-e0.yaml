@@ -1,0 +1,16 @@
+eval_fixture:
+  id: E0
+  rule: "Exact capability card, endpoint/version, provider surface, and status must match."
+  expected_error_id: E0_EXACT_CARD_REQUIRED
+  negative:
+    selection:
+      capability_card_id: kling_video_3_0_official_guide
+      version: "legacy-5s-10s"
+      status: legacy
+      provider_surface: "Runway web Gen-4.5 generation"
+  positive_control:
+    selection:
+      capability_card_id: kling_video_3_0_official_guide
+      version: "3.0"
+      status: current
+      provider_surface: "Kling AI VIDEO 3.0 product guide"

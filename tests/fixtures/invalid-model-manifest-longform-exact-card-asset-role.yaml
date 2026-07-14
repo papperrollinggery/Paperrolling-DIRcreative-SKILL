@@ -1,0 +1,15 @@
+contract_fixture:
+  id: longform-exact-card-asset-role
+  validator: longform_asset_policy
+  expected_error_contains: "element_reference unsupported by exact card reference_modes"
+  negative:
+    capability_card_id: veo_3_1_lite_generate_001_vertex_api
+    asset_role: element_reference
+    input_mode: allowed
+  positive_controls:
+    - capability_card_id: veo_3_1_generate_001_vertex_api
+      asset_role: element_reference
+      input_mode: allowed
+    - capability_card_id: veo_3_1_lite_generate_001_vertex_api
+      asset_role: element_reference
+      input_mode: planning_only

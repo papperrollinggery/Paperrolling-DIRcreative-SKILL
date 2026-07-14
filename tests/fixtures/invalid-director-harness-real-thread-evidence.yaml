@@ -1,0 +1,17 @@
+fixture_type: "real_thread_incomplete_evidence"
+expected_failure_contains:
+  - "real Threads record[0] missing lane_id"
+  - "real Threads record[0] missing thread_id"
+  - "real Threads record[0] missing thread_class"
+  - "real Threads record[0] missing dispatch_record"
+  - "real Threads record[0] missing worker_receipt"
+  - "real Threads record[0] missing adoption_decision"
+  - "real Threads record[0] missing cleanup_status"
+open_questions: []
+execution:
+  context: "standalone_chat"
+  mode: "codex_thread_role_lanes"
+  explicit_true_threads_requested: true
+  nested_dispatch: false
+  thread_records:
+    - {}

@@ -1,0 +1,5 @@
+fixture_type: "empty_role_card"
+expected_failure_contains: "role card screenwriter must be a non-empty mapping"
+result_mode: "simulated_role_passes_fallback"
+role_cards:
+  screenwriter: {}

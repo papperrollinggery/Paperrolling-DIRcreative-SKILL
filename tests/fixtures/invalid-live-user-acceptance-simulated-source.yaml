@@ -1,0 +1,93 @@
+artifact:
+  artifact_id: invalid-live-user-acceptance-simulated-source
+  version: 1.0.0
+  status: approved
+  owner_skill: checkpoint
+
+acceptance_run:
+  run_type: goal_mode_simulation
+  visual_output_mode: prompt_only
+  template_policy:
+    copy_only_after_real_user_acceptance: true
+    simulated_fixture_allowed: false
+    terminal_only_demo_allowed: false
+
+user_acceptance:
+  status: accepted
+  accepted_by_user: true
+  real_user_co_creation_verified: true
+  accepted_at: "2026-05-17T00:00:00Z"
+  user_acceptance_statement: "Invalid fixture: this claims acceptance from a simulated run."
+  user_prompt_used_for_acceptance: "<goal_context>"
+  transcript_summary: "Goal-mode simulation transcript only."
+
+chat_evidence:
+  evidence_source: simulated_fixture
+  observed_stages:
+    - "阶段: 目标模式模拟测试"
+    - "阶段: 模拟测试结论"
+  user_decisions_recorded:
+    - "模拟用户选择"
+  council_adversarial_review:
+    triggered: false
+    viewpoints:
+      - user
+      - professional_film_expert
+      - product_manager
+      - skill_developer
+      - code_researcher
+    findings_summary: []
+    adopted_changes: []
+  thread_orchestration:
+    threads_used: []
+    main_controller_thread_id: "controller"
+    dispatch_record_artifacts:
+      - ".dircreative/runs/thread-orchestration-cleanup-2026-06-06.yaml"
+    disposable_workers_archived: true
+    unintended_worker_worktrees_present: false
+    thread_audit_passed: true
+  chat_transcript_artifacts:
+    - examples/goal-mode-simulation-test/01-chat-transcript.md
+  installed_skill_checked: true
+
+accepted_scope:
+  checklist:
+    - chat_first_flow
+    - director_room_collaboration
+    - professional_script
+    - dynamic_shot_design
+    - reference_pack_roles
+    - pre_generation_contracts
+    - image_prompt_summaries
+    - model_specific_video_prompts
+    - qa_retry_rules
+    - prompt_only_boundary
+    - assisted_generation_preflight
+    - installed_skill_behavior
+    - gstack_visual_dogfood
+    - council_adversarial_review_boundary
+    - thread_orchestration_cleanup
+  accepted_items:
+    - chat_first_flow
+    - director_room_collaboration
+    - professional_script
+    - dynamic_shot_design
+    - reference_pack_roles
+    - pre_generation_contracts
+    - image_prompt_summaries
+    - model_specific_video_prompts
+    - qa_retry_rules
+    - prompt_only_boundary
+    - assisted_generation_preflight
+    - installed_skill_behavior
+    - gstack_visual_dogfood
+    - council_adversarial_review_boundary
+    - thread_orchestration_cleanup
+
+unresolved_blockers:
+  items: []
+
+qa_gate:
+  status: pass
+  reasons:
+    - "Invalid fixture: simulated evidence must not be accepted."

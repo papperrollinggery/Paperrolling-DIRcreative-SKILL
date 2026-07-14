@@ -1,0 +1,333 @@
+{
+  "registry_version": "1.0.0",
+  "verified_date": "2026-05-14",
+  "patterns": [
+    {
+      "pattern_id": "art_directed_asymmetric_layout_v1",
+      "category": "layout_policy",
+      "source": {
+        "type": "user_pattern",
+        "url": "",
+        "observed_date": "2026-05-14"
+      },
+      "trigger_keywords": [
+        "board",
+        "reference sheet",
+        "production sheet",
+        "storyboard",
+        "visual bible",
+        "pitch board"
+      ],
+      "strengths": [
+        "blocks generic grid behavior",
+        "forces visible hierarchy",
+        "makes board feel art-directed"
+      ],
+      "failure_modes": [
+        "overly chaotic layout if hierarchy is not specified",
+        "asymmetry can reduce readability if section roles are vague"
+      ],
+      "json_delta": {
+        "art_direction_policy": {
+          "non_negotiables": [
+            "do not use a generic layout",
+            "do not use evenly distributed grids unless a technical sub-section requires it",
+            "do not make the layout symmetrical only for symmetry",
+            "composition must feel art-directed, intentional, and slightly asymmetric",
+            "every section must feel carefully placed, not automatically generated"
+          ]
+        }
+      },
+      "quality_gate": [
+        "section sizes follow production importance",
+        "layout has hierarchy",
+        "negative space is intentional"
+      ],
+      "status": "active"
+    },
+    {
+      "pattern_id": "json_config_prompt_v1",
+      "category": "prompt_structure",
+      "source": {
+        "type": "github",
+        "url": "https://github.com/wuyoscar/gpt_image_2_skill/blob/main/skills/gpt-image/references/craft.md",
+        "observed_date": "2026-05-14"
+      },
+      "trigger_keywords": [
+        "complex image",
+        "multi-system",
+        "product render",
+        "production board",
+        "layout-sensitive"
+      ],
+      "strengths": [
+        "keeps visual subsystems separate",
+        "makes prompts reusable",
+        "supports agentic compilation"
+      ],
+      "failure_modes": [
+        "too many empty fields weaken the prompt",
+        "machine-looking keys can replace visual specificity if values are vague"
+      ],
+      "json_delta": {
+        "meta": {
+          "version": "1.0.0"
+        },
+        "artifact": {},
+        "layout_system": {},
+        "visual_systems": {},
+        "quality_and_artifact_control": {}
+      },
+      "quality_gate": [
+        "all required fields have concrete visual values",
+        "no vague praise-only values",
+        "aspect ratio and layout appear before subject detail"
+      ],
+      "status": "active"
+    },
+    {
+      "pattern_id": "surface_integrity_guard_v1",
+      "category": "quality_and_artifact_control",
+      "source": {
+        "type": "user_pattern",
+        "url": "",
+        "observed_date": "2026-05-14"
+      },
+      "trigger_keywords": [
+        "fish scale",
+        "noise",
+        "crack",
+        "collapse",
+        "distortion",
+        "over-sharpening",
+        "material artifact"
+      ],
+      "strengths": [
+        "targets high-frequency texture artifacts",
+        "keeps subject clear",
+        "protects natural material continuity"
+      ],
+      "failure_modes": [
+        "can over-smooth useful texture if applied too strongly",
+        "transparent-background instruction should not be used unless alpha output is required"
+      ],
+      "json_delta": {
+        "quality_and_artifact_control": {
+          "surface_integrity_guard": {
+            "prompt_suffix_for_image2_or_image_gen": "The image is clean and transparent, with complete and natural materials, smooth and uniform texture, and the main subject Be clear, with distinct background layers, and avoid excessive sharpening, color spots, and noise Cracks, collapse, and distortion",
+            "required": [
+              "clean natural materials",
+              "smooth and coherent surface texture",
+              "main subject remains clear",
+              "background depth layers remain distinct",
+              "complete object geometry"
+            ],
+            "avoid": [
+              "fish-scale texture",
+              "excessive sharpening",
+              "color speckles",
+              "random noise",
+              "cracks",
+              "collapsed surfaces",
+              "distorted geometry",
+              "broken material continuity"
+            ]
+          }
+        }
+      },
+      "quality_gate": [
+        "texture remains natural",
+        "no scale-like pattern appears on skin, fabric, metal, or background",
+        "subject silhouette remains intact"
+      ],
+      "status": "active"
+    },
+    {
+      "pattern_id": "multi_panel_identity_lock_v1",
+      "category": "consistency_locks",
+      "source": {
+        "type": "internal_eval",
+        "url": "",
+        "observed_date": "2026-05-14"
+      },
+      "trigger_keywords": [
+        "turnaround",
+        "multi-panel",
+        "character sheet",
+        "storyboard board",
+        "reference pack",
+        "identity lock"
+      ],
+      "strengths": [
+        "reduces face, costume, and silhouette drift between panels",
+        "keeps downstream video references coherent",
+        "makes technical views and cinematic views describe the same subject"
+      ],
+      "failure_modes": [
+        "can make expression studies too stiff if performance direction is missing",
+        "can force unnecessary sameness when the board is meant to compare variants"
+      ],
+      "json_delta": {
+        "consistency_locks": {
+          "identity": "same face, proportions, silhouette, and expression logic across all views",
+          "costume": "same garment structure, seams, accessories, and wear marks across all angles",
+          "geometry": "no reinterpretation between technical panels and cinematic panels",
+          "forbidden": [
+            "angle-to-angle face drift",
+            "costume redesign between views",
+            "body proportion changes",
+            "different material behavior between panels"
+          ]
+        }
+      },
+      "quality_gate": [
+        "same subject reads clearly across every panel",
+        "turnaround and portrait share the same costume and silhouette",
+        "variant comparison is explicitly labeled if differences are intentional"
+      ],
+      "status": "active"
+    },
+    {
+      "pattern_id": "search_remix_update_loop_v1",
+      "category": "self_update",
+      "source": {
+        "type": "github",
+        "url": "https://github.com/YouMind-OpenLab/gpt-image-2-prompts-search",
+        "observed_date": "2026-05-14"
+      },
+      "trigger_keywords": [
+        "prompt library",
+        "search",
+        "remix",
+        "self update",
+        "pattern registry"
+      ],
+      "strengths": [
+        "keeps prompt knowledge current",
+        "uses category search instead of loading entire library",
+        "remixes patterns instead of copying prompts"
+      ],
+      "failure_modes": [
+        "viral prompt patterns may not fit production needs",
+        "unreviewed prompt imports can create inconsistent style"
+      ],
+      "json_delta": {
+        "self_update": {
+          "promotion_rule": "promote only after fixture improvement",
+          "deprecation_rule": "deprecate after repeated QA regression"
+        }
+      },
+      "quality_gate": [
+        "source recorded",
+        "pattern extracted rather than copied wholesale",
+        "fixture QA passed before active use"
+      ],
+      "status": "active"
+    },
+    {
+      "pattern_id": "forensic_visual_breakdown_v1",
+      "category": "visual_evidence_prompt_structure",
+      "source": {
+        "type": "local_pattern_analysis",
+        "url": "local://private-source/reversePrompt.ts",
+        "observed_date": "2026-05-24"
+      },
+      "trigger_keywords": [
+        "reverse analysis",
+        "reference analysis",
+        "prompt compiler",
+        "visual bible",
+        "generation qa",
+        "style tags",
+        "negative prompt"
+      ],
+      "strengths": [
+        "forces visible-evidence-first visual decomposition",
+        "separates complete prompt, reusable core prompt, and targeted negative prompt",
+        "keeps subject, pose, environment, light, composition, camera, color, material, proportion, and intent distinct",
+        "reduces filler quality words by requiring concrete visual fields"
+      ],
+      "failure_modes": [
+        "full multilingual output is wasteful for normal DIRcreative production handoffs",
+        "reverse-prompt fidelity can conflict with director-led story intent if copied directly",
+        "race or ethnicity inference must be avoided unless required, visible, and appropriate to the project"
+      ],
+      "json_delta": {
+        "evidence_policy": {
+          "source_of_truth": "use locked story, shot list, visual bible, references, and visible generated output; do not invent unseen details",
+          "uncertainty_rule": "when a visual fact is uncertain, write a broader production-safe description instead of an exact claim",
+          "forbidden": [
+            "invented brand logos",
+            "invented exact text",
+            "invented camera bodies or lens models",
+            "invented locations",
+            "hidden objects not visible or locked upstream"
+          ]
+        },
+        "visual_decomposition": {
+          "required_fields": [
+            "subject",
+            "action_pose_or_blocking",
+            "details_appearance",
+            "environment_background",
+            "lighting_atmosphere",
+            "composition_framing",
+            "style_camera",
+            "colors_palette",
+            "materials_texture",
+            "proportion_scale",
+            "generation_intent"
+          ],
+          "director_mapping": {
+            "action_pose_or_blocking": "shot blocking and performance direction",
+            "composition_framing": "foreground, midground, background, readable zone, negative space",
+            "style_camera": "shot size, angle, lens feel, support, movement, focus",
+            "generation_intent": "asset role and downstream video-model use"
+          }
+        },
+        "prompt_layers": {
+          "director_recreation_prompt": "complete production prompt for the exact asset",
+          "prompt_core": "short reusable lock preserving subject, composition, light, style, palette, and material",
+          "negative_prompt": "targeted artifact and drift avoid-list, never a generic quality dump"
+        },
+        "type_treatment": {
+          "portrait": "identity, skin/light interaction, expression, wardrobe, gaze, lens feel",
+          "product": "silhouette, scale, material, function cues, support hardware, misread risks",
+          "poster_or_ad": "title hierarchy, product/subject overlap, text zones, barcode/date/metadata blocks when visible or required",
+          "ui": "layout grid, component hierarchy, typography, spacing, state, device/container",
+          "illustration": "line, shape language, stylization level, palette, texture, medium",
+          "three_d": "geometry, bevels, shader/material, lighting rig, camera angle, render finish",
+          "photography": "shot size, lens feel, exposure, color temperature, depth of field, sensor or phone imperfection when intended"
+        },
+        "quality_language_policy": {
+          "forbidden_standalone_terms": [
+            "high detail",
+            "masterpiece",
+            "best quality",
+            "cinematic",
+            "beautiful",
+            "premium"
+          ],
+          "replacement_rule": "replace broad praise with visible constraints such as edge behavior, texture continuity, readable labels, motivated lighting, lens compression, and material response"
+        },
+        "language_policy": {
+          "default": "single project working language plus exact displayed labels",
+          "multilingual": "use only when the deliverable, client handoff, or UI needs multiple language buckets"
+        },
+        "style_tags": {
+          "purpose": "compact routing metadata for registry search, QA clustering, and prompt UI",
+          "count": "3 to 5",
+          "rule": "short, concrete, and not a substitute for the visual decomposition"
+        }
+      },
+      "quality_gate": [
+        "visual decomposition fields are filled with concrete values",
+        "prompt layers exist for complex image assets",
+        "negative prompt targets artifact risks and continuity drift",
+        "no standalone filler quality terms remain",
+        "uncertain details are marked broadly instead of invented"
+      ],
+      "status": "active"
+    }
+  ]
+}

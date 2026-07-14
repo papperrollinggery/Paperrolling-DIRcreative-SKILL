@@ -1,0 +1,268 @@
+video_prompt_manifest:
+  project_title: ""
+  target_sequence_duration: ""
+  longform_generation_mode: "hybrid | stepwise | batch | single_sequence"
+  visual_output_mode: "prompt_only | assisted_generation | external_generation"
+  sequence_plan: ""
+  sequence_ids: []
+  reference_pack: []
+  selected_reference_strategy: "all_reference_sequence | hybrid | per_shot_i2v | minimal_test"
+
+intake_state:
+  read_before_regenerate: true
+  source_precedence: []
+  unresolved_sources: []
+  next_action: ""
+
+stage_receipt:
+  status: "draft | ready_for_review | locked | generated | accepted | blocked"
+  source_truth_refs: []
+  produced_artifacts: []
+  user_confirmation_required: false
+  next_action: ""
+
+capability_resolution:
+  registry_path: "docs/film-preproduction/sources/model-sources.yaml"
+  registry_version: ""
+  selected_cards:
+    - capability_card_id: ""
+      model_key: ""
+      version: ""
+      status: "current | preview | legacy | deprecated | workflow_only"
+      provider_surface: ""
+      verified_on: ""
+      accessed_on: ""
+      evidence_level: "S1 | S2 | S3 | S4"
+      source_urls: []
+      source_conflicts: []
+      access_mode: "api | documented_product | documented_web | workflow_only"
+      execution_mode: "api | manual_export | web_ui | workflow_only"
+      execution_verification_status: "verified | unverified | not_applicable"
+      resolution_status: "resolved | stale | ambiguous | unsupported"
+
+rights_gate:
+  status: "verified | conditional | unverified | blocked"
+  conditions: []
+  source_asset_rights: ""
+  likeness_authorization: "not_applicable | verified | unverified | blocked"
+  voice_authorization: "not_applicable | verified | unverified | blocked"
+  brand_or_character_authorization: "not_applicable | verified | unverified | blocked"
+  music_or_audio_rights: "not_applicable | verified | unverified | blocked"
+  provider_restrictions_checked: false
+  evidence_refs: []
+  generation_allowed: false
+
+audio_plan:
+  desired_audio:
+    dialogue: ""
+    voiceover: ""
+    music: ""
+    ambience: ""
+    sound_effects: []
+    silence: false
+  per_model_routes:
+    - model_key: ""
+      capability_card_id: ""
+      generation_audio_route: "native | native_configurable | reference_audio | preserve_source | postproduction | none | unresolved"
+      generate_audio_parameter: "true | false | not_applicable"
+      route_evidence: []
+      postproduction_handoff: ""
+
+execution_capabilities:
+  image_generation:
+    available: false
+    provider: "none | openai_imagegen | external | unknown"
+    allowed_by_user: false
+  video_generation:
+    available: false
+    provider: "none | sora | seedance | kling | runway | veo | external | unknown"
+    allowed_by_user: false
+    external_upload_authorized: false
+    external_execution_state: "instructions_only | external_upload_ready | externally_executed"
+    external_execution_evidence: []
+  file_write:
+    available: true
+  browser_review:
+    available: false
+
+prompt_compilation:
+  prompt_ir_schema: "docs/film-preproduction/schemas/prompt-ir.schema.json"
+  prompt_ir_schema_version: "1.1.0"
+  compiler: "scripts/dircreative_prompt_compiler.py"
+  selected_adapter: "sora | seedance | kling | runway | veo"
+  compiler_status: "pending | passed | failed"
+  terminal_surface_status: "pending | passed | failed"
+  computed_structural_score: null
+  internal_fields_removed: []
+  postproduction_handoffs: []
+
+reference_map:
+  - ref_id: ""
+    source_kind: "user_upload | client_file | conversation_media | project_file | generated_candidate"
+    source_locator: ""
+    source_hash: ""
+    source_authorization: "user_provided | project_owned | unknown"
+    inherits_from: []
+    reuse_action: "direct_reference | edit | derive | planning_only | unresolved"
+    locked: false
+    file_or_generation_id: ""
+    role: ""
+    asset_output_status: "prompt_ready | generated_candidate | user_locked | external_pending | external_imported | rejected"
+    use_for: []
+    do_not_use_for: []
+    external_generation_instructions: ""
+
+reference_bindings:
+  - model: "sora | seedance | kling | runway | veo"
+    capability_card_id: ""
+    version: ""
+    status: "current | preview | legacy | deprecated"
+    provider_surface: ""
+    shot_id: ""
+    ref_id: ""
+    upload_slot: ""
+    role: "primary_direct_input | secondary_reference | planning_only | style_reference | element_reference"
+    attached_to_run: false
+    entity_ids: []
+    action_owners: []
+    required_for_generation: false
+    prompt_file: ""
+    risk_note: ""
+
+model_prompts:
+  sora:
+    enabled: false
+    operation: "generate | edit | extend"
+    capability_card_id: ""
+    version: ""
+    status: "current | preview | legacy | deprecated"
+    provider_surface: ""
+    best_for: ""
+    prompt: ""
+    reference_warning: ""
+    desired_audio: {}
+    generation_audio_route: ""
+    rights_gate_status: ""
+    transformation_contract:
+      preserve: []
+      change: []
+      forbidden_change: []
+      overlap_check: "pass | fail"
+    risk_notes: []
+    retry_rules: []
+  seedance:
+    enabled: false
+    operation: "generate | edit | extend"
+    capability_card_id: ""
+    version: ""
+    status: "current | preview | legacy | deprecated"
+    provider_surface: ""
+    access_mode: "api | documented_product | documented_web"
+    execution_mode: "api | manual_export | web_ui"
+    execution_verification_status: "verified | unverified"
+    best_for: ""
+    prompt: ""
+    reference_warning: ""
+    audio_policy: ""
+    desired_audio: {}
+    generation_audio_route: ""
+    rights_gate_status: ""
+    transformation_contract:
+      preserve: []
+      change: []
+      forbidden_change: []
+      overlap_check: "pass | fail"
+    risk_notes: []
+    retry_rules: []
+  kling:
+    enabled: false
+    operation: "generate | edit | extend"
+    capability_card_id: ""
+    version: ""
+    status: "current | legacy"
+    provider_surface: ""
+    access_mode: "api | documented_product | documented_web"
+    execution_mode: "api | manual_export | web_ui"
+    execution_verification_status: "verified | unverified"
+    best_for: ""
+    prompt: ""
+    reference_warning: ""
+    audio_policy: ""
+    desired_audio: {}
+    generation_audio_route: ""
+    rights_gate_status: ""
+    transformation_contract:
+      preserve: []
+      change: []
+      forbidden_change: []
+      overlap_check: "pass | fail"
+    risk_notes: []
+    retry_rules: []
+  runway:
+    enabled: false
+    operation: "generate | edit"
+    generation_capability_card_id: ""
+    edit_capability_card_id: ""
+    deprecated_card_ids_rejected: []
+    version: ""
+    status: "current | preview | legacy | deprecated"
+    provider_surface: ""
+    best_for: ""
+    prompt: ""
+    reference_warning: ""
+    audio_policy: ""
+    desired_audio: {}
+    generation_audio_route: ""
+    rights_gate_status: ""
+    transformation_contract:
+      preserve: []
+      change: []
+      forbidden_change: []
+      overlap_check: "pass | fail"
+    risk_notes: []
+    retry_rules: []
+  veo:
+    enabled: false
+    operation: "generate | extend"
+    capability_card_id: ""
+    version: ""
+    status: "current | preview | legacy | deprecated"
+    provider_surface: ""
+    source_conflicts: []
+    best_for: ""
+    prompt: ""
+    reference_warning: ""
+    audio_policy: ""
+    desired_audio: {}
+    generation_audio_route: ""
+    generate_audio_parameter: "true | false | not_applicable"
+    rights_gate_status: ""
+    transformation_contract:
+      preserve: []
+      change: []
+      forbidden_change: []
+      overlap_check: "pass | fail"
+    risk_notes: []
+    retry_rules: []
+
+universal_anti_misread_clause: |
+  Use the storyboard/reference board only as production guidance.
+  Do not show or animate the board, panels, text labels, arrows, grids, or layout.
+  Generate the cinematic scene described by the shot list.
+
+qa:
+  video_prompt_gate: ""
+  missing_audio_policy: false
+  missing_reference_map: false
+  visual_output_mode_valid: false
+  capability_receipt_present: false
+  missing_generated_assets_blocked: false
+  longform_sequence_refs_valid: false
+  exact_capability_cards_resolved: false
+  deprecated_or_preview_aliases_rejected: false
+  rights_gate_passed: false
+  desired_audio_route_compatible: false
+  preserve_change_disjoint: false
+  storyboard_clean_frame_separation_valid: false
+  official_source_conflicts_preserved: false
+  conflicting_actions: []

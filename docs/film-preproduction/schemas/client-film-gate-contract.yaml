@@ -1,0 +1,133 @@
+client_film_gate_contract:
+  project_title: ""
+  target_duration_sec: 60
+  channel: ""
+  aspect_ratio: "9:16"
+
+  gate_status:
+    story: "pending | pass | fail | blocked"
+    script: "pending | pass | fail | blocked"
+    shot: "pending | pass | fail | blocked"
+    asset_reference: "pending | pass | fail | blocked"
+    prompt_generation: "pending | pass | fail | blocked"
+    client_language: "pending | pass | fail | blocked"
+
+  client_visible_text_blocks: []
+
+  story_gate:
+    customer_readable_story_preview: []
+    preserved_brief_requirements: []
+    omitted_requirements_without_user_removal: []
+    legacy_routes_preserved_until_user_removes: true
+    prop_ellipsis_rule:
+      source_has_ellipsis: false
+      required_friend_count: 0
+      expansions:
+        - character_id: ""
+          role_identity: ""
+          prop: ""
+          action: ""
+          shot_function: ""
+
+  script_gate:
+    target_duration_sec: 60
+    time_budget:
+      total_sec: 60
+      sections: []
+    vo_budget:
+      total_words_estimate: 0
+      lines:
+        - vo_id: ""
+          text: ""
+          start_sec: 0
+          end_sec: 0
+          covered_shot_ids: []
+          covered_seconds: ""
+
+  shot_gate:
+    story_sections_count: 12
+    rhythm_points_count: 30
+    shots:
+      - shot_id: ""
+        timecode: ""
+        start_sec: 0
+        end_sec: 0
+        shot_size: ""
+        camera_position: ""
+        camera_movement: ""
+        subject_action: ""
+        emotional_function: ""
+        props_characters: []
+        asset_source: ""
+        vertical_framing: ""
+        reference_motion: ""
+        hero_or_expression_critical: false
+    storyboard_pages:
+      - page_id: ""
+        image_count: 4
+        image_aspect_ratio: "9:16"
+        crop_policy: "crop_safe_no_stretch"
+        min_image_width_px: 900
+        caption_standard:
+          story_first: true
+          camera_second: true
+          source_or_confirmation_last: true
+
+  asset_reference_gate:
+    user_claims_existing_browser_images: false
+    browser_or_local_intake:
+      completed: false
+      inspected_sources: []
+      blocked_reason: ""
+    per_shot_asset_contract:
+      - shot_id: ""
+        source_decision: "live_action | ugc | reference_video | existing_grok_image | existing_chatgpt_image | existing_imagegen_image | prompt_only | new_image_prompt"
+        source_status: "available | missing | prompt_ready | generated_candidate | user_locked | external_pending | blocked"
+        use_case: "planning | client_preview | direct_video_input | ppt_storyboard"
+        usage_page: ""
+        blocker: ""
+    reference_video_music:
+      reference_motion_notes: []
+      reference_videos: []
+      music_tracks:
+        - source: ""
+          usage: ""
+          lock_status: "candidate | locked | needs_license_review"
+
+  prompt_generation:
+    status: "pending | pass | fail | blocked"
+    input_gates_locked:
+      story: false
+      script: false
+      shot: false
+      asset_reference: false
+    prompts:
+      - prompt_id: ""
+        from_locked_shot_id: ""
+        character_or_role: ""
+        prop: ""
+        action: ""
+        shot_size: ""
+        camera_angle: ""
+        composition: ""
+        orientation: "vertical | horizontal | square"
+        usage_page: ""
+        output_mode: "prompt_only | new_generation"
+
+  thread_discipline:
+    codex_threads_requested: false
+    real_thread_dispatch_required: false
+    dispatch_receipt_adoption_cleanup_required: false
+    fallback_to_simulated_workers_allowed: false
+
+  acceptance_boundary:
+    validation_scope: "structural_contract_only"
+    structural_pass_not_client_deliverable: true
+    structural_pass_not_copy_quality: true
+    structural_pass_not_visual_quality: true
+    structural_pass_not_asset_authorization: true
+    structural_pass_not_live_acceptance: true
+
+qa:
+  client_film_gate_contract: "pass | fail | needs_user"
+  failures: []

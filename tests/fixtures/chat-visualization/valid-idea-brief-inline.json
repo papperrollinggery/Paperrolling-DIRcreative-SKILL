@@ -1,0 +1,42 @@
+{
+  "spec_version": "1.0",
+  "view_id": "idea-brief-inline",
+  "execution_context": "standalone_chat",
+  "controller": {"surface_owner": "dircreative", "user_facing": true},
+  "stage_gate": {"id": "idea_intake_01", "type": "idea_intake_gate", "status": "needs_user", "decision_owner": "user"},
+  "view": {"intent": "confirm", "display_mode": "inline", "customer_stage_label": "想法读取", "decision_prompt": "这份需求理解是否准确？"},
+  "source_truth": {"artifacts": [{"artifact_id": "brief-01", "version": "1.0.0", "sha256": "1111111111111111111111111111111111111111111111111111111111111111"}]},
+  "presentation": {
+    "fields": [
+      {"id": "current_stage", "label": "当前阶段", "value": "想法读取", "classification": "presentation_only", "source_ref": null},
+      {"id": "channel", "label": "渠道", "value": "社交短视频", "classification": "source_bound", "source_ref": "brief-01#/channel"},
+      {"id": "duration", "label": "时长", "value": "30 秒", "classification": "source_bound", "source_ref": "brief-01#/duration_sec"}
+    ],
+    "options": [],
+    "recommendation": null,
+    "downstream_effects": [{"stage": "director_room", "effect": "确认后进入创意方向比较。"}]
+  },
+  "interactions": {
+    "local": ["expand"],
+    "actions": [
+      {"id": "confirm", "label": "需求准确", "kind": "submit_selection", "target_gate_id": "idea_intake_01", "conversation_intent": "确认当前需求理解，请核对当前进度后记录。"},
+      {"id": "revise", "label": "需要修正", "kind": "request_revision", "target_gate_id": "idea_intake_01", "conversation_intent": "保持当前需求理解不变，询问一个最关键的修正点。"}
+    ],
+    "max_actions": 2,
+    "deep_navigation": false,
+    "nested_scroll": false
+  },
+  "write_boundary": {
+    "preview_only": true,
+    "confirmation_required": true,
+    "writes_authoritative_state": false,
+    "write_owner": "dircreative",
+    "possible_write_targets": ["brief", "skill_run_receipt.decisions"],
+    "forbidden_claims": ["lock", "readiness", "acceptance", "completion", "generation_authorization"]
+  },
+  "fallback": {
+    "format": "markdown",
+    "required_visible_fields": ["current_stage", "decision_prompt", "brief", "downstream_effects"],
+    "decision_question": "这份需求理解是否准确？"
+  }
+}

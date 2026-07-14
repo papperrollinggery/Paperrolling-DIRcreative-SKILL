@@ -1,0 +1,288 @@
+image_prompt_manifest:
+  project_title: ""
+  generation_target: "reference_pack"
+  image_model: ""
+  authoring_mode: "json_first"
+  visual_output_mode: "prompt_only | assisted_generation | external_generation"
+  longform_generation_mode: "hybrid | stepwise | batch | single_sequence"
+  sequence_plan: ""
+  style_system:
+    style_schema: "docs/film-preproduction/schemas/image-prompt-style-config.schema.json"
+    pattern_registry: "docs/film-preproduction/prompt-pattern-registry.json"
+    selected_pattern_ids: []
+  global_style_locks: []
+  global_avoid: []
+
+intake_state:
+  read_before_regenerate: true
+  source_precedence: []
+  unresolved_sources: []
+  next_action: ""
+
+stage_receipt:
+  status: "draft | ready_for_review | locked | generated | accepted | blocked"
+  source_truth_refs: []
+  produced_artifacts: []
+  user_confirmation_required: false
+  next_action: ""
+
+capability_resolution:
+  registry_path: "docs/film-preproduction/sources/model-sources.yaml"
+  registry_version: ""
+  capability_card_id: ""
+  version: ""
+  status: "current | preview | legacy | deprecated | workflow_only"
+  provider_surface: ""
+  verified_on: ""
+  accessed_on: ""
+  evidence_level: "S1 | S2 | S3 | S4"
+  source_urls: []
+  source_conflicts: []
+  access_mode: "api | documented_product | documented_web | workflow_only"
+  execution_mode: "api | manual_export | web_ui | workflow_only"
+  execution_verification_status: "verified | unverified | not_applicable"
+  resolution_status: "resolved | stale | ambiguous | unsupported"
+
+rights_gate:
+  status: "verified | conditional | unverified | blocked"
+  conditions: []
+  source_asset_rights: ""
+  likeness_authorization: "not_applicable | verified | unverified | blocked"
+  brand_or_character_authorization: "not_applicable | verified | unverified | blocked"
+  provider_restrictions_checked: false
+  evidence_refs: []
+  generation_allowed: false
+
+audio_intent:
+  desired_audio: "downstream_metadata_only"
+  generation_audio_route: "not_applicable"
+  prohibited_in_image_prompt: true
+
+execution_capabilities:
+  image_generation:
+    available: false
+    provider: "none | openai_imagegen | external | unknown"
+    allowed_by_user: false
+    external_upload_authorized: false
+    external_execution_state: "instructions_only | external_upload_ready | externally_executed"
+    external_execution_evidence: []
+  video_generation:
+    available: false
+    provider: "none | seedance | kling | runway | veo | external | unknown"
+    allowed_by_user: false
+  file_write:
+    available: true
+  browser_review:
+    available: false
+
+images:
+  - image_id: ""
+    prompt_ir_schema_version: "1.1.0"
+    entity_bindings:
+      - entity_id: ""
+        external_name: ""
+        reference_role: "identity | product | prop | scene | style | none"
+        preserve: []
+    source_kind: "user_upload | client_file | conversation_media | project_file | generated_candidate"
+    source_locator: ""
+    source_hash: ""
+    source_authorization: "user_provided | project_owned | unknown"
+    inherits_from: []
+    reuse_action: "direct_reference | edit | derive | planning_only | unresolved"
+    locked: false
+    type: ""
+    purpose: ""
+    operation: "generate | edit | retry"
+    sequence_id: ""
+    capability_card_id: ""
+    source_references:
+      - ref_id: ""
+        file_or_generation_id: ""
+        role: "source_image | mask | identity_reference | style_reference"
+        rights_evidence_refs: []
+    input_dependencies:
+      story_package: ""
+      shot_list: ""
+      visual_bible: ""
+      sequence_plan: ""
+      reference_pack_manifest: ""
+    layout:
+      aspect_ratio: ""
+      sections: []
+      density: ""
+      readability_rules: []
+    composition_card:
+      visual_center: ""
+      subject_hierarchy: ""
+      foreground_midground_background: ""
+      negative_space: ""
+      movement_room: ""
+      leading_lines_occlusion_parallax: ""
+      perspective_depth: ""
+      screen_direction: ""
+      narrative_purpose: ""
+    render_look:
+      lighting:
+        condition: ""
+        effect: ""
+        intensity: "none | subtle | moderate | strong"
+        preserve: []
+        exit_or_continuity: ""
+      optics:
+        condition: ""
+        lens_family: ""
+        filtration: ""
+        physical_behavior: ""
+        intensity: "none | subtle | moderate | strong"
+        preserve: []
+        exit_or_continuity: ""
+      atmosphere:
+        condition: ""
+        medium: ""
+        density_scale: ""
+        light_path_visibility: ""
+        movement: ""
+        intensity: "none | subtle | moderate | strong"
+        preserve: []
+        exit_or_continuity: ""
+      grade:
+        condition: ""
+        effect: ""
+        white_balance_anchor: ""
+        contrast_gamma: ""
+        black_level: ""
+        highlight_rolloff: ""
+        saturation_density: ""
+        palette_separation: ""
+        grain_halation: ""
+        intensity: "none | subtle | moderate | strong"
+        preserve: []
+        exit_or_continuity: ""
+    text_policy: "no_text | exact_text_required | short_labels_only | production_notes_allowed"
+    direct_video_input:
+      allowed: false
+      model_slots: []
+      frame_role: "clean_first_frame | clean_key_frame | clean_end_frame | planning_only"
+      shot_id: ""
+    rights:
+      status: "verified | conditional | unverified | blocked"
+      evidence_refs: []
+    transformation_contract:
+      preserve: []
+      change: []
+      allow_incidental_change: []
+      forbidden_change: []
+      overlap_check: "pass | fail"
+    pre_generation_contract:
+      status: "pass | fail | not_required"
+      asset_id: ""
+      asset_role: ""
+      dominant_title: ""
+      secondary_project_metadata: ""
+      title_hierarchy:
+        role_label_largest: false
+        project_title_secondary: false
+        forbidden_largest_text: []
+      role_purity:
+        primary_job: ""
+        must_not_do: []
+      inheritance:
+        character_identity_source: ""
+        scene_geography_source: ""
+      direct_video_input_policy:
+        allowed: false
+        reason: ""
+      prompt_lint:
+        exact_role_label_present: false
+        title_hierarchy_instruction_present: false
+        forbidden_poster_hierarchy_present: false
+        no_unowned_scene_or_character_redesign: false
+      image_generation_allowed: false
+    asset_output:
+      status: "prompt_ready | generated_candidate | user_locked | external_pending | external_imported | rejected"
+      prompt_file: ""
+      generated_file: ""
+      external_instructions: ""
+      source_tool: ""
+      user_lock_status: "not_required | pending | locked | rejected"
+    style_config:
+      config_id: ""
+      image_type: ""
+      source_patterns: []
+      evidence_policy:
+        source_of_truth: ""
+        uncertainty_rule: ""
+        forbidden: []
+      visual_decomposition:
+        subject: {}
+        action_pose_or_blocking: {}
+        details_appearance: {}
+        environment_background: {}
+        lighting_atmosphere: {}
+        composition_framing: {}
+        style_camera: {}
+        colors_palette: {}
+        materials_texture: {}
+        proportion_scale: {}
+        generation_intent: {}
+      prompt_layers:
+        director_recreation_prompt: ""
+        prompt_core: ""
+        negative_prompt: ""
+      type_treatment:
+        asset_type: ""
+        rules: []
+        must_capture: []
+        must_not_invent: []
+      style_tags: []
+      art_direction_policy:
+        non_negotiables: []
+        placement_rule: ""
+      quality_and_artifact_control:
+        surface_integrity_guard:
+          activation: "off | observed_failure | internal_ab_eval"
+          optional_internal_qa_macro: false
+          failure_id: ""
+          required: []
+          avoid: []
+        transparent_background: false
+      self_update:
+        registry_pattern_ids: []
+        qa_observations: []
+    prompt: ""
+    prompt_text_contract:
+      required_for_all_exported_prompts: true
+      board_required_terms:
+        - "Pre-generation contract:"
+        - "Largest title on the page:"
+        - "Smaller metadata only:"
+        - "Do not make <project title> the largest title."
+        - "Direct video input policy:"
+      clean_frame_required_terms:
+        - "Clean frame contract:"
+        - "No visible title"
+        - "Direct video input policy: allowed"
+    exact_text_labels: []
+    avoid:
+      - fake text
+      - decorative filler
+      - tiny unreadable panels
+      - unrelated mood collage
+    qa:
+      role_clear: false
+      text_readable: false
+      panels_large_enough: false
+      continuity_locks_present: false
+      output_mode_supported: false
+      asset_output_status_present: false
+      video_model_safe: false
+      capability_card_resolved: false
+      rights_gate_passed: false
+      preserve_change_disjoint: false
+      source_reference_present_for_edit: false
+      optional_qa_macro_not_forced: false
+
+handoff_notes:
+  reference_map_names: []
+  external_generation_instructions: []
+  video_adapter_warning: ""

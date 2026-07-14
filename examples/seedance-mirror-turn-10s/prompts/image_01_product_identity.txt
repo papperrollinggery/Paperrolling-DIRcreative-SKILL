@@ -1,0 +1,26 @@
+Asset role: PRODUCT IDENTITY REFERENCE
+Role purity: lock the product silhouette, construction, material, proportion, and hardware for downstream shots
+Preserve: product-only display object, black satin and lace construction, strap geometry, lace edge, hardware
+Do not show: human body, face, skin, hands, wearer, erotic performance, storyboard labels, logo, watermark
+
+Use case: advertising product identity reference
+Asset type: product identity board
+Primary purpose: prove the product's stable geometry and material truth
+
+Canvas and layout:
+- Aspect ratio: 9:16 portrait
+- Visual center: one product-only display object
+- Foreground / midground / background: product in the midground, neutral dark studio behind it
+- Negative space: controlled space around the silhouette
+- Composition grammar: restrained three-quarter product framing; no collage and no repeated products
+- Text: role label only for the planning board; no brand claims
+
+Camera and render look:
+- Normal product perspective, eye-level display-object height, stable axis
+- Soft neutral fill with a restrained deep-burgundy edge source
+- Textured black level, soft satin highlight, readable lace texture
+- Optical capture and atmosphere are planning cues only; no forced filter
+
+Continuity:
+- Preserve product identity and material across all six assets
+- This is not a clean first frame and must not be used as a literal I2V frame

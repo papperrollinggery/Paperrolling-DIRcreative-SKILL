@@ -1,0 +1,197 @@
+artifact:
+  artifact_id: cyber-courier-script-breakdown-v1
+  version: 1.0.0
+  source_artifact_ids:
+    - cyber-courier-script-v1
+    - cyber-courier-treatment-v1
+  status: approved
+  owner_skill: script-breakdown
+  created_at: "2026-05-14"
+  locked_by_user: false
+
+project:
+  title: "Cyber Courier: The Alley Accepts The Package"
+  channel: "cinematic_short_test"
+  duration: "15s"
+  aspect_ratio: "16:9"
+  scene_count: 1
+  dialogue_policy: "no_dialogue"
+  voiceover_policy: "no_voiceover"
+
+scenes:
+  - scene_id: "scene_01"
+    slugline: "EXT. SERVICE ALLEY MOUTH - NIGHT - RAIN"
+    story_function: "A courier crosses a forbidden threshold and activates the hidden destination."
+    time_span: "0-15s"
+    required_beats:
+      - "courier pauses at alley mouth"
+      - "courier verifies address"
+      - "courier enters alley"
+      - "package scanner pulse begins"
+      - "courier registers danger without running"
+      - "metal service door/intercom activates"
+
+characters:
+  - character_id: "courier_01"
+    name: "Unnamed Cyber Courier"
+    role: "protagonist"
+    age_range: "young adult"
+    build: "lean, practical, working courier posture"
+    performance_state:
+      start: "tired, focused, under time pressure"
+      middle: "professional resolve"
+      end: "restrained dread, controlled stillness"
+    continuity_locks:
+      - "same face throughout"
+      - "red waterproof courier jacket"
+      - "black utility pants"
+      - "wet hair or hood edge"
+      - "black delivery bag held close"
+      - "no broad panic or sprinting"
+
+locations:
+  - location_id: "alley_01"
+    name: "Forbidden service alley"
+    type: "narrow urban service alley"
+    time: "night"
+    weather: "heavy rain"
+    geography:
+      entrance: "public street edge behind courier"
+      path: "narrow wet corridor with pipes and service panels"
+      destination: "sealed metal service door with intercom at far end"
+    continuity_locks:
+      - "red sign on left side near entrance"
+      - "blue 24-hour sign deeper in frame"
+      - "wet reflective pavement"
+      - "steam or vent haze"
+      - "closed metal service doors"
+      - "destination door at far end"
+
+props:
+  - prop_id: "bag_01"
+    name: "Black delivery bag"
+    story_function: "Contains and conceals the sealed package until the activation beat."
+    material: "wet black nylon or coated fabric"
+    continuity_locks:
+      - "carried against courier body"
+      - "strap tightened in hand"
+      - "partly opened only for package reveal"
+  - prop_id: "package_01"
+    name: "Sealed matte-black confidential package"
+    story_function: "Acts like a key that wakes the destination."
+    material: "matte-black hard case or rigid wrapped parcel"
+    state_changes:
+      - beat: "before reveal"
+        state: "dark, hidden inside bag"
+      - beat: "object reveal"
+        state: "thin red scanner pulse appears"
+      - beat: "final"
+        state: "red glow reflects in puddle"
+    continuity_locks:
+      - "red scanner glow only begins after courier enters alley"
+      - "no visible label text required"
+      - "shape remains compact enough to fit inside bag"
+  - prop_id: "terminal_01"
+    name: "Small delivery terminal"
+    story_function: "Confirms the address before entry."
+    material: "black handheld device, wet screen"
+    continuity_locks:
+      - "appears only during address check if used"
+
+wardrobe:
+  - wardrobe_id: "courier_jacket_01"
+    character_id: "courier_01"
+    item: "Red waterproof courier jacket"
+    material: "rain-wet nylon shell"
+    condition: "used but maintained"
+    continuity_locks:
+      - "red remains the primary character color"
+      - "visible water beading"
+      - "small courier ID patch allowed"
+  - wardrobe_id: "courier_pants_01"
+    character_id: "courier_01"
+    item: "Black utility pants"
+    material: "dark water-resistant work fabric"
+    condition: "wet at lower legs"
+  - wardrobe_id: "courier_boots_01"
+    character_id: "courier_01"
+    item: "Black waterproof work boots"
+    condition: "wet soles, puddle contact"
+
+makeup_hair:
+  - character_id: "courier_01"
+    requirements:
+      - "wet face or hood edge"
+      - "subtle fatigue under eyes"
+      - "visible breath in cold rain if needed"
+      - "no blood, injury, or heavy stylized makeup"
+
+vehicles: []
+
+vfx:
+  - vfx_id: "scanner_glow_01"
+    description: "Thin red scanner pulse from sealed package."
+    story_function: "Connects package to alley system."
+    timing: "begins after courier enters alley"
+    constraints:
+      - "subtle pulse, not a magical explosion"
+      - "same red family as alley sign"
+      - "visible reflection in wet ground by final beat"
+  - vfx_id: "intercom_activation_01"
+    description: "Metal service door intercom wakes with a narrow light."
+    story_function: "Shows the destination has accepted or recognized the package."
+    timing: "final beat"
+    constraints:
+      - "mechanical activation"
+      - "no visible recipient"
+      - "do not open the door in this fixture"
+
+sfx:
+  - sfx_id: "rain_ambience"
+    type: "ambience"
+    description: "Steady rain on pavement and jacket."
+  - sfx_id: "city_hum"
+    type: "ambience"
+    description: "Distant traffic and electrical city hum."
+  - sfx_id: "neon_buzz"
+    type: "ambience"
+    description: "Subtle electrical buzz from signs."
+  - sfx_id: "scanner_beep"
+    type: "prop_sfx"
+    description: "Soft scanner beep or pulse when package wakes."
+  - sfx_id: "intercom_wake"
+    type: "prop_sfx"
+    description: "Soft relay click or electrical tone when door panel activates."
+
+music:
+  policy: "none for MVP"
+  optional_later: "low pulsing noir synth only if channel variant needs stronger tension"
+
+dialogue: []
+voiceover: []
+
+special_requirements:
+  - "Story must remain readable with no dialogue or voiceover."
+  - "No extra characters."
+  - "No chase, fight, or visible recipient."
+  - "No direct image or video prompt text in this phase."
+  - "The door activates but does not open."
+  - "The package glow and door activation must be causally connected."
+
+continuity_locks:
+  character:
+    - "same courier identity"
+    - "red jacket"
+    - "black delivery bag"
+  location:
+    - "same alley geography"
+    - "red sign left"
+    - "blue sign deeper/right"
+    - "metal door at far end"
+  prop:
+    - "sealed package remains inside bag until reveal"
+    - "red scanner pulse begins only after entry"
+  sound:
+    - "no dialogue"
+    - "no voiceover"
+    - "ambience and SFX planned separately from image prompts"

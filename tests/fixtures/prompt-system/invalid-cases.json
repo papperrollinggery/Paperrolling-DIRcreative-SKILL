@@ -1,0 +1,150 @@
+[
+  {
+    "case_id": "unknown_action_owner",
+    "kind": "mutation",
+    "base": "valid/minimal-character-scene-10s.json",
+    "path": ["shot_blocks", 0, "entity_actions", 0, "owner_entity_id"],
+    "value": "missing_person",
+    "expected": "unknown owner"
+  },
+  {
+    "case_id": "planning_reference_attached",
+    "kind": "mutation",
+    "base": "valid/minimal-character-scene-10s.json",
+    "path": ["references", 1, "direct_input_policy"],
+    "value": "planning_only",
+    "expected": "planning-only reference cannot be attached"
+  },
+  {
+    "case_id": "timeline_gap",
+    "kind": "mutation",
+    "base": "valid/minimal-character-scene-10s.json",
+    "path": ["shot_blocks", 1, "time_start"],
+    "value": "05.00",
+    "expected": "timeline gap or overlap"
+  },
+  {
+    "case_id": "internal_label_in_external_name",
+    "kind": "mutation",
+    "base": "valid/minimal-character-scene-10s.json",
+    "path": ["entities", 0, "external_name"],
+    "value": "S01 woman",
+    "expected": "external_name exposes internal_shot_or_asset_label"
+  },
+  {
+    "case_id": "phantom_audio_reference",
+    "kind": "surface",
+    "text": "No @Audio 1 is attached.",
+    "allowed_slots": [],
+    "expected": "phantom_reference_slots"
+  },
+  {
+    "case_id": "local_path_leak",
+    "kind": "surface",
+    "text": "Use outputs/reference-pack/secret.png as the source.",
+    "allowed_slots": [],
+    "expected": "local_path"
+  },
+  {
+    "case_id": "qa_retry_control_leak",
+    "kind": "surface",
+    "text": "QA retry plan: if failed, rerun the generation and record a pass signal.",
+    "allowed_slots": [],
+    "expected": "internal_control_language"
+  },
+  {
+    "case_id": "generation_unit_duplicate_shot",
+    "kind": "mutation",
+    "base": "valid/longform-30s-split.json",
+    "path": ["generation_plan", "units", 1, "shot_ids"],
+    "value": ["prepare"],
+    "expected": "assign shots more than once"
+  },
+  {
+    "case_id": "invented_capability_card",
+    "kind": "mutation",
+    "base": "valid/minimal-character-scene-10s.json",
+    "path": ["capability", "capability_card_id"],
+    "value": "invented_card_99",
+    "expected": "does not resolve"
+  },
+  {
+    "case_id": "required_reference_not_attached",
+    "kind": "mutation",
+    "base": "valid/minimal-character-scene-10s.json",
+    "path": ["references", 0, "attached_to_run"],
+    "value": false,
+    "expected": "required reference is not attached"
+  },
+  {
+    "case_id": "reference_audio_without_audio_asset",
+    "kind": "mutation",
+    "base": "valid/minimal-character-scene-10s.json",
+    "path": ["audio_plan", "generation_route"],
+    "value": "reference_audio",
+    "expected": "requires an attached audio reference"
+  },
+  {
+    "case_id": "environment_internal_control_injection",
+    "kind": "mutation",
+    "base": "valid/minimal-character-scene-10s.json",
+    "path": ["shot_blocks", 0, "environment_action", "producer_note"],
+    "value": "QA retry plan must be pasted",
+    "expected": "producer_note"
+  },
+  {
+    "case_id": "stale_project_file_hash",
+    "kind": "mutation",
+    "base": "valid/minimal-character-scene-10s.json",
+    "mutations": [
+      {"path": ["intake", "supplied_assets", 0, "source_kind"], "value": "project_file"},
+      {"path": ["intake", "supplied_assets", 0, "source_locator"], "value": "README.md"},
+      {"path": ["intake", "supplied_assets", 0, "source_hash"], "value": "0000000000000000000000000000000000000000000000000000000000000000"}
+    ],
+    "verify_project_files": true,
+    "expected": "project_file asset hash mismatch"
+  },
+  {
+    "case_id": "generation_unit_handoff_state_mismatch",
+    "kind": "mutation",
+    "base": "valid/longform-30s-split.json",
+    "path": ["generation_plan", "units", 1, "incoming_state"],
+    "value": "rider motionless and facing west",
+    "expected": "handoff state mismatch"
+  },
+  {
+    "case_id": "noncanonical_seedance_slot",
+    "kind": "mutation",
+    "base": "valid/minimal-character-scene-10s.json",
+    "path": ["references", 0, "platform_slot"],
+    "value": "@Image1",
+    "expected": "explicit @ slots"
+  },
+  {
+    "case_id": "veo_unsupported_ten_second_unit",
+    "kind": "mutation",
+    "base": "valid/minimal-character-scene-10s.json",
+    "mutations": [
+      {"path": ["capability", "capability_card_id"], "value": "veo_3_1_generate_001_vertex_api"},
+      {"path": ["capability", "model_key"], "value": "veo"},
+      {"path": ["capability", "version"], "value": "veo-3.1-generate-001"},
+      {"path": ["capability", "provider_surface"], "value": "Vertex AI publisher model predictLongRunning API"},
+      {"path": ["generation_plan", "selected_adapter"], "value": "veo"}
+    ],
+    "expected": "duration is unsupported"
+  },
+  {
+    "case_id": "runway_unverified_native_audio",
+    "kind": "mutation",
+    "base": "valid/minimal-character-scene-10s.json",
+    "mutations": [
+      {"path": ["capability", "capability_card_id"], "value": "runway_gen_4_5_web"},
+      {"path": ["capability", "model_key"], "value": "runway"},
+      {"path": ["capability", "version"], "value": "Gen-4.5"},
+      {"path": ["capability", "provider_surface"], "value": "Runway web Gen-4.5 generation"},
+      {"path": ["generation_plan", "selected_adapter"], "value": "runway"},
+      {"path": ["audio_plan", "generation_route"], "value": "native"}
+    ],
+    "expected": "native audio is not verified"
+  }
+]

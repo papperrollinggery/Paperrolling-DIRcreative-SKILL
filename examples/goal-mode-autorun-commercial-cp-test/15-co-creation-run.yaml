@@ -1,0 +1,158 @@
+co_creation_run:
+  run_id: goal-autorun-commercial-cp-2026-06-15
+  project_title: "Goal Autorun Commercial CP Test"
+  run_type: dry_run_fixture
+  visual_output_mode: assisted_generation
+  longform_generation_mode: single_sequence
+  simulated_choices_allowed: true
+  real_user_co_creation_verified: false
+  live_user_acceptance_receipt_written: false
+  real_media_generated: false
+  creative_production_preflight_included: true
+  source_artifacts:
+    - examples/goal-mode-autorun-commercial-cp-test/01-chat-transcript.md
+    - .dircreative/runs/creative-production-assisted-generation-fixture.yaml
+
+gate_policy:
+  required_gates:
+    - concept_options_gate
+    - story_approval_gate
+    - script_approval_gate
+    - shot_list_approval_gate
+    - visual_direction_gate
+    - visual_bible_approval_gate
+    - sequence_plan_gate
+    - global_reference_pack_gate
+    - sequence_reference_pack_gate
+    - clean_frame_gate
+    - video_prompt_gate
+
+gates:
+  - gate_id: autorun_concept_options
+    gate_type: concept_options_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented:
+      - "cinematic restrained night-shift product proof"
+      - "loud snack commercial"
+      - "pure product demo"
+    selected_option: "cinematic restrained night-shift product proof"
+    rationale: "Best balance of film tone and commercial clarity."
+  - gate_id: autorun_story_approval
+    gate_type: story_approval_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented:
+      - "approve product proof story"
+    selected_option: "approve product proof story"
+    rationale: "Product benefit is visible through use and result."
+  - gate_id: autorun_script_approval
+    gate_type: script_approval_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented:
+      - "approve no-dialogue 15s script"
+    selected_option: "approve no-dialogue 15s script"
+    rationale: "No-dialogue path preserves international social cutdown."
+  - gate_id: autorun_shot_list_approval
+    gate_type: shot_list_approval_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented:
+      - "approve five-shot structure"
+    selected_option: "approve five-shot structure"
+    rationale: "Five shots show problem, product proof, and memory frame."
+  - gate_id: autorun_visual_direction
+    gate_type: visual_direction_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented:
+      - "cool office to warm product contrast"
+    selected_option: "cool office to warm product contrast"
+    rationale: "Clear emotional and color transition."
+  - gate_id: autorun_visual_bible
+    gate_type: visual_bible_approval_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented:
+      - "lock product, desk, hand route, steam direction"
+    selected_option: "lock product, desk, hand route, steam direction"
+    rationale: "These locks prevent generation drift."
+  - gate_id: autorun_sequence_plan
+    gate_type: sequence_plan_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented:
+      - "single 15s sequence"
+    selected_option: "single 15s sequence"
+    rationale: "Brief is a 15s commercial, not a longform story."
+  - gate_id: autorun_global_reference_pack
+    gate_type: global_reference_pack_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented:
+      - "product identity first"
+      - "scene geography first"
+      - "prompt-only export"
+    selected_option: "product identity first"
+    rationale: "Product identity protects all downstream references."
+  - gate_id: autorun_sequence_reference_pack
+    gate_type: sequence_reference_pack_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented:
+      - "identity, scene/FOV, storyboard motion, clean frames"
+    selected_option: "identity, scene/FOV, storyboard motion, clean frames"
+    rationale: "Separates planning boards from direct video inputs."
+  - gate_id: autorun_clean_frame_gate
+    gate_type: clean_frame_gate
+    status: skipped_with_risk
+    decision_source: simulated_fixture
+    options_presented:
+      - "simulate CP preflight without real generation"
+      - "prompt-only export"
+    selected_option: "simulate CP preflight without real generation"
+    rationale: "Goal autorun cannot create real media."
+    blocks:
+      - real_media_generation
+      - live_acceptance
+  - gate_id: autorun_video_prompt_gate
+    gate_type: video_prompt_gate
+    status: skipped_with_risk
+    decision_source: simulated_fixture
+    options_presented:
+      - "future Kling clean-frame test"
+      - "stay prompt-only"
+    selected_option: "future Kling clean-frame test"
+    rationale: "Kling clean-frame path is the clearest future compatibility test."
+    blocks:
+      - real_video_generation
+      - live_acceptance
+
+qa:
+  all_required_gates_present: true
+  simulated_choices_labeled: true
+  live_user_choices_required: true
+  pending_gates_block_media: true
+  no_creative_system_defaults: true
+  creative_production_preflight_without_execution: true
+  no_real_media_generated: true
+  live_acceptance_not_claimed: true
+
+skill_run_receipt:
+  run_id: goal-autorun-commercial-cp-2026-06-15
+  skill_id: co-creation-gate-runtime
+  input_artifacts:
+    - examples/goal-mode-autorun-commercial-cp-test/01-chat-transcript.md
+  output_artifacts:
+    - examples/goal-mode-autorun-commercial-cp-test/15-co-creation-run.yaml
+  decisions:
+    - "Use simulated_fixture choices for Goal autorun."
+    - "Do not generate media or write live acceptance."
+  unresolved_questions:
+    - "Real user acceptance remains required."
+  qa_gate:
+    status: pass
+    reasons:
+      - "Autorun covers all required gates and CP preflight."
+  next_recommended_skill: checkpoint

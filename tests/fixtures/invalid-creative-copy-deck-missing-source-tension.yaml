@@ -1,0 +1,29 @@
+fixture:
+  fixture_id: invalid-creative-copy-deck-missing-source-tension
+  description: Reject a creative brief that has facts without source evidence and no audience tension.
+  expectation: reject
+  mutations:
+    - operation: replace
+      path: project.creative_foundation.source_evidence
+      value: []
+    - operation: replace
+      path: project.commercial_strategy.audience_tension
+      value: {}
+  expected_failure_ids:
+    - copy_claim_register_invalid
+    - copy_dir_professional_judgment_missing
+    - copy_execution_source_binding_invalid
+    - copy_execution_status_inconsistent
+    - copy_unapproved_claim
+    - creative_source_evidence_missing
+    - creative_fact_source_binding_missing
+    - creative_inference_binding_missing
+    - creative_audience_tension_missing
+    - creative_single_minded_proposition_binding_invalid
+    - creative_story_beat_source_binding_invalid
+    - creative_story_source_binding_invalid
+    - deck_source_constraints_invalid
+    - deck_beat_claim_evidence_binding_invalid
+    - deck_slide_claim_evidence_binding_invalid
+    - deck_qa_status_invalid
+  expected_review_ids: []

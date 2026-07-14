@@ -1,0 +1,42 @@
+client_film_gate_contract:
+  project_title: "Invalid Direct Prompt"
+  target_duration_sec: 15
+  gate_status:
+    story: pending
+    script: pending
+    shot: pending
+    asset_reference: pending
+    prompt_generation: pass
+    client_language: pass
+  client_visible_text_blocks:
+    - "这版先给客户看一段完整故事文字。"
+  prompt_generation:
+    status: pass
+    input_gates_locked:
+      story: false
+      script: false
+      shot: false
+      asset_reference: false
+    prompts:
+      - prompt_id: BAD01
+        from_locked_shot_id: S01
+        character_or_role: "friend"
+        prop: "gift"
+        action: "smiles"
+        shot_size: "CU"
+        camera_angle: "front"
+        composition: "vertical"
+        orientation: vertical
+        usage_page: "deck page"
+        output_mode: new_generation
+  acceptance_boundary:
+    validation_scope: structural_contract_only
+    structural_pass_not_client_deliverable: true
+    structural_pass_not_copy_quality: true
+    structural_pass_not_visual_quality: true
+    structural_pass_not_asset_authorization: true
+    structural_pass_not_live_acceptance: true
+qa:
+  client_film_gate_contract: fail
+  failures:
+    - visual_generation_before_story_lock

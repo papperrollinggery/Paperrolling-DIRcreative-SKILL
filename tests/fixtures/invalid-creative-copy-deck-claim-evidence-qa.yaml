@@ -1,0 +1,17 @@
+fixture:
+  fixture_id: invalid-creative-copy-deck-claim-evidence-qa
+  description: Reject deck beats and slides with broken claim/evidence bindings and stale passing QA.
+  expectation: reject
+  mutations:
+    - operation: replace
+      path: deck_narrative_spec.story_arc.beats.1.evidence_ids
+      value: []
+    - operation: replace
+      path: deck_narrative_spec.slides.0.primary_claim_id
+      value: claim-02
+  expected_failure_ids:
+    - deck_story_arc_incomplete
+    - deck_beat_claim_evidence_binding_invalid
+    - deck_slide_claim_evidence_binding_invalid
+    - deck_qa_status_invalid
+  expected_review_ids: []

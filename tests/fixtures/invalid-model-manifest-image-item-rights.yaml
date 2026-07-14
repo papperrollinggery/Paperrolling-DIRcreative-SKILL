@@ -1,0 +1,53 @@
+contract_fixture:
+  id: image-item-rights-required
+  validator: image_item
+  expected_error_contains: "per-image rights missing"
+  negative:
+    capability_card_id: gpt_image_2_openai_api
+    manifest_rights:
+      status: unverified
+      evidence_refs: []
+      generation_allowed: false
+    image:
+      image_id: fixture-image
+      capability_card_id: gpt_image_2_openai_api
+      operation: generate
+      source_references: []
+      transformation_contract:
+        preserve: []
+        change: []
+        allow_incidental_change: []
+        forbidden_change: []
+        overlap_check: pass
+      qa:
+        capability_card_resolved: true
+        rights_gate_passed: false
+        preserve_change_disjoint: true
+        source_reference_present_for_edit: true
+        optional_qa_macro_not_forced: true
+  positive_control:
+    capability_card_id: gpt_image_2_openai_api
+    manifest_rights:
+      status: unverified
+      evidence_refs: []
+      generation_allowed: false
+    image:
+      image_id: fixture-image
+      capability_card_id: gpt_image_2_openai_api
+      operation: generate
+      source_references: []
+      rights:
+        status: unverified
+        evidence_refs: []
+      transformation_contract:
+        preserve: []
+        change: []
+        allow_incidental_change: []
+        forbidden_change: []
+        overlap_check: pass
+      qa:
+        capability_card_resolved: true
+        rights_gate_passed: false
+        preserve_change_disjoint: true
+        source_reference_present_for_edit: true
+        optional_qa_macro_not_forced: true

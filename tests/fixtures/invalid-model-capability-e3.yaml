@@ -1,0 +1,25 @@
+eval_fixture:
+  id: E3
+  rule: "Every edit needs non-empty, disjoint preserve/change sets and a source/reference."
+  expected_error_id: E3_PRESERVE_CHANGE_INVALID
+  negative:
+    operation: edit
+    transformation_contract:
+      preserve: []
+      change: []
+    source_references:
+      - ref_id: source-01
+        file_or_generation_id: source-image-01
+  positive_control:
+    operation: edit
+    transformation_contract:
+      preserve:
+        - subject_identity
+        - background_geometry
+        - camera_framing
+      change:
+        - wardrobe_color
+        - lighting_palette
+    source_references:
+      - ref_id: source-01
+        file_or_generation_id: source-image-01

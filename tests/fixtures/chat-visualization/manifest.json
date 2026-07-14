@@ -1,0 +1,24 @@
+{
+  "valid": [
+    "valid-idea-brief-inline.json",
+    "valid-director-compare-inline.json",
+    "valid-story-beat-ribbon-inline.json",
+    "valid-script-timing-bands-inline.json",
+    "valid-shot-timeline-fullscreen.json",
+    "valid-visual-direction-compare-inline.json",
+    "valid-visual-lock-matrix-inline.json",
+    "valid-reference-asset-graph-fullscreen.json",
+    "valid-generation-qa-inline.json",
+    "valid-image-prompt-handoff-inline.json",
+    "valid-video-route-capability-inline.json",
+    "valid-adco-worker-fallback.json"
+  ],
+  "invalid": [
+    {"file": "invalid-action-overflow.json", "expected_error": "interaction action count must be between 1 and 2"},
+    {"file": "invalid-authoritative-write.json", "expected_error": "visualization cannot write authoritative state"},
+    {"file": "invalid-fallback-incomplete.json", "expected_error": "fallback missing visible fields"},
+    {"file": "invalid-source-binding.json", "expected_error": "references unknown artifact"},
+    {"file": "invalid-adco-controller.json", "expected_error": "orchestrated_worker visualization must remain ADCO-controlled and provider-hidden"},
+    {"file": "invalid-visible-backstage-term.json", "expected_error": "customer-visible text leaks backstage term"}
+  ]
+}

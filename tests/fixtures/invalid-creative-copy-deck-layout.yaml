@@ -1,0 +1,14 @@
+fixture:
+  fixture_id: invalid-creative-copy-deck-layout
+  description: Reject slide planning that omits composition and falls back to dashboard-style panels.
+  expectation: reject
+  mutations:
+    - operation: remove
+      path: deck_narrative_spec.slides.0.layout.composition
+    - operation: replace
+      path: deck_narrative_spec.slides.0.layout.avoid_ui_panels
+      value: false
+  expected_failure_ids:
+    - deck_layout_spec_incomplete
+    - deck_qa_status_invalid
+  expected_review_ids: []

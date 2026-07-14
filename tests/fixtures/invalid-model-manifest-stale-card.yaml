@@ -1,0 +1,10 @@
+contract_fixture:
+  id: stale-card
+  validator: freshness
+  expected_error_contains: "stale by"
+  negative:
+    age_days: 91
+    stale_after_days: 90
+  positive_control:
+    age_days: 90
+    stale_after_days: 90

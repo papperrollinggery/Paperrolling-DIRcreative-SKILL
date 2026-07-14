@@ -1,0 +1,113 @@
+artifact:
+  artifact_id: invalid-image-manifest-generated-without-capability
+  version: 0.1.0
+  source_artifact_ids:
+    - regression-test
+  status: draft
+  owner_skill: image-prompt-compiler
+  locked_by_user: false
+
+image_prompt_manifest:
+  project_title: "Regression Capability Test"
+  generation_target: "advertising_reference_pack"
+  image_model: "GPT Image / Image2 compatible"
+  authoring_mode: "json_first"
+  visual_output_mode: "prompt_only"
+  longform_generation_mode: "single_sequence"
+  sequence_plan: ""
+  style_system:
+    style_schema: "docs/film-preproduction/schemas/image-prompt-style-config.schema.json"
+    pattern_registry: "docs/film-preproduction/prompt-pattern-registry.json"
+    selected_pattern_ids:
+      - art_directed_asymmetric_layout_v1
+      - json_config_prompt_v1
+      - surface_integrity_guard_v1
+
+execution_capabilities:
+  image_generation:
+    available: false
+    provider: none
+    allowed_by_user: false
+  video_generation:
+    available: false
+    provider: none
+    allowed_by_user: false
+  file_write:
+    available: true
+
+images:
+  - image_id: invalid_generated_without_capability_01
+    type: "character_identity_reference"
+    purpose: "Regression fixture: prompt-only output must not claim native image generation."
+    sequence_id: "regression-seq-01"
+    input_dependencies:
+      story_package: "tests/fixtures/invalid-image-manifest-generated-without-capability.yaml"
+      shot_list: "tests/fixtures/invalid-image-manifest-generated-without-capability.yaml"
+      visual_bible: "tests/fixtures/invalid-image-manifest-generated-without-capability.yaml"
+      sequence_plan: ""
+      reference_pack_manifest: "tests/fixtures/invalid-image-manifest-generated-without-capability.yaml"
+    layout:
+      aspect_ratio: "16:9"
+      sections:
+        - "large character front view"
+        - "side view"
+      density: "medium"
+      readability_rules:
+        - "role label must be readable"
+    asset_output:
+      status: generated_candidate
+      prompt_file: ""
+      generated_file: ""
+      external_instructions: "Do not generate in this run; export this as a prompt-only instruction for an external image tool."
+      source_tool: image_gen
+      user_lock_status: pending
+    style_config:
+      config_id: invalid_generated_without_capability_v1
+      image_type: character_identity_reference
+      source_patterns:
+        - art_directed_asymmetric_layout_v1
+        - json_config_prompt_v1
+        - surface_integrity_guard_v1
+      art_direction_policy:
+        non_negotiables:
+          - "do not use a generic product grid"
+          - "composition must feel art-directed, intentional, and slightly asymmetric"
+        placement_rule: "role label must dominate the page."
+      quality_and_artifact_control:
+        surface_integrity_guard:
+          required:
+            - "complete natural materials"
+          avoid:
+            - "fish-scale texture"
+      self_update:
+        registry_pattern_ids:
+          - art_directed_asymmetric_layout_v1
+          - surface_integrity_guard_v1
+        qa_observations: []
+    prompt: |
+      Pre-generation contract:
+      Largest title on the page: CHARACTER IDENTITY REFERENCE
+      Smaller metadata only: Regression Capability Test
+      Do not make Regression Capability Test the largest title.
+      Direct video input policy: PLANNING ONLY, NOT DIRECT VIDEO INPUT.
+      {
+        "artifact": "character identity reference",
+        "canvas": "16:9 landscape production board",
+        "layout_policy": "art-directed, intentional, slightly asymmetric, no generic equal grid",
+        "hero": "single character identity reference board",
+        "text_labels": ["CHARACTER IDENTITY REFERENCE"],
+        "material_truth": "clean fabric and skin material",
+        "style": "cinematic realism"
+      }
+    exact_text_labels:
+      - "CHARACTER IDENTITY REFERENCE"
+    avoid:
+      - "poster title hierarchy"
+    qa:
+      role_clear: true
+      text_readable: true
+      panels_large_enough: true
+      continuity_locks_present: true
+      output_mode_supported: true
+      asset_output_status_present: true
+      video_model_safe: true

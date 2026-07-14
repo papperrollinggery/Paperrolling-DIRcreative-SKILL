@@ -1,0 +1,161 @@
+artifact:
+  artifact_id: invalid-reference-pack-duplicate-role
+  version: 1.0.0
+  status: fixture_invalid
+  owner_skill: reference-image-planner
+
+reference_pack_manifest:
+  project_title: "Invalid Duplicate Reference Role"
+  version: "1.0.0"
+  strategy: "compressed_model_safe_pack"
+  longform_generation_mode: "single_sequence"
+  visual_output_mode: "prompt_only"
+  source_artifact_ids: []
+  execution_capabilities:
+    image_generation:
+      available: false
+      provider: none
+      allowed_by_user: false
+    video_generation:
+      available: false
+      provider: none
+      allowed_by_user: false
+    file_write:
+      available: true
+    browser_review:
+      available: false
+  user_decision_gate:
+    required: true
+    status: approved
+    options_presented: 3
+    selected_option: "invalid duplicate identity references"
+    user_lock_required_before_video_adapter: true
+    can_mix_options: true
+    batch_skip_per_sequence_gate: false
+    accepted_risk: []
+  reference_strategy:
+    selected: "hybrid"
+    rationale: "fixture"
+    shot_count_policy: "fixture"
+    clean_frame_policy: "start_end_only"
+  assets:
+    - asset_id: invalid_identity_a
+      role: identity_product_board
+      primary_job: "Lock product identity version A."
+      status: locked
+      asset_output:
+        status: prompt_ready
+        external_instructions: "Generate externally."
+      direct_input_policy:
+        seedance: allowed
+        kling: element_only
+        runway: reference_only
+        veo: allowed
+      qa:
+        readable_at_video_resolution: true
+        one_primary_job: true
+    - asset_id: invalid_identity_b
+      role: identity_product_board
+      primary_job: "Lock product identity version B, conflicting with version A."
+      status: locked
+      asset_output:
+        status: prompt_ready
+        external_instructions: "Generate externally."
+      direct_input_policy:
+        seedance: allowed
+        kling: element_only
+        runway: reference_only
+        veo: allowed
+      qa:
+        readable_at_video_resolution: true
+        one_primary_job: true
+    - asset_id: invalid_environment
+      role: environment_camera_board
+      primary_job: "Lock environment and camera FOV only."
+      status: locked
+      asset_output:
+        status: prompt_ready
+        external_instructions: "Generate externally."
+      direct_input_policy:
+        seedance: allowed
+        kling: planning_only
+        runway: planning_only
+        veo: allowed
+      must_not_animate:
+        - "layout labels"
+      qa:
+        readable_at_video_resolution: true
+        one_primary_job: true
+        anti_misread_clause_required: true
+    - asset_id: invalid_storyboard
+      role: storyboard_motion_board
+      primary_job: "Lock shot order and camera movement only."
+      status: locked
+      asset_output:
+        status: prompt_ready
+        external_instructions: "Generate externally."
+      direct_input_policy:
+        seedance: conditional
+        kling: forbidden
+        runway: forbidden
+        veo: conditional
+      must_not_animate:
+        - "shot labels"
+        - "panel borders"
+      qa:
+        readable_at_video_resolution: true
+        one_primary_job: true
+        anti_misread_clause_required: true
+    - asset_id: invalid_clean_frame
+      role: clean_first_frame
+      primary_job: "Direct I2V clean first frame."
+      status: selected
+      asset_output:
+        status: external_pending
+        external_instructions: "Generate a text-free clean frame."
+      direct_input_policy:
+        seedance: allowed
+        kling: allowed
+        runway: allowed
+        veo: allowed
+      text_policy: no_text
+      clean_frame_prompts:
+        - shot_id: SH01
+          frame_role: clean_first_frame
+          prompt_file: "tests/fixtures/invalid-reference-pack-duplicate-role.yaml"
+          primary_model_slots:
+            - kling
+            - runway
+      qa:
+        readable_at_video_resolution: true
+        one_primary_job: true
+
+  model_pack_recipes:
+    seedance:
+      enabled: true
+      required_bindings:
+        - "@image invalid_identity_a"
+    kling:
+      enabled: true
+      prefer_clean_first_frame: true
+      forbidden_primary_input_roles:
+        - storyboard_motion_board
+    runway:
+      enabled: true
+      prefer_clean_first_frame: true
+      forbidden_primary_input_roles:
+        - storyboard_motion_board
+    veo:
+      enabled: true
+      reference_map_required: true
+
+  qa:
+    roles_unique: false
+    dense_board_policy_present: true
+    clean_first_frame_policy_present: true
+    visual_output_mode_valid: true
+    capability_receipt_present: true
+    asset_output_statuses_present: true
+    longform_mode_valid: true
+    model_budget_ok: true
+    video_model_safe: false

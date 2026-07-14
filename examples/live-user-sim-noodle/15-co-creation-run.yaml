@@ -1,0 +1,234 @@
+artifact:
+  artifact_id: noodle-co-creation-run-v1
+  version: 1.0.0
+  source_artifact_ids:
+    - noodle-user-experience-trace-v1
+    - noodle-qa-retry-plan-v1
+  status: approved
+  owner_skill: co-creation-gate-runtime
+
+co_creation_run:
+  project_title: "Midnight Broth Cup"
+  version: "1.0.0"
+  run_type: dry_run_fixture
+  simulated_choices_allowed: true
+  real_user_co_creation_verified: false
+  visual_output_mode: prompt_only
+  longform_generation_mode: single_sequence
+  source_artifact_ids:
+    - examples/live-user-sim-noodle/01-idea-intake.md
+    - examples/live-user-sim-noodle/14-user-experience-trace.md
+    - examples/live-user-sim-noodle/12-qa-retry-plan.md
+
+gate_policy:
+  required_gates:
+    - concept_options_gate
+    - story_approval_gate
+    - script_approval_gate
+    - shot_list_approval_gate
+    - visual_direction_gate
+    - visual_bible_approval_gate
+    - sequence_plan_gate
+    - global_reference_pack_gate
+    - sequence_reference_pack_gate
+    - clean_frame_gate
+    - video_prompt_gate
+  block_media_generation_until:
+    - clean_frame_gate
+    - video_prompt_gate
+
+gates:
+  - gate_id: noodle-gate-01
+    gate_type: concept_options_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented:
+      - "Option A: Last Light At The Desk"
+      - "Option B: Platform Warmth"
+      - "Option C: Night Driver Pause"
+    selected_option: "Option A: Last Light At The Desk"
+    rationale: "Best one-location production clarity and strongest 15s product proof."
+    downstream_artifacts:
+      - examples/live-user-sim-noodle/04-selected-concept.md
+      - examples/live-user-sim-noodle/05-story-package.md
+    blocks: []
+    notes:
+      - "Simulated user chose Option A."
+  - gate_id: noodle-gate-02
+    gate_type: story_approval_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented:
+      - "Use five-beat office recovery story"
+      - "Add a second character reaction"
+      - "Make it pure product tabletop with no actor"
+    selected_option: "Use five-beat office recovery story"
+    rationale: "Keeps the 15s ad human but still product-clear."
+    downstream_artifacts:
+      - examples/live-user-sim-noodle/05-story-package.md
+    blocks: []
+    notes:
+      - "Simulated user approved story direction before script."
+  - gate_id: noodle-gate-03
+    gate_type: script_approval_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented:
+      - "Dialogue-free 15s timed script"
+      - "Add one VO line"
+      - "Add on-screen copy throughout"
+    selected_option: "Dialogue-free 15s timed script"
+    rationale: "Lets visual proof and practical sound carry the ad."
+    downstream_artifacts:
+      - examples/live-user-sim-noodle/06-script.md
+    blocks: []
+    notes:
+      - "Simulated user approved script before shot design."
+  - gate_id: noodle-gate-04
+    gate_type: shot_list_approval_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented:
+      - "Five 3-second shots"
+      - "Three 5-second shots"
+      - "One continuous 15-second shot"
+    selected_option: "Five 3-second shots"
+    rationale: "Shows setup, activation, steam, human payoff, and hero product separately."
+    downstream_artifacts:
+      - examples/live-user-sim-noodle/07-shot-list.yaml
+    blocks: []
+    notes:
+      - "Simulated user approved shot structure before visual bible."
+  - gate_id: noodle-gate-05
+    gate_type: visual_direction_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented:
+      - "Warm practical food realism with slight neo-noir office contrast"
+      - "Graphic high-energy snack commercial"
+      - "Minimal Japanese product tabletop film"
+    selected_option: "Warm practical food realism with slight neo-noir office contrast"
+    rationale: "Matches user desire for warmth and cinematic restraint."
+    downstream_artifacts:
+      - examples/live-user-sim-noodle/08-visual-bible.md
+    blocks: []
+    notes:
+      - "Simulated user rejected louder commercial style."
+  - gate_id: noodle-gate-06
+    gate_type: visual_bible_approval_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented:
+      - "Lock warm practical food realism, ivory cup, red seal, copper lid, blue/amber office light"
+      - "Make the palette cleaner and more tabletop"
+      - "Make the office darker and more noir"
+    selected_option: "Lock warm practical food realism, ivory cup, red seal, copper lid, blue/amber office light"
+    rationale: "Preserves product readability while keeping cinematic warmth."
+    downstream_artifacts:
+      - examples/live-user-sim-noodle/08-visual-bible.md
+    blocks: []
+    notes:
+      - "Simulated user approved visual bible locks before reference planning."
+  - gate_id: noodle-gate-07
+    gate_type: sequence_plan_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented:
+      - "Single 15s sequence with five shots"
+      - "Three separate 5s clips"
+      - "One continuous 15s tabletop take"
+    selected_option: "Single 15s sequence with five shots"
+    rationale: "Exercises complete planning while remaining within one generation unit."
+    downstream_artifacts:
+      - examples/live-user-sim-noodle/07-shot-list.yaml
+    blocks: []
+    notes:
+      - "No longform sequence pack needed."
+  - gate_id: noodle-gate-08
+    gate_type: global_reference_pack_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented:
+      - "Product board + office board + lighting/material/style board + storyboard board + clean frames deferred"
+      - "One dense master board"
+      - "Clean frames only"
+    selected_option: "Product board + office board + lighting/material/style board + storyboard board + clean frames deferred"
+    rationale: "Preserves model safety and keeps user review readable."
+    downstream_artifacts:
+      - examples/live-user-sim-noodle/09-reference-pack-plan.yaml
+      - examples/live-user-sim-noodle/10-image-prompt-manifest.yaml
+    blocks: []
+    notes:
+      - "Simulated user chose a compact reference pack."
+  - gate_id: noodle-gate-09
+    gate_type: sequence_reference_pack_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented:
+      - "Use one sequence pack for the 15s ad"
+      - "Split into activation and payoff packs"
+      - "Wait for generated references before prompt export"
+    selected_option: "Use one sequence pack for the 15s ad"
+    rationale: "Single 15s ad does not need per-sequence packs."
+    downstream_artifacts:
+      - examples/live-user-sim-noodle/09-reference-pack-plan.yaml
+    blocks: []
+    notes:
+      - "Single-sequence route selected."
+  - gate_id: noodle-gate-10
+    gate_type: clean_frame_gate
+    status: skipped_with_risk
+    decision_source: simulated_fixture
+    options_presented:
+      - "Generate clean N01/N05 frames now"
+      - "Stay prompt-only and defer clean frames"
+      - "Export external clean-frame instructions"
+    selected_option: "Stay prompt-only and defer clean frames"
+    rationale: "This fixture is a UX simulation without image generation authorization."
+    downstream_artifacts:
+      - examples/live-user-sim-noodle/09-reference-pack-plan.yaml
+    blocks: []
+    notes:
+      - "Direct I2V generation remains blocked until clean frames exist."
+  - gate_id: noodle-gate-11
+    gate_type: video_prompt_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented:
+      - "Export Seedance/Kling/Runway/Veo prompts in prompt-only mode"
+      - "Only export Seedance prompt"
+      - "Wait for generated image references"
+    selected_option: "Export Seedance/Kling/Runway/Veo prompts in prompt-only mode"
+    rationale: "Prompt-only export is the best complete test without generating media."
+    downstream_artifacts:
+      - examples/live-user-sim-noodle/11-video-prompt-manifest.yaml
+    blocks: []
+    notes:
+      - "Model prompts include external reference instructions and anti-misread clauses."
+
+qa:
+  all_required_gates_present: true
+  simulated_choices_labeled: true
+  live_user_choices_required: true
+  pending_gates_block_media: true
+  no_creative_system_defaults: true
+  failures: []
+
+skill_run_receipt:
+  run_id: noodle-co-creation-run-2026-05-16
+  skill_id: co-creation-gate-runtime
+  input_artifacts:
+    - examples/live-user-sim-noodle/14-user-experience-trace.md
+  output_artifacts:
+    - examples/live-user-sim-noodle/15-co-creation-run.yaml
+  decisions:
+    - "Run a complete prompt-only UX simulation with simulated choices."
+    - "Skip clean frame generation with explicit risk instead of pretending images exist."
+    - "Expose pre-generation contract and QA/retry rules before assisted generation."
+  unresolved_questions:
+    - "Actual user should choose whether to generate clean frames in a live run."
+  qa_gate:
+    status: pass
+    reasons:
+      - "All required gates exist and all simulated choices are labeled."
+  next_recommended_skill: generation-qa

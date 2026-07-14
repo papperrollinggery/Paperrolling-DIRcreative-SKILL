@@ -1,0 +1,15 @@
+fixture:
+  fixture_id: invalid-creative-copy-deck-story-arc
+  description: Reject a deck sequence that does not open on tension or resolve its own arc.
+  expectation: reject
+  mutations:
+    - operation: replace
+      path: deck_narrative_spec.story_arc.opening_tension
+      value: ""
+    - operation: replace
+      path: deck_narrative_spec.story_arc.closing_resolution
+      value: ""
+  expected_failure_ids:
+    - deck_story_arc_incomplete
+    - deck_qa_status_invalid
+  expected_review_ids: []

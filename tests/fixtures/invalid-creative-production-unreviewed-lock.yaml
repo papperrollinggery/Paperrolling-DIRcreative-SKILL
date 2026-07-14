@@ -1,0 +1,27 @@
+creative_production_adapter:
+  run_id: invalid-cp-unreviewed-lock
+  visual_output_mode: assisted_generation
+  creative_production_path: Shots
+  user_authorization:
+    explicit: true
+    decision_source: real_user
+  dircreative_gate_state:
+    story_locked: true
+    script_locked: true
+    shot_list_locked: true
+    reference_pack_locked: true
+    pre_generation_contract_status: pass
+  review_surface:
+    primary: render_moodboard_board_widget
+    widget_is_truth_source: false
+  generated_candidates:
+    - asset_id: invalid-locked-without-qa
+      asset_output_status: generated_candidate
+      qa_status: pending
+      user_lock_status: locked
+  truth_source:
+    source_of_truth: dircreative_artifacts
+    writeback_required: true
+  qa:
+    self_qa_before_user_lock: false
+    no_real_media_generated: true

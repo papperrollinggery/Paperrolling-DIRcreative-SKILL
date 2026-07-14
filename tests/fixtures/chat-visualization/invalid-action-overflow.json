@@ -1,0 +1,28 @@
+{
+  "spec_version": "1.0",
+  "view_id": "invalid-action-overflow",
+  "execution_context": "standalone_chat",
+  "controller": {"surface_owner": "dircreative", "user_facing": true},
+  "stage_gate": {"id": "idea_gate", "type": "idea_intake_gate", "status": "needs_user", "decision_owner": "user"},
+  "view": {"intent": "confirm", "display_mode": "inline", "customer_stage_label": "想法读取", "decision_prompt": "确认需求。"},
+  "source_truth": {"artifacts": [{"artifact_id": "brief", "version": "1.0.0", "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}]},
+  "presentation": {
+    "fields": [{"id": "current_stage", "label": "当前阶段", "value": "想法读取", "classification": "presentation_only", "source_ref": null}],
+    "options": [],
+    "recommendation": null,
+    "downstream_effects": [{"stage": "director_room", "effect": "进入创意方向。"}]
+  },
+  "interactions": {
+    "local": [],
+    "actions": [
+      {"id": "a", "label": "确认", "kind": "submit_selection", "target_gate_id": "idea_gate", "conversation_intent": "确认。"},
+      {"id": "b", "label": "修改", "kind": "request_revision", "target_gate_id": "idea_gate", "conversation_intent": "修改。"},
+      {"id": "c", "label": "展开", "kind": "request_fullscreen", "target_gate_id": "idea_gate", "conversation_intent": "展开。"}
+    ],
+    "max_actions": 2,
+    "deep_navigation": false,
+    "nested_scroll": false
+  },
+  "write_boundary": {"preview_only": true, "confirmation_required": true, "writes_authoritative_state": false, "write_owner": "dircreative", "possible_write_targets": [], "forbidden_claims": ["lock", "readiness", "acceptance", "completion", "generation_authorization"]},
+  "fallback": {"format": "markdown", "required_visible_fields": ["current_stage", "decision_prompt", "brief", "downstream_effects"], "decision_question": "确认需求吗？"}
+}

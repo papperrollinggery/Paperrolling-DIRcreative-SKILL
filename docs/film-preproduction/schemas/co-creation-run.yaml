@@ -1,0 +1,59 @@
+co_creation_run:
+  project_title: ""
+  version: "1.0.0"
+  run_type: "dry_run_fixture | live_user_run"
+  simulated_choices_allowed: false
+  real_user_co_creation_verified: false
+  visual_output_mode: "prompt_only | assisted_generation | external_generation"
+  longform_generation_mode: "hybrid | stepwise | batch | single_sequence"
+  source_artifact_ids: []
+
+gate_policy:
+  required_gates:
+    - concept_options_gate
+    - story_approval_gate
+    - script_approval_gate
+    - shot_list_approval_gate
+    - visual_direction_gate
+    - visual_bible_approval_gate
+    - sequence_plan_gate
+    - global_reference_pack_gate
+    - sequence_reference_pack_gate
+    - clean_frame_gate
+    - video_prompt_gate
+  block_media_generation_until:
+    - clean_frame_gate
+    - video_prompt_gate
+
+gates:
+  - gate_id: ""
+    gate_type: "concept_options_gate | story_approval_gate | script_approval_gate | shot_list_approval_gate | visual_direction_gate | visual_bible_approval_gate | sequence_plan_gate | global_reference_pack_gate | sequence_reference_pack_gate | clean_frame_gate | video_prompt_gate"
+    status: "pending | approved | needs_revision | skipped_with_risk"
+    decision_source: "real_user | simulated_fixture | pending | system_default"
+    options_presented: []
+    selected_option: ""
+    rationale: ""
+    downstream_artifacts: []
+    blocks:
+      - "media_generation"
+    notes: []
+
+qa:
+  all_required_gates_present: false
+  simulated_choices_labeled: false
+  live_user_choices_required: false
+  pending_gates_block_media: false
+  no_creative_system_defaults: false
+  failures: []
+
+skill_run_receipt:
+  run_id: ""
+  skill_id: "co-creation-gate-runtime"
+  input_artifacts: []
+  output_artifacts: []
+  decisions: []
+  unresolved_questions: []
+  qa_gate:
+    status: "pass | fail | needs_user"
+    reasons: []
+  next_recommended_skill: ""

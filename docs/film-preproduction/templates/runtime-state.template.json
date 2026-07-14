@@ -1,0 +1,69 @@
+{
+  "schema_version": "1.0.0",
+  "project_id": "replace-with-project-id",
+  "updated_at": "1970-01-01T00:00:00Z",
+  "current": {
+    "session_id": "replace-with-session-id",
+    "state_kind": "repository_baseline",
+    "stage": {
+      "id": "idea-intake",
+      "status": "needs_user",
+      "completion_receipt_record_id": null
+    },
+    "acceptance": {
+      "status": "not_requested",
+      "receipt_record_id": null
+    },
+    "completion_requirements": {
+      "required_record_kinds": [],
+      "required_logical_ids": [],
+      "manifest_required": false,
+      "acceptance_required": false
+    },
+    "manifest_record_ids": [],
+    "generation_authorization_ids": [],
+    "thread_record_ids": []
+  },
+  "records": [],
+  "current_projection": [],
+  "migrations": [],
+  "fixture_migration": {
+    "manifest_path": "tests/fixtures/runtime/migration-manifest.json",
+    "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "source_count": 0,
+    "completed_at": "1970-01-01T00:00:00Z",
+    "fixture_authority": "none",
+    "live_state_authority": false,
+    "live_acceptance_authority": false,
+    "host_attestation_authority": false
+  },
+  "legacy_debt": [],
+  "storage_policy": {
+    "budget_bytes": 1073741824,
+    "warn_at_ratio": 0.8,
+    "artifact_roots": [
+      "deliverables"
+    ],
+    "control_roots": [
+      ".dircreative/runs"
+    ],
+    "classes": {
+      "final": {
+        "retention": "preserve",
+        "user_confirmation_required_before_delete": true
+      },
+      "necessary_archive": {
+        "retention": "review",
+        "user_confirmation_required_before_delete": true
+      },
+      "regenerable_cache": {
+        "retention": "regenerate_then_remove",
+        "user_confirmation_required_before_delete": false
+      },
+      "delete_candidate": {
+        "retention": "remove_after_confirmation",
+        "user_confirmation_required_before_delete": true
+      }
+    }
+  }
+}

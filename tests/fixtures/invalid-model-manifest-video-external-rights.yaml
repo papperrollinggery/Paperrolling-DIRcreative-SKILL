@@ -1,0 +1,75 @@
+contract_fixture:
+  id: video-external-upload-blocked-rights
+  validator: video_external_execution
+  negative_cases:
+    - expected_error_contains: "external execution requires qualified rights"
+      case:
+        visual_output_mode: external_generation
+        external_instructions:
+          - "Upload the bound references to the named external video surface."
+        execution:
+          available: false
+          provider: external
+          allowed_by_user: false
+          external_upload_authorized: true
+          external_execution_state: external_upload_ready
+          external_execution_evidence: []
+        rights_gate:
+          status: blocked
+          conditions: []
+          source_asset_rights: blocked_by_owner
+          likeness_authorization: blocked
+          voice_authorization: not_applicable
+          brand_or_character_authorization: blocked
+          music_or_audio_rights: not_applicable
+          provider_restrictions_checked: true
+          evidence_refs:
+            - owner-denial
+          generation_allowed: false
+  positive_controls:
+    - visual_output_mode: external_generation
+      external_instructions:
+        - "Instructions only; do not upload until separately authorized."
+      execution:
+        available: false
+        provider: external
+        allowed_by_user: false
+        external_upload_authorized: false
+        external_execution_state: instructions_only
+        external_execution_evidence: []
+      rights_gate:
+        status: blocked
+        conditions: []
+        source_asset_rights: blocked_by_owner
+        likeness_authorization: blocked
+        voice_authorization: not_applicable
+        brand_or_character_authorization: blocked
+        music_or_audio_rights: not_applicable
+        provider_restrictions_checked: true
+        evidence_refs:
+          - owner-denial
+        generation_allowed: false
+    - visual_output_mode: external_generation
+      external_instructions:
+        - "Upload only the licensed references to the approved video surface."
+      execution:
+        available: false
+        provider: external
+        allowed_by_user: false
+        external_upload_authorized: true
+        external_execution_state: external_upload_ready
+        external_execution_evidence: []
+      rights_gate:
+        status: verified
+        conditions: []
+        source_asset_rights: client_owned
+        likeness_authorization: verified
+        voice_authorization: not_applicable
+        brand_or_character_authorization: verified
+        music_or_audio_rights: not_applicable
+        provider_restrictions_checked: true
+        evidence_refs:
+          - client-license
+          - likeness-authorization
+          - brand-authorization
+        generation_allowed: true

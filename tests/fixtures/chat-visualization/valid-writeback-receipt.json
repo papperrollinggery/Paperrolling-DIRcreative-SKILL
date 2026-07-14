@@ -1,0 +1,60 @@
+{
+  "receipt_version": "dircreative.chat-visualization-writeback@1.0",
+  "receipt_id": "writeback-concept-options-01",
+  "execution_context": "standalone_chat",
+  "controller": {
+    "write_owner": "dircreative",
+    "recorded_by": "dircreative",
+    "user_facing": true
+  },
+  "source_view": {
+    "spec_path": "tests/fixtures/chat-visualization/valid-director-compare-inline.json",
+    "spec_sha256": "15cd5541f2f1960f0074fd44264e45ae55344be09a3c3af8aadb85fa52670273",
+    "view_id": "director-concept-compare",
+    "gate_id": "concept_options_01"
+  },
+  "conversation_intent": {
+    "action_id": "adopt",
+    "action_kind": "submit_selection",
+    "selected_option_id": "emotional-echo",
+    "submitted_text": "采用情感回响方向，先建立可信关系，再让旧物与产品成为理解的证据。",
+    "decision_source": "real_user",
+    "user_confirmation_id": "fixture-user-message-001"
+  },
+  "gate_result": {
+    "status": "approved",
+    "selected_option_id": "emotional-echo",
+    "rationale": "用户明确选择，当前来源与阶段未发生冲突。",
+    "conflict": null
+  },
+  "artifact_writes": [
+    {
+      "artifact_id": "selected-concept-01",
+      "label": "已选创意方向",
+      "path": "tests/fixtures/chat-visualization/writeback-project/artifacts/selected-concept.json",
+      "change_kind": "created",
+      "before_sha256": null,
+      "after_sha256": "9986a14d870b9d050460da02a50119a3bdc94ab93b38e2ec4bdbfef27d1785a1"
+    }
+  ],
+  "lock_effects": {
+    "created": ["创意方向：情感回响"],
+    "preserved": []
+  },
+  "downstream_effects": {
+    "stale": [],
+    "preserved": [],
+    "blocked": ["开始生成图片或视频素材"]
+  },
+  "next_stage": {
+    "id": "story_approval_gate",
+    "label": "故事",
+    "status": "ready"
+  },
+  "authority": {
+    "visual_action_wrote_state": false,
+    "controller_revalidated_source": true,
+    "artifact_hashes_verified": true,
+    "generation_authorized": false
+  }
+}

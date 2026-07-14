@@ -1,0 +1,37 @@
+Clean frame contract:
+No visible title, project metadata, labels, arrows, panels, maps, swatches, callouts, or text in the image.
+Direct video input policy: allowed for Kling and Runway after user lock; this is the SH01 clean first frame.
+
+Create one clean cinematic first frame for direct image-to-video generation. Do not create a board.
+
+{
+  "meta": {
+    "config_id": "cyber_courier_clean_sh01_start_v1",
+    "image_type": "clean_first_frame",
+    "shot_id": "SH01",
+    "frame_role": "opening clean first frame for Kling and Runway"
+  },
+  "artifact": {
+    "title": "SH01 Clean First Frame",
+    "canvas": "16:9 cinematic frame, final footage style, no labels or panels",
+    "primary_job": "provide direct I2V start frame for the alley threshold shot"
+  },
+  "strict_clean_frame_rules": {
+    "forbidden": ["text", "labels", "arrows", "panel borders", "storyboard strip", "floor plan", "swatches", "callouts", "watermark", "UI overlay"],
+    "must_show": "only the cinematic scene"
+  },
+  "shot": {
+    "shot_size": "wide shot",
+    "camera_angle": "eye-level, slightly behind and left of the courier",
+    "lens": "24mm wide-angle",
+    "composition": "red-jacket courier in left foreground at the mouth of a narrow rain-soaked service alley, black delivery bag held close, alley receding into depth toward a sealed metal door",
+    "lighting": "red sign glow from camera-left, cold cyan-blue sign deeper in the alley, wet pavement reflections, blue-black rain ambience",
+    "subject_state": "courier stands still at the threshold, body angled toward alley depth, no walking yet",
+    "background_state": "heavy rain, wet reflective pavement, exposed pipes, sealed doors, no crowd",
+    "continuity_locks": ["same red waterproof jacket", "same black delivery bag", "package glow not visible yet", "destination door remains closed"]
+  },
+  "quality_and_artifact_control": {
+    "required": ["clear subject silhouette", "coherent alley depth", "natural wet nylon", "smooth rain texture", "complete body and bag geometry"],
+    "avoid": ["fish-scale rain texture", "extra characters", "door open", "fake text", "over-sharpened neon", "warped anatomy"]
+  }
+}

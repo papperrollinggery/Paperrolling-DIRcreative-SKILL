@@ -1,0 +1,343 @@
+fixture_authority: none
+live_state_authority: false
+live_acceptance_authority: false
+host_attestation_authority: false
+
+artifact:
+  artifact_id: thread-dispatch-second-level-20260627T090918Z
+  version: 1.0.0
+  source_artifact_ids:
+    - docs/film-preproduction/thread-orchestration-protocol.md
+    - docs/film-preproduction/schemas/thread-dispatch-record.yaml
+    - docs/film-preproduction/05-skill-integration-architecture.md
+    - docs/film-preproduction/06-gstack-execution-goal.md
+    - skills/dircreative/SKILL.md
+  status: ready
+  owner_skill: dircreative
+
+run:
+  run_id: thread-dispatch-second-level-20260627T090918Z
+  run_type: real_thread_cleanup_record
+  main_controller_thread:
+    thread_id: "00000000-0000-7000-8000-000000000014"
+    title: "规划 Codex thread 人性化优化"
+    cwd: "/Users/example-user/work/DIR SKILL"
+    pinned: true
+    role: pinned_user_facing_controller
+  disposable_workers_archived:
+    - thread_id: "00000000-0000-7000-8000-00000000001e"
+      role: read_only_second_level_contract_review
+      result: consumed_adopt_verdict
+      archived: true
+  isolated_worktree_workers_archived:
+    - thread_id: "00000000-0000-7000-8000-00000000001b"
+      role: second_level_dispatch_implementation_worker
+      original_worktree: "/Users/example-user/.codex/worktrees/14c1/DIR SKILL"
+      result: adopted_with_controller_validation
+      archived: true
+      worktree_removed: true
+  stateless_subagents_closed:
+    - subagent_id: "00000000-0000-7000-8000-00000000001d"
+      host_thread_id: "00000000-0000-7000-8000-00000000001b"
+      result: adopted_as_worker_local_evidence
+      closed_status: completed_closed
+    - subagent_id: "00000000-0000-7000-8000-00000000001c"
+      host_thread_id: "00000000-0000-7000-8000-000000000014"
+      result: adopted_as_controller_research_note
+      closed_status: completed_closed
+  worktree_evidence:
+    command: "git worktree list --porcelain"
+    result_summary: "Only /Users/example-user/work/DIR SKILL on main was listed after worker archival and worktree removal."
+    unintended_worker_worktrees_present: false
+  cleanup_policy:
+    task_owned_worktrees_archived: true
+    unrelated_project_threads_archived: false
+    reason: "Only the second-level dispatch implementation worker, review worker, and task-owned stateless helpers were in scope."
+
+thread_dispatch_record:
+  record_id: "thread-dispatch-second-level-20260627T090918Z"
+  version: "1.1.0"
+  project_title: "DIRcreative second-level stateless subagent contract"
+  main_controller_thread_id: "00000000-0000-7000-8000-000000000014"
+  active_goal_summary: "Add a two-level delegation contract: first-level real Codex Threads keep durable control and isolated work, while explicitly authorized worker threads may call temporary stateless read-only subagents for decomposition, source triage, risk inventory, ranking, or reference checks."
+  acceptance_standard: "Docs, root skill, schemas, executable audits, negative fixtures, real thread receipts, worker cleanup, install parity, commit, and push must pass without weakening Codex Threads or claiming live-user acceptance/objective completion."
+  created_at: "2026-06-27T09:09:18Z"
+
+thread_class_policy:
+  allowed_thread_classes:
+    - pinned_user_facing_controller
+    - disposable_read_only_worker
+    - isolated_worktree_worker
+    - reusable_research_thread
+  default_user_facing_thread_class: pinned_user_facing_controller
+  same_directory_worker_default: read_only
+  substantive_output_default_thread_class: isolated_worktree_worker
+  read_only_worker_use: review_research_cold_review_only
+  main_controller_write_boundary: receipts_adoption_merge_rollback_validation_only
+  hidden_thread_state_is_truth: false
+  second_level_subagents:
+    allowed: true
+    default_authorized: false
+    host_thread_classes:
+      - disposable_read_only_worker
+      - isolated_worktree_worker
+      - reusable_research_thread
+    allowed_task_modes:
+      - prompt_decomposition
+      - reference_check
+      - risk_inventory
+      - candidate_ranking
+      - source_or_contract_triage
+    forbidden_actions:
+      - write_files
+      - write_live_acceptance
+      - change_write_scope
+      - verify_cleanup
+      - mark_goal_complete
+      - mark_objective_complete
+      - become_durable_truth
+
+thread_budget:
+  max_active_workers: 3
+  active_worker_count: 0
+  approval_required_above: 5
+  over_budget_reason: ""
+
+dispatches:
+  - thread_id: "00000000-0000-7000-8000-000000000014"
+    thread_class: pinned_user_facing_controller
+    role: "CONTROL main-controller for goal, dispatch, worker adoption, validation, cleanup, install, commit, push, and final user report."
+    professional_identity: "main-controller delivery lead"
+    viewpoint: main-controller
+    read_scope:
+      - "repo files"
+      - ".dircreative/runs/"
+      - "Codex app thread status"
+      - "validation output"
+      - "worker receipts"
+      - "stateless helper receipts"
+    write_scope: main_controller_only
+    worktree_path: "/Users/example-user/work/DIR SKILL"
+    allowed_actions:
+      - "write dispatch, adoption, and cleanup records"
+      - "adopt or reject worker diffs"
+      - "merge or synthesize adopted worker changes"
+      - "run validation"
+      - "archive worker threads"
+      - "verify no task-owned worktrees remain"
+      - "install local skill package"
+      - "stage, commit, and push after validation"
+      - "report user-facing status"
+    expected_output: "Adopted second-level dispatch contract, validation output, install evidence, cleanup evidence, commit/push evidence, and final report."
+    stop_condition: "Finish only after worker output is consumed, review returns ADOPT or exact blockers, validation and install parity pass, cleanup evidence is recorded, and no live acceptance or objective completion is claimed."
+    cleanup_rule: keep_pinned
+    may_mark_goal_complete: false
+    output_status: consumed
+    findings_summary:
+      - "Controller adopted the isolated worker implementation after fixing an empty invocation fixture issue, running main-worktree validation, and obtaining read-only review ADOPT."
+      - "Controller used one temporary stateless read-only helper for policy classification only; the helper did not write files, own cleanup, or become durable truth."
+    adopted_into:
+      - "tests/fixtures/runtime/runs/thread-dispatch-second-level-20260627T090918Z.yaml"
+      - "docs/film-preproduction/05-skill-integration-architecture.md"
+      - "docs/film-preproduction/06-gstack-execution-goal.md"
+      - "docs/film-preproduction/thread-orchestration-protocol.md"
+      - "docs/film-preproduction/schemas/thread-dispatch-record.yaml"
+      - "docs/film-preproduction/schemas/thread-dispatch-record.template.yaml"
+      - "skills/dircreative/SKILL.md"
+      - "scripts/dircreative_second_level_dispatch_audit.py"
+      - "scripts/dircreative_loop_engineering_audit.py"
+      - "scripts/dircreative_release_gate.py"
+      - "scripts/validate_project.py"
+      - "tests/fixtures/invalid-thread-dispatch-second-level-completion.yaml"
+    consumed_at: "2026-06-27T09:09:18Z"
+    cleanup_verified_by: main-controller
+    archived: false
+    pinned: true
+    second_level_subagents:
+      authorized: false
+      allowed_task_modes: []
+      invocations: []
+
+  - thread_id: "00000000-0000-7000-8000-00000000001b"
+    thread_class: isolated_worktree_worker
+    role: "IMPLEMENTATION_WORKER"
+    professional_identity: "DIRcreative thread architecture and validation implementer"
+    viewpoint: "Codex Threads discipline, isolated worktree safety, stateless helper contract, executable validation"
+    read_scope:
+      - "skills/dircreative/SKILL.md"
+      - "docs/film-preproduction/05-skill-integration-architecture.md"
+      - "docs/film-preproduction/06-gstack-execution-goal.md"
+      - "docs/film-preproduction/thread-orchestration-protocol.md"
+      - "docs/film-preproduction/schemas/thread-dispatch-record.yaml"
+      - "docs/film-preproduction/schemas/thread-dispatch-record.template.yaml"
+      - "scripts/validate_project.py"
+      - "scripts/dircreative_loop_engineering_audit.py"
+      - "scripts/dircreative_release_gate.py"
+    write_scope: isolated_worktree_only
+    worktree_path: "/Users/example-user/.codex/worktrees/14c1/DIR SKILL"
+    allowed_actions:
+      - "edit scoped docs, schemas, root skill, scripts, and fixtures in isolated worktree"
+      - "run focused validation"
+      - "call one explicitly authorized temporary stateless read-only helper for source or contract triage"
+      - "return receipt and adoption recommendation"
+    expected_output: "Patch, validation output, second-level helper feasibility verdict, negative fixture, cleanup expectations, and adoption notes."
+    stop_condition: "Return after second-level audit, loop audit, validate_project, git diff check, and receipt; do not commit, push, install, write live acceptance, or mark objective complete."
+    cleanup_rule: archive_after_adoption_or_rejection
+    may_mark_goal_complete: false
+    output_status: adopted
+    findings_summary:
+      - "Added the second-level delegation contract across protocol docs, schemas, root skill, validation script, loop audit, release gate, and a negative fixture."
+      - "Verified a worker-hosted temporary stateless subagent can be used as read-only local evidence when the first-level Codex Thread owns reconciliation and receipt."
+      - "Fixed the initial empty invocation sample after controller review; final worker validation passed."
+    adopted_into:
+      - "docs/film-preproduction/05-skill-integration-architecture.md"
+      - "docs/film-preproduction/06-gstack-execution-goal.md"
+      - "docs/film-preproduction/thread-orchestration-protocol.md"
+      - "docs/film-preproduction/schemas/thread-dispatch-record.yaml"
+      - "docs/film-preproduction/schemas/thread-dispatch-record.template.yaml"
+      - "skills/dircreative/SKILL.md"
+      - "scripts/dircreative_second_level_dispatch_audit.py"
+      - "scripts/dircreative_loop_engineering_audit.py"
+      - "scripts/dircreative_release_gate.py"
+      - "scripts/validate_project.py"
+      - "tests/fixtures/invalid-thread-dispatch-second-level-completion.yaml"
+    consumed_at: "2026-06-27T09:09:18Z"
+    cleanup_verified_by: main-controller
+    archived: true
+    pinned: false
+    second_level_subagents:
+      authorized: true
+      allowed_task_modes:
+        - source_or_contract_triage
+        - risk_inventory
+        - candidate_ranking
+      invocations:
+        - subagent_id: "00000000-0000-7000-8000-00000000001d"
+          agent_type: stateless_read_only
+          task_mode: source_or_contract_triage
+          input_question: "Which DIRcreative thread classes and task modes should allow temporary stateless subagents, and which actions must stay forbidden so real Codex Threads remain the durable control layer?"
+          output_summary: "Allowed read-only helper work for decomposition, reference checks, risk inventory, ranking, and source or contract triage inside authorized worker/research threads; forbids file writes, live acceptance, cleanup ownership, scope changes, completion claims, and durable truth."
+          closed_status: completed_closed
+          adoption_decision: adopted
+          adopted_into:
+            - "docs/film-preproduction/thread-orchestration-protocol.md"
+            - "docs/film-preproduction/schemas/thread-dispatch-record.yaml"
+            - "scripts/dircreative_second_level_dispatch_audit.py"
+          durable_truth: false
+          may_write_live_acceptance: false
+          may_mark_goal_complete: false
+
+  - thread_id: "00000000-0000-7000-8000-00000000001e"
+    thread_class: disposable_read_only_worker
+    role: "READ_ONLY_REVIEW_WORKER"
+    professional_identity: "independent workflow and council reviewer"
+    viewpoint: "adversarial QA for Codex Threads discipline, stateless helper boundary, executable validation, and cleanup"
+    read_scope:
+      - "git status --short"
+      - "git diff --check"
+      - "git worktree list --porcelain"
+      - "docs/film-preproduction/thread-orchestration-protocol.md"
+      - "docs/film-preproduction/schemas/thread-dispatch-record.yaml"
+      - "skills/dircreative/SKILL.md"
+      - "scripts/dircreative_second_level_dispatch_audit.py"
+      - "scripts/dircreative_loop_engineering_audit.py"
+      - "scripts/validate_project.py"
+    write_scope: none
+    worktree_path: ""
+    allowed_actions:
+      - "read-only review"
+      - "run read-only validation commands"
+      - "return severity-ordered findings and ADOPT or REJECT verdict"
+    expected_output: "Cold-review findings, validation evidence, and adopt/reject recommendation."
+    stop_condition: "Return final review receipt only; do not edit files, write receipts, commit, push, install, or mark objective complete."
+    cleanup_rule: archive_after_consumed
+    may_mark_goal_complete: false
+    output_status: consumed
+    findings_summary:
+      - "Returned ADOPT with no blockers and no non-blocking concerns."
+      - "Independently ran git diff --check, git worktree list --porcelain, second-level dispatch audit, loop engineering audit, and validate_project; all passed."
+      - "Confirmed the second-level contract is enforceable and does not weaken real Codex Threads discipline."
+    adopted_into:
+      - "tests/fixtures/runtime/runs/thread-dispatch-second-level-20260627T090918Z.yaml"
+      - "docs/film-preproduction/thread-orchestration-protocol.md"
+      - "scripts/validate_project.py"
+    consumed_at: "2026-06-27T09:09:18Z"
+    cleanup_verified_by: main-controller
+    archived: true
+    pinned: false
+    second_level_subagents:
+      authorized: false
+      allowed_task_modes: []
+      invocations: []
+
+worktree_audit:
+  command: "git worktree list --porcelain"
+  expected_main_worktree: "/Users/example-user/work/DIR SKILL"
+  unintended_worker_worktrees_present: false
+  stale_worker_checkout_present: false
+  checked_paths:
+    - "/Users/example-user/work/DIR SKILL"
+    - "/Users/example-user/.codex/worktrees/14c1/DIR SKILL"
+  evidence_source: git
+
+completion_boundary:
+  live_user_acceptance_receipt_exists: false
+  release_gate_passed: true
+  objective_complete: false
+  completion_claim_allowed: false
+
+qa:
+  main_controller_pinned: true
+  one_pinned_main_controller: true
+  disposable_workers_archived: true
+  stale_worker_threads_visible_for_project: false
+  useful_findings_reconciled: true
+  worker_findings_reconciled_into_repo: true
+  no_hidden_thread_truth: true
+  no_unintended_worktrees: true
+  unintended_worker_worktrees_present: false
+  no_completion_claim: true
+  live_user_acceptance_written: false
+  objective_complete_claimed: false
+  second_level_subagents_are_durable_truth: false
+  second_level_subagents_may_write_live_acceptance: false
+  second_level_subagents_may_mark_goal_complete: false
+  failures: []
+
+skill_run_receipt:
+  run_id: thread-dispatch-second-level-20260627T090918Z
+  skill_id: dircreative
+  input_artifacts:
+    - "create_thread pendingWorktreeId local:00000000-0000-4000-8000-000000000001"
+    - "codex_app.read_thread(00000000-0000-7000-8000-00000000001b)"
+    - "codex_app.read_thread(00000000-0000-7000-8000-00000000001e)"
+    - "multi_agent_v1.spawn_agent(00000000-0000-7000-8000-00000000001c)"
+    - "git worktree list --porcelain"
+  output_artifacts:
+    - "tests/fixtures/runtime/runs/thread-dispatch-second-level-20260627T090918Z.yaml"
+    - "docs/film-preproduction/05-skill-integration-architecture.md"
+    - "docs/film-preproduction/06-gstack-execution-goal.md"
+    - "docs/film-preproduction/thread-orchestration-protocol.md"
+    - "docs/film-preproduction/schemas/thread-dispatch-record.yaml"
+    - "docs/film-preproduction/schemas/thread-dispatch-record.template.yaml"
+    - "skills/dircreative/SKILL.md"
+    - "scripts/dircreative_second_level_dispatch_audit.py"
+    - "scripts/dircreative_loop_engineering_audit.py"
+    - "scripts/dircreative_release_gate.py"
+    - "scripts/validate_project.py"
+    - "tests/fixtures/invalid-thread-dispatch-second-level-completion.yaml"
+  decisions:
+    - "Keep real Codex Threads as the first-level durable execution and accountability layer."
+    - "Allow temporary stateless read-only subagents only when a valid worker/research thread explicitly authorizes a narrow helper task."
+    - "Require every second-level invocation to record subagent_id or TOOL_BLOCKED, input, output summary, close status, adoption decision, adopted artifacts, and three false boundary flags."
+    - "Forbid second-level helpers from writing files, live acceptance, cleanup evidence, scope changes, objective completion, or durable truth."
+    - "Adopt review-worker ADOPT verdict after independent validation passed."
+  unresolved_questions: []
+  qa_gate:
+    status: pass
+    reasons:
+      - "No live user acceptance or OBJECTIVE_COMPLETE is claimed."
+      - "Real Codex Thread worker output was reconciled into durable repo files."
+      - "The second-level helper remained read-only, temporary, closed, and subordinate to the worker receipt."
+      - "Task-owned worker thread was archived and its isolated worktree was removed."
+  next_recommended_skill: checkpoint

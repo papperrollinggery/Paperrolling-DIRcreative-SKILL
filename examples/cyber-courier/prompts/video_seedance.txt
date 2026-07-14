@@ -1,0 +1,45 @@
+# Seedance Video Prompt
+
+Best use: 15-second multi-reference cinematic previs.
+
+## Reference Map
+
+Image 1 = courier character identity and wardrobe. Use it for the same face, red waterproof jacket, black delivery bag, and restrained dread expression.
+
+Image 2 = alley environment and blocking. Use it for the entrance-to-door axis, red sign on the left, blue sign deeper/right, wet pavement, and destination door.
+
+Image 3 = prop state reference. Use it for the black delivery bag, compact sealed package, and thin red scanner pulse.
+
+Image 4 = director storyboard reference for shot order only.
+
+Image 5 = lighting and style reference. Use it for blue-black rain, restrained red/cyan lighting, wet material behavior, and natural rain texture.
+
+Anti-misread: Use storyboard/reference boards only as production guidance. Do not show or animate the board, panels, text labels, arrows, grids, tables, or layout.
+
+## Video Task
+
+Generate a 15-second cinematic cyber-noir sequence in 16:9.
+
+Shot 1, 0-3s: wide locked-off view from the alley entrance. A red-jacket courier stands in heavy rain at the forbidden alley mouth, holding a black delivery bag. Red sign on left, blue sign deeper/right, wet pavement reflecting neon.
+
+Shot 2, 3-6s: slow tracking shot behind the courier as he steps into the alley. He moves with controlled caution, not panic, and tightens one hand around the black bag strap.
+
+Shot 3, 6-8s: macro insert inside the half-open delivery bag. The compact sealed matte-black package emits a thin red scanner pulse. The glow is mechanical and subtle.
+
+Shot 4, 8-12s: close-up on the courier. He looks from the glowing bag toward the far metal door. His jaw tightens, breath visible in cold rain, expression restrained and tense.
+
+Shot 5, 12-15s: medium wide view toward the sealed metal door. The intercom panel lights up while the courier stops short of it. The package glow reflects in the puddle. Cut before the door opens.
+
+## Continuity Locks
+
+Same courier face and red jacket across all shots. Same black delivery bag. Same compact sealed package. Same alley geography. Scanner glow starts only in shot 3. Door activates only in shot 5. No recipient appears.
+
+## Audio Policy
+
+MVP visual previs mode: silent visual-only clip; post-production audio planned separately.
+
+If generated audio is enabled: steady rain ambience, distant city hum, subtle neon buzz, soft scanner beep at shot 3, faint relay click at shot 5, no dialogue, no voiceover, no music.
+
+## Avoid
+
+Do not add attackers, crowds, weapons, vehicles, door opening, extra signs, magic organic alley movement, or a visible recipient.

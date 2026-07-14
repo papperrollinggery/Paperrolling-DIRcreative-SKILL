@@ -1,0 +1,206 @@
+fixture_authority: none
+live_state_authority: false
+live_acceptance_authority: false
+host_attestation_authority: false
+
+artifact:
+  artifact_id: back-door-light-visual-package-assisted-generation-v1
+  version: 1.0.0
+  status: needs_revision
+  owner_skill: generation-qa
+  source_artifact_ids:
+    - live-chat-acceptance-test-thread
+    - user-reference-image-rainy-convenience-store-anime-poster
+
+run:
+  run_id: back-door-light-visual-package-assisted-generation-2026-06-06
+  project_title: "便利店灯下的两个人"
+  source_context: "Real chat assisted-generation test inside DIRcreative live acceptance attempt."
+  authorization_source: real_user
+  user_requested_material: "完整视觉物料包"
+  visual_output_mode: assisted_generation
+  image_generation_provider: chatgpt_image_gen
+  video_generation_provider: none
+  video_generated: false
+  live_user_acceptance_receipt_written: false
+  real_user_acceptance_status: not_recorded
+  no_media_copied_into_examples: true
+
+reference_direction:
+  user_reference_summary:
+    - "青春都市动画电影宣发感"
+    - "雨夜便利店和城市地标纵深"
+    - "两个年轻人背靠背，暧昧但疏离"
+    - "大标题书法压画面，情绪先行"
+  originality_boundary:
+    - "Do not copy existing manga characters, plot, title, poster composition, or real logos."
+    - "Use a fictional convenience store and original characters."
+    - "No smoking or cigarette-dependent concept."
+
+workflow_correction:
+  issue_found: "Assistant initially guessed a generic storyboard prompt instead of asking/selecting the material type and carrying full director-shot constraints."
+  corrective_rule_added:
+    - "Before compiling or generating visual material, show a user-facing material choice."
+    - "Professional storyboard/motion map must carry character design, scene layout, prop continuity, shot size, camera position, camera movement, subject movement path, blocking, emotional beat, transition logic, and model risk."
+  updated_files:
+    - docs/film-preproduction/production-prompt-discipline.md
+    - skills/dircreative/SKILL.md
+    - skills/dircreative/image-prompt-compiler/SKILL.md
+    - scripts/validate_project.py
+
+assets:
+  - asset_id: bdl_kv_01_main_poster
+    role: main_poster_key_visual
+    file_path: /Users/example-user/.codex/generated_images/00000000-0000-7000-8000-000000000002/ig_083b6728c645a39b016a23fa97f6ac8199b205facf2ce88e3c.png
+    generated_dimensions: "1024x1536"
+    direct_video_input: false
+    allowed_use:
+      - mood lock
+      - poster direction review
+      - title and tone exploration
+    forbidden_use:
+      - direct I2V frame
+      - character identity lock
+    user_lock_status: needs_user
+    usable_for_next_step: false
+  - asset_id: bdl_ref_01_character_identity
+    role: character_identity_reference
+    file_path: /Users/example-user/.codex/generated_images/00000000-0000-7000-8000-000000000002/ig_083b6728c645a39b016a23fb753e4c81998b1b16144ffa6745.png
+    generated_dimensions: "1536x1024"
+    direct_video_input: false
+    allowed_use:
+      - character design review
+      - identity consistency lock after user approval
+    forbidden_use:
+      - direct I2V frame
+    user_lock_status: needs_user
+    usable_for_next_step: false
+  - asset_id: bdl_ref_02_scene_geography_fov
+    role: scene_geography_camera_fov_reference
+    file_path: /Users/example-user/.codex/generated_images/00000000-0000-7000-8000-000000000002/ig_083b6728c645a39b016a23fc2d0604819988b2e99491eb482d.png
+    generated_dimensions: "1536x1024"
+    direct_video_input: false
+    allowed_use:
+      - scene geography review
+      - camera FOV planning
+      - background art direction lock after user approval
+    forbidden_use:
+      - direct I2V frame
+    user_lock_status: needs_user
+    usable_for_next_step: false
+  - asset_id: bdl_ref_03_professional_storyboard_motion_map
+    role: professional_storyboard_motion_map
+    file_path: /Users/example-user/.codex/generated_images/00000000-0000-7000-8000-000000000002/ig_083b6728c645a39b016a23fc9342048199bfaf965129115254.png
+    generated_dimensions: "1536x1024"
+    direct_video_input: false
+    allowed_use:
+      - director shot review
+      - camera movement planning
+      - subject path planning
+      - video prompt planning after user approval
+    forbidden_use:
+      - direct I2V frame
+      - clean-frame substitute
+    user_lock_status: needs_user
+    usable_for_next_step: false
+  - asset_id: bdl_clean_01_back_to_back_rain_frame
+    role: clean_frame_direct_video_candidate
+    file_path: /Users/example-user/.codex/generated_images/00000000-0000-7000-8000-000000000002/ig_083b6728c645a39b016a23fd8ab0088199bdb6e27edb73f158.png
+    generated_dimensions: "1672x941"
+    direct_video_input: true
+    direct_video_reason: "Single text-free 16:9 frame can become an I2V candidate only after user visual lock and QA."
+    allowed_use:
+      - I2V first-frame candidate after user lock
+      - Seedance/Kling/Runway/Veo clean visual reference after QA
+    forbidden_use:
+      - accepted live-user evidence
+      - locked asset before QA
+    user_lock_status: needs_user
+    usable_for_next_step: false
+
+qa:
+  image_generation_authorized: true
+  real_files_exist: true
+  asset_count_is_five: true
+  dense_boards_not_direct_i2v: true
+  clean_frame_direct_i2v_candidate: true
+  video_generation_blocked_until_user_lock: true
+  no_video_generated: true
+  no_media_copied_into_examples: true
+  live_acceptance_not_claimed: true
+  user_review_required: true
+  approved_for_video_prompt_test: false
+  current_verdict: needs_revision
+  real_user_feedback:
+    reviewed_in_chat: true
+    verdict: not_accepted
+    summary: "User is not satisfied with the script/story layer because the assistant skipped over the story development and moved too quickly into visual generation."
+    failure_ids:
+      - story_development_skipped
+      - script_depth_insufficient
+      - visual_generation_before_story_lock
+    required_fix:
+      - "Return to story and script development before treating any visual package as accepted."
+      - "Offer story-direction choices and get user confirmation before generating or locking more visual assets."
+      - "Do not write live-user-acceptance.yaml from this run."
+  revised_story_proposal:
+    status: rejected_for_revision
+    proposed_direction: "同一个秘密避难所"
+    title: "便利店灯下的两个人"
+    logline: "上海雨夜，一家虚构便利店侧墙下的监控死角成为两个年轻人的十分钟避难所；他们只交换每天最小的失败，直到某晚规则被打破，真正的压力终于说出口。"
+    dramatic_engine:
+      - "小失败规则: 每晚只能讲一件小失败，不能讲真正难过的事。"
+      - "重复相遇: 便利店灯、雨、饮料、站位每天细微变化，关系从陌生到默契。"
+      - "破例时刻: 当两人第一次说出真正的问题，关系从氛围变成剧情。"
+      - "结尾动作: 小票背面写着“明天也可以失败一次”，不告白但留下继续出现的可能。"
+    user_feedback: "User says the script is not professional enough and lacks story tension."
+    required_fix:
+      - "Do not continue with the low-tension 'small failure' engine."
+      - "Rebuild the story around external pressure, irreversible choice, and a stronger hidden relationship engine."
+      - "Write the next proposal as a professional story treatment before any more visual generation."
+    required_user_decision: "User must approve a stronger story treatment before more visual assets are generated or locked."
+  known_risks:
+    - "Generated poster text may need review for legibility."
+    - "Character identity consistency across later generations is not locked until user approval."
+    - "Clean frame must be self-QA checked before video use."
+    - "User says the storyboard/motion page text is thin, unprofessional, and lacks production shot-card writing."
+  storyboard_text_feedback:
+    reviewed_in_chat: true
+    verdict: not_accepted
+    failure_id: storyboard_information_density_too_low
+    summary: "The generated storyboard image had visual structure, but its visible text descriptions were too thin and did not read like professional director shot-card writing."
+    required_fix:
+      - "Rewrite storyboard cell text as professional shot-card summaries."
+      - "Each cell must include narrative purpose, lens/support/movement, blocking path, continuity lock, sound/edit cue, and model risk."
+      - "Do not use thin labels such as wide, close-up, slow push, conversation, or emotional ending as standalone descriptions."
+
+next_user_decision:
+  question: "是否先回到故事/剧本阶段，重新补齐剧情方向，再决定是否继续视觉物料？"
+  options:
+    - "先重做故事方向和剧本。"
+    - "保留视觉方向，只重写剧情。"
+    - "换一个全新的原创故事方向。"
+
+skill_run_receipt:
+  run_id: back-door-light-visual-package-assisted-generation-2026-06-06
+  skill_id: generation-qa
+  input_artifacts:
+    - user chat: "《躲在超市后门抽烟的两人》作为测试创意"
+    - user reference image: rainy convenience-store anime poster direction
+  output_artifacts:
+    - tests/fixtures/runtime/runs/back-door-light-visual-package-assisted-generation.yaml
+  decisions:
+    - "User chose full visual material package."
+    - "Generate original anime-film visual package rather than copying the referenced IP or brand."
+    - "Keep live acceptance unrecorded until explicit final user acceptance."
+  unresolved_questions:
+    - "User rejected the current flow because story/script work was too shallow."
+    - "User must approve a revised story/script before any further generated assets can be treated as useful."
+  qa_gate:
+    status: fail
+    reasons:
+      - "Generated files exist and are registered."
+      - "Workflow correction is documented and validated."
+      - "Real user rejected the current flow because story/script development was skipped."
+      - "Live acceptance remains blocked."
+  next_recommended_skill: story-development

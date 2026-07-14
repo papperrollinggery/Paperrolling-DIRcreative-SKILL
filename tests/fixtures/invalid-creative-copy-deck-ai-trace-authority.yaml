@@ -1,0 +1,12 @@
+fixture:
+  fixture_id: invalid-creative-copy-deck-ai-trace-authority
+  description: Reject a humanizer diagnostic that grants itself blocking authority.
+  expectation: reject
+  mutations:
+    - operation: replace
+      path: project.copy_development.humanizer_diagnostic.may_fail_copy_by_itself
+      value: true
+  expected_failure_ids:
+    - copy_ai_trace_metadata_inconsistent
+    - copy_humanizer_authority_invalid
+  expected_review_ids: []

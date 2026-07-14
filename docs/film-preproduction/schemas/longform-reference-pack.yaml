@@ -1,0 +1,125 @@
+longform_reference_pack:
+  project_title: ""
+  version: "1.0.0"
+  source_artifact_ids: []
+  longform_generation_mode: "hybrid | stepwise | batch"
+  visual_output_mode: "prompt_only | assisted_generation | external_generation"
+  sequence_plan: ""
+
+capability_resolution:
+  registry_path: "docs/film-preproduction/sources/model-sources.yaml"
+  registry_version: ""
+  selected_cards:
+    - capability_card_id: ""
+      version: ""
+      status: "current | preview | legacy | deprecated | workflow_only"
+      provider_surface: ""
+      verified_on: ""
+      accessed_on: ""
+      evidence_level: "S1 | S2 | S3 | S4"
+      source_urls: []
+      source_conflicts: []
+      access_mode: "api | documented_product | documented_web | workflow_only"
+      execution_mode: "api | manual_export | web_ui | workflow_only"
+      execution_verification_status: "verified | unverified | not_applicable"
+      resolution_status: "resolved | stale | ambiguous | unsupported"
+
+rights_gate:
+  status: "verified | conditional | unverified | blocked"
+  source_asset_rights: ""
+  likeness_authorization: "not_applicable | verified | unverified | blocked"
+  voice_authorization: "not_applicable | verified | unverified | blocked"
+  brand_or_character_authorization: "not_applicable | verified | unverified | blocked"
+  music_or_audio_rights: "not_applicable | verified | unverified | blocked"
+  provider_restrictions_checked: false
+  evidence_refs: []
+  generation_allowed: false
+
+global_pack:
+  pack_id: ""
+  status: "candidate | selected | locked | superseded"
+  user_gate:
+    required: true
+    status: "pending | approved | needs_revision"
+  assets:
+    - asset_id: ""
+      role: "identity_product_board | environment_camera_board | style_material_board | audio_reference | element_reference"
+      primary_job: ""
+      asset_output:
+        status: "prompt_ready | generated_candidate | user_locked | external_pending | external_imported | rejected"
+        prompt_file: ""
+        generated_file: ""
+        external_instructions: ""
+        source_tool: ""
+        user_lock_status: "not_required | pending | locked | rejected"
+
+sequence_packs:
+  - sequence_id: ""
+    pack_id: ""
+    duration_sec: 15
+    user_gate:
+      required: true
+      status: "pending | approved | needs_revision"
+    continuity_reuse:
+      global_asset_ids: []
+      locked_identity_refs: []
+      locked_style_refs: []
+    capability_targets:
+      - capability_card_id: ""
+        operation: "generate | edit | extend"
+        enabled: false
+        reference_policy:
+          board_input_allowed: false
+          clean_start_frame_required: false
+          clean_end_frame_preferred: false
+          element_reference_preferred: false
+          structured_reference_map_required: false
+    assets:
+      - asset_id: ""
+        role: "scene_plate | clean_first_frame | clean_end_frame | motion_reference_video | audio_reference | storyboard_motion_board | element_reference"
+        primary_job: ""
+        direct_input_policy:
+          - capability_card_id: ""
+            input_mode: "allowed | conditional | forbidden | planning_only | element_only | reference_only"
+        asset_output:
+          status: "prompt_ready | generated_candidate | user_locked | external_pending | external_imported | rejected"
+          prompt_file: ""
+          generated_file: ""
+          external_instructions: ""
+          source_tool: ""
+          user_lock_status: "not_required | pending | locked | rejected"
+        must_not_animate: []
+        qa:
+          one_primary_job: false
+          video_model_safe: false
+          clean_frame_available_if_needed: false
+          user_gate_resolved: false
+
+edit_assembly:
+  sequence_order: []
+  continuity_checks: []
+  audio_spine: ""
+  transition_notes: []
+  retry_order: []
+
+qa:
+  global_pack_locked_or_prompt_ready: false
+  per_sequence_policy_valid: false
+  output_statuses_present: false
+  model_budget_ok: false
+  video_model_safe: false
+  exact_capability_cards_resolved: false
+  family_aliases_absent: false
+  failures: []
+
+skill_run_receipt:
+  run_id: ""
+  skill_id: "longform-reference-planner"
+  input_artifacts: []
+  output_artifacts: []
+  decisions: []
+  unresolved_questions: []
+  qa_gate:
+    status: "pass | fail | needs_user"
+    reasons: []
+  next_recommended_skill: "image-prompt-compiler"

@@ -1,0 +1,17 @@
+Asset role: PROFESSIONAL STORYBOARD + MOTION MAP
+Role purity: communicate shot order, timing, camera path, subject/object/environment actions, audio cues, transitions, and model risks
+Inherited sources: product identity reference and scene geography reference
+Do not show or animate: storyboard cells as scene content, arrows, labels, grids, borders, or page layout
+
+Use case: advertising preproduction and motion planning
+Asset type: professional storyboard and motion map
+Primary purpose: make the 10-second sequence executable before model prompt export
+
+Required shot cards:
+Opening 00:00-00:02.50 | Narrative purpose: controlled identity hook | Lens/support/movement: normal product perspective, stabilized axial creep-in | Blocking/path: product-only display object remains still | Continuity: product, mirror, axis, black-level detail | Sound/edit: low room tone, fabric settle, specular match cut
+Middle 00:02.50-00:05.50 | Narrative purpose: material discovery | Lens/support/movement: macro-like close view, short lateral slider, one rack focus | Blocking/path: camera reveals satin, lace, and hardware; object remains fixed | Continuity: same construction and palette | Sound/edit: close fabric texture, hardware tick, rack-focus bridge
+Final 00:05.50-00:10.00 | Narrative purpose: confident final reveal | Lens/support/movement: locked camera with small pull-back | Blocking/path: display object rotates one smooth 45 degrees around vertical axis | Continuity: same mirror, product, palette, and negative space | Sound/edit: mechanical turn, final near-silence, clean hold
+
+Continuity:
+- One dominant subject action and one dominant camera action per shot
+- Preserve screen direction, mirror geometry, product identity, and vertical crop safety

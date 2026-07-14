@@ -1,0 +1,306 @@
+artifact:
+  artifact_id: rainlock-180-sequence-plan-v1
+  version: 1.0.0
+  source_artifact_ids:
+    - rainlock-selected-concept-v1
+    - rainlock-shot-list-v1
+  status: approved
+  owner_skill: sequence-planner
+  created_at: "2026-05-15"
+  locked_by_user: false
+
+sequence_plan:
+  project_title: "RainLock Commuter Shell: 3-Minute Commuter Proof Film"
+  version: "1.0.0"
+  target_duration_sec: 180
+  channel: "brand_film_and_social_cutdowns"
+  source_artifact_ids:
+    - rainlock-selected-concept-v1
+    - rainlock-shot-list-v1
+  longform_generation_mode: hybrid
+  visual_output_mode: prompt_only
+
+generation_unit_policy:
+  target_unit_sec: 15
+  min_unit_sec: 5
+  max_unit_sec: 15
+  allow_multi_shot_inside_unit: true
+  split_when:
+    - "dialogue sync is critical"
+    - "product proof must be exact"
+    - "commuter identity drifts"
+    - "camera move overloads one generation"
+
+execution_capabilities:
+  image_generation:
+    available: false
+    provider: none
+    allowed_by_user: false
+  video_generation:
+    available: false
+    provider: none
+    allowed_by_user: false
+  file_write:
+    available: true
+  browser_review:
+    available: false
+
+user_gates:
+  sequence_plan_gate:
+    required: true
+    status: approved
+  global_visual_lock_gate:
+    required: true
+    status: approved
+  per_sequence_gate_policy: required
+  batch_skip_per_sequence_gate: false
+  accepted_risk: []
+
+global_continuity_anchors:
+  identity:
+    - "same early-30s city commuter, calm expression, practical posture"
+  product_or_prop:
+    - "graphite RainLock shell, sealed zipper, structured hood, dry work shirt collar"
+  wardrobe:
+    - "work trousers, leather work bag, no hiking gear"
+  locations:
+    - "apartment doorway, lobby threshold, city rain, crosswalk, station platform, office arrival"
+  palette_lighting:
+    - "amber interiors, steel blue rain exterior, graphite shell, natural wet reflections"
+  lens_camera:
+    - "28mm threshold wides, 35mm tracking, 85mm macro water-bead inserts, 50mm payoff close-ups"
+  audio:
+    - "rain, fabric, footsteps, transit ambience, no dialogue by default"
+
+sequences:
+  - sequence_id: rainlock-seq-01
+    duration_sec: 15
+    generation_units: 1
+    dramatic_function: "Hook: the commuter sees the storm and chooses to step out."
+    shots: ["R01", "R02"]
+    continuity_anchors: ["graphite shell", "dry collar", "lobby threshold"]
+    required_reference_pack_id: rainlock-seq-01-pack
+    clean_start_frame_required: true
+    clean_end_frame_required: true
+    user_gate:
+      required: true
+      status: approved
+    edit_handoff:
+      incoming_transition: "cold open from black to lobby door reflection"
+      outgoing_transition: "match cut from door push to exterior rain"
+      audio_handoff: "interior room tone becomes heavy rain"
+      retry_priority: high
+  - sequence_id: rainlock-seq-02
+    duration_sec: 15
+    generation_units: 1
+    dramatic_function: "Water proof: rain beads and rolls off without soaking the shell."
+    shots: ["R02", "R03"]
+    continuity_anchors: ["sealed zipper", "water bead macro", "same shell geometry"]
+    required_reference_pack_id: rainlock-seq-02-pack
+    clean_start_frame_required: true
+    clean_end_frame_required: false
+    user_gate:
+      required: true
+      status: pending
+    edit_handoff:
+      incoming_transition: "macro insert from sleeve movement"
+      outgoing_transition: "water bead movement becomes crosswalk reflection"
+      audio_handoff: "close rain on fabric to street ambience"
+      retry_priority: high
+  - sequence_id: rainlock-seq-03
+    duration_sec: 15
+    generation_units: 1
+    dramatic_function: "Movement proof: the commuter crosses traffic without bulky garment behavior."
+    shots: ["R03"]
+    continuity_anchors: ["work bag remains dry", "hood stays shaped", "city crosswalk"]
+    required_reference_pack_id: rainlock-seq-03-pack
+    clean_start_frame_required: true
+    clean_end_frame_required: true
+    user_gate:
+      required: true
+      status: pending
+    edit_handoff:
+      incoming_transition: "reflection match from water bead to crosswalk"
+      outgoing_transition: "whip pan into subway entrance"
+      audio_handoff: "rain plus traffic into station rumble"
+      retry_priority: medium
+  - sequence_id: rainlock-seq-04
+    duration_sec: 15
+    generation_units: 1
+    dramatic_function: "Fit proof: hood and collar protect without hiding the face."
+    shots: ["R04"]
+    continuity_anchors: ["face visible", "hood profile", "dry collar"]
+    required_reference_pack_id: rainlock-seq-04-pack
+    clean_start_frame_required: true
+    clean_end_frame_required: false
+    user_gate:
+      required: true
+      status: pending
+    edit_handoff:
+      incoming_transition: "station light catches hood edge"
+      outgoing_transition: "collar close-up cuts to platform arrival"
+      audio_handoff: "rain muffles into station ambience"
+      retry_priority: medium
+  - sequence_id: rainlock-seq-05
+    duration_sec: 15
+    generation_units: 1
+    dramatic_function: "Arrival proof: commuter reaches platform composed and dry."
+    shots: ["R05"]
+    continuity_anchors: ["dry shirt collar", "same bag", "graphite shell"]
+    required_reference_pack_id: rainlock-seq-05-pack
+    clean_start_frame_required: true
+    clean_end_frame_required: true
+    user_gate:
+      required: true
+      status: pending
+    edit_handoff:
+      incoming_transition: "platform train light reveals dry collar"
+      outgoing_transition: "train door reflection to office glass"
+      audio_handoff: "train chime to soft office ambience"
+      retry_priority: high
+  - sequence_id: rainlock-seq-06
+    duration_sec: 15
+    generation_units: 1
+    dramatic_function: "Office transition: the shell still reads polished, not outdoor gear."
+    shots: ["R05"]
+    continuity_anchors: ["premium city fit", "no mountain styling", "dry work shirt"]
+    required_reference_pack_id: rainlock-seq-06-pack
+    clean_start_frame_required: true
+    clean_end_frame_required: false
+    user_gate:
+      required: true
+      status: pending
+    edit_handoff:
+      incoming_transition: "train reflection becomes office glass"
+      outgoing_transition: "zipper detail cut to product table"
+      audio_handoff: "office room tone"
+      retry_priority: medium
+  - sequence_id: rainlock-seq-07
+    duration_sec: 15
+    generation_units: 1
+    dramatic_function: "Material hero: product detail sequence makes the engineering tangible."
+    shots: ["R02"]
+    continuity_anchors: ["water beads", "seam", "zipper", "hood material"]
+    required_reference_pack_id: rainlock-seq-07-pack
+    clean_start_frame_required: true
+    clean_end_frame_required: false
+    user_gate:
+      required: true
+      status: pending
+    edit_handoff:
+      incoming_transition: "office table reflection into macro fabric"
+      outgoing_transition: "macro bead rolls into night street reflection"
+      audio_handoff: "close fabric and rain detail"
+      retry_priority: high
+  - sequence_id: rainlock-seq-08
+    duration_sec: 15
+    generation_units: 1
+    dramatic_function: "Night commute variation: proof still works in harder light."
+    shots: ["R03", "R04"]
+    continuity_anchors: ["same shell", "night rain", "street practicals"]
+    required_reference_pack_id: rainlock-seq-08-pack
+    clean_start_frame_required: true
+    clean_end_frame_required: true
+    user_gate:
+      required: true
+      status: pending
+    edit_handoff:
+      incoming_transition: "macro reflection becomes night crosswalk"
+      outgoing_transition: "hood detail cuts to morning door"
+      audio_handoff: "night rain to morning rain"
+      retry_priority: medium
+  - sequence_id: rainlock-seq-09
+    duration_sec: 15
+    generation_units: 1
+    dramatic_function: "Morning repeat: the product becomes a daily habit, not a one-off stunt."
+    shots: ["R01", "R03"]
+    continuity_anchors: ["same commuter", "same shell", "same bag"]
+    required_reference_pack_id: rainlock-seq-09-pack
+    clean_start_frame_required: true
+    clean_end_frame_required: false
+    user_gate:
+      required: true
+      status: pending
+    edit_handoff:
+      incoming_transition: "match cut from night door to morning door"
+      outgoing_transition: "rain sound softens for final payoff"
+      audio_handoff: "lighter rain rhythm"
+      retry_priority: low
+  - sequence_id: rainlock-seq-10
+    duration_sec: 15
+    generation_units: 1
+    dramatic_function: "Social proof: surrounding commuters are wet while hero stays composed."
+    shots: ["R03", "R05"]
+    continuity_anchors: ["hero remains primary", "product benefit visible", "no crowd overload"]
+    required_reference_pack_id: rainlock-seq-10-pack
+    clean_start_frame_required: true
+    clean_end_frame_required: false
+    user_gate:
+      required: true
+      status: pending
+    edit_handoff:
+      incoming_transition: "street layer opens wider"
+      outgoing_transition: "return to hero close-up"
+      audio_handoff: "rain and city footsteps"
+      retry_priority: medium
+  - sequence_id: rainlock-seq-11
+    duration_sec: 15
+    generation_units: 1
+    dramatic_function: "Final product memory: shell, water, zipper, dry collar, and city fit are restated."
+    shots: ["R02", "R04", "R05"]
+    continuity_anchors: ["shell geometry", "water proof", "dry collar"]
+    required_reference_pack_id: rainlock-seq-11-pack
+    clean_start_frame_required: true
+    clean_end_frame_required: true
+    user_gate:
+      required: true
+      status: pending
+    edit_handoff:
+      incoming_transition: "hero close-up to product detail montage"
+      outgoing_transition: "hard cut to final line"
+      audio_handoff: "music can enter after proof beat"
+      retry_priority: high
+  - sequence_id: rainlock-seq-12
+    duration_sec: 15
+    generation_units: 1
+    dramatic_function: "Closing offer: arrive ready, rain becomes irrelevant."
+    shots: ["R05"]
+    continuity_anchors: ["same hero", "dry arrival", "brand memory"]
+    required_reference_pack_id: rainlock-seq-12-pack
+    clean_start_frame_required: true
+    clean_end_frame_required: true
+    user_gate:
+      required: true
+      status: pending
+    edit_handoff:
+      incoming_transition: "product montage resolves to calm face"
+      outgoing_transition: "end card handled in edit, not generated as fake text"
+      audio_handoff: "rain fades under final music sting"
+      retry_priority: high
+
+qa:
+  duration_matches_target: true
+  sequence_units_within_model_limit: true
+  global_anchors_present: true
+  user_gates_match_mode: true
+  prompt_only_supported: true
+  failures: []
+
+skill_run_receipt:
+  run_id: rainlock-180-sequence-plan-2026-05-15
+  skill_id: sequence-planner
+  input_artifacts:
+    - examples/product-ad-raincoat/04-selected-concept.md
+    - examples/product-ad-raincoat/06-shot-list.yaml
+  output_artifacts:
+    - examples/product-ad-raincoat/10-sequence-plan.yaml
+  decisions:
+    - "Use hybrid mode: full 180s plan first, then one 15s sequence pack at a time."
+    - "Keep visual output in prompt_only mode so agents without image generation can still execute the plan."
+  unresolved_questions:
+    - "User must approve sequence reference packs before final generation."
+  qa_gate:
+    status: pass
+    reasons:
+      - "Twelve 15s units match 180s target and preserve per-sequence gates."
+  next_recommended_skill: longform-reference-planner

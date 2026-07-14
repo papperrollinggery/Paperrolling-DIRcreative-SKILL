@@ -1,0 +1,1151 @@
+source_registry:
+  version: "2.0.0"
+  verified_date: "2026-07-11"
+  accessed_on: "2026-07-11"
+  purpose: "Versioned capability cards for image, video, editing, and canvas routes used by DIRcreative."
+  resolution_rule: "Select by capability_card_id + version + provider_surface; model-family aliases are never sufficient."
+  refresh_policy:
+    refresh_before_production: true
+    stale_after_days: 90
+    fail_closed_when_stale_or_ambiguous: true
+  source_tier_precedence:
+    - S1
+    - S2
+    - S3
+    - S4
+
+source_tiers:
+  S1:
+    label: "official_api_or_manual"
+    authority: "May authorize a version-and-surface-scoped capability claim."
+    allowed_source_types:
+      - official_api_changelog
+      - official_api_documentation
+      - official_api_guide
+      - official_api_input_manual
+      - official_api_model_catalog
+      - official_endpoint_manual
+      - official_model_page
+      - official_release_notes
+      - official_stable_model_page
+      - official_vertex_api_reference
+    allowed_domains:
+      - developers.openai.com
+      - docs.dev.runwayml.com
+      - docs.cloud.google.com
+      - cloud.google.com
+  S2:
+    label: "original_research_paper"
+    authority: "May support architecture or evaluated capability claims only for the named paper/model version."
+    allowed_source_types:
+      - original_research_paper
+    allowed_domains:
+      - arxiv.org
+  S3:
+    label: "version_scoped_official_guide"
+    authority: "May authorize only the named product version, mode, and surface described by the guide."
+    allowed_source_types:
+      - legacy_version_scoped_official_guide
+      - official_product_announcement
+      - official_workflow_guide
+      - version_scoped_official_guide
+      - version_scoped_official_launch_guide
+      - version_scoped_official_prompt_guide
+    allowed_domains:
+      - app.klingai.com
+      - cloud.google.com
+      - developers.openai.com
+      - docs.tapnow.ai
+      - help.runwayml.com
+      - kling.ai
+      - seed.bytedance.com
+  S4:
+    label: "community_or_github_clue"
+    authority: "Clue only; cannot make a capability generation-ready without S1-S3 confirmation."
+
+capability_card_contract:
+  version: "1.0.0"
+  required_fields:
+    - capability_card_id
+    - version
+    - status
+    - verified_on
+    - accessed_on
+    - source
+    - evidence_level
+    - reference_modes
+    - audio_route
+    - duration
+    - edit
+    - extension
+    - rights
+    - failure_modes
+  status_values:
+    - current
+    - preview
+    - legacy
+    - deprecated
+    - workflow_only
+  invariant: "Every fact is scoped to the exact version and provider_surface on its card."
+
+models:
+  - model_key: gpt_image
+    capability_card_id: gpt_image_2_openai_api
+    display_name: "GPT Image 2"
+    provider: openai
+    provider_surface: "OpenAI Image API and Responses API image_generation tool"
+    version: "gpt-image-2"
+    status: current
+    verified_on: "2026-07-10"
+    accessed_on: "2026-07-10"
+    last_verified: "2026-07-10"
+    source_type: "official_api_documentation"
+    primary_url: "https://developers.openai.com/api/docs/guides/image-generation"
+    source:
+      primary:
+        tier: S1
+        type: official_api_guide
+        url: "https://developers.openai.com/api/docs/guides/image-generation"
+        accessed_on: "2026-07-10"
+        claim_scope: "gpt-image-2 through the named OpenAI API surfaces"
+      supporting: []
+    evidence_level: S1
+    official_or_primary_facts:
+      - "The Image API supports generation and edits for GPT Image models."
+      - "The edits endpoint can use one or more images as references and can apply a mask."
+      - "The Responses API image tool supports conversational multi-turn generation and editing."
+      - "gpt-image-2 processes image inputs at high fidelity and does not expose a configurable input_fidelity value."
+      - "gpt-image-2 does not support transparent backgrounds on the documented API surface."
+    reference_modes:
+      text_to_image: supported
+      image_edit: supported
+      mask_edit: supported
+      multi_image_reference: supported
+      multi_turn_edit: supported
+      image_input_fidelity: always_high
+    audio_route:
+      native_audio_supported: false
+      generation_audio_route: not_applicable
+    duration:
+      kind: not_applicable
+      supported_values_sec: []
+    edit:
+      supported: true
+      modes:
+        - whole_image
+        - reference_composition
+        - masked_region
+        - conversational_multi_turn
+      preserve_change_required: true
+    extension:
+      supported: false
+      route: image_edit_or_outpaint_prompt
+    rights:
+      gate: required
+      required_evidence:
+        - source_asset_rights
+        - likeness_or_brand_authorization_when_applicable
+        - openai_usage_policy_compatibility
+      generation_allowed_when_unverified: false
+    failure_modes:
+      - precise_text_or_layout_drift
+      - recurring_character_or_brand_consistency_drift
+      - composition_placement_drift
+      - unsupported_transparent_background
+      - moderation_or_rights_gate_failure
+    inferred_adapter_behavior:
+      - "Resolve this card before naming output controls or reference behavior."
+      - "For edits, declare non-overlapping preserve and change sets."
+      - "Use multiple references only when each image has one named role."
+    refresh_trigger:
+      - "The OpenAI image guide changes model versions, input modes, edit behavior, or output controls."
+    adapter_impact:
+      - "Re-run E0-E6 and prompt-contract checks before promotion."
+
+  - model_key: sora
+    capability_card_id: sora_2_openai_videos_api
+    display_name: "Sora 2"
+    provider: openai
+    provider_surface: "OpenAI Videos API"
+    version: "sora-2"
+    status: current
+    verified_on: "2026-07-10"
+    accessed_on: "2026-07-10"
+    last_verified: "2026-07-10"
+    source_type: "official_api_documentation"
+    primary_url: "https://developers.openai.com/api/docs/guides/video-generation"
+    source:
+      primary:
+        tier: S1
+        type: official_api_guide
+        url: "https://developers.openai.com/api/docs/guides/video-generation"
+        accessed_on: "2026-07-10"
+        claim_scope: "sora-2 on the OpenAI Videos API"
+      supporting:
+        - tier: S3
+          type: version_scoped_official_prompt_guide
+          url: "https://developers.openai.com/cookbook/examples/sora/sora2_prompting_guide"
+          accessed_on: "2026-07-10"
+          claim_scope: "Sora 2 prompt and iteration behavior"
+    evidence_level: S1
+    official_or_primary_facts:
+      - "Sora 2 creates video with synchronized audio from text or image input."
+      - "input_reference anchors the first frame of one generation."
+      - "Reusable character assets are for non-human subjects by default and may be combined with input_reference."
+      - "The API supports targeted edits and completed-video extensions with endpoint-specific constraints."
+      - "Current guardrails reject real people, human faces in input images, copyrighted characters, and copyrighted music."
+    reference_modes:
+      text_to_video: supported
+      first_frame_image: supported
+      reusable_non_human_character: supported
+      maximum_character_assets_per_generation: 2
+      human_likeness_character: blocked_by_default
+    audio_route:
+      native_audio_supported: true
+      generation_audio_route: native_synced
+      prompt_section_required_when_audio_desired: true
+    duration:
+      kind: discrete
+      supported_values_sec:
+        - 4
+        - 8
+        - 12
+        - 16
+        - 20
+    edit:
+      supported: true
+      endpoint: "POST /v1/videos/edits"
+      preserve_change_required: true
+      uploaded_video_access: eligible_customers_only
+    extension:
+      supported: true
+      endpoint: "POST /v1/videos/extensions"
+      max_added_sec_per_extension: 20
+      max_extensions: 6
+      max_total_sec: 120
+      supports_characters: false
+      supports_image_reference: false
+    rights:
+      gate: required
+      blocked_by_documented_surface:
+        - real_people_including_public_figures
+        - human_faces_in_input_images
+        - copyrighted_characters
+        - copyrighted_music
+      generation_allowed_when_unverified: false
+    failure_modes:
+      - rights_or_guardrail_rejection
+      - image_reference_misread_as_more_than_first_frame
+      - human_likeness_character_rejection
+      - extension_with_unsupported_character_or_image_reference
+      - identity_or_timing_drift_in_longer_clips
+    inferred_adapter_behavior:
+      - "Use a clean first frame for input_reference and keep planning boards out of that slot."
+      - "Use character assets only for eligible non-human subjects unless access evidence proves otherwise."
+      - "Split extension, edit, and create into separate routes."
+    refresh_trigger:
+      - "OpenAI changes Videos API endpoints, duration, character, extension, edit, audio, or guardrails."
+    adapter_impact:
+      - "Re-resolve duration, reference, audio, edit, extension, and rights routes."
+
+  - model_key: sora_pro
+    capability_card_id: sora_2_pro_openai_videos_api
+    display_name: "Sora 2 Pro"
+    provider: openai
+    provider_surface: "OpenAI Videos API"
+    version: "sora-2-pro"
+    status: current
+    verified_on: "2026-07-10"
+    accessed_on: "2026-07-10"
+    last_verified: "2026-07-10"
+    source_type: "official_api_documentation"
+    primary_url: "https://developers.openai.com/api/docs/guides/video-generation"
+    source:
+      primary:
+        tier: S1
+        type: official_api_guide
+        url: "https://developers.openai.com/api/docs/guides/video-generation"
+        accessed_on: "2026-07-10"
+        claim_scope: "sora-2-pro on the OpenAI Videos API"
+      supporting:
+        - tier: S1
+          type: official_model_page
+          url: "https://developers.openai.com/api/docs/models/sora-2-pro"
+          accessed_on: "2026-07-10"
+          claim_scope: "sora-2-pro model identity and synchronized-audio capability"
+    evidence_level: S1
+    official_or_primary_facts:
+      - "Sora 2 Pro creates synchronized-audio video from natural language or images."
+      - "The Videos API applies the same first-frame, character, edit, extension, and rights boundaries recorded for this exact card."
+    reference_modes:
+      text_to_video: supported
+      first_frame_image: supported
+      reusable_non_human_character: supported
+      maximum_character_assets_per_generation: 2
+      human_likeness_character: blocked_by_default
+    audio_route:
+      native_audio_supported: true
+      generation_audio_route: native_synced
+      prompt_section_required_when_audio_desired: true
+    duration:
+      kind: discrete
+      supported_values_sec:
+        - 4
+        - 8
+        - 12
+        - 16
+        - 20
+    edit:
+      supported: true
+      endpoint: "POST /v1/videos/edits"
+      preserve_change_required: true
+      uploaded_video_access: eligible_customers_only
+    extension:
+      supported: true
+      endpoint: "POST /v1/videos/extensions"
+      max_added_sec_per_extension: 20
+      max_extensions: 6
+      max_total_sec: 120
+      supports_characters: false
+      supports_image_reference: false
+    rights:
+      gate: required
+      blocked_by_documented_surface:
+        - real_people_including_public_figures
+        - human_faces_in_input_images
+        - copyrighted_characters
+        - copyrighted_music
+      generation_allowed_when_unverified: false
+    failure_modes:
+      - rights_or_guardrail_rejection
+      - image_reference_misread_as_more_than_first_frame
+      - extension_with_unsupported_character_or_image_reference
+      - identity_or_timing_drift_in_longer_clips
+    inferred_adapter_behavior:
+      - "Select Pro explicitly; never infer it from the Sora family name."
+      - "Use the same separated create, edit, and extension routes as documented for this card."
+    refresh_trigger:
+      - "OpenAI changes sora-2-pro model or Videos API behavior."
+    adapter_impact:
+      - "Re-resolve card-specific quality, duration, reference, audio, edit, extension, and rights routes."
+
+  - model_key: seedance
+    capability_card_id: seedance_2_0_official_launch
+    display_name: "Seedance 2.0"
+    provider: bytedance_seed
+    provider_surface: "Seedance 2.0 launch product surfaces described by ByteDance Seed"
+    version: "2.0"
+    status: current
+    access_mode: documented_product
+    execution_mode: manual_export
+    execution_verification_status: unverified
+    verified_on: "2026-07-10"
+    accessed_on: "2026-07-10"
+    last_verified: "2026-07-10"
+    source_type: "official_version_guide_and_original_paper"
+    primary_url: "https://seed.bytedance.com/en/blog/seedance-2-0-official-launch"
+    secondary_url: "https://arxiv.org/abs/2604.14148"
+    source:
+      primary:
+        tier: S3
+        type: version_scoped_official_launch_guide
+        url: "https://seed.bytedance.com/en/blog/seedance-2-0-official-launch"
+        accessed_on: "2026-07-10"
+        claim_scope: "Seedance 2.0 named launch surfaces only"
+      supporting:
+        - tier: S2
+          type: original_research_paper
+          url: "https://arxiv.org/abs/2604.14148"
+          accessed_on: "2026-07-10"
+          claim_scope: "Seedance 2.0 research architecture and evaluated modes"
+    evidence_level: S2
+    official_or_primary_facts:
+      - "Seedance 2.0 accepts text, image, audio, and video references on the documented launch surfaces."
+      - "The 9-image, 3-video, and 3-audio limits are version-scoped to Seedance 2.0 and must not be inherited by later aliases."
+      - "The launch guide documents 15-second multi-shot audio-video output."
+      - "The launch guide documents prompt-directed video editing and continuation for Seedance 2.0."
+    reference_modes:
+      text_reference: supported
+      image_reference: supported
+      video_reference: supported
+      audio_reference: supported
+      storyboard_reference: conditional_with_explicit_role_binding
+      maximum_image_references: 9
+      maximum_video_references: 3
+      maximum_audio_references: 3
+      limit_scope: "Seedance 2.0 named launch surfaces only"
+    audio_route:
+      native_audio_supported: true
+      generation_audio_route: native_synced
+      audio_reference_supported: true
+    duration:
+      kind: version_scoped
+      official_launch_output_sec: 15
+      researched_range_sec:
+        - 4
+        - 15
+    edit:
+      supported: true
+      preserve_change_required: true
+      endpoint_or_ui_must_be_verified_at_execution: true
+    extension:
+      supported: true
+      endpoint_or_ui_must_be_verified_at_execution: true
+    rights:
+      gate: required
+      documented_human_portrait_condition: "Identity verification or prior legal authorization is required for real human portrait references."
+      generation_allowed_when_unverified: false
+    failure_modes:
+      - version_scoped_reference_limits_inherited_by_another_version
+      - dense_board_animated_literally
+      - competing_reference_roles
+      - multi_subject_or_text_rendering_drift
+      - occasional_audio_distortion
+    inferred_adapter_behavior:
+      - "Bind every reference by role and mark storyboards as production guidance."
+      - "Treat all numeric limits as Seedance 2.0-only."
+      - "Resolve the actual endpoint or UI mode before promising edit or extension execution."
+    refresh_trigger:
+      - "ByteDance publishes a new Seedance version, API surface, or changed reference limit."
+    adapter_impact:
+      - "Create a new card instead of mutating 2.0 facts into an alias."
+
+  - model_key: kling
+    capability_card_id: kling_video_3_0_official_guide
+    display_name: "Kling VIDEO 3.0"
+    provider: kling_ai
+    provider_surface: "Kling AI VIDEO 3.0 product guide"
+    version: "3.0"
+    status: current
+    access_mode: documented_product
+    execution_mode: manual_export
+    execution_verification_status: unverified
+    verified_on: "2026-07-10"
+    accessed_on: "2026-07-10"
+    last_verified: "2026-07-10"
+    source_type: "version_scoped_official_guide"
+    primary_url: "https://app.klingai.com/cn/quickstart/klingai-video-3-model-user-guide"
+    source:
+      primary:
+        tier: S3
+        type: version_scoped_official_guide
+        url: "https://app.klingai.com/cn/quickstart/klingai-video-3-model-user-guide"
+        accessed_on: "2026-07-10"
+        claim_scope: "Kling VIDEO 3.0 and VIDEO 3.0 Omni modes described by the guide"
+      supporting: []
+    evidence_level: S3
+    official_or_primary_facts:
+      - "Kling VIDEO 3.0 supports flexible 3-15 second generation."
+      - "The guide documents text-to-video, image-to-video, start/end frames, native audio, multi-shot, and element-reference workflows."
+      - "Elements can be created from a video or from 2-4 reference images on the documented product surface."
+      - "The older 5/10 second rule belongs to the separate legacy card and is not a VIDEO 3.0 constraint."
+    reference_modes:
+      text_to_video: supported
+      image_to_video: supported
+      start_end_frame: supported
+      element_reference: supported
+      element_reference_image_count:
+        - 2
+        - 4
+      multi_shot: supported
+    audio_route:
+      native_audio_supported: true
+      generation_audio_route: native_synced
+      element_voice_binding: supported
+    duration:
+      kind: range
+      minimum_sec: 3
+      maximum_sec: 15
+      flexible_within_range: true
+    edit:
+      supported: unverified
+      preserve_change_required: true
+      route: "Resolve a dedicated edit card or stay prompt-only."
+    extension:
+      supported: unverified
+      route: "Resolve a dedicated extension card or stay prompt-only."
+    rights:
+      gate: required
+      required_evidence:
+        - source_asset_rights
+        - likeness_and_voice_authorization_when_applicable
+      generation_allowed_when_unverified: false
+    failure_modes:
+      - legacy_5_10_rule_applied_to_video_3
+      - element_identity_or_voice_binding_drift
+      - custom_multi_shot_timing_overload
+      - first_or_last_frame_motion_conflict
+      - unverified_edit_or_extension_claim
+    inferred_adapter_behavior:
+      - "Use the 3-15 second range only after this exact card is selected."
+      - "Bind elements, start/end frames, multi-shot, and audio as distinct controls."
+      - "Do not route edit or extension through this card without stronger endpoint evidence."
+    refresh_trigger:
+      - "Kling changes VIDEO 3.0, Omni, element, duration, audio, edit, or extension behavior."
+    adapter_impact:
+      - "Re-run duration, reference, audio, and route separation evals."
+
+  - model_key: kling_legacy
+    capability_card_id: kling_legacy_i2v_5_10_official_guide
+    display_name: "Kling legacy Image-to-Video"
+    provider: kling_ai
+    provider_surface: "Kling legacy Image-to-Video guide"
+    version: "legacy-5s-10s"
+    status: legacy
+    verified_on: "2026-07-10"
+    accessed_on: "2026-07-10"
+    last_verified: "2026-07-10"
+    source_type: "legacy_official_guide"
+    primary_url: "https://kling.ai/quickstart/image-to-video-guide"
+    source:
+      primary:
+        tier: S3
+        type: legacy_version_scoped_official_guide
+        url: "https://kling.ai/quickstart/image-to-video-guide"
+        accessed_on: "2026-07-10"
+        claim_scope: "Legacy Kling Image-to-Video workflow described by the guide; not VIDEO 3.0"
+      supporting: []
+    evidence_level: S3
+    official_or_primary_facts:
+      - "The legacy guide documents 5-second or 10-second image-to-video output."
+      - "Its motion prompt formula centers subject movement and background movement."
+    reference_modes:
+      image_to_video: supported
+      first_frame_image: supported
+      multi_shot: unverified
+      element_reference: unverified
+    audio_route:
+      native_audio_supported: unverified
+      generation_audio_route: postproduction_required
+    duration:
+      kind: discrete
+      supported_values_sec:
+        - 5
+        - 10
+    edit:
+      supported: false
+      preserve_change_required: true
+    extension:
+      supported: unverified
+    rights:
+      gate: required
+      required_evidence:
+        - source_asset_rights
+        - likeness_authorization_when_applicable
+      generation_allowed_when_unverified: false
+    failure_modes:
+      - selected_for_video_3_without_explicit_legacy_version
+      - motion_contradicts_input_still
+      - legacy_capability_promoted_to_current
+    inferred_adapter_behavior:
+      - "Select only when the user or execution surface explicitly identifies the legacy 5/10-second workflow."
+      - "Never use this card as the default Kling capability."
+    refresh_trigger:
+      - "The legacy guide is removed or the project drops legacy compatibility."
+    adapter_impact:
+      - "Deprecate the card without altering the VIDEO 3.0 card."
+
+  - model_key: runway
+    capability_card_id: runway_gen_4_5_web
+    display_name: "Runway Gen-4.5"
+    provider: runway
+    provider_surface: "Runway web Gen-4.5 generation"
+    version: "Gen-4.5"
+    status: current
+    verified_on: "2026-07-10"
+    accessed_on: "2026-07-10"
+    last_verified: "2026-07-10"
+    source_type: "version_scoped_official_guide"
+    primary_url: "https://help.runwayml.com/hc/en-us/articles/46974685288467-Creating-with-Gen-4-5"
+    source:
+      primary:
+        tier: S3
+        type: version_scoped_official_guide
+        url: "https://help.runwayml.com/hc/en-us/articles/46974685288467-Creating-with-Gen-4-5"
+        accessed_on: "2026-07-10"
+        claim_scope: "Runway Gen-4.5 generation on the documented web surface"
+      supporting:
+        - tier: S3
+          type: version_scoped_official_prompt_guide
+          url: "https://help.runwayml.com/hc/en-us/articles/42460036199443-Text-to-Video-Prompting-Guide"
+          accessed_on: "2026-07-10"
+          claim_scope: "Gen-4.5 text-to-video prompt behavior"
+    evidence_level: S3
+    official_or_primary_facts:
+      - "Gen-4.5 offers text-to-video and image-to-video controls on the documented web surface."
+      - "The official guide documents 2-10 second duration and motion-focused image-to-video prompting."
+      - "Gen-4.5 generation is separate from Aleph 2.0 editing."
+    reference_modes:
+      text_to_video: supported
+      image_to_video: supported
+      first_frame_image: supported
+      additional_inputs: not_yet_documented
+    audio_route:
+      native_audio_supported: unverified
+      generation_audio_route: postproduction_required
+    duration:
+      kind: range
+      minimum_sec: 2
+      maximum_sec: 10
+    edit:
+      supported: false
+      route: runway_aleph_2_0_web
+      preserve_change_required: true
+    extension:
+      supported: unverified
+      route: "Resolve another capability card or stay prompt-only."
+    rights:
+      gate: required
+      required_evidence:
+        - source_asset_rights
+        - likeness_and_brand_authorization_when_applicable
+      generation_allowed_when_unverified: false
+    failure_modes:
+      - gen_4_5_generation_used_as_aleph_edit
+      - unsupported_native_audio_assumption
+      - overloaded_image_to_video_prompt
+      - duration_outside_2_10_seconds
+    inferred_adapter_behavior:
+      - "Use Gen-4.5 only for new text/image video generation."
+      - "Route change-to-existing-video tasks to an exact Aleph card."
+      - "Keep desired audio separate and default generation audio to post-production unless a stronger card is selected."
+    refresh_trigger:
+      - "Runway changes Gen-4.5 duration, input modes, audio, or platform availability."
+    adapter_impact:
+      - "Re-run generation/edit route and audio-route evals."
+
+  - model_key: runway_aleph
+    capability_card_id: runway_aleph_2_0_web
+    display_name: "Runway Aleph 2.0"
+    provider: runway
+    provider_surface: "Runway Edit Studio"
+    version: "Aleph 2.0"
+    status: current
+    verified_on: "2026-07-10"
+    accessed_on: "2026-07-10"
+    last_verified: "2026-07-10"
+    source_type: "version_scoped_official_guide"
+    primary_url: "https://help.runwayml.com/hc/en-us/articles/52150503729171-Aleph-2-0-Prompting-Guide"
+    source:
+      primary:
+        tier: S3
+        type: version_scoped_official_guide
+        url: "https://help.runwayml.com/hc/en-us/articles/52150503729171-Aleph-2-0-Prompting-Guide"
+        accessed_on: "2026-07-10"
+        claim_scope: "Aleph 2.0 in-context video editing in Runway Edit Studio"
+      supporting: []
+    evidence_level: S3
+    official_or_primary_facts:
+      - "Aleph 2.0 is Runway's in-context video editing model."
+      - "It is designed to change only the requested target while preserving unrequested background, lighting, and surrounding details."
+      - "An optional motion prompt may accompany keyframe edits."
+      - "The Edit Studio guide does not publish a numeric input-duration range; API limits must not be inherited by this web card."
+    reference_modes:
+      source_video: required
+      edited_keyframe: supported
+      optional_motion_prompt: supported
+      text_to_video: not_this_route
+    audio_route:
+      native_audio_supported: unverified
+      generation_audio_route: preserve_source_or_postproduction
+    duration:
+      kind: surface_specific
+      surface: runway_edit_studio
+      verification_status: unverified
+      minimum_input_sec: null
+      maximum_input_sec: null
+      related_api_duration_card_id: runway_aleph_2_0_api
+    edit:
+      supported: true
+      modes:
+        - change_background
+        - change_wardrobe_or_accessory
+        - change_weather_or_time
+        - relight
+        - replace_subject_or_object
+        - restyle
+      preserve_change_required: true
+    extension:
+      supported: false
+      route: "Resolve another capability card."
+    rights:
+      gate: required
+      required_evidence:
+        - source_video_rights
+        - edit_authorization
+        - likeness_and_brand_authorization_when_applicable
+      generation_allowed_when_unverified: false
+    failure_modes:
+      - preserve_and_change_overlap
+      - broad_edit_rewrites_unrequested_regions
+      - source_video_or_keyframe_rights_unverified
+      - gen_4_5_prompt_used_instead_of_edit_prompt
+      - api_duration_inherited_by_web_surface
+    inferred_adapter_behavior:
+      - "Write explicit, non-overlapping preserve and change sets."
+      - "Use one targeted edit per pass when preservation matters."
+      - "Do not use Aleph as a new-video generation alias."
+    refresh_trigger:
+      - "Runway changes Aleph version, edit modes, audio handling, or access surface."
+    adapter_impact:
+      - "Re-run edit separation and preserve/change evals."
+
+  - model_key: runway_aleph_api
+    capability_card_id: runway_aleph_2_0_api
+    display_name: "Runway Aleph 2.0 API"
+    provider: runway
+    provider_surface: "Runway API video_to_video endpoint"
+    version: "aleph2"
+    status: current
+    verified_on: "2026-07-11"
+    accessed_on: "2026-07-11"
+    last_verified: "2026-07-11"
+    source_type: "official_api_changelog_and_input_manual"
+    primary_url: "https://docs.dev.runwayml.com/api-details/api_changelog/"
+    source:
+      primary:
+        tier: S1
+        type: official_api_changelog
+        url: "https://docs.dev.runwayml.com/api-details/api_changelog/"
+        accessed_on: "2026-07-11"
+        claim_scope: "Aleph 2.0 API model identifier, video_to_video route, keyframes, and 2-30 second input range"
+      supporting:
+        - tier: S1
+          type: official_api_input_manual
+          url: "https://docs.dev.runwayml.com/assets/inputs/"
+          accessed_on: "2026-07-11"
+          claim_scope: "Aleph 2.0 API video-input duration, resolution, and FPS requirements"
+        - tier: S1
+          type: official_api_model_catalog
+          url: "https://docs.dev.runwayml.com/guides/models/"
+          accessed_on: "2026-07-11"
+          claim_scope: "aleph2 API model catalog entry and video plus text/image input contract"
+    evidence_level: S1
+    official_or_primary_facts:
+      - "Runway API exposes Aleph 2.0 as model identifier aleph2 on the video_to_video endpoint."
+      - "The API accepts 2-30 second source videos at 30 FPS or lower and preserves resolution up to 1080p."
+      - "The API duration range applies only to this exact API card, not Runway Edit Studio."
+    reference_modes:
+      source_video: required
+      keyframe_images: supported
+      maximum_keyframe_images: 5
+      text_prompt: required
+      text_to_video: not_this_route
+    audio_route:
+      native_audio_supported: unverified
+      generation_audio_route: preserve_source_or_postproduction
+    duration:
+      kind: input_range
+      surface: runway_api_video_to_video
+      minimum_input_sec: 2
+      maximum_input_sec: 30
+      maximum_input_fps: 30
+    edit:
+      supported: true
+      preserve_change_required: true
+      source_video_required: true
+    extension:
+      supported: false
+      route: "Resolve another capability card."
+    rights:
+      gate: required
+      required_evidence:
+        - source_video_rights
+        - edit_authorization
+        - likeness_and_brand_authorization_when_applicable
+      generation_allowed_when_unverified: false
+    failure_modes:
+      - web_duration_inherited_by_api_surface
+      - source_video_missing
+      - preserve_and_change_overlap
+      - aleph2_alpha_deprecated_alias_selected
+    inferred_adapter_behavior:
+      - "Use model aleph2 only on the Runway API video_to_video endpoint."
+      - "Require source video plus non-overlapping preserve/change sets."
+      - "Keep the 2-30 second range scoped to this API card."
+    refresh_trigger:
+      - "Runway changes the aleph2 identifier, endpoint, duration, keyframe, or FPS contract."
+    adapter_impact:
+      - "Re-run API edit-source, duration, and surface-separation evals."
+
+  - model_key: runway_aleph_legacy
+    capability_card_id: runway_gen_4_aleph_api_deprecated
+    display_name: "Runway Gen-4 Aleph"
+    provider: runway
+    provider_surface: "Runway API legacy video editing"
+    version: "Gen-4 Aleph"
+    status: deprecated
+    deprecation:
+      deprecated: true
+      verified_on: "2026-07-10"
+      replacement_capability_card_id: runway_aleph_2_0_api
+    verified_on: "2026-07-10"
+    accessed_on: "2026-07-10"
+    last_verified: "2026-07-10"
+    source_type: "official_api_input_manual"
+    primary_url: "https://docs.dev.runwayml.com/assets/inputs/"
+    source:
+      primary:
+        tier: S1
+        type: official_api_input_manual
+        url: "https://docs.dev.runwayml.com/assets/inputs/"
+        accessed_on: "2026-07-10"
+        claim_scope: "Gen-4 Aleph deprecation status in Runway API inputs documentation"
+      supporting: []
+    evidence_level: S1
+    official_or_primary_facts:
+      - "Runway's current API input manual labels Gen-4 Aleph as Deprecated."
+      - "Aleph 2.0 is a distinct current edit route and must not inherit the deprecated card status."
+    reference_modes:
+      source_video: legacy_supported
+      keyframe_edit: legacy_supported
+      new_generation: not_this_route
+    audio_route:
+      native_audio_supported: unverified
+      generation_audio_route: preserve_source_or_postproduction
+    duration:
+      kind: deprecated_historical
+      supported_values_sec: []
+    edit:
+      supported: legacy_only
+      preserve_change_required: true
+      replacement_capability_card_id: runway_aleph_2_0_api
+    extension:
+      supported: false
+      route: "Resolve another current capability card."
+    rights:
+      gate: required
+      required_evidence:
+        - source_video_rights
+        - edit_authorization
+      generation_allowed_when_unverified: false
+    failure_modes:
+      - deprecated_gen_4_aleph_selected_for_new_work
+      - deprecated_status_lost_through_runway_family_alias
+      - aleph_2_0_mistaken_for_gen_4_aleph
+    inferred_adapter_behavior:
+      - "Reject new execution against this deprecated card unless an explicit legacy exception is recorded."
+      - "Route new API edit work to runway_aleph_2_0_api after capability resolution."
+    refresh_trigger:
+      - "Runway removes the legacy model or names a different replacement."
+    adapter_impact:
+      - "Preserve deprecation history without downgrading Aleph 2.0."
+
+  - model_key: veo
+    capability_card_id: veo_3_1_generate_001_vertex_api
+    display_name: "Veo 3.1 Generate 001"
+    provider: google
+    provider_surface: "Vertex AI publisher model predictLongRunning API"
+    version: "veo-3.1-generate-001"
+    status: current
+    verified_on: "2026-07-11"
+    accessed_on: "2026-07-11"
+    last_verified: "2026-07-11"
+    source_type: "official_stable_model_and_api_manual"
+    primary_url: "https://docs.cloud.google.com/vertex-ai/generative-ai/docs/models/veo/3-1-generate"
+    source:
+      primary:
+        tier: S1
+        type: official_stable_model_page
+        url: "https://docs.cloud.google.com/vertex-ai/generative-ai/docs/models/veo/3-1-generate"
+        accessed_on: "2026-07-11"
+        claim_scope: "stable veo-3.1-generate-001 identity, launch stage, references, duration, and endpoint features"
+      supporting:
+        - tier: S1
+          type: official_vertex_api_reference
+          url: "https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/veo-video-generation"
+          accessed_on: "2026-07-11"
+          claim_scope: "Generic Vertex prediction reference retained for conflict tracking; no exact stable-card generateAudio binding was located during the 2026-07-11 audit"
+        - tier: S1
+          type: official_release_notes
+          url: "https://docs.cloud.google.com/vertex-ai/generative-ai/docs/release-notes"
+          accessed_on: "2026-07-10"
+          claim_scope: "preview-to-stable endpoint migration"
+        - tier: S3
+          type: official_product_announcement
+          url: "https://cloud.google.com/blog/products/ai-machine-learning/veo-3-1-lite-and-a-new-veo-upscaling-capability-on-vertex-ai/"
+          accessed_on: "2026-07-10"
+          claim_scope: "Veo 3.1 family native-audio statement; supporting evidence only"
+    evidence_level: S1
+    official_or_primary_facts:
+      - "The March 3, 2026 release notes migrate veo-3.1-generate-preview to stable veo-3.1-generate-001."
+      - "The stable model page records GA status and supports text-to-video, image-to-video, first/last frames, asset references, and extension."
+      - "The exact stable model page marks sound generation as not supported for veo-3.1-generate-001."
+      - "The registered generic API URL did not expose a locatable generateAudio field during the 2026-07-11 audit and therefore cannot authorize audio for this exact card."
+      - "The exact endpoint supports 4, 6, or 8 second outputs; reference-image-to-video uses 8 seconds."
+      - "The family-level announcement conflicts with the exact stable model page, so the card remains audio-ambiguous and defaults to post-production."
+    reference_modes:
+      text_to_video: supported
+      image_to_video: supported
+      first_last_frame: supported
+      asset_reference_images: supported
+    audio_route:
+      native_audio_supported: unverified
+      generation_audio_route: postproduction_required
+      request_parameter: unverified
+      parameter_required_for_veo_3: unverified
+      accepted_values: []
+      endpoint_specific: true
+      verification_status: ambiguous_official_surface_conflict
+      conflict_note: "The exact stable page says sound generation is not supported. A family announcement says native audio, while the registered generic API URL does not expose an exact-card generateAudio binding. Fail closed to post-production."
+    duration:
+      kind: discrete
+      supported_values_sec:
+        - 4
+        - 6
+        - 8
+      reference_image_to_video_sec: 8
+    edit:
+      supported: false
+      preserve_change_required: true
+      route: "Resolve a dedicated edit card."
+    extension:
+      supported: true
+      endpoint_or_ui_must_be_verified_at_execution: true
+    rights:
+      gate: required
+      required_evidence:
+        - source_asset_rights
+        - likeness_and_brand_authorization_when_applicable
+      generation_allowed_when_unverified: false
+    failure_modes:
+      - vertex_audio_claim_generalized_to_another_provider_surface
+      - official_audio_surface_conflict_hidden_from_receipt
+      - deprecated_preview_alias_selected_as_current
+      - duration_outside_4_6_8_seconds
+      - reference_mode_confused_with_first_frame
+      - extension_surface_not_verified
+    inferred_adapter_behavior:
+      - "Keep desired_audio separate and route it to post-production for this exact stable card."
+      - "Require exact stable endpoint and provider surface in the selection receipt."
+      - "Keep the official audio conflict visible; do not infer exact-card audio from a generic parameter or family announcement."
+    refresh_trigger:
+      - "Google changes the exact endpoint manual, surface, audio flag, duration, or extension support."
+    adapter_impact:
+      - "Create or revise an endpoint-specific card; do not mutate family defaults."
+
+  - model_key: veo_fast
+    capability_card_id: veo_3_1_fast_generate_001_vertex_api
+    display_name: "Veo 3.1 Fast Generate 001"
+    provider: google
+    provider_surface: "Vertex AI publisher model predictLongRunning API"
+    version: "veo-3.1-fast-generate-001"
+    status: current
+    verified_on: "2026-07-11"
+    accessed_on: "2026-07-11"
+    last_verified: "2026-07-11"
+    source_type: "official_stable_model_and_api_manual"
+    primary_url: "https://docs.cloud.google.com/vertex-ai/generative-ai/docs/models/veo/3-1-generate"
+    source:
+      primary:
+        tier: S1
+        type: official_stable_model_page
+        url: "https://docs.cloud.google.com/vertex-ai/generative-ai/docs/models/veo/3-1-generate"
+        accessed_on: "2026-07-11"
+        claim_scope: "stable veo-3.1-fast-generate-001 identity, launch stage, references, and duration"
+      supporting:
+        - tier: S1
+          type: official_vertex_api_reference
+          url: "https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/veo-video-generation"
+          accessed_on: "2026-07-11"
+          claim_scope: "Generic Vertex prediction reference retained for conflict tracking; no exact fast-card generateAudio binding was located during the 2026-07-11 audit"
+        - tier: S1
+          type: official_release_notes
+          url: "https://docs.cloud.google.com/vertex-ai/generative-ai/docs/release-notes"
+          accessed_on: "2026-07-10"
+          claim_scope: "preview-to-stable fast endpoint migration"
+    evidence_level: S1
+    official_or_primary_facts:
+      - "The March 3, 2026 release notes migrate the preview alias to stable veo-3.1-fast-generate-001."
+      - "The stable model page records GA status, 4/6/8 second duration, and image/reference routes for the Fast endpoint."
+      - "The exact stable Fast model page marks sound generation as not supported."
+      - "The registered generic API URL did not expose a locatable exact fast-card generateAudio field during the 2026-07-11 audit."
+    reference_modes:
+      text_to_video: supported
+      image_to_video: supported
+      first_last_frame: supported
+      asset_reference_images: supported
+    audio_route:
+      native_audio_supported: unverified
+      generation_audio_route: postproduction_required
+      request_parameter: unverified
+      parameter_required_for_veo_3: unverified
+      accepted_values: []
+      endpoint_specific: true
+      verification_status: ambiguous_official_surface_conflict
+      conflict_note: "The exact stable Fast page says sound generation is not supported, and the generic API URL does not bind generateAudio to this exact card. Fail closed to post-production."
+    duration:
+      kind: discrete
+      supported_values_sec:
+        - 4
+        - 6
+        - 8
+    edit:
+      supported: false
+      preserve_change_required: true
+      route: "Resolve a dedicated edit card."
+    extension:
+      supported: true
+      endpoint_or_ui_must_be_verified_at_execution: true
+    rights:
+      gate: required
+      required_evidence:
+        - source_asset_rights
+        - likeness_and_brand_authorization_when_applicable
+      generation_allowed_when_unverified: false
+    failure_modes:
+      - deprecated_fast_preview_alias_selected_as_current
+      - vertex_audio_claim_generalized_to_another_surface
+      - duration_outside_4_6_8_seconds
+    inferred_adapter_behavior:
+      - "Select the stable Fast card explicitly and route desired audio to post-production."
+      - "Keep endpoint-specific reference and duration behavior in the receipt."
+    refresh_trigger:
+      - "Google changes the stable Fast endpoint, request schema, audio, duration, or extension support."
+    adapter_impact:
+      - "Re-resolve the exact stable Fast card and rerun audio/reference evals."
+
+  - model_key: veo_lite
+    capability_card_id: veo_3_1_lite_generate_001_vertex_api
+    display_name: "Veo 3.1 Lite Generate 001"
+    provider: google
+    provider_surface: "Vertex AI publisher model predictLongRunning API"
+    version: "veo-3.1-lite-generate-001"
+    status: preview
+    verified_on: "2026-07-11"
+    accessed_on: "2026-07-11"
+    last_verified: "2026-07-11"
+    source_type: "official_endpoint_manual_and_announcement"
+    primary_url: "https://docs.cloud.google.com/vertex-ai/generative-ai/docs/models/veo/3-1-generate"
+    source:
+      primary:
+        tier: S1
+        type: official_endpoint_manual
+        url: "https://docs.cloud.google.com/vertex-ai/generative-ai/docs/models/veo/3-1-generate"
+        accessed_on: "2026-07-11"
+        claim_scope: "veo-3.1-lite-generate-001 preview identity and endpoint features"
+      supporting:
+        - tier: S1
+          type: official_vertex_api_reference
+          url: "https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/veo-video-generation"
+          accessed_on: "2026-07-11"
+          claim_scope: "Generic Vertex prediction reference retained for schema context; no exact Lite generateAudio binding was located during the 2026-07-11 audit"
+        - tier: S3
+          type: official_product_announcement
+          url: "https://cloud.google.com/blog/products/ai-machine-learning/veo-3-1-lite-and-a-new-veo-upscaling-capability-on-vertex-ai/"
+          accessed_on: "2026-07-10"
+          claim_scope: "Veo 3.1 Lite native audio and family-tier positioning"
+    evidence_level: S1
+    official_or_primary_facts:
+      - "The exact Lite endpoint manual marks sound generation as supported."
+      - "The same manual marks reference images as not supported for this Lite endpoint."
+      - "The endpoint supports 4, 6, or 8 second outputs."
+    reference_modes:
+      text_to_video: supported
+      image_to_video: supported
+      first_last_frame: supported
+      asset_reference_images: not_supported
+    audio_route:
+      native_audio_supported: true
+      generation_audio_route: native
+      request_parameter: unverified
+      parameter_required_for_veo_3: unverified
+      endpoint_specific: true
+      verification_status: verified_exact_endpoint_sound_support
+    duration:
+      kind: discrete
+      supported_values_sec:
+        - 4
+        - 6
+        - 8
+    edit:
+      supported: false
+      preserve_change_required: true
+      route: "Resolve a dedicated edit card."
+    extension:
+      supported: true
+      endpoint_or_ui_must_be_verified_at_execution: true
+    rights:
+      gate: required
+      required_evidence:
+        - source_asset_rights
+        - likeness_and_brand_authorization_when_applicable
+      generation_allowed_when_unverified: false
+    failure_modes:
+      - lite_audio_claim_generalized_to_other_veo_endpoint
+      - unsupported_reference_assets_assumed_from_family
+      - preview_surface_changed_without_refresh
+    inferred_adapter_behavior:
+      - "Select Lite explicitly when native sound is required and its other constraints fit; do not invent an undocumented generateAudio parameter."
+      - "Do not attach asset reference images to this card."
+    refresh_trigger:
+      - "Google changes the Lite endpoint launch stage, audio, references, duration, or extension support."
+    adapter_impact:
+      - "Re-resolve the exact Lite card and re-run audio/reference evals."
+
+  - model_key: tapnow_canvas
+    capability_card_id: tapnow_canvas_workflow_2026_07_10
+    display_name: "TapNow canvas workflow"
+    provider: tapnow
+    provider_surface: "TapNow documented canvas workflow"
+    version: "workflow-snapshot-2026-07-10"
+    status: workflow_only
+    verified_on: "2026-07-10"
+    accessed_on: "2026-07-10"
+    last_verified: "2026-07-10"
+    source_type: "official_workflow_documentation"
+    primary_url: "https://docs.tapnow.ai/en/docs/welcome-to-tapnow/basic-capabilities"
+    secondary_url: "https://docs.tapnow.ai/en/docs/video-creation/use-start-end-frames"
+    source:
+      primary:
+        tier: S3
+        type: official_workflow_guide
+        url: "https://docs.tapnow.ai/en/docs/welcome-to-tapnow/basic-capabilities"
+        accessed_on: "2026-07-10"
+        claim_scope: "TapNow workflow and canvas behaviors, not a single model capability"
+      supporting:
+        - tier: S3
+          type: official_workflow_guide
+          url: "https://docs.tapnow.ai/en/docs/video-creation/use-start-end-frames"
+          accessed_on: "2026-07-10"
+          claim_scope: "start/end frame workflow"
+    evidence_level: S3
+    official_or_primary_facts:
+      - "The workflow supports text, image, reusable asset, canvas-node, and start/end-frame paths."
+      - "This card describes orchestration only and cannot authorize an underlying model capability."
+    reference_modes:
+      canvas_graph: supported
+      multi_image_workflow: supported
+      start_end_frame_workflow: supported
+      underlying_model_capability: must_resolve_separately
+    audio_route:
+      native_audio_supported: unverified
+      generation_audio_route: resolve_underlying_model_or_postproduction
+    duration:
+      kind: delegated
+      source: underlying_model_capability_card
+    edit:
+      supported: workflow_only
+      preserve_change_required: true
+      underlying_model_card_required: true
+    extension:
+      supported: workflow_only
+      underlying_model_card_required: true
+    rights:
+      gate: required
+      required_evidence:
+        - every_input_node_rights
+        - underlying_model_terms
+      generation_allowed_when_unverified: false
+    failure_modes:
+      - canvas_workflow_mistaken_for_model_capability
+      - graph_edge_bypasses_story_or_rights_gate
+      - dense_board_bound_as_literal_first_frame
+      - optimized_prompt_loses_source_intent
+    inferred_adapter_behavior:
+      - "Use the canvas as a lineage receipt and resolve every generation node to its own capability card."
+      - "Keep planning boards separate from direct clean-frame inputs."
+    refresh_trigger:
+      - "TapNow changes canvas, start/end frame, reusable asset, or optimizer behavior."
+    adapter_impact:
+      - "Update workflow receipt fields without inventing underlying model facts."

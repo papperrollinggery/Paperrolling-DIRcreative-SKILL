@@ -1,0 +1,87 @@
+client_film_gate_contract:
+  project_title: "Invalid Missing Asset Contract"
+  target_duration_sec: 15
+  gate_status:
+    story: pass
+    script: pass
+    shot: pass
+    asset_reference: pass
+    prompt_generation: pending
+    client_language: pass
+  client_visible_text_blocks:
+    - "朋友把旧照片放回相册，结尾一起看向下一次出发。"
+  story_gate:
+    customer_readable_story_preview:
+      - "故事从相册开始，朋友们带着不同礼物回到同一个房间。"
+      - "结尾让新船票成为下一段旅程的邀请。"
+    preserved_brief_requirements:
+      - "保留客户道具和朋友身份。"
+    omitted_requirements_without_user_removal: []
+    prop_ellipsis_rule:
+      source_has_ellipsis: false
+      expansions: []
+  script_gate:
+    target_duration_sec: 15
+    time_budget:
+      total_sec: 15
+      sections: []
+    vo_budget:
+      total_words_estimate: 0
+      lines: []
+  shot_gate:
+    story_sections_count: 3
+    rhythm_points_count: 4
+    shots:
+      - shot_id: S01
+        timecode: "00:00-00:03"
+        start_sec: 0
+        end_sec: 3
+        shot_size: "CU"
+        camera_position: "front"
+        camera_movement: "locked"
+        subject_action: "opens album"
+        emotional_function: "starts memory"
+        props_characters: ["album"]
+        asset_source: "missing"
+        vertical_framing: "center safe"
+        reference_motion: "hand opens album"
+    storyboard_pages:
+      - page_id: SB01
+        image_count: 4
+        image_aspect_ratio: "9:16"
+        crop_policy: "crop_safe_no_stretch"
+        min_image_width_px: 900
+        caption_standard:
+          story_first: true
+          camera_second: true
+          source_or_confirmation_last: true
+  asset_reference_gate:
+    user_claims_existing_browser_images: true
+    browser_or_local_intake:
+      completed: false
+      inspected_sources: []
+      blocked_reason: ""
+    per_shot_asset_contract: []
+    reference_video_music:
+      reference_motion_notes: []
+      reference_videos: []
+      music_tracks: []
+  prompt_generation:
+    status: pending
+    input_gates_locked:
+      story: true
+      script: true
+      shot: true
+      asset_reference: false
+    prompts: []
+  acceptance_boundary:
+    validation_scope: structural_contract_only
+    structural_pass_not_client_deliverable: true
+    structural_pass_not_copy_quality: true
+    structural_pass_not_visual_quality: true
+    structural_pass_not_asset_authorization: true
+    structural_pass_not_live_acceptance: true
+qa:
+  client_film_gate_contract: fail
+  failures:
+    - missing_asset_output_status

@@ -1,0 +1,12 @@
+fixture:
+  fixture_id: invalid-creative-copy-deck-audience-copy-boundary
+  description: Reject internal prompt notes on a slide and recompute the stale audience-copy QA flag.
+  expectation: reject
+  mutations:
+    - operation: replace
+      path: deck_narrative_spec.slides.0.prompt_notes
+      value: "Tell the image model to exaggerate the product reflection."
+  expected_failure_ids:
+    - deck_audience_copy_boundary_invalid
+    - deck_qa_status_invalid
+  expected_review_ids: []

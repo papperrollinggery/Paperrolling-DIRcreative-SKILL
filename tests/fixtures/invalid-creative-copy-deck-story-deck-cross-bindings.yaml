@@ -1,0 +1,22 @@
+fixture:
+  fixture_id: invalid-creative-copy-deck-story-deck-cross-bindings
+  description: Reject story and deck sources that bypass the approved project binding chain.
+  expectation: reject
+  mutations:
+    - operation: replace
+      path: story_package.source_bindings.fact_ids
+      value:
+        - fact-missing
+    - operation: replace
+      path: deck_narrative_spec.source_constraints.source_evidence_ids
+      value:
+        - evidence-missing
+  expected_failure_ids:
+    - copy_execution_source_binding_invalid
+    - creative_story_beat_source_binding_invalid
+    - creative_story_source_binding_invalid
+    - deck_source_constraints_invalid
+    - deck_beat_claim_evidence_binding_invalid
+    - deck_slide_claim_evidence_binding_invalid
+    - deck_qa_status_invalid
+  expected_review_ids: []

@@ -1,0 +1,15 @@
+fixture_type: "orchestrated_worker_scope"
+expected_failure_contains:
+  - "director-room result missing open_questions list"
+  - "director-room execution must record nested_dispatch false"
+  - "orchestrated_worker must execute only the handoff-selected subskill"
+  - "orchestrated_worker forbids nested director-room thread dispatch"
+execution:
+  context: "orchestrated_worker"
+  mode: "orchestrated_worker_handoff"
+  explicit_true_threads_requested: false
+  nested_dispatch: true
+  handoff_selected_subskill: "director-room"
+  executed_subskills: ["director-room", "shot-design"]
+  thread_records:
+    - thread_id: "00000000-0000-7000-8000-000000000013"

@@ -1,0 +1,35 @@
+contract_fixture:
+  id: image-edit-missing-source
+  validator: image_edit
+  negative_cases:
+    - expected_error_contains: "requires a source/reference"
+      case:
+        capability_card_id: gpt_image_2_openai_api
+        rights:
+          evidence_refs: [source-license]
+        transformation_contract:
+          preserve: [subject_identity, composition]
+          change: [wardrobe_color]
+        source_references: []
+    - expected_error_contains: "source/reference rights evidence missing"
+      case:
+        capability_card_id: gpt_image_2_openai_api
+        rights:
+          evidence_refs: [source-license]
+        transformation_contract:
+          preserve: [subject_identity, composition]
+          change: [wardrobe_color]
+        source_references:
+          - ref_id: source-01
+            file_or_generation_id: imported/source-01.png
+  positive_control:
+    capability_card_id: gpt_image_2_openai_api
+    rights:
+      evidence_refs: [source-license]
+    transformation_contract:
+      preserve: [subject_identity, composition]
+      change: [wardrobe_color]
+    source_references:
+      - ref_id: source-01
+        file_or_generation_id: imported/source-01.png
+        rights_evidence_refs: [source-license]

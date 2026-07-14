@@ -1,0 +1,53 @@
+{
+  "schema_version": "1.0.0",
+  "project_id": "paperrollinggery/Paperrolling-DIRcreative-SKILL",
+  "updated_at": "2026-07-11T03:57:25Z",
+  "current": {
+    "session_id": "runtime-baseline-2026-07-11",
+    "state_kind": "repository_baseline",
+    "stage": {
+      "id": "repository-runtime-baseline",
+      "status": "needs_user",
+      "completion_receipt_record_id": null
+    },
+    "acceptance": {
+      "status": "not_requested",
+      "receipt_record_id": null
+    },
+    "completion_requirements": {
+      "required_record_kinds": [],
+      "required_logical_ids": [],
+      "manifest_required": false,
+      "acceptance_required": false
+    },
+    "manifest_record_ids": [],
+    "generation_authorization_ids": [],
+    "thread_record_ids": []
+  },
+  "records": [],
+  "current_projection": [],
+  "migrations": [],
+  "fixture_migration": {
+    "manifest_path": "tests/fixtures/runtime/migration-manifest.json",
+    "manifest_sha256": "80e7f7e14e5189b716f25c2d93499440bc1233b7070cf4ecc396f72eaae4524a",
+    "source_count": 17,
+    "completed_at": "2026-07-11T03:57:25Z",
+    "fixture_authority": "none",
+    "live_state_authority": false,
+    "live_acceptance_authority": false,
+    "host_attestation_authority": false
+  },
+  "legacy_debt": [],
+  "storage_policy": {
+    "budget_bytes": 1073741824,
+    "warn_at_ratio": 0.8,
+    "artifact_roots": ["deliverables"],
+    "control_roots": [".dircreative/runs"],
+    "classes": {
+      "final": {"retention": "preserve", "user_confirmation_required_before_delete": true},
+      "necessary_archive": {"retention": "review", "user_confirmation_required_before_delete": true},
+      "regenerable_cache": {"retention": "regenerate_then_remove", "user_confirmation_required_before_delete": false},
+      "delete_candidate": {"retention": "remove_after_confirmation", "user_confirmation_required_before_delete": true}
+    }
+  }
+}

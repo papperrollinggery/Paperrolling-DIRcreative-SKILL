@@ -1,0 +1,72 @@
+thread_dispatch_record:
+  record_id: invalid-same-directory-write
+  version: "1.0.0"
+  project_title: "Invalid Thread Dispatch"
+  main_controller_thread_id: "controller"
+  active_goal_summary: "Invalid same-directory worker write."
+  acceptance_standard: "OBJECTIVE_COMPLETE: YES only after real live-user acceptance"
+  created_at: "2026-06-06"
+
+thread_class_policy:
+  allowed_thread_classes:
+    - pinned_user_facing_controller
+    - disposable_read_only_worker
+    - isolated_worktree_worker
+    - reusable_research_thread
+  default_user_facing_thread_class: pinned_user_facing_controller
+  same_directory_worker_default: read_only
+  hidden_thread_state_is_truth: false
+
+dispatches:
+  - thread_id: "controller"
+    thread_class: pinned_user_facing_controller
+    role: "main controller"
+    viewpoint: main-controller
+    read_scope: []
+    write_scope: main_controller_only
+    worktree_path: "/Users/example-user/work/DIR SKILL"
+    expected_output: "final synthesis"
+    cleanup_rule: keep_pinned
+    may_mark_goal_complete: false
+    output_status: consumed
+    findings_summary: []
+    adopted_into: []
+    archived: false
+    pinned: true
+  - thread_id: "worker"
+    thread_class: disposable_read_only_worker
+    role: "bad same-directory worker"
+    viewpoint: bad
+    read_scope: []
+    write_scope: main_controller_only
+    worktree_path: ""
+    expected_output: "bad write"
+    cleanup_rule: archive_after_consumed
+    may_mark_goal_complete: false
+    output_status: consumed
+    findings_summary: []
+    adopted_into: []
+    archived: false
+    pinned: false
+
+worktree_audit:
+  command: "git worktree list --porcelain"
+  expected_main_worktree: "/Users/example-user/work/DIR SKILL"
+  unintended_worker_worktrees_present: false
+  evidence_source: git
+
+completion_boundary:
+  live_user_acceptance_receipt_exists: false
+  release_gate_passed: true
+  objective_complete: false
+  completion_claim_allowed: false
+
+qa:
+  one_pinned_main_controller: true
+  disposable_workers_archived: false
+  useful_findings_reconciled: false
+  no_hidden_thread_truth: true
+  no_unintended_worktrees: true
+  no_completion_claim: true
+  failures:
+    - "same_directory_worker_write"

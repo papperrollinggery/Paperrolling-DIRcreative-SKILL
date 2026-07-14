@@ -1,0 +1,129 @@
+project:
+  title: ""
+  raw_idea: ""
+  channel: ""
+  target_duration: ""
+  aspect_ratio: ""
+  audience: ""
+  tone: ""
+  references: []
+  constraints: []
+  status: "draft"
+
+creative_foundation:
+  facts:
+    - fact_id: ""
+      statement: ""
+      source_evidence_ids: []
+  source_evidence:
+    - evidence_id: ""
+      source_type: ""
+      locator: ""
+      summary: ""
+      verification_status: "unverified"
+  inferences:
+    - inference_id: ""
+      statement: ""
+      based_on_fact_ids: []
+      confidence: ""
+      audience_facing_policy: "label_as_inference"
+
+commercial_strategy:
+  audience_tension:
+    audience_state: ""
+    felt_pressure: ""
+    desired_change: ""
+    evidence_ids: []
+  business_objective:
+    objective_type: ""
+    intended_result: ""
+    measurement_signal: ""
+  single_minded_proposition:
+    statement: ""
+    support_fact_ids: []
+    audience_relevance: ""
+  avoid_cliches: []
+
+copy_development:
+  source_samples:
+    - sample_id: ""
+      source_ref: ""
+      excerpt: ""
+      why_representative: ""
+      recency: ""
+  sample_shortfall_reason: ""
+  voice_profile:
+    author: ""
+    goal: ""
+    confidence: ""
+    source_sample_ids: []
+    rhythm: ""
+    compression: ""
+    capitalization: ""
+    parentheticals: ""
+    question_use: ""
+    claim_style: ""
+    preferred_moves: []
+    banned_moves: []
+    cta_rules: ""
+    channel_notes: {}
+    coverage_shortfall_reason: ""
+  claims:
+    - claim_id: ""
+      text: ""
+      approval_status: "unreviewed"
+      evidence_ids: []
+  dir_professional_judgment:
+    audience_effect: ""
+    channel_fit: ""
+    factual_boundaries: []
+    tradeoff: ""
+    approved_claim_ids: []
+  de_ai_refinement:
+    fidelity_status: "pending"
+    protected_meaning_points: []
+    factual_additions: []
+    new_claims_added: false
+  manual_craft_review:
+    reviewer_role: ""
+    status: "pending"
+    rhythm_assessment: ""
+    abstraction_assessment: ""
+    evidence_alignment: "pending"
+    reviewed_ai_trace_clusters: []
+  humanizer_diagnostic:
+    authority: "diagnostic_only"
+    trace_clusters: []
+    manual_review_required: false
+    may_fail_copy_by_itself: false
+
+creative:
+  logline: ""
+  theme: ""
+  concept: ""
+  visual_hook: ""
+  story_promise: ""
+
+production:
+  characters: []
+  locations: []
+  props: []
+  wardrobe: []
+  sound_policy:
+    dialogue: "undecided"
+    voiceover: "undecided"
+    sfx: "undecided"
+    music: "undecided"
+    silence: "undecided"
+  target_models: []
+
+deliverables:
+  outline: ""
+  treatment: ""
+  script: ""
+  deck_narrative_spec: ""
+  shot_list: ""
+  visual_bible: ""
+  image_prompt_manifest: ""
+  video_prompt_manifest: ""
+  qa_report: ""

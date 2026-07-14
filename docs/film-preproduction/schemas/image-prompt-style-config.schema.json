@@ -1,0 +1,277 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://paperrolling.local/schemas/image-prompt-style-config.schema.json",
+  "title": "Image Prompt Style Config",
+  "type": "object",
+  "required": [
+    "meta",
+    "artifact",
+    "production_context",
+    "art_direction_policy",
+    "layout_system",
+    "visual_systems",
+    "consistency_locks",
+    "quality_and_artifact_control",
+    "avoid"
+  ],
+  "properties": {
+    "meta": {
+      "type": "object",
+      "required": ["config_id", "version", "image_type", "verified_date"],
+      "properties": {
+        "config_id": { "type": "string" },
+        "version": { "type": "string" },
+        "image_type": {
+          "type": "string",
+          "enum": [
+            "character_design_board",
+            "environment_blocking_board",
+            "prop_product_board",
+            "director_storyboard_board",
+            "lighting_style_board",
+            "production_board",
+            "portrait_reference",
+            "product_identity_reference",
+            "poster_ad_layout",
+            "ui_surface_reference",
+            "illustration_style_board",
+            "three_d_render_reference",
+            "photographic_clean_frame"
+          ]
+        },
+        "verified_date": { "type": "string" },
+        "source_patterns": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": true
+    },
+    "artifact": {
+      "type": "object",
+      "required": ["title", "artifact_role", "canvas", "output_use"],
+      "properties": {
+        "title": { "type": "string" },
+        "artifact_role": { "type": "string" },
+        "canvas": {
+          "type": "object",
+          "required": ["aspect_ratio", "orientation"],
+          "properties": {
+            "aspect_ratio": { "type": "string" },
+            "orientation": { "type": "string" },
+            "quality": { "type": "string" }
+          },
+          "additionalProperties": true
+        },
+        "output_use": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": true
+    },
+    "production_context": {
+      "type": "object",
+      "properties": {
+        "audience": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "project_stage": { "type": "string" },
+        "downstream_use": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": true
+    },
+    "art_direction_policy": {
+      "type": "object",
+      "required": ["non_negotiables", "must_feel", "forbidden"],
+      "properties": {
+        "non_negotiables": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "must_feel": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "forbidden": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "placement_rule": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "layout_system": {
+      "type": "object",
+      "required": ["hierarchy", "sections", "readability_rules"],
+      "properties": {
+        "hierarchy": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "sections": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["section_id", "role", "relative_size", "placement_logic"],
+            "properties": {
+              "section_id": { "type": "string" },
+              "role": { "type": "string" },
+              "relative_size": { "type": "string" },
+              "placement_logic": { "type": "string" },
+              "required_content": {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "readability_rules": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": true
+    },
+    "visual_systems": {
+      "type": "object",
+      "properties": {
+        "subject_system": { "type": "object", "additionalProperties": true },
+        "environment_system": { "type": "object", "additionalProperties": true },
+        "prop_system": { "type": "object", "additionalProperties": true },
+        "performance_direction": { "type": "object", "additionalProperties": true },
+        "cinematic_capture": { "type": "object", "additionalProperties": true },
+        "material_truth": { "type": "object", "additionalProperties": true },
+        "text_annotation_system": { "type": "object", "additionalProperties": true }
+      },
+      "additionalProperties": true
+    },
+    "evidence_policy": {
+      "type": "object",
+      "properties": {
+        "source_of_truth": { "type": "string" },
+        "uncertainty_rule": { "type": "string" },
+        "forbidden": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": true
+    },
+    "visual_decomposition": {
+      "type": "object",
+      "properties": {
+        "subject": { "type": "object", "additionalProperties": true },
+        "action_pose_or_blocking": { "type": "object", "additionalProperties": true },
+        "details_appearance": { "type": "object", "additionalProperties": true },
+        "environment_background": { "type": "object", "additionalProperties": true },
+        "lighting_atmosphere": { "type": "object", "additionalProperties": true },
+        "composition_framing": { "type": "object", "additionalProperties": true },
+        "style_camera": { "type": "object", "additionalProperties": true },
+        "colors_palette": { "type": "object", "additionalProperties": true },
+        "materials_texture": { "type": "object", "additionalProperties": true },
+        "proportion_scale": { "type": "object", "additionalProperties": true },
+        "generation_intent": { "type": "object", "additionalProperties": true }
+      },
+      "additionalProperties": true
+    },
+    "prompt_layers": {
+      "type": "object",
+      "properties": {
+        "director_recreation_prompt": { "type": "string" },
+        "prompt_core": { "type": "string" },
+        "negative_prompt": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "type_treatment": {
+      "type": "object",
+      "properties": {
+        "asset_type": { "type": "string" },
+        "rules": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "must_capture": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "must_not_invent": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": true
+    },
+    "style_tags": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 0,
+      "maxItems": 5
+    },
+    "consistency_locks": {
+      "type": "object",
+      "properties": {
+        "identity": { "type": "string" },
+        "costume": { "type": "string" },
+        "geometry": { "type": "string" },
+        "layout": { "type": "string" },
+        "forbidden": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": true
+    },
+    "quality_and_artifact_control": {
+      "type": "object",
+      "properties": {
+        "quality_flags": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "surface_integrity_guard": {
+          "type": "object",
+          "properties": {
+            "prompt_suffix_for_image2_or_image_gen": {
+              "type": "string"
+            },
+            "required": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "avoid": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          },
+          "additionalProperties": true
+        },
+        "transparent_background": { "type": "boolean" }
+      },
+      "additionalProperties": true
+    },
+    "avoid": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "self_update": {
+      "type": "object",
+      "properties": {
+        "registry_pattern_ids": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "promotion_rule": { "type": "string" },
+        "deprecation_rule": { "type": "string" }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

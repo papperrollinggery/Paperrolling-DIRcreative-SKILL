@@ -1,0 +1,20 @@
+eval_fixture:
+  id: E6
+  rule: "The fixed surface-integrity wording is an optional internal QA macro, not a universal model suffix."
+  expected_error_id: E6_OPTIONAL_QA_MACRO_FORCED
+  negative:
+    qa_macro:
+      macro_id: surface_integrity_guard_v1
+      enabled: true
+      application: required_for_all_prompts
+      activation: model_family_default
+      failure_id: ""
+    prompt_contains_fixed_suffix: true
+  positive_control:
+    qa_macro:
+      macro_id: surface_integrity_guard_v1
+      enabled: false
+      application: optional
+      activation: off
+      failure_id: ""
+    prompt_contains_fixed_suffix: false

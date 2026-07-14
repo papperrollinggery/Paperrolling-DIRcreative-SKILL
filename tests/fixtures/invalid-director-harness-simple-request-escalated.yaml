@@ -1,0 +1,5 @@
+fixture_type: "simple_request_escalated"
+expected_failure_contains: "lightweight request declared director_room"
+routing_case:
+  request: "把这句广告片文案润色一下：下雨也不收场。"
+  declared_route: "director_room"

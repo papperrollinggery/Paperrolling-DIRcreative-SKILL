@@ -1,0 +1,28 @@
+creative_production_adapter:
+  run_id: invalid-cp-widget-truth
+  visual_output_mode: assisted_generation
+  creative_production_path: Mood boards
+  user_authorization:
+    explicit: true
+    decision_source: real_user
+  dircreative_gate_state:
+    story_locked: true
+    script_locked: true
+    shot_list_locked: true
+    reference_pack_locked: true
+    pre_generation_contract_status: pass
+  review_surface:
+    primary: render_moodboard_board_widget
+    runDirectory: outputs/invalid
+    streamPath: outputs/invalid/data/stream.json
+    widget_is_truth_source: true
+  generated_candidates:
+    - asset_id: invalid-candidate
+      asset_output_status: generated_candidate
+      qa_status: pass
+      user_lock_status: pending
+  truth_source:
+    source_of_truth: creative_production_widget
+    writeback_required: false
+  qa:
+    no_real_media_generated: true

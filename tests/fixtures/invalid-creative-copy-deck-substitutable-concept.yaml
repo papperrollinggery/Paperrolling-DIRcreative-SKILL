@@ -1,0 +1,27 @@
+fixture:
+  fixture_id: invalid-creative-copy-deck-substitutable-concept
+  description: Reject a concept that still works when the nearest generic competitor replaces the subject.
+  expectation: reject
+  mutations:
+    - operation: replace
+      path: story_package.concept.substitutability_check.alternatives
+      value: []
+    - operation: replace
+      path: story_package.concept.substitutability_check.before_swap
+      value: ""
+    - operation: replace
+      path: story_package.concept.substitutability_check.still_works_without_rewrite
+      value: true
+    - operation: replace
+      path: story_package.concept.substitutability_check.broken_dependency_ids
+      value:
+        - dependency-missing
+    - operation: replace
+      path: story_package.concept.substitutability_check.independent_reviewer.independent_from_concept_author
+      value: false
+    - operation: replace
+      path: story_package.concept.substitutability_check.verdict
+      value: substitutable
+  expected_failure_ids:
+    - creative_concept_substitutable
+  expected_review_ids: []

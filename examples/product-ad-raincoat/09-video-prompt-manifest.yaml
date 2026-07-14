@@ -1,0 +1,490 @@
+artifact:
+  artifact_id: rainlock-video-prompt-manifest-v1
+  version: 1.0.0
+  source_artifact_ids:
+    - rainlock-shot-list-v1
+    - rainlock-reference-pack-plan-v1
+    - rainlock-image-prompt-manifest-v1
+  status: approved
+  owner_skill: video-model-adapter
+  created_at: "2026-05-14"
+  locked_by_user: false
+
+video_prompt_manifest:
+  project_title: "RainLock Commuter Shell"
+  target_sequence_duration: "15s"
+  longform_generation_mode: "single_sequence"
+  visual_output_mode: "prompt_only"
+  selected_reference_strategy: "hybrid"
+  sequence_plan: ""
+  sequence_ids:
+    - rainlock-seq-01
+  reference_pack:
+    - "rainlock_image_01 product material reference"
+    - "rainlock_image_02 commute first-frame and use-case reference"
+    - "rainlock_image_03 storyboard order reference only"
+    - "rainlock_image_04 lighting/material/style reference"
+
+capability_resolution:
+  registry_path: "docs/film-preproduction/sources/model-sources.yaml"
+  registry_version: "2.0.0"
+  selected_cards:
+    - capability_card_id: seedance_2_0_official_launch
+      model_key: seedance
+      version: "2.0"
+      status: current
+      provider_surface: "Seedance 2.0 launch product surfaces described by ByteDance Seed"
+      verified_on: "2026-07-10"
+      accessed_on: "2026-07-10"
+      evidence_level: S2
+      source_urls:
+        - "https://seed.bytedance.com/en/blog/seedance-2-0-official-launch"
+        - "https://arxiv.org/abs/2604.14148"
+      source_conflicts: []
+      access_mode: documented_product
+      execution_mode: manual_export
+      execution_verification_status: unverified
+      resolution_status: resolved
+    - capability_card_id: kling_video_3_0_official_guide
+      model_key: kling
+      version: "3.0"
+      status: current
+      provider_surface: "Kling AI VIDEO 3.0 product guide"
+      verified_on: "2026-07-10"
+      accessed_on: "2026-07-10"
+      evidence_level: S3
+      source_urls:
+        - "https://app.klingai.com/cn/quickstart/klingai-video-3-model-user-guide"
+      source_conflicts: []
+      access_mode: documented_product
+      execution_mode: manual_export
+      execution_verification_status: unverified
+      resolution_status: resolved
+    - capability_card_id: runway_gen_4_5_web
+      model_key: runway
+      version: "Gen-4.5"
+      status: current
+      provider_surface: "Runway web Gen-4.5 generation"
+      verified_on: "2026-07-10"
+      accessed_on: "2026-07-10"
+      evidence_level: S3
+      source_urls:
+        - "https://help.runwayml.com/hc/en-us/articles/46974685288467-Creating-with-Gen-4-5"
+        - "https://help.runwayml.com/hc/en-us/articles/42460036199443-Text-to-Video-Prompting-Guide"
+      source_conflicts: []
+      resolution_status: resolved
+    - capability_card_id: veo_3_1_generate_001_vertex_api
+      model_key: veo
+      version: "veo-3.1-generate-001"
+      status: current
+      provider_surface: "Vertex AI publisher model predictLongRunning API"
+      verified_on: "2026-07-11"
+      accessed_on: "2026-07-11"
+      evidence_level: S1
+      source_urls:
+        - "https://docs.cloud.google.com/vertex-ai/generative-ai/docs/models/veo/3-1-generate"
+        - "https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/veo-video-generation"
+        - "https://docs.cloud.google.com/vertex-ai/generative-ai/docs/release-notes"
+        - "https://cloud.google.com/blog/products/ai-machine-learning/veo-3-1-lite-and-a-new-veo-upscaling-capability-on-vertex-ai/"
+      source_conflicts:
+        - "The exact stable page says sound generation is not supported; family-level audio claims and the generic API URL do not authorize audio for this exact card."
+      resolution_status: resolved
+
+rights_gate:
+  status: unverified
+  conditions: []
+  source_asset_rights: "Prompt-only artifact; rights must be verified before any upload or generation."
+  likeness_authorization: unverified
+  voice_authorization: unverified
+  brand_or_character_authorization: unverified
+  music_or_audio_rights: unverified
+  provider_restrictions_checked: true
+  evidence_refs: []
+  generation_allowed: false
+
+audio_plan:
+  desired_audio:
+    dialogue: "none"
+    voiceover: "none"
+    music: "optional_postproduction"
+    ambience: "project_specific"
+    sound_effects:
+      - "See each model prompt."
+    silence: false
+  per_model_routes:
+    - model_key: seedance
+      capability_card_id: seedance_2_0_official_launch
+      generation_audio_route: postproduction
+      generate_audio_parameter: not_applicable
+      route_evidence:
+        - "Execution surface is documented-product/manual-export and remains unverified."
+      postproduction_handoff: "Export ambience and effects notes to editorial; do not claim native execution."
+    - model_key: kling
+      capability_card_id: kling_video_3_0_official_guide
+      generation_audio_route: postproduction
+      generate_audio_parameter: not_applicable
+      route_evidence:
+        - "Execution surface is documented-product/manual-export and remains unverified."
+      postproduction_handoff: "Export ambience and effects notes to editorial; do not claim native execution."
+    - model_key: runway
+      capability_card_id: runway_gen_4_5_web
+      generation_audio_route: postproduction
+      generate_audio_parameter: not_applicable
+      route_evidence:
+        - "Exact Gen-4.5 web card does not verify native audio."
+      postproduction_handoff: "Build dialogue, ambience, music, and effects in editorial."
+    - model_key: veo
+      capability_card_id: veo_3_1_generate_001_vertex_api
+      generation_audio_route: postproduction
+      generate_audio_parameter: not_applicable
+      route_evidence:
+        - "The exact stable model page marks sound generation as not supported; the generic API URL does not prove generateAudio for this card."
+      postproduction_handoff: "Build the declared dialogue, music, ambience, and effects as an editorial audio package."
+
+
+execution_capabilities:
+  image_generation:
+    available: false
+    provider: none
+    allowed_by_user: false
+  video_generation:
+    available: false
+    provider: none
+    allowed_by_user: false
+    external_upload_authorized: false
+    external_execution_state: instructions_only
+    external_execution_evidence: []
+  file_write:
+    available: true
+  browser_review:
+    available: false
+
+reference_map:
+  - ref_id: rainlock_image_01
+    file_or_generation_id: "generated from examples/product-ad-raincoat/08-image-prompt-manifest.yaml"
+    role: "product_material_reference"
+    asset_output_status: prompt_ready
+    use_for:
+      - "graphite shell geometry"
+      - "sealed zipper"
+      - "hood shape"
+      - "water-bead material behavior"
+    do_not_use_for:
+      - "animating the product board layout"
+      - "showing labels in final video"
+    external_generation_instructions: "Generate or import the product material board before using as visual truth."
+  - ref_id: rainlock_image_02
+    file_or_generation_id: "generated from examples/product-ad-raincoat/08-image-prompt-manifest.yaml"
+    role: "commute_first_frame_reference"
+    asset_output_status: prompt_ready
+    use_for:
+      - "lobby threshold"
+      - "crosswalk motion"
+      - "platform dry arrival"
+      - "commuter styling"
+    do_not_use_for:
+      - "adding extra models"
+      - "turning the board into a collage"
+    external_generation_instructions: "Generate or import the commute board, then export clean text-free start/end frames."
+  - ref_id: rainlock_image_03
+    file_or_generation_id: "generated from examples/product-ad-raincoat/08-image-prompt-manifest.yaml"
+    role: "shot_order_reference_only"
+    asset_output_status: prompt_ready
+    use_for:
+      - "five-shot order"
+      - "copy timing"
+      - "camera movement planning"
+    do_not_use_for:
+      - "showing or animating storyboard panels"
+      - "showing labels, panel borders, or timing text"
+    external_generation_instructions: "Use as planning/Seedance/Veo guidance only; do not use as direct Kling/Runway first frame."
+  - ref_id: rainlock_image_04
+    file_or_generation_id: "generated from examples/product-ad-raincoat/08-image-prompt-manifest.yaml"
+    role: "lighting_material_style_reference"
+    asset_output_status: prompt_ready
+    use_for:
+      - "rain lighting"
+      - "graphite material behavior"
+      - "water-bead texture guard"
+      - "amber and steel palette"
+    do_not_use_for:
+      - "direct Kling or Runway first-frame input"
+      - "showing style swatches in the final video"
+    external_generation_instructions: "Use as lighting/material/style guidance only; do not use as direct I2V start frame."
+
+reference_bindings:
+  - model: seedance
+    capability_card_id: seedance_2_0_official_launch
+    version: "2.0"
+    status: current
+    provider_surface: "Seedance 2.0 launch product surfaces described by ByteDance Seed"
+    shot_id: SEQUENCE
+    ref_id: rainlock_image_01
+    upload_slot: "@image1"
+    role: secondary_reference
+    required_for_generation: true
+    prompt_file: "examples/product-ad-raincoat/09-video-prompt-manifest.yaml#seedance"
+    risk_note: "Product material reference anchors graphite shell geometry, sealed zipper, hood, and water-bead behavior."
+  - model: seedance
+    capability_card_id: seedance_2_0_official_launch
+    version: "2.0"
+    status: current
+    provider_surface: "Seedance 2.0 launch product surfaces described by ByteDance Seed"
+    shot_id: SEQUENCE
+    ref_id: rainlock_image_02
+    upload_slot: "@image2"
+    role: secondary_reference
+    required_for_generation: true
+    prompt_file: "examples/product-ad-raincoat/09-video-prompt-manifest.yaml#seedance"
+    risk_note: "Use-case reference anchors commute blocking and text-free clean-frame crop source."
+  - model: seedance
+    capability_card_id: seedance_2_0_official_launch
+    version: "2.0"
+    status: current
+    provider_surface: "Seedance 2.0 launch product surfaces described by ByteDance Seed"
+    shot_id: SEQUENCE
+    ref_id: rainlock_image_03
+    upload_slot: "@image3"
+    role: planning_only
+    required_for_generation: false
+    prompt_file: "examples/product-ad-raincoat/09-video-prompt-manifest.yaml#seedance"
+    risk_note: "Storyboard order board must not appear as visible panels, labels, arrows, or timing text."
+  - model: seedance
+    capability_card_id: seedance_2_0_official_launch
+    version: "2.0"
+    status: current
+    provider_surface: "Seedance 2.0 launch product surfaces described by ByteDance Seed"
+    shot_id: SEQUENCE
+    ref_id: rainlock_image_04
+    upload_slot: "@image4"
+    role: style_reference
+    required_for_generation: true
+    prompt_file: "examples/product-ad-raincoat/09-video-prompt-manifest.yaml#seedance"
+    risk_note: "Style board supplies lighting and material truth only, not final on-screen swatches."
+  - model: kling
+    capability_card_id: kling_video_3_0_official_guide
+    version: "3.0"
+    status: current
+    provider_surface: "Kling AI VIDEO 3.0 product guide"
+    shot_id: R01-R05
+    ref_id: rainlock_image_02
+    upload_slot: "element reference only"
+    role: element_reference
+    required_for_generation: false
+    prompt_file: "examples/product-ad-raincoat/09-video-prompt-manifest.yaml#kling"
+    risk_note: "Prompt-only commute board cannot be primary I2V input until text-free clean frames are generated/imported and user locked."
+  - model: runway
+    capability_card_id: runway_gen_4_5_web
+    version: "Gen-4.5"
+    status: current
+    provider_surface: "Runway web Gen-4.5 generation"
+    shot_id: R01-R05
+    ref_id: rainlock_image_01
+    upload_slot: "element reference only"
+    role: element_reference
+    required_for_generation: false
+    prompt_file: "examples/product-ad-raincoat/09-video-prompt-manifest.yaml#runway"
+    risk_note: "Use product traits only; do not use the labeled material board as a direct first frame."
+  - model: veo
+    capability_card_id: veo_3_1_generate_001_vertex_api
+    version: "veo-3.1-generate-001"
+    status: current
+    provider_surface: "Vertex AI publisher model predictLongRunning API"
+    shot_id: SEQUENCE
+    ref_id: rainlock_image_03
+    upload_slot: "reference map shot order"
+    role: planning_only
+    required_for_generation: false
+    prompt_file: "examples/product-ad-raincoat/09-video-prompt-manifest.yaml#veo"
+    risk_note: "Structured prompt carries shot order; storyboard board remains non-visual guidance."
+
+model_prompts:
+  seedance:
+    enabled: true
+    operation: generate
+    capability_card_id: seedance_2_0_official_launch
+    version: "2.0"
+    status: current
+    provider_surface: "Seedance 2.0 launch product surfaces described by ByteDance Seed"
+    access_mode: documented_product
+    execution_mode: manual_export
+    execution_verification_status: unverified
+    desired_audio:
+      mode: planned_diegetic_audio
+    generation_audio_route: postproduction
+    rights_gate_status: unverified
+    transformation_contract:
+      preserve: []
+      change: []
+      forbidden_change: []
+      overlap_check: pass
+    best_for: "15s multi-reference product proof sequence using material, use-case, and shot-order references."
+    prompt: |
+      REFERENCE MAP
+      rainlock_image_01 = product material and geometry reference.
+      rainlock_image_02 = commuter use-case and first-frame reference.
+      rainlock_image_03 = shot-order reference only. Do not show or animate the storyboard board, labels, panel borders, or timing text.
+      rainlock_image_04 = lighting/material/style reference only. Do not show style swatches, labels, or board layout.
+
+      VIDEO TASK
+      Generate a 15-second premium urban product ad. The commuter steps from a warm lobby into heavy rain, water beads roll off the graphite shell, the commuter crosses a wet city street, adjusts the hood once, and arrives at a train platform with a dry collar and composed expression.
+
+      CONTINUITY LOCKS
+      Same graphite shell, same sealed zipper line, same hood shape, same commuter bag, same real city rain, no outdoor mountain setting.
+
+      AUDIO
+      Rain on glass, close rain on fabric, footsteps, subway air, train chime. No dialogue. Music may enter only after the dry-arrival payoff.
+    reference_warning: "Storyboard/reference boards are production guidance only; do not animate boards, labels, arrows, panels, timing text, or layout."
+    audio_policy: "Optional generated diegetic audio; no dialogue; music only after proof beat."
+    risk_notes:
+      - "Storyboard board can be misread as a visual object."
+      - "Product material may drift if material board is not prioritized."
+    retry_rules:
+      - "If board appears in output, remove rainlock_image_03 and use shot text only."
+      - "If shell geometry changes, prioritize rainlock_image_01 and reduce scene count."
+  kling:
+    enabled: true
+    operation: generate
+    capability_card_id: kling_video_3_0_official_guide
+    version: "3.0"
+    status: current
+    provider_surface: "Kling AI VIDEO 3.0 product guide"
+    access_mode: documented_product
+    execution_mode: manual_export
+    execution_verification_status: unverified
+    desired_audio:
+      mode: planned_diegetic_audio
+    generation_audio_route: postproduction
+    rights_gate_status: unverified
+    transformation_contract:
+      preserve: []
+      change: []
+      forbidden_change: []
+      overlap_check: pass
+    best_for: "Per-shot image-to-video motion from clean use-case stills."
+    prompt: |
+      Reference boards are planning guidance only; do not show or animate board labels, panels, arrows, grids, timing text, or layout.
+      The commuter steps forward from the lobby into heavy rain with calm confidence.
+      Water beads move naturally across the graphite rain shell and roll away from the zipper seam.
+      City reflections ripple in the wet crosswalk behind the subject.
+      The camera tracks laterally at waist height, keeping the shell and dry work bag visible.
+    reference_warning: "Use a clean first frame from rainlock_image_02 or rainlock_image_01; do not use the dense storyboard board as the main image."
+    audio_policy: "Visual-only generation preferred; add rain, fabric, and train ambience in post."
+    risk_notes:
+      - "Actions that contradict the still image may cause product or pose drift."
+      - "Dense boards reduce image-to-video clarity."
+    retry_rules:
+      - "If motion fails, keep camera locked and animate only rain beads plus subject step."
+      - "If extra people appear, simplify to one commuter and one background layer."
+  runway:
+    enabled: true
+    operation: generate
+    generation_capability_card_id: runway_gen_4_5_web
+    edit_capability_card_id: ""
+    deprecated_card_ids_rejected:
+      - runway_gen_4_aleph_api_deprecated
+    version: "Gen-4.5"
+    status: current
+    provider_surface: "Runway web Gen-4.5 generation"
+    desired_audio:
+      mode: planned_diegetic_audio
+    generation_audio_route: postproduction
+    rights_gate_status: unverified
+    transformation_contract:
+      preserve: []
+      change: []
+      forbidden_change: []
+      overlap_check: pass
+    best_for: "Short single-beat motion tests from strong product or commute stills."
+    prompt: |
+      Reference boards are planning guidance only; do not show board labels, panels, arrows, grids, timing text, or layout.
+      The subject walks steadily through heavy city rain. Water beads slide across the graphite shell while the camera gently tracks alongside. The work shirt collar stays dry and the subject remains composed.
+    reference_warning: "Use one clean image-to-video still per shot. Avoid storyboard boards and long multi-shot scripts."
+    audio_policy: "Silent visual-only generation; audio handled in post-production."
+    risk_notes:
+      - "Overly long prompts can reduce motion clarity."
+      - "Negative wording can create unexpected artifacts."
+    retry_rules:
+      - "Split into R01, R02, R03, R04, and R05 single-shot runs."
+      - "Use positive motion wording and one dominant action."
+  veo:
+    enabled: true
+    operation: generate
+    capability_card_id: veo_3_1_generate_001_vertex_api
+    version: "veo-3.1-generate-001"
+    status: current
+    provider_surface: "Vertex AI publisher model predictLongRunning API"
+    source_conflicts:
+      - "The exact stable page says sound generation is not supported; keep the family/API ambiguity visible and use post-production audio."
+    desired_audio:
+      mode: planned_diegetic_audio
+    generation_audio_route: postproduction
+    generate_audio_parameter: not_applicable
+    rights_gate_status: unverified
+    transformation_contract:
+      preserve: []
+      change: []
+      forbidden_change: []
+      overlap_check: pass
+    best_for: "Structured product film prompt with subject, action, scene, camera, lighting, style, and audio."
+    prompt: |
+      Reference boards are planning guidance only; do not show or animate board labels, panels, arrows, grids, timing text, or layout.
+      Subject: an urban commuter wearing a graphite RainLock waterproof shell, carrying a dry leather work bag.
+      Action: the commuter steps into heavy rain, water beads off the shell, crosses a wet city street, adjusts the hood once, and arrives at a train platform with a dry shirt collar.
+      Scene: modern city commute, warm lobby threshold, rain-soaked crosswalk, brushed steel station platform.
+      Camera: 28mm doorway push, 85mm macro water-bead insert, 35mm lateral track, 50mm dry-arrival close-up.
+      Lighting and style: premium urban product advertising, cool rain exterior, amber practical interior light, real material behavior.
+      Audio: rain on glass, fabric rustle, footsteps, subway air, train chime, no dialogue.
+    reference_warning: "Reference boards guide product identity, commute setting, and shot order only; final video must be the cinematic product ad."
+    audio_policy: "Post-production only for this exact stable card: diegetic sound, no dialogue, and optional music."
+    risk_notes:
+      - "Too many product details can compete with story flow."
+      - "Audio support depends on selected Veo product path."
+    retry_rules:
+      - "If sequence collapses, generate product proof and dry-arrival as separate clips."
+      - "If audio is wrong, switch to silent visual-only and post-production audio."
+
+universal_anti_misread_clause: |
+  Use storyboard/reference boards only as production guidance.
+  Do not show or animate the board, panels, text labels, arrows, grids, timing text, or layout.
+  Generate the product ad scene described by the shot list.
+
+qa:
+  video_prompt_gate: "pass"
+  missing_audio_policy: false
+  missing_reference_map: false
+  visual_output_mode_valid: true
+  capability_receipt_present: true
+  missing_generated_assets_blocked: true
+  longform_sequence_refs_valid: true
+  exact_capability_cards_resolved: true
+  deprecated_or_preview_aliases_rejected: true
+  rights_gate_passed: false
+  desired_audio_route_compatible: true
+  preserve_change_disjoint: true
+  storyboard_clean_frame_separation_valid: true
+  official_source_conflicts_preserved: true
+  conflicting_actions: []
+  model_prompts_differ_materially: true
+  reference_bindings_present: true
+  selected_reference_strategy_present: true
+  no_video_generated: true
+
+skill_run_receipt:
+  run_id: rainlock-video-prompt-manifest-2026-05-14
+  skill_id: video-model-adapter
+  input_artifacts:
+    - examples/product-ad-raincoat/06-shot-list.yaml
+    - examples/product-ad-raincoat/07-reference-pack-plan.yaml
+    - examples/product-ad-raincoat/08-image-prompt-manifest.yaml
+  output_artifacts:
+    - examples/product-ad-raincoat/09-video-prompt-manifest.yaml
+  decisions:
+    - "Create different adapter prompts for Seedance, Kling, Runway, and Veo."
+  unresolved_questions:
+    - "Real generation remains outside the authorized boundary."
+  qa_gate:
+    status: pass
+    reasons:
+      - "Manifest includes reference map, anti-misread clause, audio policy, risk notes, and retry rules."
+  next_recommended_skill: generation-qa

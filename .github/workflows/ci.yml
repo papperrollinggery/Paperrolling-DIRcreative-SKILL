@@ -1,0 +1,196 @@
+name: DIRcreative CI
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-install-package-bilateral:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.12", "3.14"]
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Runtime versions
+        run: |
+          python3 --version
+          ruby --version
+
+      - name: Restore annotated release tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          git fetch --force origin "refs/tags/${GITHUB_REF_NAME}:refs/tags/${GITHUB_REF_NAME}"
+          test "$(git cat-file -t "refs/tags/${GITHUB_REF_NAME}")" = "tag"
+
+      - name: Source validation
+        env:
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: python3 scripts/validate_project.py
+
+      - name: Dependency-free visualization schema validation
+        env:
+          PYTHONDONTWRITEBYTECODE: "1"
+          DIRCREATIVE_FORCE_BUILTIN_SCHEMA_VALIDATOR: "1"
+        run: |
+          python3 scripts/dircreative_visualization_audit.py
+          python3 scripts/dircreative_visualization_writeback.py self-test
+
+      - name: Forced builtin state validation
+        env:
+          PYTHONDONTWRITEBYTECODE: "1"
+          DIRCREATIVE_FORCE_BUILTIN_SCHEMA_VALIDATOR: "1"
+        run: python3 scripts/dircreative_state_audit.py self-test
+
+      - name: Install and parity
+        env:
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: |
+          TARGET="$RUNNER_TEMP/dircreative-installed"
+          python3 scripts/install_local_skill.py --target "$TARGET"
+          python3 scripts/dircreative_install_parity.py --target "$TARGET"
+          cd "$TARGET"
+          python3 scripts/validate_project.py
+
+      - name: Build, verify, and install exact-commit release artifact
+        env:
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: |
+          VERSION="$(cat VERSION)"
+          DIST="$RUNNER_TEMP/dist"
+          EXTRACT_ROOT="$RUNNER_TEMP/release-extract"
+          EXTRACTED="$EXTRACT_ROOT/dircreative-$VERSION"
+          ARCHIVE_TARGET="$RUNNER_TEMP/dircreative-archive-installed"
+          ARGS=(--allow-unpublished)
+          VERIFY_ARGS=(
+            --artifact "$DIST/dircreative-$VERSION.tar.gz"
+            --checksums "$DIST/SHA256SUMS"
+            --expected-version "$VERSION"
+            --expected-commit "$(git rev-parse HEAD)"
+            --reproducible-source "$GITHUB_WORKSPACE"
+            --require-reproducible-match
+            --extract-to "$EXTRACT_ROOT"
+          )
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            test "$GITHUB_REF_NAME" = "v$VERSION"
+            ARGS+=(--require-tag)
+            VERIFY_ARGS+=(--expected-tag "$GITHUB_REF_NAME" --require-remote-tag)
+          fi
+          umask 022
+          python3 scripts/dircreative_build_release.py "${ARGS[@]}" --output-dir "$DIST"
+          umask 077
+          python3 scripts/dircreative_build_release.py "${ARGS[@]}" --output-dir "$RUNNER_TEMP/dist-umask-077"
+          cmp \
+            "$DIST/dircreative-$VERSION.tar.gz" \
+            "$RUNNER_TEMP/dist-umask-077/dircreative-$VERSION.tar.gz"
+          umask 022
+          python3 scripts/dircreative_verify_release.py "${VERIFY_ARGS[@]}"
+          python3 "$EXTRACTED/scripts/install_local_skill.py" --target "$ARCHIVE_TARGET"
+          (
+            cd "$EXTRACTED"
+            python3 scripts/dircreative_install_parity.py --target "$ARCHIVE_TARGET"
+          )
+          (
+            cd "$ARCHIVE_TARGET"
+            python3 scripts/validate_project.py
+          )
+
+      - name: Installed archive ADCO v1 bilateral
+        env:
+          PYTHONDONTWRITEBYTECODE: "1"
+          ADCO_RELEASE_SHA: c19e3f92bdf4d311ab4ed79831b344979f1df01f
+        run: |
+          git clone --depth 1 --branch v0.2.0 \
+            https://github.com/papperrollinggery/ad-creative-orchestrator.git \
+            "$RUNNER_TEMP/adco"
+          ADCO_TESTED_SHA="$(git -C "$RUNNER_TEMP/adco" rev-parse HEAD)"
+          test "$ADCO_TESTED_SHA" = "$ADCO_RELEASE_SHA"
+          echo "ADCO_TESTED_SHA=$ADCO_TESTED_SHA"
+          (
+            cd "$RUNNER_TEMP/dircreative-archive-installed"
+            python3 scripts/dircreative_adco_native_exchange.py --adco-repo "$RUNNER_TEMP/adco"
+          )
+
+      - name: Upload tagged release candidate
+        if: startsWith(github.ref, 'refs/tags/v') && matrix.python-version == '3.12'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: dircreative-${{ github.ref_name }}
+          path: |
+            ${{ runner.temp }}/dist/dircreative-*.tar.gz
+            ${{ runner.temp }}/dist/SHA256SUMS
+          if-no-files-found: error
+
+      - name: Upload reproducibility candidate
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: reproducibility-ubuntu-py${{ matrix.python-version }}
+          path: ${{ runner.temp }}/dist/dircreative-*.tar.gz
+          if-no-files-found: error
+
+  reproducibility-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.12"
+
+      - name: Build macOS reproducibility candidate
+        env:
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: |
+          VERSION="$(cat VERSION)"
+          umask 022
+          python3 scripts/dircreative_build_release.py \
+            --allow-unpublished \
+            --output-dir "$RUNNER_TEMP/dist"
+          umask 077
+          python3 scripts/dircreative_build_release.py \
+            --allow-unpublished \
+            --output-dir "$RUNNER_TEMP/dist-umask-077"
+          cmp \
+            "$RUNNER_TEMP/dist/dircreative-$VERSION.tar.gz" \
+            "$RUNNER_TEMP/dist-umask-077/dircreative-$VERSION.tar.gz"
+
+      - name: Upload macOS reproducibility candidate
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: reproducibility-macos-py3.12
+          path: ${{ runner.temp }}/dist/dircreative-*.tar.gz
+          if-no-files-found: error
+
+  compare-reproducibility:
+    needs: [validate-install-package-bilateral, reproducibility-macos]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: reproducibility-*
+          path: candidates
+
+      - name: Require byte-identical artifacts across Python, umask, and OS
+        run: |
+          mapfile -t artifacts < <(find candidates -type f -name 'dircreative-*.tar.gz' | sort)
+          test "${#artifacts[@]}" -eq 4
+          first="${artifacts[0]}"
+          for artifact in "${artifacts[@]:1}"; do
+            cmp "$first" "$artifact"
+          done
+          sha256sum "${artifacts[@]}"

@@ -1,0 +1,33 @@
+# Veo Video Prompt
+
+Best use: structured cinematic prompt with subject, action, setting, camera, lighting, style, and audio.
+
+## Reference Map
+
+Reference image_01 for courier identity and wardrobe. Reference image_02 for the alley geography. Reference image_03 for the black delivery bag, sealed package, and red scanner pulse. Reference image_04 for five-shot order only. Reference image_05 for palette, rain texture, and lighting.
+
+Anti-misread: Use storyboard/reference boards only as production guidance. Do not show or animate the board, panels, text labels, arrows, grids, tables, or layout. Generate the cinematic scene described below.
+
+## Structured Prompt
+
+Subject: a tired young cyber courier in a red waterproof jacket, black utility pants, and black work boots, carrying a black delivery bag close to his body.
+
+Scene: a narrow forbidden service alley at night in heavy rain, wet reflective pavement, red sign on the left near the entrance, blue 24-hour sign deeper on the right, exposed pipes, closed service panels, and a sealed metal door with an intercom at the far end.
+
+Action: the courier pauses at the alley mouth, enters with controlled caution, notices a thin red scanner pulse from the sealed package inside the bag, reacts with restrained dread, then stops short of the metal door as the intercom panel lights up.
+
+Shot flow: 0-3s locked wide threshold shot; 3-6s slow tracking entry behind the courier; 6-8s macro insert of scanner pulse; 8-12s close-up reaction with subtle push-in; 12-15s locked final shot of the intercom activating.
+
+Camera: grounded cinematic camera language, 24mm wide establishing view, 35mm tracking shot, 90mm macro insert, 50mm close-up, 35mm final medium wide shot. Preserve the alley axis from entrance to door.
+
+Lighting: blue-black rain ambience, red sign reflections, cold cyan depth light, subtle red scanner glow, narrow intercom panel light. Reflections remain natural on wet asphalt.
+
+Style: grounded cyber-noir suspense, practical production design, restrained performance, no trailer exaggeration.
+
+Continuity: same courier face, same red jacket, same black delivery bag, same compact sealed package, same alley geography. Scanner glow starts only at the package insert. Door activates but does not open. No recipient appears.
+
+Audio: steady rain ambience, distant city hum, subtle neon electrical buzz, soft scanner beep when the package seal pulses, faint relay click when the intercom activates, no dialogue, no voiceover, no music.
+
+## Alternate Silent Mode
+
+If the chosen Veo workflow does not support reliable audio, generate silent visual footage and use the audio plan from `examples/cyber-courier/12-audio-policy.md` in post-production.

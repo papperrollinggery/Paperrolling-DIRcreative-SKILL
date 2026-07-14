@@ -1,0 +1,78 @@
+{
+  "spec_version": "1.0",
+  "view_id": "video-route-capability-compare",
+  "execution_context": "standalone_chat",
+  "controller": {"surface_owner": "dircreative", "user_facing": true},
+  "stage_gate": {"id": "video_prompt_01", "type": "video_prompt_gate", "status": "needs_user", "decision_owner": "user"},
+  "view": {"intent": "compare", "display_mode": "inline", "customer_stage_label": "视频生成建议", "decision_prompt": "选择一条提示词适配路线，或继续只保留提示词。"},
+  "source_truth": {
+    "artifacts": [
+      {"artifact_id": "capability-cards-01", "version": "2026-07-14", "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
+      {"artifact_id": "video-prompt-manifest-01", "version": "1.1.0", "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}
+    ]
+  },
+  "presentation": {
+    "fields": [
+      {"id": "current_stage", "label": "当前阶段", "value": "视频生成建议", "classification": "presentation_only", "source_ref": null},
+      {"id": "media_status", "label": "当前媒体状态", "value": "未生成真实视频；下列路线仅用于提示词适配选择。", "classification": "source_bound", "source_ref": "video-prompt-manifest-01#/media_status"},
+      {"id": "authorization", "label": "执行授权", "value": "未授权；选择路线不会调用视频工具。", "classification": "source_bound", "source_ref": "video-prompt-manifest-01#/authorization"}
+    ],
+    "options": [
+      {
+        "id": "route-clean-frame",
+        "label": "干净首帧路线",
+        "summary": "用已确认的干净首帧保持身份、构图与起始状态。",
+        "tradeoff": "稳定性高，但必须先具备通过 QA 的直接输入帧。",
+        "details": [
+          {"id": "exact_model", "label": "模型路线", "value": "首帧约束路线"},
+          {"id": "duration", "label": "时长", "value": "以最新官方能力说明为准"},
+          {"id": "reference_slots", "label": "参考素材", "value": "一张干净首帧；规划图不直接输入"},
+          {"id": "audio", "label": "音频", "value": "后期制作"},
+          {"id": "evidence_status", "label": "可靠程度", "value": "官方说明已核对；当前执行入口未验证"},
+          {"id": "route_risk", "label": "主要风险", "value": "没有通过检查的干净首帧时不能开始"}
+        ],
+        "source_refs": ["capability-cards-01#/routes/0", "video-prompt-manifest-01#/routes/0"]
+      },
+      {
+        "id": "route-reference-set",
+        "label": "多参考路线",
+        "summary": "按人物、场景、道具职责拆分参考输入。",
+        "tradeoff": "控制维度多，但参考职责或槽位不清会互相污染。",
+        "details": [
+          {"id": "exact_model", "label": "模型路线", "value": "多参考素材路线"},
+          {"id": "duration", "label": "时长", "value": "以最新官方能力说明为准"},
+          {"id": "reference_slots", "label": "参考素材", "value": "人物、场景、道具分别对应"},
+          {"id": "audio", "label": "音频", "value": "能力未证实时走后期"},
+          {"id": "evidence_status", "label": "可靠程度", "value": "官方说明已核对；实际可用性未验证"},
+          {"id": "route_risk", "label": "主要风险", "value": "参考素材职责不清会导致人物和场景不一致"}
+        ],
+        "source_refs": ["capability-cards-01#/routes/1", "video-prompt-manifest-01#/routes/1"]
+      }
+    ],
+    "recommendation": {"option_id": "route-clean-frame", "reason": "先选择约束更清晰的提示词路线；生成仍需后续独立授权。"},
+    "downstream_effects": [{"stage": "generation_qa", "effect": "路线确定后先做预生成校验；本次选择不触发生成。"}]
+  },
+  "interactions": {
+    "local": ["select", "compare", "expand"],
+    "actions": [
+      {"id": "choose-route", "label": "采用提示词路线", "kind": "submit_selection", "target_gate_id": "video_prompt_01", "conversation_intent": "提交暂存的提示词适配路线；只记录路线，不调用视频工具，也不授予生成权限。"},
+      {"id": "stay-prompt-only", "label": "保持提示词模式", "kind": "pause_prompt_only", "target_gate_id": "video_prompt_01", "conversation_intent": "只保留提示词，不调用视频工具。"}
+    ],
+    "max_actions": 2,
+    "deep_navigation": false,
+    "nested_scroll": false
+  },
+  "write_boundary": {
+    "preview_only": true,
+    "confirmation_required": true,
+    "writes_authoritative_state": false,
+    "write_owner": "dircreative",
+    "possible_write_targets": ["video-prompt-manifest", "skill_run_receipt.decisions"],
+    "forbidden_claims": ["lock", "readiness", "acceptance", "completion", "generation_authorization"]
+  },
+  "fallback": {
+    "format": "table",
+    "required_visible_fields": ["current_stage", "decision_prompt", "options", "exact_model", "duration", "reference_slots", "audio", "evidence_status", "route_risk", "downstream_effects"],
+    "decision_question": "采用干净首帧路线、多参考路线，还是只保留提示词？"
+  }
+}

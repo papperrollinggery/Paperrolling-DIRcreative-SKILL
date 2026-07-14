@@ -1,0 +1,44 @@
+fixture:
+  fixture_id: invalid-creative-copy-deck-ai-trace-cluster-review-only
+  description: A clustered phrase scan must request contextual review without blocking otherwise valid copy.
+  expectation: review_only
+  mutations:
+    - operation: replace
+      path: story_package.copy_execution.audience_facing_text
+      value: "此外，值得注意的是，这不仅是一次更新，而且标志着一次深刻变化。"
+    - operation: replace
+      path: project.copy_development.humanizer_diagnostic.trace_clusters
+      value:
+        - road_sign_cluster
+        - binary_contrast_cluster
+        - inflated_significance_cluster
+    - operation: replace
+      path: project.copy_development.humanizer_diagnostic.manual_review_required
+      value: true
+    - operation: replace
+      path: project.copy_development.manual_craft_review.status
+      value: review_required
+    - operation: replace
+      path: project.copy_development.manual_craft_review.rhythm_assessment
+      value: "Clustered connective and contrast shells require contextual craft review."
+    - operation: replace
+      path: project.copy_development.manual_craft_review.reviewed_ai_trace_clusters
+      value:
+        - road_sign_cluster
+        - binary_contrast_cluster
+        - inflated_significance_cluster
+    - operation: replace
+      path: story_package.copy_execution.manual_craft_status
+      value: review_required
+    - operation: replace
+      path: story_package.copy_execution.humanizer_review_status
+      value: review_required
+    - operation: replace
+      path: story_package.copy_execution.ai_trace_clusters
+      value:
+        - road_sign_cluster
+        - binary_contrast_cluster
+        - inflated_significance_cluster
+  expected_failure_ids: []
+  expected_review_ids:
+    - copy_ai_trace_cluster_review

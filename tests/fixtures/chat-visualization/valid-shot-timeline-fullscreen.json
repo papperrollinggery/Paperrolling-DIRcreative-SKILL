@@ -1,0 +1,68 @@
+{
+  "spec_version": "1.0",
+  "view_id": "shot-rhythm-inline",
+  "execution_context": "standalone_chat",
+  "controller": {"surface_owner": "dircreative", "user_facing": true},
+  "stage_gate": {"id": "shot_list_01", "type": "shot_list_approval_gate", "status": "needs_user", "decision_owner": "user"},
+  "view": {"intent": "timeline", "display_mode": "inline", "customer_stage_label": "分镜头确认", "decision_prompt": "镜头节奏、声音和制作风险是否成立？"},
+  "source_truth": {"artifacts": [{"artifact_id": "shot-list-01", "version": "2.1.0", "sha256": "3333333333333333333333333333333333333333333333333333333333333333"}]},
+  "presentation": {
+    "fields": [
+      {"id": "current_stage", "label": "当前阶段", "value": "分镜头确认", "classification": "presentation_only", "source_ref": null},
+      {"id": "duration", "label": "总时长", "value": 30, "classification": "source_bound", "source_ref": "shot-list-01#/target_duration_sec"},
+      {"id": "shot_count", "label": "镜头数", "value": 6, "classification": "source_bound", "source_ref": "shot-list-01#/shot_count"},
+      {"id": "timeline", "label": "镜头时间线", "value": [
+        {"id": "sh01", "label": "建立空间", "start": 0, "end": 4},
+        {"id": "sh02", "label": "父亲动作", "start": 4, "end": 9},
+        {"id": "sh03", "label": "发现旧习惯", "start": 9, "end": 14},
+        {"id": "sh04", "label": "产品介入", "start": 14, "end": 19},
+        {"id": "sh05", "label": "共同动作", "start": 19, "end": 25},
+        {"id": "sh06", "label": "品牌收束", "start": 25, "end": 30}
+      ], "classification": "source_bound", "source_ref": "shot-list-01#/shots"},
+      {
+        "id": "shot_rhythm",
+        "label": "镜头节奏多轨图",
+        "value": {
+          "duration": 30,
+          "summary": "六个镜头共享 30 秒时间轴；产品在第四镜头进入，第五镜头是情绪与制作风险共同峰值。",
+          "shots": [
+            {"id": "sh01", "label": "建立父女与厨房空间", "start": 0, "end": 4, "size": "全景", "movement": "固定", "action": "各自忙碌", "audio": "清晨环境声", "risk": "低"},
+            {"id": "sh02", "label": "父亲重复旧习惯", "start": 4, "end": 9, "size": "中景", "movement": "缓慢推近", "action": "寻找旧杯", "audio": "杯具轻响", "risk": "低"},
+            {"id": "sh03", "label": "女儿已经准备好旧杯", "start": 9, "end": 14, "size": "近景", "movement": "轻微横移", "action": "递出旧杯", "audio": "音乐进入", "risk": "表演节奏"},
+            {"id": "sh04", "label": "产品成为共同动作媒介", "start": 14, "end": 19, "size": "特写", "movement": "跟随手部", "action": "共同完成", "audio": "动作音增强", "risk": "手部连续性"},
+            {"id": "sh05", "label": "父亲用动作回应理解", "start": 19, "end": 25, "size": "近景", "movement": "由静到推近", "action": "停顿后回应", "audio": "短暂静默", "risk": "情绪与表演"},
+            {"id": "sh06", "label": "关系余韵与品牌落点", "start": 25, "end": 30, "size": "中近景", "movement": "固定", "action": "并肩完成", "audio": "品牌声音收束", "risk": "品牌出现过重"}
+          ]
+        },
+        "classification": "source_bound",
+        "source_ref": "shot-list-01#/shot_rhythm"
+      }
+    ],
+    "options": [],
+    "recommendation": null,
+    "downstream_effects": [{"stage": "visual_direction", "effect": "确认后按镜头风险配置视觉方向与参考资产。"}]
+  },
+  "interactions": {
+    "local": ["select", "filter", "expand"],
+    "actions": [
+      {"id": "approve", "label": "镜头结构成立", "kind": "submit_selection", "target_gate_id": "shot_list_01", "conversation_intent": "提交镜头结构确认，请核对总时长和当前进度。"},
+      {"id": "revise", "label": "调整节奏", "kind": "request_revision", "target_gate_id": "shot_list_01", "conversation_intent": "保持镜头表不变，说明一个最关键的节奏冲突。"}
+    ],
+    "max_actions": 2,
+    "deep_navigation": false,
+    "nested_scroll": false
+  },
+  "write_boundary": {
+    "preview_only": true,
+    "confirmation_required": true,
+    "writes_authoritative_state": false,
+    "write_owner": "dircreative",
+    "possible_write_targets": ["shot-list", "co-creation-run.gates"],
+    "forbidden_claims": ["lock", "readiness", "acceptance", "completion", "generation_authorization"]
+  },
+  "fallback": {
+    "format": "table",
+    "required_visible_fields": ["current_stage", "decision_prompt", "timeline", "shot_rhythm", "downstream_effects"],
+    "decision_question": "镜头节奏成立，还是需要调整一个关键段落？"
+  }
+}

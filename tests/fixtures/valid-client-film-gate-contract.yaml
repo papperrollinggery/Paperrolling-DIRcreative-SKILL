@@ -1,0 +1,448 @@
+client_film_gate_contract:
+  project_title: "Friendship Route Test"
+  target_duration_sec: 60
+  channel: "vertical client proposal film"
+  aspect_ratio: "9:16"
+
+  gate_status:
+    story: pass
+    script: pass
+    shot: pass
+    asset_reference: pass
+    prompt_generation: pass
+    client_language: pass
+
+  client_visible_text_blocks:
+    - "这支一分钟短片不是把十二个段落平铺出来，而是让观众跟着一只旧相册、一只旅行箱和六位朋友的礼物，一步步看见十年友谊如何被重新点亮。每位朋友带来的物件都推动一次回忆和一次当下动作，结尾回到大家同框的庆祝时刻。"
+    - "画面节奏会从安静翻看旧照片开始，逐渐进入礼物、拥抱、笑声和奔跑的连续动作。我们用近景留住手部和道具，用中景交代朋友关系，用几个关键运动镜头把回忆连成一条生日路线。"
+
+  story_gate:
+    customer_readable_story_preview:
+      - "开场从一本旧相册开始，主角翻到第一张合照时，画面不是停在怀旧，而是让桌上的旅行箱慢慢打开。里面露出每位朋友曾经留下的物件，观众会先看见这些物件像线索一样排开，再看见朋友们从不同方向赶来，把回忆重新带回今天。"
+      - "中段让六位朋友逐一出现，每个人不是只拿着一个道具摆拍，而是用自己的角色身份完成一个动作：有人负责寻找，有人负责准备点心，有人负责布置，有人把旧布重新变成庆祝背景。故事的重点是这些动作如何互相接上，让十年的陪伴从旧回忆变成正在发生的惊喜。"
+      - "结尾不是简单合影，而是大家把物件放回旅行箱，箱子合上时变成一张新的船票。主角抬头看见朋友们已经站成一圈，最后一秒留下的是一起出发的感觉，而不是单纯纪念过去。"
+    preserved_brief_requirements:
+      - "保留旧相册、旅行箱、船票和朋友礼物作为故事骨架。"
+      - "保留原先三条方向，除非用户明确删除。"
+      - "保留每位朋友各有角色身份和道具动作。"
+    omitted_requirements_without_user_removal: []
+    legacy_routes_preserved_until_user_removes: true
+    prop_ellipsis_rule:
+      source_has_ellipsis: true
+      required_friend_count: 6
+      expansions:
+        - character_id: F01
+          role_identity: "观察者朋友"
+          prop: "望远镜"
+          action: "从阳台发现第一只庆祝气球"
+          shot_function: "启动寻找路线"
+        - character_id: F02
+          role_identity: "照顾者朋友"
+          prop: "点心篮"
+          action: "把十年前常吃的点心摆回桌面"
+          shot_function: "把回忆落到味觉和手部动作"
+        - character_id: F03
+          role_identity: "布置者朋友"
+          prop: "扎染布匹"
+          action: "拉开布匹形成庆祝背景"
+          shot_function: "完成空间变化"
+        - character_id: F04
+          role_identity: "记录者朋友"
+          prop: "旧拍立得"
+          action: "拍下新合影并夹进相册"
+          shot_function: "连接过去和当下"
+        - character_id: F05
+          role_identity: "带路者朋友"
+          prop: "手绘地图"
+          action: "指向下一段回忆地点"
+          shot_function: "推动剪辑节奏"
+        - character_id: F06
+          role_identity: "惊喜收尾朋友"
+          prop: "新船票"
+          action: "把船票放到旅行箱最上层"
+          shot_function: "触发结尾共同出发"
+
+  script_gate:
+    target_duration_sec: 60
+    time_budget:
+      total_sec: 60
+      sections:
+        - section_id: A
+          seconds: "0-10"
+          purpose: "旧相册和旅行箱建立悬念"
+        - section_id: B
+          seconds: "10-42"
+          purpose: "六位朋友和道具接力推进"
+        - section_id: C
+          seconds: "42-60"
+          purpose: "惊喜收束和新船票记忆点"
+    vo_budget:
+      total_words_estimate: 112
+      lines:
+        - vo_id: VO01
+          text: "十年前，我们把第一次同行藏进一张旧照片。"
+          start_sec: 0
+          end_sec: 10
+          covered_shot_ids: [S01, S02, S03, S04, S05]
+          covered_seconds: "00:00-00:10"
+        - vo_id: VO02
+          text: "今天，每个人都带着自己的线索回来。"
+          start_sec: 10
+          end_sec: 20
+          covered_shot_ids: [S06, S07, S08, S09, S10]
+          covered_seconds: "00:10-00:20"
+        - vo_id: VO03
+          text: "有人负责寻找，有人负责照顾，有人负责把房间变成庆祝的海岸。"
+          start_sec: 20
+          end_sec: 30
+          covered_shot_ids: [S11, S12, S13, S14, S15]
+          covered_seconds: "00:20-00:30"
+        - vo_id: VO04
+          text: "那些看似普通的小物件，原来都是我们一起走过的路线。"
+          start_sec: 30
+          end_sec: 40
+          covered_shot_ids: [S16, S17, S18, S19, S20]
+          covered_seconds: "00:30-00:40"
+        - vo_id: VO05
+          text: "当新照片夹进相册，十年没有停在过去。"
+          start_sec: 40
+          end_sec: 50
+          covered_shot_ids: [S21, S22, S23, S24, S25]
+          covered_seconds: "00:40-00:50"
+        - vo_id: VO06
+          text: "它只是变成下一次出发前，所有人都在场的约定。"
+          start_sec: 50
+          end_sec: 60
+          covered_shot_ids: [S26, S27, S28, S29, S30]
+          covered_seconds: "00:50-00:60"
+
+  shot_gate:
+    story_sections_count: 12
+    rhythm_points_count: 30
+    shot_defaults: &shot_defaults
+      shot_size: "MS"
+      camera_position: "vertical eye-level three-quarter angle"
+      camera_movement: "motivated two-second move from hands to face"
+      subject_action: "friend completes one visible gift action"
+      emotional_function: "turns a memory object into present-tense companionship"
+      props_characters: ["main character", "friend", "gift prop"]
+      asset_source: "per-shot asset contract"
+      vertical_framing: "face and prop remain inside 9:16 center-safe zone"
+      reference_motion: "reference motion note records handoff speed and eyeline"
+      hero_or_expression_critical: false
+    shots:
+      - <<: *shot_defaults
+        shot_id: S01
+        timecode: "00:00-00:02"
+        start_sec: 0
+        end_sec: 2
+        shot_size: "CU"
+        subject_action: "hand opens the old photo album"
+      - <<: *shot_defaults
+        shot_id: S02
+        timecode: "00:02-00:04"
+        start_sec: 2
+        end_sec: 4
+      - <<: *shot_defaults
+        shot_id: S03
+        timecode: "00:04-00:06"
+        start_sec: 4
+        end_sec: 6
+      - <<: *shot_defaults
+        shot_id: S04
+        timecode: "00:06-00:08"
+        start_sec: 6
+        end_sec: 8
+      - <<: *shot_defaults
+        shot_id: S05
+        timecode: "00:08-00:10"
+        start_sec: 8
+        end_sec: 10
+      - <<: *shot_defaults
+        shot_id: S06
+        timecode: "00:10-00:12"
+        start_sec: 10
+        end_sec: 12
+      - <<: *shot_defaults
+        shot_id: S07
+        timecode: "00:12-00:14"
+        start_sec: 12
+        end_sec: 14
+      - <<: *shot_defaults
+        shot_id: S08
+        timecode: "00:14-00:16"
+        start_sec: 14
+        end_sec: 16
+      - <<: *shot_defaults
+        shot_id: S09
+        timecode: "00:16-00:18"
+        start_sec: 16
+        end_sec: 18
+      - <<: *shot_defaults
+        shot_id: S10
+        timecode: "00:18-00:20"
+        start_sec: 18
+        end_sec: 20
+      - <<: *shot_defaults
+        shot_id: S11
+        timecode: "00:20-00:22"
+        start_sec: 20
+        end_sec: 22
+      - <<: *shot_defaults
+        shot_id: S12
+        timecode: "00:22-00:24"
+        start_sec: 22
+        end_sec: 24
+      - <<: *shot_defaults
+        shot_id: S13
+        timecode: "00:24-00:26"
+        start_sec: 24
+        end_sec: 26
+      - <<: *shot_defaults
+        shot_id: S14
+        timecode: "00:26-00:28"
+        start_sec: 26
+        end_sec: 28
+      - <<: *shot_defaults
+        shot_id: S15
+        timecode: "00:28-00:30"
+        start_sec: 28
+        end_sec: 30
+      - <<: *shot_defaults
+        shot_id: S16
+        timecode: "00:30-00:32"
+        start_sec: 30
+        end_sec: 32
+      - <<: *shot_defaults
+        shot_id: S17
+        timecode: "00:32-00:34"
+        start_sec: 32
+        end_sec: 34
+      - <<: *shot_defaults
+        shot_id: S18
+        timecode: "00:34-00:36"
+        start_sec: 34
+        end_sec: 36
+      - <<: *shot_defaults
+        shot_id: S19
+        timecode: "00:36-00:38"
+        start_sec: 36
+        end_sec: 38
+      - <<: *shot_defaults
+        shot_id: S20
+        timecode: "00:38-00:40"
+        start_sec: 38
+        end_sec: 40
+      - <<: *shot_defaults
+        shot_id: S21
+        timecode: "00:40-00:42"
+        start_sec: 40
+        end_sec: 42
+      - <<: *shot_defaults
+        shot_id: S22
+        timecode: "00:42-00:44"
+        start_sec: 42
+        end_sec: 44
+      - <<: *shot_defaults
+        shot_id: S23
+        timecode: "00:44-00:46"
+        start_sec: 44
+        end_sec: 46
+      - <<: *shot_defaults
+        shot_id: S24
+        timecode: "00:46-00:48"
+        start_sec: 46
+        end_sec: 48
+      - <<: *shot_defaults
+        shot_id: S25
+        timecode: "00:48-00:50"
+        start_sec: 48
+        end_sec: 50
+      - <<: *shot_defaults
+        shot_id: S26
+        timecode: "00:50-00:52"
+        start_sec: 50
+        end_sec: 52
+      - <<: *shot_defaults
+        shot_id: S27
+        timecode: "00:52-00:54"
+        start_sec: 52
+        end_sec: 54
+      - <<: *shot_defaults
+        shot_id: S28
+        timecode: "00:54-00:56"
+        start_sec: 54
+        end_sec: 56
+      - <<: *shot_defaults
+        shot_id: S29
+        timecode: "00:56-00:58"
+        start_sec: 56
+        end_sec: 58
+        hero_or_expression_critical: true
+        reference_motion: "reference clip note: group leans in, pause, then shared laugh"
+      - <<: *shot_defaults
+        shot_id: S30
+        timecode: "00:58-01:00"
+        start_sec: 58
+        end_sec: 60
+        shot_size: "WS"
+        subject_action: "friends close the travel case around the new ticket"
+        hero_or_expression_critical: true
+        reference_motion: "reference clip note: case closes, heads lift toward camera"
+    storyboard_pages:
+      - page_id: SB01
+        image_count: 4
+        image_aspect_ratio: "9:16"
+        crop_policy: "crop_safe_no_stretch"
+        min_image_width_px: 900
+        caption_standard:
+          story_first: true
+          camera_second: true
+          source_or_confirmation_last: true
+
+  asset_reference_gate:
+    user_claims_existing_browser_images: true
+    browser_or_local_intake:
+      completed: true
+      inspected_sources:
+        - "browser tab: existing Grok image contact sheet"
+        - "local folder: existing ChatGPT image export"
+      blocked_reason: ""
+    contract_defaults: &asset_defaults
+      source_decision: existing_grok_image
+      source_status: available
+      use_case: ppt_storyboard
+      usage_page: "storyboard sequence"
+      blocker: ""
+    per_shot_asset_contract:
+      - <<: *asset_defaults
+        shot_id: S01
+      - <<: *asset_defaults
+        shot_id: S02
+      - <<: *asset_defaults
+        shot_id: S03
+      - <<: *asset_defaults
+        shot_id: S04
+      - <<: *asset_defaults
+        shot_id: S05
+      - <<: *asset_defaults
+        shot_id: S06
+      - <<: *asset_defaults
+        shot_id: S07
+      - <<: *asset_defaults
+        shot_id: S08
+      - <<: *asset_defaults
+        shot_id: S09
+      - <<: *asset_defaults
+        shot_id: S10
+        source_decision: new_image_prompt
+        source_status: prompt_ready
+      - <<: *asset_defaults
+        shot_id: S11
+      - <<: *asset_defaults
+        shot_id: S12
+      - <<: *asset_defaults
+        shot_id: S13
+      - <<: *asset_defaults
+        shot_id: S14
+      - <<: *asset_defaults
+        shot_id: S15
+      - <<: *asset_defaults
+        shot_id: S16
+      - <<: *asset_defaults
+        shot_id: S17
+      - <<: *asset_defaults
+        shot_id: S18
+      - <<: *asset_defaults
+        shot_id: S19
+      - <<: *asset_defaults
+        shot_id: S20
+        source_decision: prompt_only
+        source_status: prompt_ready
+      - <<: *asset_defaults
+        shot_id: S21
+      - <<: *asset_defaults
+        shot_id: S22
+      - <<: *asset_defaults
+        shot_id: S23
+      - <<: *asset_defaults
+        shot_id: S24
+      - <<: *asset_defaults
+        shot_id: S25
+      - <<: *asset_defaults
+        shot_id: S26
+      - <<: *asset_defaults
+        shot_id: S27
+      - <<: *asset_defaults
+        shot_id: S28
+      - <<: *asset_defaults
+        shot_id: S29
+        source_decision: reference_video
+      - <<: *asset_defaults
+        shot_id: S30
+        source_decision: reference_video
+    reference_video_music:
+      reference_motion_notes:
+        - shot_id: S29
+          source: "reference motion note"
+          usage: "group lean-in timing"
+        - shot_id: S30
+          source: "reference motion note"
+          usage: "travel case close and group lift"
+      reference_videos:
+        - source: "internal reference clip candidate"
+          usage: "hero group rhythm"
+          lock_status: candidate
+      music_tracks:
+        - source: "licensed track candidate"
+          usage: "warm build from album opening to group reveal"
+          lock_status: needs_license_review
+
+  prompt_generation:
+    status: pass
+    input_gates_locked:
+      story: true
+      script: true
+      shot: true
+      asset_reference: true
+    prompts:
+      - prompt_id: P10
+        from_locked_shot_id: S10
+        character_or_role: "带路者朋友"
+        prop: "手绘地图"
+        action: "points to the next memory location"
+        shot_size: "MS"
+        camera_angle: "vertical eye-level three-quarter"
+        composition: "friend and map inside center-safe 9:16 frame"
+        orientation: vertical
+        usage_page: "storyboard page 2"
+        output_mode: new_generation
+      - prompt_id: P20
+        from_locked_shot_id: S20
+        character_or_role: "记录者朋友"
+        prop: "旧拍立得"
+        action: "slides a fresh photo into the album"
+        shot_size: "CU"
+        camera_angle: "over-shoulder hand insert"
+        composition: "album and hand fill lower two thirds, face reaction remains visible"
+        orientation: vertical
+        usage_page: "storyboard page 4"
+        output_mode: prompt_only
+
+  thread_discipline:
+    codex_threads_requested: false
+    real_thread_dispatch_required: false
+    dispatch_receipt_adoption_cleanup_required: false
+    fallback_to_simulated_workers_allowed: false
+
+  acceptance_boundary:
+    validation_scope: structural_contract_only
+    structural_pass_not_client_deliverable: true
+    structural_pass_not_copy_quality: true
+    structural_pass_not_visual_quality: true
+    structural_pass_not_asset_authorization: true
+    structural_pass_not_live_acceptance: true
+
+qa:
+  client_film_gate_contract: pass
+  failures: []

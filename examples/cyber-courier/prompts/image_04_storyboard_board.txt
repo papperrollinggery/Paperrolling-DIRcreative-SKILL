@@ -1,0 +1,54 @@
+Pre-generation contract:
+Largest title on the page: PROFESSIONAL STORYBOARD + MOTION MAP
+Smaller metadata only: Project: Cyber Courier: The Alley Accepts The Package
+Do not make Cyber Courier: The Alley Accepts The Package the largest title.
+Direct video input policy: PLANNING ONLY; this board is not a direct video frame.
+Storyboard density requirement: each shot must include timecode, duration, shot image region, detailed frame description, shot size, focal length, camera position, camera movement start/end, subject blocking, sound or audio cue, transition, and model risk.
+
+Create the reference image from this JSON-first prompt config. Render a single 16:9 director storyboard production board for planning only, not final footage.
+
+{
+  "meta": {
+    "config_id": "cyber_courier_storyboard_board_v1",
+    "image_type": "director_storyboard_board",
+    "source_patterns": ["art_directed_asymmetric_layout_v1", "json_config_prompt_v1", "surface_integrity_guard_v1"]
+  },
+  "artifact": {
+    "title": "Five-Shot Director Storyboard Board",
+    "role": "lock shot order, timing, action, lens, camera movement, and audio planning note",
+    "canvas": "16:9 landscape, readable film production storyboard board"
+  },
+  "art_direction_policy": {
+    "non_negotiables": [
+      "do not use a generic 3x3 storyboard grid",
+      "shot strip may be ordered but the full board must be art-directed",
+      "composition must feel intentional, not automatically generated",
+      "shot panels must be large enough to show action and blocking"
+    ]
+  },
+  "layout_system": {
+    "hero_regions": ["larger SH01 threshold geography frame", "larger SH05 final door activation frame"],
+    "shot_strip": ["SH01", "SH02", "SH03", "SH04", "SH05"],
+    "notes": "short duration, lens, and camera-motion notes near each frame",
+    "exact_text_labels": ["REFERENCE BOARD ONLY", "SH01 0-3s THRESHOLD", "SH02 3-6s ENTRY", "SH03 6-8s PACKAGE PULSE", "SH04 8-12s REACTION", "SH05 12-15s DOOR ACTIVATION"]
+  },
+  "visual_systems": {
+    "sequence": "red-jacket courier at alley threshold, tracking entry, package pulse insert, restrained reaction, metal door intercom activation",
+    "camera_notes": "24mm locked wide, 35mm slow tracking, 90mm macro insert, 50mm subtle push-in, 35mm locked final",
+    "audio_plan_label": "rain ambience, neon buzz, scanner beep, intercom relay, no dialogue, no music",
+    "warning": "REFERENCE BOARD ONLY"
+  },
+  "consistency_locks": {
+    "shots": "five shots only; same courier, same alley, same package state progression",
+    "forbidden": ["extra shots", "door opened", "recipient appears", "chase", "fight", "generic 3x3 grid"]
+  },
+  "quality_and_artifact_control": {
+    "surface_integrity_guard": {
+      "required": ["clear storyboard frames", "readable labels", "coherent alley geography"],
+      "avoid": ["tiny unreadable panels", "fake text", "overloaded layout", "fish-scale rain texture"]
+    }
+  },
+  "avoid": ["decorative mood collage", "unlabeled thumbnails", "random extra scenes"]
+}
+
+QA notes: This image is a planning board. Later video prompts must explicitly say not to show or animate the board, panels, labels, arrows, grids, or layout.

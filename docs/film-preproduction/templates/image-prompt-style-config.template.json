@@ -1,0 +1,337 @@
+{
+  "meta": {
+    "config_id": "character_board_art_directed_v1",
+    "version": "1.0.0",
+    "image_type": "character_design_board",
+    "verified_date": "2026-05-14",
+    "source_patterns": [
+      "user_character_sheet_prompt",
+      "github_wuyoscar_json_config_prompt",
+      "openai_exact_text_and_reference_map_guidance",
+      "forensic_visual_breakdown_v1"
+    ]
+  },
+  "artifact": {
+    "title": "Film Character Design Board",
+    "artifact_role": "cinematic character design sheet for film development",
+    "canvas": {
+      "aspect_ratio": "16:9",
+      "orientation": "landscape",
+      "quality": "high"
+    },
+    "output_use": [
+      "director review",
+      "casting discussion",
+      "costume design",
+      "reference image pack",
+      "downstream video model reference"
+    ]
+  },
+  "production_context": {
+    "audience": [
+      "director",
+      "casting team",
+      "costume department",
+      "production designer",
+      "video prompt adapter"
+    ],
+    "project_stage": "preproduction",
+    "downstream_use": [
+      "character identity lock",
+      "wardrobe continuity",
+      "reference image for video generation"
+    ]
+  },
+  "art_direction_policy": {
+    "non_negotiables": [
+      "do not use a generic layout",
+      "do not use evenly distributed grids unless a technical turnaround grid is required",
+      "do not make the layout symmetrical only for symmetry",
+      "composition must feel art-directed, intentional, and slightly asymmetric",
+      "every section must feel carefully placed, not automatically generated"
+    ],
+    "must_feel": [
+      "high-budget animated film pitch board",
+      "studio-grade production design document",
+      "clean but not sterile",
+      "curated and human art-directed"
+    ],
+    "forbidden": [
+      "generic model sheet",
+      "auto-generated template feel",
+      "decorative filler",
+      "empty space that does not support hierarchy"
+    ],
+    "placement_rule": "section size and placement must follow production importance, not equal distribution"
+  },
+  "layout_system": {
+    "hierarchy": {
+      "hero_region": "large cinematic portrait or primary design view",
+      "secondary_regions": "turnaround, head studies, costume breakdown",
+      "annotation_regions": "short readable production labels",
+      "negative_space": "intentional breathing room only"
+    },
+    "sections": [
+      {
+        "section_id": "identity_and_turnaround",
+        "role": "lock full-body proportions and silhouette",
+        "relative_size": "large",
+        "placement_logic": "dominant left or central band because identity consistency is the main purpose",
+        "required_content": [
+          "front view",
+          "three-quarter view",
+          "side view",
+          "back view",
+          "three-quarter back view"
+        ]
+      },
+      {
+        "section_id": "head_studies",
+        "role": "lock face structure and expression range",
+        "relative_size": "medium",
+        "placement_logic": "near turnaround so face identity can be compared against body views",
+        "required_content": [
+          "front neutral",
+          "three-quarter primary personality",
+          "side structure",
+          "head down angle",
+          "head up angle",
+          "intense dynamic angle"
+        ]
+      },
+      {
+        "section_id": "costume_material_breakdown",
+        "role": "show fabric, seams, wear, accessories, and prop logic",
+        "relative_size": "medium",
+        "placement_logic": "placed near the body views and connected with short callout lines",
+        "required_content": [
+          "fabric swatches",
+          "seam details",
+          "shoe wear",
+          "accessories",
+          "character prop"
+        ]
+      },
+      {
+        "section_id": "cinematic_portrait",
+        "role": "show the character as an actor captured in a story moment",
+        "relative_size": "large",
+        "placement_logic": "offset as the emotional anchor of the board",
+        "required_content": [
+          "environment context",
+          "practical light source",
+          "50mm or 85mm lens feel",
+          "shallow depth of field",
+          "transition emotion"
+        ]
+      }
+    ],
+    "readability_rules": [
+      "all labels must be short and readable",
+      "exact label text must be placed in quotes",
+      "avoid unreadable microtext",
+      "do not rely on tiny text for downstream video model understanding"
+    ]
+  },
+  "visual_systems": {
+    "subject_system": {
+      "name": "character name supplied by project",
+      "identity": {
+        "full_name": "supplied full name",
+        "alias": "supplied alias or code name",
+        "age": "supplied age or stylized age",
+        "height": "supplied height",
+        "body_type": "supplied body type, proportions, posture tendency",
+        "design_language": "supplied cultural or animation design language"
+      }
+    },
+    "performance_direction": {
+      "acting_quality": "captured like a real actor during a key narrative moment, not posing",
+      "micro_expression": [
+        "lip tension",
+        "eye flicker",
+        "subtle brow change"
+      ],
+      "emotion_rule": "capture transitional emotion, not a frozen expression chart",
+      "body_language": "posture and movement rhythm supplied by project"
+    },
+    "cinematic_capture": {
+      "environment": "character-relevant location",
+      "lighting": "practical source, controlled contrast",
+      "lens": "50mm or 85mm, shallow depth of field",
+      "tone": "cinematic realism"
+    },
+    "material_truth": {
+      "principle": "materials must behave like real surfaces",
+      "required": [
+        "fabric stretch",
+        "stitching",
+        "folds",
+        "wear",
+        "dirt",
+        "stains",
+        "soft skin-light interaction"
+      ],
+      "avoid": [
+        "plastic fabric",
+        "over-smooth skin",
+        "fake texture"
+      ]
+    },
+    "text_annotation_system": {
+      "language": "Simplified Chinese or English as specified",
+      "exact_text_rule": "all displayed text must be quoted exactly",
+      "label_style": "short studio production labels",
+      "annotation_style": "thin callout lines, clean hierarchy"
+    }
+  },
+  "evidence_policy": {
+    "source_of_truth": "Use locked upstream artifacts and visible reference evidence only: story, shot list, visual bible, reference pack plan, generated/imported image if present, and exact displayed text.",
+    "uncertainty_rule": "If a visual detail is uncertain, use a broader production-safe description instead of inventing an exact brand, place, lens model, logo, hidden object, or unreadable text.",
+    "forbidden": [
+      "invented logos",
+      "invented exact text",
+      "invented camera bodies",
+      "invented named locations",
+      "hidden objects not visible or locked upstream"
+    ]
+  },
+  "visual_decomposition": {
+    "subject": {
+      "rule": "count, category, scale, silhouette, and the most important visible or locked attributes"
+    },
+    "action_pose_or_blocking": {
+      "rule": "action, pose, gesture, gaze, orientation, start/end position, path, screen direction, and axis note when relevant"
+    },
+    "details_appearance": {
+      "rule": "wardrobe, props, product features, anatomy, markings, condition, design cues, and exact visible text only when required"
+    },
+    "environment_background": {
+      "rule": "foreground, midground, background, depth cues, surrounding objects, weather, and geography"
+    },
+    "lighting_atmosphere": {
+      "rule": "source direction, source quality, contrast, shadow softness, color temperature, mood, and atmosphere"
+    },
+    "composition_framing": {
+      "rule": "shot size, camera angle, crop, subject placement, negative space, perspective, focal emphasis, and readable zones"
+    },
+    "style_camera": {
+      "rule": "visual medium, realism or stylization level, lens feel, support, movement, focus, render or photographic finish"
+    },
+    "colors_palette": {
+      "rule": "primary, secondary, accent, contrast relationship, and color restrictions"
+    },
+    "materials_texture": {
+      "rule": "surface behavior, texture continuity, wear, finish, transparency, reflectivity, and light interaction"
+    },
+    "proportion_scale": {
+      "rule": "relative scale, object thickness, human/product proportion, panel size, and spatial relationship"
+    },
+    "generation_intent": {
+      "rule": "what this asset must solve for director review, reference locking, clean I2V input, prompt-only handoff, or QA retry"
+    }
+  },
+  "prompt_layers": {
+    "director_recreation_prompt": "Complete production prompt for this exact asset, preserving asset role, subject, blocking, environment, light, composition, camera language, palette, material behavior, text policy, and downstream use.",
+    "prompt_core": "Reusable lock: subject identity or product geometry, composition, light, style, palette, material, and continuity anchors.",
+    "negative_prompt": "Targeted avoid-list for this asset: drift, wrong labels, fake text, unreadable panels, material artifacts, misread categories, and model-specific failure risks."
+  },
+  "type_treatment": {
+    "asset_type": "character_design_board",
+    "rules": [
+      "portrait references emphasize identity, expression, gaze, wardrobe, skin-light interaction, and lens feel",
+      "product references emphasize silhouette, scale, material, function cues, support hardware, and misread risks",
+      "poster or ad layouts emphasize title hierarchy, subject/product overlap, text zones, metadata blocks, and readable branding",
+      "UI references emphasize component hierarchy, typography, spacing, state, device or container, and interaction affordance",
+      "illustration references emphasize line, shape language, stylization level, palette, texture, and medium",
+      "3D references emphasize geometry, bevels, shader/material, lighting rig, camera angle, and render finish",
+      "photographic clean frames emphasize shot size, lens feel, exposure, color temperature, depth of field, and believable capture imperfections when intended"
+    ],
+    "must_capture": [
+      "subject",
+      "action_pose_or_blocking",
+      "environment_background",
+      "lighting_atmosphere",
+      "composition_framing",
+      "style_camera",
+      "colors_palette",
+      "materials_texture",
+      "proportion_scale",
+      "generation_intent"
+    ],
+    "must_not_invent": [
+      "brand logos",
+      "unreadable text",
+      "named locations",
+      "camera body or lens model",
+      "offscreen objects"
+    ]
+  },
+  "style_tags": [
+    "identity lock",
+    "material truth",
+    "cinematic board",
+    "asymmetric layout"
+  ],
+  "consistency_locks": {
+    "identity": "same face, proportions, silhouette, and expression logic across all views",
+    "costume": "same garment structure, seams, accessories, and wear marks across all angles",
+    "geometry": "no reinterpretation between front, side, back, and portrait views",
+    "layout": "no generic equal-grid layout unless used inside a specific technical sub-section",
+    "forbidden": [
+      "angle-to-angle face drift",
+      "costume redesign between views",
+      "body proportion changes",
+      "different material behavior between panels"
+    ]
+  },
+  "quality_and_artifact_control": {
+    "quality_flags": [
+      "readable edges on identity-critical features",
+      "focus target and depth relationship are explicit",
+      "surface behavior is described through material response",
+      "clean readable annotations"
+    ],
+    "surface_integrity_guard": {
+      "prompt_suffix_for_image2_or_image_gen": "The image is clean and transparent, with complete and natural materials, smooth and uniform texture, and the main subject Be clear, with distinct background layers, and avoid excessive sharpening, color spots, and noise Cracks, collapse, and distortion",
+      "required": [
+        "clean natural materials",
+        "smooth and coherent surface texture",
+        "main subject remains clear",
+        "background depth layers remain distinct",
+        "complete object geometry"
+      ],
+      "avoid": [
+        "fish-scale texture",
+        "excessive sharpening",
+        "color speckles",
+        "random noise",
+        "cracks",
+        "collapsed surfaces",
+        "distorted geometry",
+        "broken material continuity"
+      ]
+    },
+    "transparent_background": false
+  },
+  "avoid": [
+    "generic model sheet",
+    "evenly distributed auto grid",
+    "symmetry for symmetry",
+    "fake text",
+    "unreadable micro labels",
+    "decorative filler",
+    "plastic CGI material",
+    "over-sharpened noisy texture"
+  ],
+  "self_update": {
+    "registry_pattern_ids": [
+      "art_directed_asymmetric_layout_v1",
+      "surface_integrity_guard_v1",
+      "multi_panel_identity_lock_v1",
+      "forensic_visual_breakdown_v1"
+    ],
+    "promotion_rule": "promote a pattern only after it improves layout clarity, identity consistency, or material fidelity in a project fixture",
+    "deprecation_rule": "deprecate a pattern after repeated QA failures such as unreadable text, fish-scale texture, or generic grid regression"
+  }
+}

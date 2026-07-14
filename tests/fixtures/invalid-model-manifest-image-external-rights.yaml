@@ -1,0 +1,121 @@
+contract_fixture:
+  id: image-external-upload-unverified-rights
+  validator: image_external_execution
+  negative_cases:
+    - expected_error_contains: "typed source-asset rights"
+      case:
+        visual_output_mode: external_generation
+        external_instructions:
+          - "Upload the locked source to the named external image surface."
+        execution:
+          available: false
+          provider: external
+          allowed_by_user: false
+          external_upload_authorized: true
+          external_execution_state: external_upload_ready
+          external_execution_evidence: []
+        rights_gate:
+          status: verified
+          conditions: []
+          source_asset_rights: "Not yet verified."
+          likeness_authorization: not_applicable
+          voice_authorization: not_applicable
+          brand_or_character_authorization: not_applicable
+          music_or_audio_rights: not_applicable
+          provider_restrictions_checked: true
+          evidence_refs:
+            - self-asserted-note
+          generation_allowed: true
+    - expected_error_contains: "durable authorization or license evidence"
+      case:
+        visual_output_mode: external_generation
+        external_instructions:
+          - "Upload the locked source to the named external image surface."
+        execution:
+          available: false
+          provider: external
+          allowed_by_user: false
+          external_upload_authorized: true
+          external_execution_state: external_upload_ready
+          external_execution_evidence: []
+        rights_gate:
+          status: verified
+          conditions: []
+          source_asset_rights: client_owned
+          likeness_authorization: not_applicable
+          voice_authorization: not_applicable
+          brand_or_character_authorization: not_applicable
+          music_or_audio_rights: not_applicable
+          provider_restrictions_checked: true
+          evidence_refs:
+            - self-asserted-note
+          generation_allowed: true
+    - expected_error_contains: "external execution requires qualified rights"
+      case:
+        visual_output_mode: external_generation
+        external_instructions:
+          - "Upload the locked source to the named external image surface."
+        execution:
+          available: false
+          provider: external
+          allowed_by_user: false
+          external_upload_authorized: true
+          external_execution_state: external_upload_ready
+          external_execution_evidence: []
+        rights_gate:
+          status: unverified
+          conditions: []
+          source_asset_rights: "Not yet verified."
+          likeness_authorization: unverified
+          voice_authorization: not_applicable
+          brand_or_character_authorization: unverified
+          music_or_audio_rights: not_applicable
+          provider_restrictions_checked: false
+          evidence_refs: []
+          generation_allowed: false
+  positive_controls:
+    - visual_output_mode: external_generation
+      external_instructions:
+        - "Instructions only; do not upload until separately authorized."
+      execution:
+        available: false
+        provider: external
+        allowed_by_user: false
+        external_upload_authorized: false
+        external_execution_state: instructions_only
+        external_execution_evidence: []
+      rights_gate:
+        status: unverified
+        conditions: []
+        source_asset_rights: "Not yet verified."
+        likeness_authorization: unverified
+        voice_authorization: not_applicable
+        brand_or_character_authorization: unverified
+        music_or_audio_rights: not_applicable
+        provider_restrictions_checked: false
+        evidence_refs: []
+        generation_allowed: false
+    - visual_output_mode: external_generation
+      external_instructions:
+        - "Upload only to the approved external image surface."
+      execution:
+        available: false
+        provider: external
+        allowed_by_user: false
+        external_upload_authorized: true
+        external_execution_state: external_upload_ready
+        external_execution_evidence: []
+      rights_gate:
+        status: conditional
+        conditions:
+          - "Use only the approved provider account; decision owner: producer."
+        source_asset_rights: client_owned
+        likeness_authorization: not_applicable
+        voice_authorization: not_applicable
+        brand_or_character_authorization: verified
+        music_or_audio_rights: not_applicable
+        provider_restrictions_checked: true
+        evidence_refs:
+          - client-license
+          - brand-authorization
+        generation_allowed: true

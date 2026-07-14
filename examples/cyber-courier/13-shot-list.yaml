@@ -1,0 +1,331 @@
+artifact:
+  artifact_id: cyber-courier-shot-list-v1
+  version: 1.0.0
+  source_artifact_ids:
+    - cyber-courier-script-v1
+    - cyber-courier-script-breakdown-v1
+    - cyber-courier-audio-policy-v1
+  status: approved
+  owner_skill: shot-design
+  created_at: "2026-05-14"
+  locked_by_user: false
+
+shot_list:
+  project_title: "Cyber Courier: The Alley Accepts The Package"
+  channel: "cinematic_short_test"
+  target_duration: "15s"
+  aspect_ratio: "16:9"
+  shot_count: 5
+  sequence_intent: "Visual suspense micro-short: threshold, commitment, package activation, courier reaction, door activation."
+  professional_standard: "docs/film-preproduction/shot-language-standard.md"
+
+shots:
+  - shot_id: "SH01"
+    timecode: "00:00-00:03"
+    duration: "3s"
+    story_beat: "Establish forbidden threshold"
+    narrative_purpose: "Show the courier choosing to enter a dangerous address."
+    shot_type: "establishing threshold shot"
+    shot_size: "wide shot"
+    camera_angle: "eye-level, slightly behind and left of courier"
+    lens: "24mm wide-angle"
+    lens_reason: "Wide lens holds alley geography, courier silhouette, and destination depth before the story narrows."
+    camera_support: "locked tripod"
+    camera_motion: "locked-off camera remains still; rain and neon provide motion"
+    focus: "deep focus across courier and alley depth; far signage remains readable as shape, not text"
+    composition: "courier left foreground, red sign left midground, blue sign and closed doors deep background"
+    subject_action: "Courier stands at alley mouth, checks the alley, holds black delivery bag close."
+    blocking:
+      start_position: "Courier in left foreground at alley entrance."
+      end_position: "Courier remains at threshold, body angled toward alley depth."
+      path: "No travel yet; only weight shift toward the alley."
+      eyeline: "From delivery terminal or street edge into the alley depth."
+      screen_direction: "Future movement will go left foreground toward center background."
+      axis_note: "Establish axis down the alley from entrance to destination door; keep camera on street-left side."
+    scene:
+      location: "Forbidden service alley entrance"
+      foreground: "Courier in red jacket, rain streaks, black delivery bag"
+      midground: "Wet alley pavement, red sign on left"
+      background: "Blue 24-hour sign deeper in alley, closed service doors"
+      weather: "Heavy rain"
+      lighting: "Red sign glow left, cold cyan-blue signage deeper in frame"
+    continuity:
+      characters:
+        - "courier_01"
+      props:
+        - "bag_01"
+        - "terminal_01_optional"
+      wardrobe:
+        - "red waterproof jacket"
+        - "black utility pants"
+      state_locks:
+        - "package glow is not visible yet"
+        - "no other characters visible"
+        - "alley door remains dark"
+    audio:
+      dialogue: []
+      voiceover: []
+      ambience:
+        - "steady rain"
+        - "distant traffic hum"
+        - "subtle neon buzz"
+      sfx: []
+      music: "none"
+      silence: "no dialogue; restrained sound bed only"
+    transition_in: "cut from black"
+    transition_out: "straight cut"
+    model_notes:
+      seedance: "Use as first shot in chronological flow; lock alley geography."
+      kling: "Motion should be mostly environmental; subject remains nearly still."
+      runway: "Good single image-to-video setup with locked-off camera."
+      veo: "Can include rain ambience if audio-capable workflow is used."
+
+  - shot_id: "SH02"
+    timecode: "00:03-00:06"
+    duration: "3s"
+    story_beat: "Commit to delivery"
+    narrative_purpose: "Show the courier crossing the threshold and choosing duty over instinct."
+    shot_type: "tracking commitment shot"
+    shot_size: "medium tracking shot"
+    camera_angle: "rear three-quarter, shoulder height"
+    lens: "35mm normal-wide"
+    lens_reason: "35mm keeps the courier human-scaled while preserving alley direction and rain reflections."
+    camera_support: "stabilized gimbal tracking behind subject"
+    camera_motion: "slow tracking move behind courier into the alley"
+    focus: "continuous focus on courier back and bag strap; alley background stays readable but soft"
+    composition: "courier centered on alley vanishing line, rain shoulders foreground, red/cyan reflections along pavement"
+    subject_action: "Courier steps forward into the alley and tightens one hand around the bag strap."
+    blocking:
+      start_position: "Courier just inside alley entrance."
+      end_position: "Courier several steps deeper, centered in the alley path."
+      path: "Forward movement from foreground toward mid-depth."
+      eyeline: "Forward toward the far metal door, not at camera."
+      screen_direction: "Away from camera into depth."
+      axis_note: "Stay on established alley axis; do not reverse left-right signage positions."
+    scene:
+      location: "Forbidden service alley interior"
+      foreground: "Rain on courier shoulders and hood edge"
+      midground: "Courier moving past red sign reflection"
+      background: "Pipes, closed doors, blue sign deeper right"
+      weather: "Heavy rain"
+      lighting: "Red reflections across wet ground, cold cyan rim from background"
+    continuity:
+      characters:
+        - "courier_01"
+      props:
+        - "bag_01"
+      wardrobe:
+        - "red waterproof jacket"
+        - "black utility pants"
+      state_locks:
+        - "bag remains closed enough to conceal package"
+        - "package glow still not visible"
+        - "courier does not run"
+    audio:
+      dialogue: []
+      voiceover: []
+      ambience:
+        - "rain"
+        - "neon buzz"
+      sfx:
+        - "wet footsteps"
+        - "bag strap tension"
+      music: "none"
+      silence: "no dialogue"
+    transition_in: "straight cut"
+    transition_out: "cut to insert"
+    model_notes:
+      seedance: "Maintain same courier identity and red jacket from SH01."
+      kling: "Primary motion is subject walking forward; background rain moves naturally."
+      runway: "Keep prompt focused on walking and slow tracking, no extra action."
+      veo: "Use subject action plus camera movement, with audio cues separated."
+
+  - shot_id: "SH03"
+    timecode: "00:06-00:08"
+    duration: "2s"
+    story_beat: "Object reveal"
+    narrative_purpose: "Reveal the sealed package as active and causally linked to the alley."
+    shot_type: "macro prop reveal insert"
+    shot_size: "extreme close-up insert"
+    camera_angle: "slight high angle into half-open delivery bag"
+    lens: "90mm macro"
+    lens_reason: "Macro lens isolates the scanner seal and makes the package state change unambiguous."
+    camera_support: "locked macro tripod"
+    camera_motion: "static macro insert; shallow focus holds on scanner seal"
+    focus: "shallow focus locked on scanner seal; bag fabric falls off at edges"
+    composition: "bag fabric forms dark frame, package centered, red scanner pulse travels across the seal"
+    subject_action: "A thin red scanner pulse appears on the sealed matte-black package inside the bag."
+    blocking:
+      start_position: "Bag held against courier torso."
+      end_position: "Package glow visible through half-open bag."
+      path: "No subject travel; only subtle hand and fabric movement."
+      eyeline: "Not applicable; object insert."
+      screen_direction: "Object remains centered; red pulse travels across seal."
+      axis_note: "Insert must preserve bag orientation from SH02."
+    scene:
+      location: "Inside delivery bag within alley"
+      foreground: "Wet black bag fabric edge"
+      midground: "Matte-black sealed package with scanner seal"
+      background: "Soft red/cyan rain reflections, out of focus"
+      weather: "Rain present as droplets on bag exterior"
+      lighting: "Red scanner glow reflected on black material"
+    continuity:
+      characters:
+        - "courier_01_partial_hands"
+      props:
+        - "bag_01"
+        - "package_01"
+        - "scanner_glow_01"
+      wardrobe:
+        - "red jacket edge may appear out of focus"
+      state_locks:
+        - "scanner glow begins in this shot"
+        - "package remains compact and sealed"
+        - "no readable label text required"
+    audio:
+      dialogue: []
+      voiceover: []
+      ambience:
+        - "rain muffled under close detail"
+      sfx:
+        - "soft scanner beep"
+        - "low electronic pulse"
+      music: "none"
+      silence: "let scanner cue stand alone"
+    transition_in: "cut to insert"
+    transition_out: "cut to reaction"
+    model_notes:
+      seedance: "Critical prop state lock: scanner glow starts here."
+      kling: "Use image-to-video only for subtle pulse, not object transformation."
+      runway: "Macro insert should avoid extra camera movement."
+      veo: "Audio cue can be timed to scanner pulse if supported."
+
+  - shot_id: "SH04"
+    timecode: "00:08-00:12"
+    duration: "4s"
+    story_beat: "Register danger"
+    narrative_purpose: "Show the courier understanding that the package has awakened the address."
+    shot_type: "performance reaction close-up"
+    shot_size: "close-up"
+    camera_angle: "eye-level frontal three-quarter"
+    lens: "50mm normal lens"
+    lens_reason: "Normal lens keeps facial geometry believable while retaining bag edge and alley color cues."
+    camera_support: "short slider dolly"
+    camera_motion: "slow dolly in, very subtle"
+    focus: "starts on glowing bag edge, then racks to courier eyes as the jaw tightens"
+    composition: "courier face upper third, bag glow lower frame, red/cyan signage blurred behind"
+    subject_action: "Courier looks from the glowing bag toward the far door; jaw tightens, breath visible, body stays controlled."
+    blocking:
+      start_position: "Courier stopped mid-alley, bag near torso."
+      end_position: "Courier still stopped, gaze fixed toward destination door."
+      path: "No walking; only head and eye movement."
+      eyeline: "Down to package, then up toward far metal door."
+      screen_direction: "Eyeline moves from lower frame to deep background direction."
+      axis_note: "Maintain same alley axis; door remains ahead of courier."
+    scene:
+      location: "Mid-alley"
+      foreground: "Rain droplets, courier face and jacket"
+      midground: "Courier shoulders and black bag edge"
+      background: "Blurred red and blue signage, dark door direction"
+      weather: "Heavy rain, visible breath if useful"
+      lighting: "Red scanner bounce under face, cold cyan rim light"
+    continuity:
+      characters:
+        - "courier_01"
+      props:
+        - "bag_01"
+        - "package_01_glowing"
+      wardrobe:
+        - "red waterproof jacket"
+      state_locks:
+        - "courier does not panic or run"
+        - "expression is restrained dread"
+        - "package glow remains subtle"
+    audio:
+      dialogue: []
+      voiceover: []
+      ambience:
+        - "rain"
+        - "reduced distant traffic"
+        - "electrical buzz"
+      sfx:
+        - "faint continuing electronic pulse"
+      music: "none"
+      silence: "sparse sound emphasizes reaction"
+    transition_in: "cut to reaction"
+    transition_out: "cut to final activation"
+    model_notes:
+      seedance: "Important identity continuity shot; same face and wardrobe."
+      kling: "Primary motion is micro-expression and subtle dolly."
+      runway: "Positive wording: camera slowly pushes in; subject remains still."
+      veo: "Good place for ambience-only audio with no dialogue."
+
+  - shot_id: "SH05"
+    timecode: "00:12-00:15"
+    duration: "3s"
+    story_beat: "Destination activates"
+    narrative_purpose: "End on the irreversible hook that the alley has accepted the package."
+    shot_type: "final activation tableau"
+    shot_size: "medium wide shot"
+    camera_angle: "low eye-level from behind courier toward far door"
+    lens: "35mm normal-wide"
+    lens_reason: "35mm preserves courier-to-door distance and lets the intercom activation read clearly."
+    camera_support: "locked tripod"
+    camera_motion: "locked-off camera remains still as the intercom light activates"
+    focus: "deep enough to hold courier silhouette and intercom light; puddle reflection can stay soft"
+    composition: "courier foreground/midground facing away, intercom panel background right third, puddle reflection foreground"
+    subject_action: "Courier stands short of the sealed metal door while the intercom panel lights up."
+    blocking:
+      start_position: "Courier in foreground or midground facing destination door."
+      end_position: "Courier remains still as door panel glows."
+      path: "No walking after activation; stop short of door."
+      eyeline: "Courier looks at intercom panel."
+      screen_direction: "Subject faces away from camera toward depth."
+      axis_note: "Preserve entrance-to-door axis; final shot confirms geography."
+    scene:
+      location: "Far end of forbidden service alley"
+      foreground: "Puddle reflecting red package glow"
+      midground: "Courier with black bag"
+      background: "Sealed metal service door and intercom panel"
+      weather: "Rain continues"
+      lighting: "Intercom panel glow, red package reflection, cold alley ambience"
+    continuity:
+      characters:
+        - "courier_01"
+      props:
+        - "bag_01"
+        - "package_01_glowing"
+        - "intercom_activation_01"
+      wardrobe:
+        - "red waterproof jacket"
+      state_locks:
+        - "door activates but does not open"
+        - "no recipient appears"
+        - "package glow and panel activation feel connected"
+    audio:
+      dialogue: []
+      voiceover: []
+      ambience:
+        - "steady rain"
+        - "low electrical buzz"
+      sfx:
+        - "soft intercom relay click"
+        - "faint package pulse"
+      music: "none"
+      silence: "end sparse, no sting"
+    transition_in: "cut to final activation"
+    transition_out: "cut to black before door opens"
+    model_notes:
+      seedance: "Final continuity shot; do not show storyboard board or labels."
+      kling: "Primary motion is panel light activating; subject remains still."
+      runway: "Good single-scene end shot; no complex multi-action."
+      veo: "Audio can include relay click and rain if supported."
+
+qa:
+  shot_gate: "pass"
+  professional_shot_language: true
+  continuity_issues: []
+  model_risks:
+    - "If prompts overuse danger language, models may add chase or attackers."
+    - "Macro package insert must not transform the package into a weapon or suitcase."
+    - "Final door should activate but not open."

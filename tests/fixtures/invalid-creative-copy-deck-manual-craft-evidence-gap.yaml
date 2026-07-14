@@ -1,0 +1,26 @@
+fixture:
+  fixture_id: invalid-creative-copy-deck-manual-craft-evidence-gap
+  description: Reject word-list-clean copy when manual review finds uniform rhythm, abstraction, and evidence detachment.
+  expectation: reject
+  mutations:
+    - operation: replace
+      path: story_package.copy_execution.audience_facing_text
+      value: "Momentum becomes meaning. Clarity becomes confidence. Progress becomes possibility."
+    - operation: replace
+      path: project.copy_development.manual_craft_review.status
+      value: needs_revision
+    - operation: replace
+      path: project.copy_development.manual_craft_review.rhythm_assessment
+      value: "Three identical sentence shells create mechanical rhythm."
+    - operation: replace
+      path: project.copy_development.manual_craft_review.abstraction_assessment
+      value: "Abstract nouns replace the approved visible proof."
+    - operation: replace
+      path: project.copy_development.manual_craft_review.evidence_alignment
+      value: fail
+    - operation: replace
+      path: story_package.copy_execution.manual_craft_status
+      value: needs_revision
+  expected_failure_ids:
+    - copy_manual_craft_review_failed
+  expected_review_ids: []

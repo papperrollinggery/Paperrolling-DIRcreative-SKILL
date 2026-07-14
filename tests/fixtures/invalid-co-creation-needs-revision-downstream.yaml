@@ -1,0 +1,161 @@
+artifact:
+  artifact_id: invalid-co-creation-needs-revision-downstream
+  version: 1.0.0
+  status: fixture_invalid
+  owner_skill: co-creation-gate-runtime
+
+co_creation_run:
+  project_title: "Invalid Needs Revision Downstream"
+  version: "1.0.0"
+  run_type: dry_run_fixture
+  simulated_choices_allowed: true
+  real_user_co_creation_verified: false
+  visual_output_mode: prompt_only
+  longform_generation_mode: single_sequence
+  source_artifact_ids:
+    - tests/fixtures/invalid-co-creation-needs-revision-downstream.yaml
+
+gate_policy:
+  required_gates:
+    - concept_options_gate
+    - story_approval_gate
+    - script_approval_gate
+    - shot_list_approval_gate
+    - visual_direction_gate
+    - visual_bible_approval_gate
+    - sequence_plan_gate
+    - global_reference_pack_gate
+    - sequence_reference_pack_gate
+    - clean_frame_gate
+    - video_prompt_gate
+  block_media_generation_until:
+    - clean_frame_gate
+    - video_prompt_gate
+
+gates:
+  - gate_id: invalid-gate-01
+    gate_type: concept_options_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented: ["A", "B", "C"]
+    selected_option: "A"
+    rationale: "Fixture setup."
+    downstream_artifacts: []
+    blocks: []
+  - gate_id: invalid-gate-02
+    gate_type: story_approval_gate
+    status: needs_revision
+    decision_source: simulated_fixture
+    options_presented: ["Revise story", "Keep current", "Stop"]
+    selected_option: "Revise story"
+    rationale: "Story contradiction was found, but this invalid fixture still declares downstream writes."
+    downstream_artifacts:
+      - tests/fixtures/generated-story.md
+      - tests/fixtures/generated-script.md
+    blocks: []
+  - gate_id: invalid-gate-03
+    gate_type: script_approval_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented: ["Script A", "Script B"]
+    selected_option: "Script A"
+    rationale: "Invalid downstream approval after story revision request."
+    downstream_artifacts: []
+    blocks: []
+  - gate_id: invalid-gate-04
+    gate_type: shot_list_approval_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented: ["Five shots", "Three shots"]
+    selected_option: "Five shots"
+    rationale: "Fixture continuation."
+    downstream_artifacts: []
+    blocks: []
+  - gate_id: invalid-gate-05
+    gate_type: visual_direction_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented: ["Grounded", "Stylized"]
+    selected_option: "Grounded"
+    rationale: "Fixture continuation."
+    downstream_artifacts: []
+    blocks: []
+  - gate_id: invalid-gate-06
+    gate_type: visual_bible_approval_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented: ["Lock bible", "Revise bible"]
+    selected_option: "Lock bible"
+    rationale: "Fixture continuation."
+    downstream_artifacts: []
+    blocks: []
+  - gate_id: invalid-gate-07
+    gate_type: sequence_plan_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented: ["Single sequence", "Split sequence"]
+    selected_option: "Single sequence"
+    rationale: "Fixture continuation."
+    downstream_artifacts: []
+    blocks: []
+  - gate_id: invalid-gate-08
+    gate_type: global_reference_pack_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented: ["Separated references", "Dense board"]
+    selected_option: "Separated references"
+    rationale: "Fixture continuation."
+    downstream_artifacts: []
+    blocks: []
+  - gate_id: invalid-gate-09
+    gate_type: sequence_reference_pack_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented: ["Single pack", "Two packs"]
+    selected_option: "Single pack"
+    rationale: "Fixture continuation."
+    downstream_artifacts: []
+    blocks: []
+  - gate_id: invalid-gate-10
+    gate_type: clean_frame_gate
+    status: pending
+    decision_source: pending
+    options_presented: ["Stay prompt-only", "Generate clean frame"]
+    selected_option: ""
+    rationale: "Media is not authorized."
+    downstream_artifacts: []
+    blocks:
+      - media_generation
+  - gate_id: invalid-gate-11
+    gate_type: video_prompt_gate
+    status: pending
+    decision_source: pending
+    options_presented: ["Stay prompt-only", "Export prompts"]
+    selected_option: ""
+    rationale: "Video generation is not authorized."
+    downstream_artifacts: []
+    blocks:
+      - media_generation
+
+qa:
+  all_required_gates_present: true
+  simulated_choices_labeled: true
+  live_user_choices_required: true
+  pending_gates_block_media: true
+  no_creative_system_defaults: true
+  failures:
+    - needs_revision_downstream_artifacts
+
+skill_run_receipt:
+  run_id: invalid-needs-revision-downstream
+  skill_id: co-creation-gate-runtime
+  input_artifacts: []
+  output_artifacts:
+    - tests/fixtures/invalid-co-creation-needs-revision-downstream.yaml
+  decisions: []
+  unresolved_questions: []
+  qa_gate:
+    status: fail
+    reasons:
+      - "needs_revision gate incorrectly declares downstream artifacts."
+  next_recommended_skill: story-development

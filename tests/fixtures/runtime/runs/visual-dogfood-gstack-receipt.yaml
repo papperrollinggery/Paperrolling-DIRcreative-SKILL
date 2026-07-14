@@ -1,0 +1,142 @@
+fixture_authority: none
+live_state_authority: false
+live_acceptance_authority: false
+host_attestation_authority: false
+
+artifact:
+  artifact_id: visual-dogfood-gstack-receipt-v1
+  version: 1.0.0
+  source_artifact_ids:
+    - dircreative-visual-dogfood-pages
+    - dircreative-readiness-audit
+    - dircreative-goal-completion-audit
+  status: approved
+  owner_skill: gstack
+
+run:
+  run_id: visual-dogfood-gstack-2026-05-17
+  tool: gstack browse
+  command_source: "manual browser dogfood after scripts/dircreative_visual_dogfood.py"
+  visual_dogfood_index: /tmp/dircreative-visual-dogfood/index.html
+  console_status: no_console_messages
+  browser_status: pass
+  screenshot_reviewed_by_agent: true
+  real_media_generated: false
+  notes:
+    - "This receipt records gstack/browser dogfood opening of all reproducible visual dogfood pages."
+    - "2026-05-17 refresh added goal-mode complete-idea and rough-idea simulation pages."
+    - "The screenshots are temporary local proof artifacts under /tmp; regenerate with scripts/dircreative_visual_dogfood.py and gstack browse if /tmp is cleared."
+
+pages_checked:
+  - page_id: visual_dogfood_index
+    url: file:///tmp/dircreative-visual-dogfood/index.html
+    status: 200
+    console_status: no_console_messages
+    screenshot_path: /tmp/dircreative-gstack-index.png
+    required_visible_terms:
+      - DIRcreative Visual Dogfood
+      - one-idea.html
+      - complete-idea.html
+      - goal-mode-simulation.html
+      - goal-mode-rough-idea.html
+      - readiness-audit.html
+      - goal-audit.html
+  - page_id: one_idea_flow
+    url: file:///tmp/dircreative-visual-dogfood/one-idea.html
+    status: 200
+    console_status: no_console_messages
+    screenshot_path: /tmp/dircreative-gstack-one-idea.png
+    required_visible_terms:
+      - DIRcreative 一句话想法流程可视检查
+      - 生成前合同
+      - QA 与重试规则
+  - page_id: complete_idea_flow
+    url: file:///tmp/dircreative-visual-dogfood/complete-idea.html
+    status: 200
+    console_status: no_console_messages
+    screenshot_path: /tmp/dircreative-gstack-complete-idea.png
+    required_visible_terms:
+      - DIRcreative 完整想法流程可视检查
+      - 导演组会议
+      - 6镜头分镜
+      - QA 与重试规则
+  - page_id: goal_mode_complete_simulation
+    url: file:///tmp/dircreative-visual-dogfood/goal-mode-simulation.html
+    status: 200
+    console_status: no_console_messages
+    screenshot_path: /tmp/dircreative-gstack-goal-mode-simulation.png
+    required_visible_terms:
+      - DIRcreative Goal 模式模拟测试
+      - "阶段: 目标模式模拟测试"
+      - 模拟用户选择
+      - "阶段: 生成前合同"
+      - "阶段: 模拟测试结论"
+  - page_id: goal_mode_rough_idea_simulation
+    url: file:///tmp/dircreative-visual-dogfood/goal-mode-rough-idea.html
+    status: 200
+    console_status: no_console_messages
+    screenshot_path: /tmp/dircreative-gstack-goal-mode-rough-idea.png
+    required_visible_terms:
+      - DIRcreative Goal 模式一句话想法模拟测试
+      - "阶段: 想法读取"
+      - 模拟用户选择
+      - "阶段: 生成前合同"
+      - "阶段: 模拟测试结论"
+  - page_id: readiness_audit
+    url: file:///tmp/dircreative-visual-dogfood/readiness-audit.html
+    status: 200
+    console_status: no_console_messages
+    screenshot_path: /tmp/dircreative-gstack-readiness.png
+    required_visible_terms:
+      - DIRcreative Readiness Audit
+      - READINESS: PASS
+  - page_id: goal_completion_audit
+    url: file:///tmp/dircreative-visual-dogfood/goal-audit.html
+    status: 200
+    console_status: no_console_messages
+    screenshot_path: /tmp/dircreative-gstack-goal-audit.png
+    required_visible_terms:
+      - DIRcreative Goal Completion Audit
+      - live user acceptance receipt template
+      - TECHNICAL_READINESS: PASS
+      - GOAL_COMPLETE: NO
+
+qa:
+  visual_dogfood_pages_generated: true
+  gstack_opened_pages: true
+  screenshots_saved: true
+  console_errors_absent: true
+  one_idea_flow_visible: true
+  complete_idea_flow_visible: true
+  goal_mode_complete_simulation_visible: true
+  goal_mode_rough_idea_simulation_visible: true
+  readiness_audit_visible: true
+  goal_audit_visible: true
+  no_real_media_generated: true
+  failures: []
+
+skill_run_receipt:
+  run_id: visual-dogfood-gstack-2026-05-17
+  skill_id: gstack
+  input_artifacts:
+    - /tmp/dircreative-visual-dogfood/index.html
+    - /tmp/dircreative-visual-dogfood/one-idea.html
+    - /tmp/dircreative-visual-dogfood/complete-idea.html
+    - /tmp/dircreative-visual-dogfood/goal-mode-simulation.html
+    - /tmp/dircreative-visual-dogfood/goal-mode-rough-idea.html
+    - /tmp/dircreative-visual-dogfood/readiness-audit.html
+    - /tmp/dircreative-visual-dogfood/goal-audit.html
+  output_artifacts:
+    - tests/fixtures/runtime/runs/visual-dogfood-gstack-receipt.yaml
+  decisions:
+    - "Use reproducible local HTML pages as gstack dogfood targets."
+    - "Record console status and screenshot paths for each page."
+  unresolved_questions:
+    - "User still decides whether the observed chat experience is satisfactory."
+  qa_gate:
+    status: pass
+    reasons:
+      - "gstack/browser dogfood opened index, one-idea, complete-idea, goal-mode complete simulation, goal-mode rough-idea simulation, and readiness pages with no console messages."
+      - "gstack opened the goal audit page and confirmed GOAL_COMPLETE: NO is visible."
+      - "Screenshots were saved for all dogfood pages."
+  next_recommended_skill: checkpoint

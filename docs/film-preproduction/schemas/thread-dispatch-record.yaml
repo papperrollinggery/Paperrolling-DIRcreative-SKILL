@@ -1,0 +1,110 @@
+thread_dispatch_record:
+  record_id: ""
+  version: "1.0.0"
+  project_title: ""
+  main_controller_thread_id: ""
+  active_goal_summary: ""
+  acceptance_standard: "OBJECTIVE_COMPLETE: YES only after real live-user acceptance"
+  created_at: ""
+
+thread_class_policy:
+  allowed_thread_classes:
+    - pinned_user_facing_controller
+    - disposable_read_only_worker
+    - isolated_worktree_worker
+    - reusable_research_thread
+  default_user_facing_thread_class: pinned_user_facing_controller
+  same_directory_worker_default: read_only
+  substantive_output_default_thread_class: isolated_worktree_worker
+  read_only_worker_use: review_research_cold_review_only
+  main_controller_write_boundary: receipts_adoption_merge_rollback_validation_only
+  hidden_thread_state_is_truth: false
+  second_level_subagents:
+    allowed: true
+    default_authorized: false
+    host_thread_classes:
+      - disposable_read_only_worker
+      - isolated_worktree_worker
+      - reusable_research_thread
+    allowed_task_modes:
+      - prompt_decomposition
+      - reference_check
+      - risk_inventory
+      - candidate_ranking
+      - source_or_contract_triage
+    forbidden_actions:
+      - write_files
+      - write_live_acceptance
+      - change_write_scope
+      - verify_cleanup
+      - mark_goal_complete
+      - mark_objective_complete
+      - become_durable_truth
+
+thread_budget:
+  max_active_workers: 3
+  active_worker_count: 0
+  approval_required_above: 5
+  over_budget_reason: ""
+
+dispatches:
+  - thread_id: ""
+    thread_class: "pinned_user_facing_controller | disposable_read_only_worker | isolated_worktree_worker | reusable_research_thread"
+    role: ""
+    professional_identity: ""
+    viewpoint: ""
+    read_scope: []
+    write_scope: "none | isolated_worktree_only | main_controller_only"
+    worktree_path: ""
+    allowed_actions: []
+    expected_output: ""
+    stop_condition: ""
+    cleanup_rule: "keep_pinned | archive_after_consumed | archive_after_adoption_or_rejection | keep_reusable_until_research_captured"
+    may_mark_goal_complete: false
+    output_status: "pending | consumed | rejected | adopted | deferred"
+    terminal_reason: "completed | adopted | rejected | failed | system_error | interrupted | duplicate | superseded | abandoned | null"
+    findings_summary: []
+    adopted_into: []
+    consumed_at: ""
+    cleanup_verified_by: ""
+    archived: false
+    pinned: false
+    second_level_subagents:
+      authorized: false
+      allowed_task_modes: []
+      invocations: []
+
+worktree_audit:
+  command: "git worktree list --porcelain"
+  expected_main_worktree: ""
+  unintended_worker_worktrees_present: false
+  stale_worker_checkout_present: false
+  checked_paths: []
+  evidence_source: "git | recorded_receipt"
+
+completion_boundary:
+  live_user_acceptance_receipt_exists: false
+  release_gate_passed: false
+  objective_complete: false
+  completion_claim_allowed: false
+
+qa:
+  one_pinned_main_controller: false
+  disposable_workers_archived: false
+  useful_findings_reconciled: false
+  no_hidden_thread_truth: false
+  no_unintended_worktrees: false
+  no_completion_claim: false
+  failures: []
+
+skill_run_receipt:
+  run_id: ""
+  skill_id: "dircreative"
+  input_artifacts: []
+  output_artifacts: []
+  decisions: []
+  unresolved_questions: []
+  qa_gate:
+    status: "pass | fail | needs_user"
+    reasons: []
+  next_recommended_skill: ""

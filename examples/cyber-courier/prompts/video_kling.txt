@@ -1,0 +1,77 @@
+# Kling Video Prompt Pack
+
+Best use: image-to-video per-shot motion control. Use clean shot stills as the primary input for first-frame/start-end-frame workflows, not the full dense storyboard board.
+
+Selected strategy for this test: hybrid.
+Clean frames currently planned for SH01, SH03, and SH05. If SH02 or SH04 is tested in Kling and the result drifts, generate dedicated clean first frames for those shots before retrying.
+
+Kling formula: subject movement + background movement + camera movement.
+
+## Reference Map
+
+- image_01: courier face, red jacket, black bag.
+- image_02: alley geography.
+- image_03: package and scanner pulse.
+- image_05: rain, red/cyan lighting, wet material.
+- image_04: shot order reference only; do not animate the board itself.
+- image_06_clean_sh01: primary image for SH01.
+- image_07_clean_sh03: primary image for SH03.
+- image_08_clean_sh05: primary or end frame for SH05.
+
+## SH01 Prompt
+
+Subject movement: The courier stands at the alley entrance in a red rain jacket, holding the black delivery bag close, making a small hesitant weight shift toward the alley.
+
+Background movement: Heavy rain falls, neon reflections ripple across wet pavement, distant signage flickers softly.
+
+Camera movement: Locked-off wide shot remains still.
+
+Audio policy: visual-only generation; add rain and city hum in post.
+
+## SH02 Prompt
+
+Reference strategy: no dedicated clean frame in the hybrid pack. Use all-reference/element guidance or generate a SH02 clean first frame before direct I2V if precision matters.
+
+Subject movement: The courier steps forward into the alley with controlled caution and tightens his hand around the black delivery bag strap.
+
+Background movement: Rain streaks downward, red neon reflections slide across puddles, steam drifts lightly near pipes.
+
+Camera movement: Slow tracking movement behind the courier, keeping him centered as he walks into depth.
+
+Audio policy: visual-only generation; add footsteps and rain in post.
+
+## SH03 Prompt
+
+Subject movement: Inside the half-open delivery bag, the sealed matte-black package remains still while a thin red scanner pulse turns on across the seal.
+
+Background movement: Water droplets tremble on the black bag fabric, soft alley reflections shimmer out of focus.
+
+Camera movement: Static macro shot holds focus on the scanner seal.
+
+Audio policy: visual-only generation; add scanner beep in post.
+
+## SH04 Prompt
+
+Reference strategy: no dedicated clean frame in the hybrid pack. Use all-reference/element guidance or generate a SH04 clean first frame before direct I2V if performance consistency matters.
+
+Subject movement: The courier stops, looks down at the glowing package, then slowly raises his eyes toward the far door; his jaw tightens with restrained dread.
+
+Background movement: Rain continues behind him, neon light flickers gently, breath is faintly visible in cold air.
+
+Camera movement: Very slow push-in toward the courier's face.
+
+Audio policy: visual-only generation; keep post audio sparse.
+
+## SH05 Prompt
+
+Subject movement: The courier stands still short of the sealed metal door, holding the black bag, watching the intercom panel light up.
+
+Background movement: Rain falls, the door panel emits a narrow light, red package glow reflects in a puddle.
+
+Camera movement: Locked-off medium wide shot remains still.
+
+Audio policy: visual-only generation; add relay click and rain in post.
+
+## Anti-Misread Clause
+
+Use reference boards only to understand identity, props, scene geography, and shot order. Do not show or animate the board, panels, labels, arrows, grids, or layout.

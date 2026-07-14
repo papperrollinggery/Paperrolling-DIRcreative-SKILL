@@ -1,0 +1,42 @@
+eval_fixture:
+  id: E1
+  rule: "A self-declared S1 label is not authoritative unless its type and URL match a registered S1 source."
+  expected_error_id: E1_AUTHORITATIVE_SOURCE_REQUIRED
+  negative_cases:
+    - expected_error_id: E1_AUTHORITATIVE_SOURCE_REQUIRED
+      case:
+        claim:
+          authoritative: true
+          evidence_level: S1
+          source_type: github_prompt_skill
+          source_url: "https://github.com/example/fake-official-source"
+          claim_scope: "fake official capability"
+          version_scope: "veo-3.1-generate-001"
+          provider_surface: "Vertex AI publisher model predictLongRunning API"
+    - expected_error_id: E1_AUTHORITATIVE_SOURCE_REQUIRED
+      case:
+        claim:
+          authoritative: true
+          evidence_level: S3
+          source_type: version_scoped_official_guide
+          source_url: "https://help.runwayml.com/fake-unregistered"
+          claim_scope: "Runway Gen-4.5 generation on the documented web surface"
+          version_scope: "Gen-4.5"
+          provider_surface: "Runway web Gen-4.5 generation"
+  positive_controls:
+    - claim:
+        authoritative: true
+        evidence_level: S1
+        source_type: official_vertex_api_reference
+        source_url: "https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/veo-video-generation"
+        claim_scope: "Generic Vertex prediction reference retained for conflict tracking; no exact stable-card generateAudio binding was located during the 2026-07-11 audit"
+        version_scope: "veo-3.1-generate-001"
+        provider_surface: "Vertex AI publisher model predictLongRunning API"
+    - claim:
+        authoritative: true
+        evidence_level: S3
+        source_type: version_scoped_official_guide
+        source_url: "https://help.runwayml.com/hc/en-us/articles/46974685288467-Creating-with-Gen-4-5"
+        claim_scope: "Runway Gen-4.5 generation on the documented web surface"
+        version_scope: "Gen-4.5"
+        provider_surface: "Runway web Gen-4.5 generation"

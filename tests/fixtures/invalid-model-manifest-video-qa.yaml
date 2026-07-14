@@ -1,0 +1,37 @@
+contract_fixture:
+  id: video-qa-must-match-computed-facts
+  validator: video_qa
+  negative_cases:
+    - expected_error_contains: "QA field missing or non-boolean: official_source_conflicts_preserved"
+      case:
+        computed: &computed
+          exact_capability_cards_resolved: true
+          deprecated_or_preview_aliases_rejected: true
+          rights_gate_passed: false
+          desired_audio_route_compatible: true
+          preserve_change_disjoint: true
+          storyboard_clean_frame_separation_valid: true
+          official_source_conflicts_preserved: true
+        qa:
+          exact_capability_cards_resolved: true
+          deprecated_or_preview_aliases_rejected: true
+          rights_gate_passed: false
+          desired_audio_route_compatible: true
+          preserve_change_disjoint: true
+          storyboard_clean_frame_separation_valid: true
+    - expected_error_contains: "lying QA field rights_gate_passed"
+      case:
+        computed: *computed
+        qa: &lying_qa
+          exact_capability_cards_resolved: true
+          deprecated_or_preview_aliases_rejected: true
+          rights_gate_passed: true
+          desired_audio_route_compatible: true
+          preserve_change_disjoint: true
+          storyboard_clean_frame_separation_valid: true
+          official_source_conflicts_preserved: true
+  positive_control:
+    computed: *computed
+    qa:
+      <<: *lying_qa
+      rights_gate_passed: false

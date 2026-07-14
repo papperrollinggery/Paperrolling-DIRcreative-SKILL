@@ -1,0 +1,24 @@
+Asset role: SCENE GEOGRAPHY + CAMERA FOV REFERENCE
+Role purity: lock the studio geography, mirror position, floor reflection, axis, and depth
+Inherited sources: product identity reference for scale only
+Preserve: dark studio, smoky mirror, black reflective floor, camera axis, vertical depth
+Do not show or animate: FOV wedges, arrows, labels, atlas panels, characters, text, logos
+
+Use case: advertising scene and camera planning
+Asset type: scene geography plus camera FOV atlas
+Primary purpose: give downstream prompts stable spatial truth
+
+Canvas and layout:
+- Aspect ratio: 9:16 portrait planning atlas
+- Visual center: one clear studio route and one camera axis
+- Foreground / midground / background: floor reflection, display-object zone, mirror depth
+- Composition grammar: readable depth and parallax, not a decorative mood collage
+- Movement room: leave space for a controlled 45-degree display turn and small camera pull-back
+
+Camera and render look:
+- Eye-level display-object height, normal perspective, stable horizon
+- Deep neutral blacks, restrained burgundy edge light, soft mirror reflections
+- Low-density haze only where directional light crosses the studio air
+
+Continuity:
+- Preserve mirror geometry, floor, axis, and lighting direction

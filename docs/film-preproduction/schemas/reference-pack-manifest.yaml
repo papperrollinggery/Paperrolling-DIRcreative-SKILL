@@ -1,0 +1,263 @@
+reference_pack_manifest:
+  project_title: ""
+  version: "1.0.0"
+  strategy: "compressed_model_safe_pack"
+  longform_generation_mode: "hybrid | stepwise | batch | single_sequence"
+  visual_output_mode: "prompt_only | assisted_generation | external_generation"
+  source_artifact_ids: []
+
+intake_state:
+  read_before_regenerate: true
+  source_precedence: []
+  unresolved_sources: []
+  next_action: ""
+
+stage_receipt:
+  status: "draft | ready_for_review | locked | generated | accepted | blocked"
+  source_truth_refs: []
+  produced_artifacts: []
+  user_confirmation_required: false
+  next_action: ""
+
+capability_resolution:
+  registry_path: "docs/film-preproduction/sources/model-sources.yaml"
+  registry_version: ""
+  selected_cards:
+    - capability_card_id: ""
+      model_key: ""
+      version: ""
+      status: "current | preview | legacy | deprecated | workflow_only"
+      provider_surface: ""
+      verified_on: ""
+      accessed_on: ""
+      evidence_level: "S1 | S2 | S3 | S4"
+      source_urls: []
+      source_conflicts: []
+      resolution_status: "resolved | stale | ambiguous | unsupported"
+
+rights_gate:
+  status: "verified | conditional | unverified | blocked"
+  source_asset_rights: ""
+  likeness_authorization: "not_applicable | verified | unverified | blocked"
+  voice_authorization: "not_applicable | verified | unverified | blocked"
+  brand_or_character_authorization: "not_applicable | verified | unverified | blocked"
+  music_or_audio_rights: "not_applicable | verified | unverified | blocked"
+  provider_restrictions_checked: false
+  evidence_refs: []
+  generation_allowed: false
+
+execution_capabilities:
+  image_generation:
+    available: false
+    provider: "none | openai_imagegen | external | unknown"
+    allowed_by_user: false
+  video_generation:
+    available: false
+    provider: "none | sora | seedance | kling | runway | veo | external | unknown"
+    allowed_by_user: false
+  file_write:
+    available: true
+  browser_review:
+    available: false
+
+user_decision_gate:
+  required: true
+  status: "pending | approved | needs_revision"
+  options_presented: 0
+  selected_option: ""
+  user_lock_required_before_video_adapter: true
+  can_mix_options: true
+  batch_skip_per_sequence_gate: false
+  accepted_risk: []
+  notes: []
+
+sequence_scope:
+  target_duration_sec: 15
+  sequence_plan: ""
+  sequence_ids: []
+  generation_unit_sec: 15
+  global_reference_pack: true
+  per_sequence_reference_packs: false
+
+reference_strategy:
+  selected: "all_reference_sequence | hybrid | per_shot_i2v | minimal_test"
+  rationale: ""
+  shot_count_policy: ""
+  clean_frame_policy: "not_required | selected_key_frames | every_shot | start_end_only"
+  user_options_presented: []
+  accepted_risks: []
+
+assets:
+  - asset_id: ""
+    entity_ids: []
+    entity_binding_role: "identity | product | prop | scene | style | blocking | none"
+    source_kind: "user_upload | client_file | conversation_media | project_file | generated_candidate"
+    source_locator: ""
+    source_hash: ""
+    source_authorization: "user_provided | project_owned | unknown"
+    inherits_from: []
+    reuse_action: "direct_reference | edit | derive | planning_only | unresolved"
+    locked: false
+    role: "master_reference_board | identity_product_board | character_identity_reference | environment_camera_board | scene_geography_camera_fov_reference | storyboard_motion_board | professional_storyboard_motion_map | style_material_board | lighting_material_style_board | clean_first_frame | clean_end_frame | motion_reference_video | audio_reference | element_reference"
+    primary_job: ""
+    supports: []
+    visible_role_label: ""
+    inherits_character_identity_from: ""
+    inherits_scene_geography_from: ""
+    fov_source_shot_id: ""
+    duplicate_policy: "no_duplicate_visual_truth | inherits_locked_source | deliberate_repetition"
+    source_prompt_or_file: ""
+    media_class: "planning_board | clean_frame | reusable_asset | motion_reference | audio_reference"
+    rights:
+      status: "verified | conditional | unverified | blocked"
+      owner_or_license_basis: ""
+      evidence_refs: []
+    status: "candidate | selected | locked | superseded"
+    asset_output:
+      status: "prompt_ready | generated_candidate | user_locked | external_pending | external_imported | rejected"
+      prompt_file: ""
+      generated_file: ""
+      external_instructions: ""
+      source_tool: ""
+      user_lock_status: "not_required | pending | locked | rejected"
+    direct_input_policy:
+      resolved_cards:
+        - capability_card_id: ""
+          version: ""
+          provider_surface: ""
+          reference_mode: "planning_only | first_frame | last_frame | asset_reference | style_reference | character_reference | element_reference | motion_reference | audio_reference"
+          allowed: false
+          source_field: "reference_modes"
+          anti_misread_required: false
+          reason: ""
+      seedance: "allowed | conditional | forbidden | planning_only"
+      kling: "allowed | conditional | forbidden | planning_only | element_only"
+      runway: "allowed | conditional | forbidden | planning_only | reference_only"
+      veo: "allowed | conditional | forbidden | planning_only"
+    contains: []
+    clean_frame_prompts:
+      - shot_id: ""
+        frame_role: "clean_first_frame | clean_key_frame | clean_end_frame"
+        prompt_file: ""
+        primary_model_slots: []
+    text_policy: "no_text | large_labels_only | short_labels_only | production_notes_allowed"
+    storyboard_cell_requirements:
+      required: false
+      per_shot_cells: false
+      fields:
+        - shot_id
+        - timecode
+        - duration
+        - shot_image_region
+        - detailed_frame_description
+        - shot_size
+        - focal_length
+        - camera_position
+        - camera_movement
+        - subject_blocking
+        - sound
+        - transition
+        - model_risk
+    must_not_animate: []
+    transformation_contract:
+      operation: "generate | edit | extend | retry | not_applicable"
+      preserve: []
+      change: []
+      allow_incidental_change: []
+      forbidden_change: []
+      overlap_check: "pass | fail | not_applicable"
+    model_risks: []
+    qa:
+      readable_at_video_resolution: false
+      one_primary_job: false
+      no_conflicting_subjects: false
+      clean_frame_available_if_needed: false
+      anti_misread_clause_required: false
+      anti_misread_clause_present: false
+
+model_pack_recipes:
+  sora:
+    enabled: false
+    capability_card_id: ""
+    version: ""
+    provider_surface: ""
+    reference_budget_from_card: true
+    reference_modes_used: []
+    rights_gate_status: ""
+    required_bindings: []
+  seedance:
+    enabled: false
+    capability_card_id: ""
+    version: ""
+    provider_surface: ""
+    reference_budget_from_card: true
+    allowed_asset_roles: []
+    required_bindings: []
+    anti_misread_required_for_boards: false
+  kling:
+    enabled: false
+    capability_card_id: ""
+    version: ""
+    status: "current | legacy"
+    provider_surface: ""
+    reference_budget_from_card: true
+    reference_modes_used: []
+    planning_only_asset_roles: []
+    prompt_fields_required_by_selected_card: []
+  runway:
+    enabled: false
+    generation_capability_card_id: ""
+    edit_capability_card_id: ""
+    deprecated_card_ids_rejected: []
+    provider_surface: ""
+    reference_budget_from_card: true
+    reference_modes_used: []
+    planning_only_asset_roles: []
+  veo:
+    enabled: false
+    capability_card_id: ""
+    version: ""
+    provider_surface: ""
+    source_conflicts: []
+    reference_budget_from_card: true
+    reference_modes_used: []
+    desired_audio: {}
+    generation_audio_route: ""
+    request_audio_parameter: ""
+    anti_misread_required_for_boards: false
+
+qa:
+  reference_pack_gate: ""
+  roles_unique: false
+  dense_board_policy_present: false
+  clean_first_frame_policy_present: false
+  visual_output_mode_valid: false
+  capability_receipt_present: false
+  asset_output_statuses_present: false
+  longform_mode_valid: false
+  model_budget_ok: false
+  video_model_safe: false
+  character_consistency_locked: false
+  scene_consistency_locked: false
+  duplicate_visual_truth_avoided: false
+  role_labels_present: false
+  professional_storyboard_page_present: false
+  storyboard_information_density_ok: false
+  exact_capability_cards_resolved: false
+  deprecated_or_alias_cards_rejected: false
+  rights_gate_passed: false
+  planning_boards_separated_from_clean_frames: false
+  preserve_change_disjoint: false
+  failures: []
+
+skill_run_receipt:
+  run_id: ""
+  skill_id: "reference-image-planner"
+  input_artifacts: []
+  output_artifacts: []
+  decisions: []
+  unresolved_questions: []
+  qa_gate:
+    status: "pass | fail | needs_user"
+    reasons: []
+  next_recommended_skill: "image-prompt-compiler"

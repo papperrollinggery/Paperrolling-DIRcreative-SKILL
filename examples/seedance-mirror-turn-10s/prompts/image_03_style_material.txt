@@ -1,0 +1,25 @@
+Asset role: LIGHTING + MATERIAL STYLE REFERENCE
+Role purity: lock light quality, black-level separation, satin response, lace texture, and mirror behavior
+Inherited sources: product identity reference
+Preserve: black satin, matte lace, deep burgundy accent, restrained reflections
+Do not show or animate: swatches, labels, board panels, human wearer, brand marks, fake text
+
+Use case: advertising lighting and material reference
+Asset type: style and material board
+Primary purpose: define observable surface behavior rather than a generic filter
+
+Canvas and layout:
+- Aspect ratio: 9:16 portrait board with one dominant material zone
+- Visual center: satin highlight and lace edge
+- Spatial layers: foreground edge reflection, midground surface, background neutral-black studio
+- Composition grammar: material isolation with controlled negative space
+
+Render look:
+- Lighting: narrow burgundy edge source plus low neutral fill, subtle contrast
+- Optics: spherical product perspective, subtle diffusion, local highlight bloom only when a practical crosses the lens edge
+- Atmosphere: sparse low-density haze only in the edge-light path
+- Grade: neutral balance first, textured deep blacks, soft highlight roll-off, low saturation, restrained burgundy
+- Preserve satin weave, lace detail, hardware edges, and mirror geometry
+
+Continuity:
+- Use this image to express consistent light and material behavior without decorative labels or board graphics

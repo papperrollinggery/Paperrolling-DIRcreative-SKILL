@@ -1,0 +1,694 @@
+taxonomy:
+  version: 1.0.0
+  verified_date: "2026-05-14"
+  purpose: "Normalize DIRcreative QA failures so generation retries and prompt-pattern updates stay comparable."
+
+failure_types:
+  - id: weak_story_idea
+    layer: story
+    symptoms:
+      - "No concrete conflict, decision, or emotional turn."
+      - "Idea describes mood but not screenable action."
+      - "Story relies on poster atmosphere or slice-of-life texture without external pressure, irreversible choice, reveal, or consequence."
+    severity: high
+    gate: story_gate
+    default_owner_skill: director-room
+
+  - id: story_development_skipped
+    layer: story
+    symptoms:
+      - "Assistant jumps from rough idea or visual reference into image generation, storyboard, or prompt writing before the story engine is approved."
+      - "Story gate lacks logline, story engine, external pressure, stakes, escalation, reversal, and ending consequence."
+    severity: critical
+    gate: story_gate
+    default_owner_skill: story-development
+
+  - id: generic_script
+    layer: script
+    symptoms:
+      - "Script could fit any brand, character, or genre."
+      - "Dialogue or voiceover states theme without visual proof."
+      - "Scenes are mood exchanges without character objective, obstacle, turn, reveal, or visible consequence."
+    severity: high
+    gate: script_gate
+    default_owner_skill: script-treatment
+
+  - id: script_depth_insufficient
+    layer: script
+    symptoms:
+      - "Script has attractive atmosphere but lacks professional dramatic tension."
+      - "The approved story engine is not translated into scene objectives, conflict pressure, action beats, turn/reveal, and consequence."
+      - "Dialogue decorates mood instead of creating pressure, misdirection, refusal, concession, reveal, or choice."
+    severity: high
+    gate: script_gate
+    default_owner_skill: script-treatment
+
+  - id: visual_generation_before_story_lock
+    layer: orchestration
+    symptoms:
+      - "Assistant generates visual material before story and script gates are approved."
+      - "Generated images make the workflow look advanced while story/script quality is still unapproved or rejected."
+    severity: critical
+    gate: co_creation_gate
+    default_owner_skill: co-creation-gate-runtime
+
+  - id: material_selection_missing
+    layer: orchestration
+    symptoms:
+      - "Assistant guesses whether the user wants a character reference, scene/FOV reference, storyboard/motion map, clean frame, style board, test image, full pack, or prompt-only export."
+      - "Prompt writing or media generation starts before the user-facing material selection gate is shown or simulated."
+    severity: high
+    gate: co_creation_gate
+    default_owner_skill: image-prompt-compiler
+
+  - id: thread_control_incomplete
+    layer: orchestration
+    symptoms:
+      - "Main-controller thread does not define worker role, write scope, expected output, or cleanup rule before dispatch."
+      - "Failed worktree initialization, stale worker findings, or same-directory worker writes are treated as project truth."
+    severity: high
+    gate: execution_gate
+    default_owner_skill: dircreative
+
+  - id: community_recipe_overfit
+    layer: research
+    symptoms:
+      - "A Reddit, X, Higgsfield-style, or prompt-library recipe is copied into DIRcreative without conversion into source truth, material role, prompt contract, and falsifiable QA."
+      - "Community model claims such as duration, reference slots, audio support, platform availability, or cost are treated as verified facts."
+      - "The prompt sounds sophisticated but bypasses story/script/shot locks or single-variable iteration."
+    severity: high
+    gate: prompt_research_gate
+    default_owner_skill: update
+
+  - id: vague_visual_direction
+    layer: visual_bible
+    symptoms:
+      - "Visual notes rely on broad adjectives."
+      - "No production rules for color, material, light, or texture."
+    severity: high
+    gate: visual_bible_gate
+    default_owner_skill: visual-bible
+
+  - id: F-COMP-01
+    layer: composition
+    symptoms:
+      - "The subject has no stable visual center or is defeated by background, reflection, text, or crop."
+    severity: high
+    gate: shot_gate
+    default_owner_skill: shot-design
+
+  - id: F-COMP-02
+    layer: composition
+    symptoms:
+      - "The prompt mechanically applies rule of thirds, center framing, or symmetry without a narrative purpose."
+    severity: medium
+    gate: shot_gate
+    default_owner_skill: shot-design
+
+  - id: F-COMP-03
+    layer: composition
+    symptoms:
+      - "Subject movement or camera movement exits the safe crop or has no movement room."
+    severity: high
+    gate: shot_gate
+    default_owner_skill: shot-design
+
+  - id: F-LOOK-01
+    layer: grade
+    symptoms:
+      - "The image is flat or the grade has no story, material, or continuity purpose."
+    severity: medium
+    gate: generation_qa_gate
+    default_owner_skill: generation-qa
+
+  - id: F-OPT-01
+    layer: optics
+    symptoms:
+      - "The prompt says cinematic filter or premium optics without naming observable lens behavior."
+    severity: medium
+    gate: prompt_gate
+    default_owner_skill: video-model-adapter
+
+  - id: F-OPT-02
+    layer: optics
+    symptoms:
+      - "Flare or bloom washes out the subject, black-level detail, or material texture."
+    severity: high
+    gate: generation_qa_gate
+    default_owner_skill: generation-qa
+
+  - id: F-OPT-03
+    layer: optics
+    symptoms:
+      - "Focus, depth of field, bokeh shape, or light-source position contradicts the stated lens behavior."
+    severity: medium
+    gate: generation_qa_gate
+    default_owner_skill: generation-qa
+
+  - id: F-ATM-01
+    layer: atmosphere
+    symptoms:
+      - "Tyndall or volumetric light appears without a directional source, medium, density, or visible light path."
+    severity: medium
+    gate: generation_qa_gate
+    default_owner_skill: generation-qa
+
+  - id: F-GRADE-01
+    layer: grade
+    symptoms:
+      - "Grade breaks white balance, product material, highlight readability, or continuity between shots."
+    severity: high
+    gate: generation_qa_gate
+    default_owner_skill: generation-qa
+
+  - id: overloaded_shot
+    layer: shot_design
+    symptoms:
+      - "One shot asks for multiple story beats, product actions, and camera moves."
+      - "Duration cannot support the described action."
+    severity: high
+    gate: shot_gate
+    default_owner_skill: shot-design
+
+  - id: unusable_reference_image_plan
+    layer: reference_image
+    symptoms:
+      - "One board is expected to solve identity, geography, product, story, and style at once."
+      - "Panels are too small for downstream video model reference."
+    severity: high
+    gate: image_prompt_gate
+    default_owner_skill: reference-image-planner
+
+  - id: generic_grid_board_layout
+    layer: image_prompt
+    symptoms:
+      - "Board reads as an equal-size template rather than an art-directed production artifact."
+      - "Hierarchy does not explain panel placement."
+    severity: medium
+    gate: image_prompt_gate
+    default_owner_skill: image-prompt-compiler
+
+  - id: fish_scale_material_artifact
+    layer: image_generation
+    symptoms:
+      - "Fabric, skin, metal, rain, or background carries scale-like high-frequency texture."
+      - "Surface continuity breaks into speckles, cracks, or over-sharpened noise."
+    severity: medium
+    gate: generation_qa_gate
+    default_owner_skill: generation-qa
+
+  - id: image_prompt_missing_json_style_config
+    layer: image_prompt
+    symptoms:
+      - "Prompt is only free prose."
+      - "No selected pattern IDs, layout policy, material truth, or consistency locks."
+    severity: high
+    gate: image_prompt_gate
+    default_owner_skill: image-prompt-compiler
+
+  - id: image_prompt_missing_visual_decomposition
+    layer: image_prompt
+    symptoms:
+      - "Prompt does not separate subject, action/blocking, details, environment, light, composition, camera, palette, material, proportion, and generation intent."
+      - "Visual bible or shot evidence cannot be traced into the final image prompt."
+    severity: high
+    gate: image_prompt_gate
+    default_owner_skill: image-prompt-compiler
+
+  - id: image_prompt_missing_prompt_layers
+    layer: image_prompt
+    symptoms:
+      - "Complex image asset has no complete director prompt, reusable prompt core, or targeted negative prompt."
+      - "Retry work cannot isolate which layer should change."
+    severity: medium
+    gate: image_prompt_gate
+    default_owner_skill: image-prompt-compiler
+
+  - id: invented_visual_fact
+    layer: image_prompt
+    symptoms:
+      - "Prompt or output adds logos, exact text, named locations, camera bodies, lens models, hidden objects, product features, wardrobe details, or scene props not visible or locked upstream."
+      - "Uncertain details are written as exact claims instead of broader production-safe wording."
+    severity: high
+    gate: image_prompt_gate
+    default_owner_skill: image-prompt-compiler
+
+  - id: empty_quality_wording
+    layer: image_prompt
+    symptoms:
+      - "Prompt relies on standalone praise words such as high detail, masterpiece, best quality, cinematic, beautiful, or premium."
+      - "Quality language is not tied to material, lighting, camera, readability, composition, or continuity constraints."
+    severity: medium
+    gate: image_prompt_gate
+    default_owner_skill: image-prompt-compiler
+
+  - id: storyboard_board_misread_by_video_model
+    layer: video_generation
+    symptoms:
+      - "Generated video shows the storyboard sheet, labels, panels, arrows, or tables."
+      - "Model animates the reference board instead of the cinematic scene."
+    severity: high
+    gate: generation_qa_gate
+    default_owner_skill: video-model-adapter
+
+  - id: copied_video_prompt_across_models
+    layer: video_prompt
+    symptoms:
+      - "Seedance, Kling, Runway, and Veo entries share the same instruction shape."
+      - "Prompt ignores known model-specific input behavior."
+    severity: high
+    gate: video_prompt_gate
+    default_owner_skill: video-model-adapter
+
+  - id: missing_audio_policy
+    layer: audio
+    symptoms:
+      - "Prompt does not state silence, generated audio, post audio, voiceover, music, or effects policy."
+      - "Audio is blended into visual prose without execution boundary."
+    severity: medium
+    gate: video_prompt_gate
+    default_owner_skill: video-model-adapter
+
+  - id: model_specific_motion_failure
+    layer: video_generation
+    symptoms:
+      - "Subject movement contradicts the input image."
+      - "Camera motion, background movement, or product action fails for one model but not another."
+    severity: medium
+    gate: generation_qa_gate
+    default_owner_skill: generation-qa
+
+  - id: product_benefit_not_visible
+    layer: advertising
+    symptoms:
+      - "Product claim is stated but not demonstrated."
+      - "The shot plan does not show proof, transformation, or use case."
+    severity: high
+    gate: script_gate
+    default_owner_skill: director-room
+
+  - id: film_story_conflict_missing
+    layer: story
+    symptoms:
+      - "The brief has atmosphere but no visible want, obstacle, pressure, decision, reveal, or consequence."
+      - "The audience cannot identify what changes on screen."
+    severity: high
+    gate: story_gate
+    default_owner_skill: story-development
+
+  - id: film_emotional_turn_missing
+    layer: story
+    symptoms:
+      - "The ending does not change how the viewer reads the beginning."
+      - "The emotional arc is a mood description instead of a screenable turn."
+    severity: high
+    gate: story_gate
+    default_owner_skill: script-treatment
+
+  - id: commercial_objective_missing
+    layer: advertising
+    symptoms:
+      - "The run does not state demand, proof, launch, conversion, retention, recall, trust, or another business objective."
+      - "Creative choices are detached from the commercial result."
+    severity: high
+    gate: director_room_gate
+    default_owner_skill: director-room
+
+  - id: audience_channel_context_missing
+    layer: advertising
+    symptoms:
+      - "Target audience, occasion, market, platform, or first release format is absent."
+      - "Shot rhythm and reference plan cannot be judged against a channel."
+    severity: high
+    gate: idea_intake_gate
+    default_owner_skill: idea-intake
+
+  - id: product_proof_not_visible
+    layer: advertising
+    symptoms:
+      - "The product benefit is asserted in copy but not shown as use, demonstration, comparison, transformation, or consequence."
+      - "The final memory frame does not prove the offer."
+    severity: high
+    gate: shot_gate
+    default_owner_skill: shot-design
+
+  - id: director_room_tradeoff_missing
+    layer: director_room
+    symptoms:
+      - "The director-room stage gives one recommendation without surfacing a film-versus-commercial tension."
+      - "The production choice does not name downstream impact."
+    severity: high
+    gate: director_room_gate
+    default_owner_skill: director-room
+
+  - id: product_lock_before_generation_missing
+    layer: image_generation
+    symptoms:
+      - "Product silhouette, material, scale, use method, logo/text policy, or forbidden drift is not frozen before product identity generation."
+      - "Creative Production or image generation starts from a product beauty shot that cannot lock product truth."
+    severity: critical
+    gate: image_prompt_gate
+    default_owner_skill: image-prompt-compiler
+
+  - id: generated_candidate_locked_without_self_qa
+    layer: generation_qa
+    symptoms:
+      - "A generated candidate is moved to user_locked before self-QA passes."
+      - "The user is asked to be the first QA pass."
+    severity: critical
+    gate: generation_qa_gate
+    default_owner_skill: generation-qa
+
+  - id: creative_production_widget_used_as_truth
+    layer: orchestration
+    symptoms:
+      - "A Creative Production widget, HTML page, temporary screenshot, or local URL is treated as source truth."
+      - "Generated review state is not written back into DIRcreative artifacts or `.dircreative/runs/`."
+    severity: critical
+    gate: execution_gate
+    default_owner_skill: image-prompt-compiler
+
+  - id: goal_autorun_claimed_live_acceptance
+    layer: acceptance
+    symptoms:
+      - "A Goal autorun dry-run writes or implies live user acceptance."
+      - "`simulated_fixture` choices are promoted to `real_user` acceptance."
+    severity: critical
+    gate: acceptance_gate
+    default_owner_skill: checkpoint
+
+  - id: continuity_drift
+    layer: continuity
+    symptoms:
+      - "Character, product, wardrobe, environment, or prop state changes without story reason."
+      - "Reference pack and shot list disagree."
+    severity: high
+    gate: generation_qa_gate
+    default_owner_skill: generation-qa
+
+  - id: character_identity_reference_drift
+    layer: reference_pack
+    symptoms:
+      - "Generated boards or clean frames show different faces, body proportions, wardrobe silhouette, protective gear, or recurring props."
+      - "Downstream images reinterpret the character instead of inheriting the locked identity reference."
+    severity: high
+    gate: reference_pack_gate
+    default_owner_skill: generation-qa
+
+  - id: scene_geography_reference_drift
+    layer: reference_pack
+    symptoms:
+      - "Generated boards or clean frames change route direction, street geography, vehicle position, landmark placement, or light-source direction."
+      - "Storyboard panels invent camera positions not present in the scene geography/camera FOV reference."
+    severity: high
+    gate: reference_pack_gate
+    default_owner_skill: generation-qa
+
+  - id: reference_asset_duplicate_conflict
+    layer: reference_pack
+    symptoms:
+      - "Several images repeat the same character or scene but introduce different visual facts."
+      - "Repetition creates confusion instead of reinforcing a locked source of truth."
+    severity: high
+    gate: reference_pack_gate
+    default_owner_skill: reference-image-planner
+
+  - id: reference_asset_role_label_missing
+    layer: reference_pack
+    symptoms:
+      - "Image or manifest does not clearly say whether the asset is a character reference, scene plus camera movement reference, storyboard/motion page, style reference, or clean I2V frame."
+      - "Downstream model adapter cannot tell which assets are planning-only and which are direct video candidates."
+    severity: medium
+    gate: reference_pack_gate
+    default_owner_skill: image-prompt-compiler
+
+  - id: reference_role_label_hierarchy_wrong
+    layer: reference_pack
+    symptoms:
+      - "The film or project title is the largest header while the asset role label is small or secondary."
+      - "The user cannot immediately tell whether the image is a character reference, scene/FOV reference, storyboard page, or clean video frame."
+    severity: medium
+    gate: reference_pack_gate
+    default_owner_skill: image-prompt-compiler
+
+  - id: image_generation_called_without_pre_generation_contract
+    layer: image_prompt
+    symptoms:
+      - "Assistant calls an image generation tool before a machine-readable pre-generation contract passes."
+      - "Prompt relies on prose intent but does not lock asset role, dominant title, inheritance sources, role purity, and direct-input policy before generation."
+    severity: high
+    gate: image_prompt_gate
+    default_owner_skill: image-prompt-compiler
+
+  - id: storyboard_information_density_too_low
+    layer: storyboard
+    symptoms:
+      - "Storyboard page only contains simple captions or mood frames."
+      - "Shot cells lack timecode, duration, shot image region, detailed frame description, shot size, focal length, camera movement, subject blocking, sound, transition, or model risk."
+      - "Visible storyboard text is too thin: labels such as wide, close-up, slow push, conversation, or emotional ending appear without narrative purpose, lens/support/movement, blocking path, continuity, sound/edit cue, or model risk."
+    severity: high
+    gate: shot_gate
+    default_owner_skill: shot-design
+
+  - id: reference_board_too_dense_for_model
+    layer: reference_pack
+    symptoms:
+      - "Board has tiny panels, unreadable labels, or too many visual systems for the target model."
+      - "A direct video input would likely animate the board rather than the intended scene."
+    severity: high
+    gate: reference_pack_gate
+    default_owner_skill: reference-image-planner
+
+  - id: clean_first_frame_missing
+    layer: reference_pack
+    symptoms:
+      - "Kling or Runway is enabled but no clean first frame is available."
+      - "Only dense boards exist for direct image-to-video generation."
+    severity: high
+    gate: reference_pack_gate
+    default_owner_skill: reference-image-planner
+
+  - id: reference_role_conflict
+    layer: reference_pack
+    symptoms:
+      - "One reference asset is assigned multiple competing primary jobs."
+      - "Identity, environment, product, style, and motion constraints are mixed without direct input policy."
+    severity: high
+    gate: reference_pack_gate
+    default_owner_skill: reference-image-planner
+
+  - id: unreadable_reference_text
+    layer: reference_pack
+    symptoms:
+      - "Labels, timing notes, floor plan marks, or arrows are too small after compression."
+      - "Text may become visual noise or fake text in downstream generation."
+    severity: medium
+    gate: reference_pack_gate
+    default_owner_skill: image-prompt-compiler
+
+  - id: element_reference_missing
+    layer: reference_pack
+    symptoms:
+      - "Kling element workflow is selected but character, product, prop, or scene element references are missing."
+      - "Element lacks a clear main reference image and supplementary angles."
+    severity: medium
+    gate: reference_pack_gate
+    default_owner_skill: reference-image-planner
+
+  - id: first_frame_does_not_match_shot
+    layer: reference_pack
+    symptoms:
+      - "Clean first frame does not match the intended shot size, subject state, or environment."
+      - "Motion prompt would have to fight the input frame."
+    severity: high
+    gate: reference_pack_gate
+    default_owner_skill: video-model-adapter
+
+  - id: model_pack_budget_exceeded
+    layer: reference_pack
+    symptoms:
+      - "Selected reference pack exceeds current model image, video, audio, element, or mixed-file policy."
+      - "Too many references compete for model attention."
+    severity: medium
+    gate: reference_pack_gate
+    default_owner_skill: reference-image-planner
+
+  - id: board_used_as_direct_i2v_input_when_forbidden
+    layer: video_prompt
+    symptoms:
+      - "Kling or Runway direct input points at a storyboard, master board, or floor-plan board."
+      - "Prompt lacks a clean first frame despite model policy."
+    severity: high
+    gate: video_prompt_gate
+    default_owner_skill: video-model-adapter
+
+  - id: visual_output_mode_missing
+    layer: capability
+    symptoms:
+      - "Manifest does not say whether outputs are prompt-only, generated by the current agent, or prepared for an external tool."
+      - "Downstream skill cannot know whether image files are expected to exist."
+    severity: high
+    gate: reference_pack_gate
+    default_owner_skill: image-prompt-compiler
+
+  - id: missing_asset_output_status
+    layer: capability
+    symptoms:
+      - "Reference or image asset has no prompt_ready, generated_candidate, user_locked, external_pending, external_imported, or rejected status."
+      - "Video adapter references a visual asset without knowing whether it exists."
+    severity: high
+    gate: video_prompt_gate
+    default_owner_skill: reference-image-planner
+
+  - id: plausibility_over_verification
+    layer: prompt_discipline
+    symptoms:
+      - "Prompt, adapter, or handoff states model behavior, aspect ratio, duration, tool availability, account state, price, credit cost, or enum values without local policy, official docs, or tool schema evidence."
+      - "A plausible platform fact is written as verified production truth."
+    severity: high
+    gate: image_prompt_gate
+    default_owner_skill: image-prompt-compiler
+
+  - id: prompt_contract_incomplete
+    layer: prompt_discipline
+    symptoms:
+      - "Prompt handoff omits routing, source truth, visual output mode, authorization evidence, reference binding, prompt contract, model constraints, targeted negative constraints, or falsifiable success rubric."
+      - "Prompt construction and execution state are mixed together."
+    severity: high
+    gate: image_prompt_gate
+    default_owner_skill: image-prompt-compiler
+
+  - id: multi_variable_retry
+    layer: prompt_discipline
+    symptoms:
+      - "Retry changes identity, scene, action, camera, style, model settings, and output controls together."
+      - "Failure diagnosis does not name the failure id, unchanged locks, single variable changed, expected visible improvement, and next QA check."
+    severity: medium
+    gate: generation_qa_gate
+    default_owner_skill: generation-qa
+
+  - id: stale_reference_context
+    layer: prompt_discipline
+    symptoms:
+      - "Prompt window keeps old references, superseded user choices, stale generated files, or conflicting model notes after upstream decisions changed."
+      - "Useful thread or chat history is treated as production truth without being converted into an artifact, manifest, or receipt."
+    severity: high
+    gate: reference_pack_gate
+    default_owner_skill: reference-image-planner
+
+  - id: missing_falsifiable_success_criteria
+    layer: prompt_discipline
+    symptoms:
+      - "Generation-ready handoff says the output should be better, cinematic, premium, realistic, or high quality without visible pass/fail criteria."
+      - "The reviewer cannot test identity match, scene/FOV match, action fit, camera behavior, role purity, output boundary, or failure routing."
+    severity: medium
+    gate: generation_qa_gate
+    default_owner_skill: generation-qa
+
+  - id: unauthorized_assisted_generation
+    layer: capability
+    symptoms:
+      - "A skill attempts image or video generation without explicit user authorization."
+      - "Execution capability says generation is unavailable or not allowed but output mode implies generated media."
+    severity: high
+    gate: image_prompt_gate
+    default_owner_skill: image-prompt-compiler
+
+  - id: longform_sequence_plan_missing
+    layer: longform
+    symptoms:
+      - "A 60s, 90s, or 180s target moves directly into image/video prompts without sequence decomposition."
+      - "No user gate exists for the total duration split."
+    severity: high
+    gate: longform_sequence_gate
+    default_owner_skill: sequence-planner
+
+  - id: sequence_pack_overloaded
+    layer: longform
+    symptoms:
+      - "One sequence pack tries to carry too many shots, scene changes, product claims, or camera moves for a 5-15s unit."
+      - "The sequence dramatic function is not distinct."
+    severity: high
+    gate: longform_sequence_gate
+    default_owner_skill: longform-reference-planner
+
+  - id: batch_mode_risk_unaccepted
+    layer: longform
+    symptoms:
+      - "Batch mode skips per-sequence user gates without an accepted continuity/rework risk record."
+      - "All reference packs are exported at once for a longform project without user review policy."
+    severity: medium
+    gate: longform_sequence_gate
+    default_owner_skill: sequence-planner
+
+  - id: external_generation_instructions_missing
+    layer: capability
+    symptoms:
+      - "Manifest uses prompt_only or external_generation but does not explain how to generate/import the asset."
+      - "Video adapter cannot map expected references to external tool upload slots."
+    severity: medium
+    gate: image_prompt_gate
+    default_owner_skill: image-prompt-compiler
+
+  - id: prompt_ir_schema_invalid
+    layer: prompt_ir
+    symptoms:
+      - "Prompt IR fails the executable Draft 2020-12 schema or uses the authoring template as if it were the schema."
+      - "Required entity, action, generation-unit, capability, or QA fields have the wrong type or are missing."
+    severity: high
+    gate: video_prompt_gate
+    default_owner_skill: video-model-adapter
+
+  - id: terminal_prompt_internal_leak
+    layer: prompt_compiler
+    symptoms:
+      - "Final pasted prompt contains internal shot/asset IDs, local paths, hashes, manifest fields, failure IDs, or retry rules."
+      - "Internal QA or production labels are exposed as model instructions."
+    severity: high
+    gate: video_prompt_gate
+    default_owner_skill: video-model-adapter
+
+  - id: terminal_prompt_phantom_reference
+    layer: prompt_compiler
+    symptoms:
+      - "Final prompt names an image, video, or audio slot that is not attached to the selected run."
+      - "A planning-only board is compiled as a direct reference."
+    severity: high
+    gate: video_prompt_gate
+    default_owner_skill: video-model-adapter
+
+  - id: entity_action_owner_unresolved
+    layer: prompt_ir
+    symptoms:
+      - "A person, product, prop, dialogue line, or sound event has no valid owning entity."
+      - "Two characters or similar assets can swap identity, action, speaker, or ownership."
+    severity: high
+    gate: shot_gate
+    default_owner_skill: shot-design
+
+  - id: generation_unit_plan_invalid
+    layer: longform
+    symptoms:
+      - "Shot or generation-unit time ranges contain a gap, overlap, non-positive duration, or fail to cover target duration."
+      - "A target longer than one allowed generation unit is not split into state-bound units."
+    severity: high
+    gate: longform_sequence_gate
+    default_owner_skill: sequence-planner
+
+  - id: retry_not_converging
+    layer: generation_qa
+    symptoms:
+      - "The same failure and layer have been retried three times without reaching the expected pass signal."
+      - "The workflow keeps adding prompt detail instead of splitting complexity, changing route, escalating, or stopping."
+    severity: high
+    gate: generation_qa_gate
+    default_owner_skill: generation-qa
+
+  - id: historical_context_pollution
+    layer: runtime_state
+    symptoms:
+      - "Superseded prompt copies, stale generated caches, old model notes, or historical run artifacts are still discoverable as current production truth."
+      - "An unreferenced historical artifact can be selected by search, resume, packaging, or prompt compilation."
+    severity: medium
+    gate: checkpoint_gate
+    default_owner_skill: checkpoint

@@ -1,0 +1,234 @@
+artifact:
+  artifact_id: zombie-cleaner-co-creation-run-v1
+  version: 1.0.0
+  source_artifact_ids:
+    - zombie-cleaner-workflow-run-trace-v1
+  status: approved
+  owner_skill: co-creation-gate-runtime
+
+co_creation_run:
+  project_title: "Wasteland Sanitation Route"
+  version: "1.0.0"
+  run_type: dry_run_fixture
+  simulated_choices_allowed: true
+  real_user_co_creation_verified: false
+  visual_output_mode: prompt_only
+  longform_generation_mode: hybrid
+  source_artifact_ids:
+    - examples/zombie-cleaner-test/00-source-study.md
+    - examples/zombie-cleaner-test/14-workflow-run-trace.md
+
+gate_policy:
+  required_gates:
+    - concept_options_gate
+    - story_approval_gate
+    - script_approval_gate
+    - shot_list_approval_gate
+    - visual_direction_gate
+    - visual_bible_approval_gate
+    - sequence_plan_gate
+    - global_reference_pack_gate
+    - sequence_reference_pack_gate
+    - clean_frame_gate
+    - video_prompt_gate
+  block_media_generation_until:
+    - clean_frame_gate
+    - video_prompt_gate
+
+gates:
+  - gate_id: zc-gate-01
+    gate_type: concept_options_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented:
+      - "Option A: Wasteland Sanitation Route"
+      - "Option B: The Last Recycling Clerk"
+      - "Option C: Dawn Disinfection Parade"
+    selected_option: "Option A: Wasteland Sanitation Route"
+    rationale: "Best fit for 180s longform test because it has one worker, one vehicle, one prop objective, and clear action escalation."
+    downstream_artifacts:
+      - examples/zombie-cleaner-test/04-selected-concept.md
+      - examples/zombie-cleaner-test/05-story-package.md
+    blocks: []
+    notes:
+      - "Fixture selection only. A live run must ask the user."
+  - gate_id: zc-gate-02
+    gate_type: story_approval_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented:
+      - "Approve municipal route story"
+      - "Make it darker survival horror"
+      - "Make it shorter and more comedic"
+    selected_option: "Approve municipal route story"
+    rationale: "Keeps the longform test structured around one worker, one route, and escalating cleanup beats."
+    downstream_artifacts:
+      - examples/zombie-cleaner-test/05-story-package.md
+    blocks: []
+    notes:
+      - "Fixture selection only. A live run must ask the user."
+  - gate_id: zc-gate-03
+    gate_type: script_approval_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented:
+      - "Approve dialogue-light 180s script"
+      - "Add more radio voiceover"
+      - "Reduce action beats"
+    selected_option: "Approve dialogue-light 180s script"
+    rationale: "Keeps the sequence plan visual and model-safe."
+    downstream_artifacts:
+      - examples/zombie-cleaner-test/06-script.md
+    blocks: []
+    notes:
+      - "Fixture selection only. A live run must ask the user."
+  - gate_id: zc-gate-04
+    gate_type: shot_list_approval_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented:
+      - "Approve 12 x 15s shot/sequence structure"
+      - "Split into 18 shorter units"
+      - "Batch all shots at once"
+    selected_option: "Approve 12 x 15s shot/sequence structure"
+    rationale: "Matches the hybrid 180s workflow."
+    downstream_artifacts:
+      - examples/zombie-cleaner-test/07-shot-list.yaml
+      - examples/zombie-cleaner-test/08-sequence-plan.yaml
+    blocks: []
+    notes:
+      - "Fixture selection only. A live run must ask the user."
+  - gate_id: zc-gate-05
+    gate_type: visual_direction_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented:
+      - "Atom-punk municipal apocalypse"
+      - "Handheld survival horror"
+      - "Graphic novel splatter comedy"
+    selected_option: "Atom-punk municipal apocalypse"
+    rationale: "Keeps the referenced genre energy while avoiding gore-heavy or copied visual language."
+    downstream_artifacts:
+      - examples/zombie-cleaner-test/09-visual-bible.md
+    blocks: []
+    notes:
+      - "Fixture selection only. A live run must ask the user."
+  - gate_id: zc-gate-06
+    gate_type: visual_bible_approval_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented:
+      - "Approve atom-punk municipal visual bible"
+      - "Make it more handheld and gritty"
+      - "Make it more graphic novel"
+    selected_option: "Approve atom-punk municipal visual bible"
+    rationale: "Locks identity, vehicle, palette, props, and route style before reference planning."
+    downstream_artifacts:
+      - examples/zombie-cleaner-test/09-visual-bible.md
+    blocks: []
+    notes:
+      - "Fixture selection only. A live run must ask the user."
+  - gate_id: zc-gate-07
+    gate_type: sequence_plan_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented:
+      - "Hybrid 12 x 15s"
+      - "Stepwise 18 x 10s"
+      - "Batch 12 x 15s"
+    selected_option: "Hybrid 12 x 15s"
+    rationale: "Best balance of full-film continuity and per-sequence user control."
+    downstream_artifacts:
+      - examples/zombie-cleaner-test/08-sequence-plan.yaml
+    blocks: []
+    notes:
+      - "Fixture selection only. A live run must ask the user."
+  - gate_id: zc-gate-08
+    gate_type: global_reference_pack_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented:
+      - "Worker + vehicle + route + sequence board"
+      - "One dense master board"
+      - "Per-shot clean frame only"
+    selected_option: "Worker + vehicle + route + sequence board"
+    rationale: "Preserves identity and model safety while keeping references compact."
+    downstream_artifacts:
+      - examples/zombie-cleaner-test/10-reference-pack-plan.yaml
+      - examples/zombie-cleaner-test/11-image-prompt-manifest.yaml
+    blocks: []
+    notes:
+      - "Fixture selection only. A live run must ask the user."
+  - gate_id: zc-gate-09
+    gate_type: sequence_reference_pack_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented:
+      - "Approve zc-seq-01 as first executable pack"
+      - "Start from zc-seq-10 action pack"
+      - "Revise global pack first"
+    selected_option: "Approve zc-seq-01 as first executable pack"
+    rationale: "First sequence is the safest entry point for real generation because it establishes identity and vehicle."
+    downstream_artifacts:
+      - examples/zombie-cleaner-test/12-longform-reference-pack.yaml
+    blocks: []
+    notes:
+      - "Fixture selection only. A live run must ask the user."
+  - gate_id: zc-gate-10
+    gate_type: clean_frame_gate
+    status: pending
+    decision_source: pending
+    options_presented:
+      - "Generate zc-seq-01 clean first frame"
+      - "Generate worker/vehicle boards first"
+      - "Stay prompt-only"
+    selected_option: ""
+    rationale: "No real images exist yet, so clean frames cannot be approved."
+    downstream_artifacts: []
+    blocks:
+      - media_generation
+      - direct_i2v_video_prompt_export
+    notes:
+      - "This is where the live workflow must ask the user before generation."
+  - gate_id: zc-gate-11
+    gate_type: video_prompt_gate
+    status: pending
+    decision_source: pending
+    options_presented:
+      - "Export Seedance prompt for zc-seq-01"
+      - "Export Kling prompt for zc-seq-01"
+      - "Keep all models prompt-only"
+    selected_option: ""
+    rationale: "Model prompts exist, but final generation should wait for clean frames and user approval."
+    downstream_artifacts:
+      - examples/zombie-cleaner-test/13-video-prompt-manifest.yaml
+    blocks:
+      - media_generation
+    notes:
+      - "This is where the live workflow must ask the user before video generation."
+
+qa:
+  all_required_gates_present: true
+  simulated_choices_labeled: true
+  live_user_choices_required: true
+  pending_gates_block_media: true
+  no_creative_system_defaults: true
+  failures: []
+
+skill_run_receipt:
+  run_id: zombie-cleaner-co-creation-run-2026-05-16
+  skill_id: co-creation-gate-runtime
+  input_artifacts:
+    - examples/zombie-cleaner-test/14-workflow-run-trace.md
+  output_artifacts:
+    - examples/zombie-cleaner-test/15-co-creation-run.yaml
+  decisions:
+    - "Mark existing zombie-cleaner fixture as dry-run simulation, not live user co-creation."
+    - "Keep media generation blocked until clean_frame_gate and video_prompt_gate are real-user approved."
+  unresolved_questions:
+    - "Live user must choose whether to generate zc-seq-01 references first."
+  qa_gate:
+    status: pass
+    reasons:
+      - "All required gates are present and simulated decisions are labeled."
+  next_recommended_skill: image-prompt-compiler

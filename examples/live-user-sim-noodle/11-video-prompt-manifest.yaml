@@ -1,0 +1,485 @@
+artifact:
+  artifact_id: noodle-video-prompt-manifest-v1
+  version: 1.0.0
+  source_artifact_ids:
+    - noodle-shot-list-v1
+    - noodle-reference-pack-plan-v1
+    - noodle-image-prompt-manifest-v1
+  status: approved
+  owner_skill: video-model-adapter
+  locked_by_user: false
+
+video_prompt_manifest:
+  project_title: "Midnight Broth Cup"
+  target_sequence_duration: "15s"
+  longform_generation_mode: "single_sequence"
+  visual_output_mode: "prompt_only"
+  selected_reference_strategy: "hybrid"
+  sequence_plan: ""
+  sequence_ids:
+    - noodle-seq-01
+  reference_pack:
+    - "noodle_image_01 product identity reference"
+    - "noodle_image_02 office and clean-frame source"
+    - "noodle_image_03 lighting/material/style reference"
+    - "noodle_image_04 storyboard order reference only"
+
+capability_resolution:
+  registry_path: "docs/film-preproduction/sources/model-sources.yaml"
+  registry_version: "2.0.0"
+  selected_cards:
+    - capability_card_id: seedance_2_0_official_launch
+      model_key: seedance
+      version: "2.0"
+      status: current
+      provider_surface: "Seedance 2.0 launch product surfaces described by ByteDance Seed"
+      verified_on: "2026-07-10"
+      accessed_on: "2026-07-10"
+      evidence_level: S2
+      source_urls:
+        - "https://seed.bytedance.com/en/blog/seedance-2-0-official-launch"
+        - "https://arxiv.org/abs/2604.14148"
+      source_conflicts: []
+      access_mode: documented_product
+      execution_mode: manual_export
+      execution_verification_status: unverified
+      resolution_status: resolved
+    - capability_card_id: kling_video_3_0_official_guide
+      model_key: kling
+      version: "3.0"
+      status: current
+      provider_surface: "Kling AI VIDEO 3.0 product guide"
+      verified_on: "2026-07-10"
+      accessed_on: "2026-07-10"
+      evidence_level: S3
+      source_urls:
+        - "https://app.klingai.com/cn/quickstart/klingai-video-3-model-user-guide"
+      source_conflicts: []
+      access_mode: documented_product
+      execution_mode: manual_export
+      execution_verification_status: unverified
+      resolution_status: resolved
+    - capability_card_id: runway_gen_4_5_web
+      model_key: runway
+      version: "Gen-4.5"
+      status: current
+      provider_surface: "Runway web Gen-4.5 generation"
+      verified_on: "2026-07-10"
+      accessed_on: "2026-07-10"
+      evidence_level: S3
+      source_urls:
+        - "https://help.runwayml.com/hc/en-us/articles/46974685288467-Creating-with-Gen-4-5"
+        - "https://help.runwayml.com/hc/en-us/articles/42460036199443-Text-to-Video-Prompting-Guide"
+      source_conflicts: []
+      resolution_status: resolved
+    - capability_card_id: veo_3_1_generate_001_vertex_api
+      model_key: veo
+      version: "veo-3.1-generate-001"
+      status: current
+      provider_surface: "Vertex AI publisher model predictLongRunning API"
+      verified_on: "2026-07-11"
+      accessed_on: "2026-07-11"
+      evidence_level: S1
+      source_urls:
+        - "https://docs.cloud.google.com/vertex-ai/generative-ai/docs/models/veo/3-1-generate"
+        - "https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/veo-video-generation"
+        - "https://docs.cloud.google.com/vertex-ai/generative-ai/docs/release-notes"
+        - "https://cloud.google.com/blog/products/ai-machine-learning/veo-3-1-lite-and-a-new-veo-upscaling-capability-on-vertex-ai/"
+      source_conflicts:
+        - "The exact stable page says sound generation is not supported; family-level audio claims and the generic API URL do not authorize audio for this exact card."
+      resolution_status: resolved
+
+rights_gate:
+  status: unverified
+  conditions: []
+  source_asset_rights: "Prompt-only artifact; rights must be verified before any upload or generation."
+  likeness_authorization: unverified
+  voice_authorization: unverified
+  brand_or_character_authorization: unverified
+  music_or_audio_rights: unverified
+  provider_restrictions_checked: true
+  evidence_refs: []
+  generation_allowed: false
+
+audio_plan:
+  desired_audio:
+    dialogue: "none"
+    voiceover: "none"
+    music: "optional_postproduction"
+    ambience: "project_specific"
+    sound_effects:
+      - "See each model prompt."
+    silence: false
+  per_model_routes:
+    - model_key: seedance
+      capability_card_id: seedance_2_0_official_launch
+      generation_audio_route: postproduction
+      generate_audio_parameter: not_applicable
+      route_evidence:
+        - "Execution surface is documented-product/manual-export and remains unverified."
+      postproduction_handoff: "Export ambience and effects notes to editorial; do not claim native execution."
+    - model_key: kling
+      capability_card_id: kling_video_3_0_official_guide
+      generation_audio_route: postproduction
+      generate_audio_parameter: not_applicable
+      route_evidence:
+        - "Execution surface is documented-product/manual-export and remains unverified."
+      postproduction_handoff: "Export ambience and effects notes to editorial; do not claim native execution."
+    - model_key: runway
+      capability_card_id: runway_gen_4_5_web
+      generation_audio_route: postproduction
+      generate_audio_parameter: not_applicable
+      route_evidence:
+        - "Exact Gen-4.5 web card does not verify native audio."
+      postproduction_handoff: "Build dialogue, ambience, music, and effects in editorial."
+    - model_key: veo
+      capability_card_id: veo_3_1_generate_001_vertex_api
+      generation_audio_route: postproduction
+      generate_audio_parameter: not_applicable
+      route_evidence:
+        - "The exact stable model page marks sound generation as not supported; the generic API URL does not prove generateAudio for this card."
+      postproduction_handoff: "Build the declared dialogue, music, ambience, and effects as an editorial audio package."
+
+
+execution_capabilities:
+  image_generation:
+    available: false
+    provider: none
+    allowed_by_user: false
+  video_generation:
+    available: false
+    provider: none
+    allowed_by_user: false
+    external_upload_authorized: false
+    external_execution_state: instructions_only
+    external_execution_evidence: []
+  file_write:
+    available: true
+  browser_review:
+    available: false
+
+reference_map:
+  - ref_id: noodle_image_01
+    file_or_generation_id: "generated from examples/live-user-sim-noodle/10-image-prompt-manifest.yaml"
+    role: "product_identity_reference"
+    asset_output_status: prompt_ready
+    use_for:
+      - "cup identity"
+      - "red seal tab"
+      - "broth and noodle texture"
+      - "steam behavior"
+    do_not_use_for:
+      - "animating board labels"
+      - "adding fake product text"
+    external_generation_instructions: "Generate or import the product identity board before using it as visual truth."
+  - ref_id: noodle_image_02
+    file_or_generation_id: "generated from examples/live-user-sim-noodle/10-image-prompt-manifest.yaml"
+    role: "office_environment_reference"
+    asset_output_status: prompt_ready
+    use_for:
+      - "desk layout"
+      - "worker blocking"
+      - "monitor and lamp lighting"
+      - "clean start/end frame crops"
+    do_not_use_for:
+      - "showing panel borders"
+      - "turning the office board into a collage"
+    external_generation_instructions: "Generate or import the environment board, then crop text-free N01 and N05 frames for direct I2V."
+  - ref_id: noodle_image_03
+    file_or_generation_id: "generated from examples/live-user-sim-noodle/10-image-prompt-manifest.yaml"
+    role: "lighting_material_style_reference"
+    asset_output_status: prompt_ready
+    use_for:
+      - "blue and amber lighting"
+      - "matte cup material"
+      - "broth, noodle, and steam texture"
+      - "artifact guard"
+    do_not_use_for:
+      - "direct Kling or Runway first-frame input"
+      - "showing style swatches in the final video"
+    external_generation_instructions: "Use as lighting/material/style guidance only; never as direct I2V start frame."
+  - ref_id: noodle_image_04
+    file_or_generation_id: "generated from examples/live-user-sim-noodle/10-image-prompt-manifest.yaml"
+    role: "shot_order_reference_only"
+    asset_output_status: prompt_ready
+    use_for:
+      - "five-shot order"
+      - "camera movement"
+      - "audio timing"
+    do_not_use_for:
+      - "direct Kling or Runway first-frame input"
+      - "showing storyboard text in the final video"
+    external_generation_instructions: "Use as planning/Seedance/Veo guidance only; never as direct I2V start frame."
+
+reference_bindings:
+  - model: seedance
+    capability_card_id: seedance_2_0_official_launch
+    version: "2.0"
+    status: current
+    provider_surface: "Seedance 2.0 launch product surfaces described by ByteDance Seed"
+    shot_id: SEQUENCE
+    ref_id: noodle_image_01
+    upload_slot: "@image1"
+    role: secondary_reference
+    required_for_generation: true
+    prompt_file: "examples/live-user-sim-noodle/11-video-prompt-manifest.yaml#seedance"
+    risk_note: "Product identity reference anchors cup geometry, red seal, broth, noodles, and steam."
+  - model: seedance
+    capability_card_id: seedance_2_0_official_launch
+    version: "2.0"
+    status: current
+    provider_surface: "Seedance 2.0 launch product surfaces described by ByteDance Seed"
+    shot_id: SEQUENCE
+    ref_id: noodle_image_02
+    upload_slot: "@image2"
+    role: secondary_reference
+    required_for_generation: true
+    prompt_file: "examples/live-user-sim-noodle/11-video-prompt-manifest.yaml#seedance"
+    risk_note: "Environment reference anchors desk blocking, monitor blue, lamp amber, and clean-frame crop source."
+  - model: seedance
+    capability_card_id: seedance_2_0_official_launch
+    version: "2.0"
+    status: current
+    provider_surface: "Seedance 2.0 launch product surfaces described by ByteDance Seed"
+    shot_id: SEQUENCE
+    ref_id: noodle_image_03
+    upload_slot: "@image3"
+    role: style_reference
+    required_for_generation: true
+    prompt_file: "examples/live-user-sim-noodle/11-video-prompt-manifest.yaml#seedance"
+    risk_note: "Style/material board must not become visible board content."
+  - model: seedance
+    capability_card_id: seedance_2_0_official_launch
+    version: "2.0"
+    status: current
+    provider_surface: "Seedance 2.0 launch product surfaces described by ByteDance Seed"
+    shot_id: SEQUENCE
+    ref_id: noodle_image_04
+    upload_slot: "@image4"
+    role: planning_only
+    required_for_generation: false
+    prompt_file: "examples/live-user-sim-noodle/11-video-prompt-manifest.yaml#seedance"
+    risk_note: "Storyboard board supplies shot order only; labels, panels, arrows, and timing text must not appear."
+  - model: kling
+    capability_card_id: kling_video_3_0_official_guide
+    version: "3.0"
+    status: current
+    provider_surface: "Kling AI VIDEO 3.0 product guide"
+    shot_id: N01-N05
+    ref_id: noodle_image_02
+    upload_slot: "element reference only"
+    role: element_reference
+    required_for_generation: false
+    prompt_file: "examples/live-user-sim-noodle/11-video-prompt-manifest.yaml#kling"
+    risk_note: "Prompt-only environment board cannot be primary I2V input until text-free clean frames are generated/imported and user locked."
+  - model: runway
+    capability_card_id: runway_gen_4_5_web
+    version: "Gen-4.5"
+    status: current
+    provider_surface: "Runway web Gen-4.5 generation"
+    shot_id: N01-N05
+    ref_id: noodle_image_01
+    upload_slot: "element reference only"
+    role: element_reference
+    required_for_generation: false
+    prompt_file: "examples/live-user-sim-noodle/11-video-prompt-manifest.yaml#runway"
+    risk_note: "Use product traits only; do not use the labeled board as a direct first frame."
+  - model: veo
+    capability_card_id: veo_3_1_generate_001_vertex_api
+    version: "veo-3.1-generate-001"
+    status: current
+    provider_surface: "Vertex AI publisher model predictLongRunning API"
+    shot_id: SEQUENCE
+    ref_id: noodle_image_04
+    upload_slot: "reference map shot order"
+    role: planning_only
+    required_for_generation: false
+    prompt_file: "examples/live-user-sim-noodle/11-video-prompt-manifest.yaml#veo"
+    risk_note: "Structured prompt should carry shot order; storyboard board remains non-visual guidance."
+
+model_prompts:
+  seedance:
+    enabled: true
+    operation: generate
+    capability_card_id: seedance_2_0_official_launch
+    version: "2.0"
+    status: current
+    provider_surface: "Seedance 2.0 launch product surfaces described by ByteDance Seed"
+    access_mode: documented_product
+    execution_mode: manual_export
+    execution_verification_status: unverified
+    desired_audio:
+      mode: planned_diegetic_audio
+    generation_audio_route: postproduction
+    rights_gate_status: unverified
+    transformation_contract:
+      preserve: []
+      change: []
+      forbidden_change: []
+      overlap_check: pass
+    best_for: "One 15s multi-reference product ad where product, office, and shot order must stay coordinated."
+    prompt: |
+      REFERENCE MAP
+      @image noodle_image_01 = product identity, red seal, broth, noodles, steam.
+      @image noodle_image_02 = office desk, worker blocking, monitor blue, lamp amber, clean-frame source.
+      @image noodle_image_03 = lighting/material/style only. Do not show or animate style board labels, swatches, panels, or layout.
+      @image noodle_image_04 = shot order only. Do not show or animate storyboard labels, panels, arrows, or timing text.
+
+      VIDEO TASK
+      Generate a 15-second vertical cinematic product ad. Cold office screen light, tired worker, unopened ivory noodle cup. The hand pulls the red seal tab, the indicator warms amber, steam rises through blue monitor light, the worker takes one quiet sip, and the final frame holds on the steaming cup by the rainy city window.
+
+      CONTINUITY LOCKS
+      Same ivory cup, same red seal band, same copper lid edge, same worker, same desk, natural steam, clean broth and noodles, no exaggerated snack-commercial energy.
+
+      AUDIO
+      Office hum, peel tab, soft heat click, steam, spoon touch, distant elevator bell. No dialogue. Keep music optional and minimal.
+    reference_warning: "Reference boards are production guidance only; do not animate labels, arrows, panels, board borders, or timing text."
+    audio_policy: "Diegetic sound may be generated if supported; no dialogue; music optional in post."
+    risk_notes:
+      - "Storyboard board can be misread as final visual layout."
+      - "Steam can become explosive if over-described."
+    retry_rules:
+      - "If storyboard panels appear, remove noodle_image_03 and keep shot order as text."
+      - "If product label drifts, prioritize noodle_image_01 and reduce actor movement."
+  kling:
+    enabled: true
+    operation: generate
+    capability_card_id: kling_video_3_0_official_guide
+    version: "3.0"
+    status: current
+    provider_surface: "Kling AI VIDEO 3.0 product guide"
+    access_mode: documented_product
+    execution_mode: manual_export
+    execution_verification_status: unverified
+    desired_audio:
+      mode: planned_diegetic_audio
+    generation_audio_route: postproduction
+    rights_gate_status: unverified
+    transformation_contract:
+      preserve: []
+      change: []
+      forbidden_change: []
+      overlap_check: pass
+    best_for: "Direct I2V from clean N01 or N05 stills after images are generated externally."
+    prompt: |
+      Reference boards are planning guidance only; do not show or animate board labels, panels, arrows, grids, timing text, callouts, or layout.
+      A late-night office worker sits at a quiet desk beside a rainy city window. Soft steam rises from an ivory noodle cup with a red seal band. The camera makes a small slow push toward the cup while blue monitor light and warm desk-lamp light mix naturally. The worker reaches in gently and the steam moves upward in soft layers.
+    reference_warning: "Use one clean text-free frame from noodle_image_02 or dedicated clean-frame output; do not use storyboard board as the main input."
+    audio_policy: "Visual-only generation preferred; add office hum, tab peel, steam, and elevator bell in post."
+    risk_notes:
+      - "Kling may follow the still strongly and resist multi-shot changes."
+      - "Dense boards can be interpreted as actual panels."
+    retry_rules:
+      - "If motion is unstable, keep camera locked and animate steam only."
+      - "If hands deform, use a clean frame without hand contact."
+  runway:
+    enabled: true
+    operation: generate
+    generation_capability_card_id: runway_gen_4_5_web
+    edit_capability_card_id: ""
+    deprecated_card_ids_rejected:
+      - runway_gen_4_aleph_api_deprecated
+    version: "Gen-4.5"
+    status: current
+    provider_surface: "Runway web Gen-4.5 generation"
+    desired_audio:
+      mode: planned_diegetic_audio
+    generation_audio_route: postproduction
+    rights_gate_status: unverified
+    transformation_contract:
+      preserve: []
+      change: []
+      forbidden_change: []
+      overlap_check: pass
+    best_for: "Short single-beat motion from a strong clean product or office still."
+    prompt: |
+      Reference boards are planning guidance only; do not show board labels, panels, arrows, grids, timing text, callouts, or layout.
+      Soft steam rises from the ivory noodle cup on a late-night office desk. Blue monitor light and warm desk lamp create a calm contrast. The worker's hand steadies the cup and the camera slowly pushes in. Keep the product label stable and the steam natural.
+    reference_warning: "Use one clean still per run. Avoid storyboard boards and long five-shot scripts."
+    audio_policy: "Silent visual-only generation; audio handled in edit."
+    risk_notes:
+      - "Long prompts can reduce Runway motion clarity."
+      - "Product typography can drift if the still is weak."
+    retry_rules:
+      - "Split N01, N02, N03, N04, and N05 into separate runs if the full 15s collapses."
+      - "Use positive wording and one dominant action."
+  veo:
+    enabled: true
+    operation: generate
+    capability_card_id: veo_3_1_generate_001_vertex_api
+    version: "veo-3.1-generate-001"
+    status: current
+    provider_surface: "Vertex AI publisher model predictLongRunning API"
+    source_conflicts:
+      - "The exact stable page says sound generation is not supported; keep the family/API ambiguity visible and use post-production audio."
+    desired_audio:
+      mode: planned_diegetic_audio
+    generation_audio_route: postproduction
+    generate_audio_parameter: not_applicable
+    rights_gate_status: unverified
+    transformation_contract:
+      preserve: []
+      change: []
+      forbidden_change: []
+      overlap_check: pass
+    best_for: "Structured full-scene product film prompt with audio notes."
+    prompt: |
+      Reference boards are planning guidance only; do not show or animate board labels, panels, arrows, grids, timing text, callouts, or layout.
+      Subject: a late-night office worker with an ivory self-heating noodle cup marked MIDNIGHT BROTH, red seal band, copper lid edge.
+      Action: the worker rubs one eye, pulls the red seal tab, watches steam rise from clean broth and noodles, takes one quiet sip, and leaves the cup steaming in a final hero frame.
+      Scene: quiet office desk near a rainy city window, blue monitor light, warm desk lamp, laptop edge and spoon for scale.
+      Camera: 28mm slow desk push, 85mm macro red seal insert, 50mm steam tilt, 50mm first-sip dolly, 70mm locked product hero.
+      Lighting and style: cinematic restrained food realism, monitor blue versus desk-lamp amber, natural steam and tactile matte paper cup.
+      Audio: office hum, peel tab, soft heat click, steam, spoon touch, distant elevator bell, no dialogue.
+    reference_warning: "Use reference boards only to preserve product identity, environment, and shot order; final output is the cinematic ad, not a production board."
+    audio_policy: "Post-production only for this exact stable card: diegetic sound, no dialogue, and optional music."
+    risk_notes:
+      - "Too many food details can create texture noise."
+      - "Audio behavior depends on selected Veo path."
+    retry_rules:
+      - "If the sequence collapses, generate activation, steam, and hero cup as separate clips."
+      - "If audio is inaccurate, switch to silent visual-only and add sound in post."
+
+universal_anti_misread_clause: |
+  Reference boards are production guidance only.
+  Do not show or animate board panels, text labels, arrows, timing text, callouts, grids, or layout.
+  Generate the actual late-night noodle cup product ad described by the shot list.
+
+qa:
+  video_prompt_gate: "pass"
+  missing_audio_policy: false
+  missing_reference_map: false
+  visual_output_mode_valid: true
+  capability_receipt_present: true
+  missing_generated_assets_blocked: true
+  longform_sequence_refs_valid: true
+  exact_capability_cards_resolved: true
+  deprecated_or_preview_aliases_rejected: true
+  rights_gate_passed: false
+  desired_audio_route_compatible: true
+  preserve_change_disjoint: true
+  storyboard_clean_frame_separation_valid: true
+  official_source_conflicts_preserved: true
+  conflicting_actions: []
+  model_prompts_differ_materially: true
+  reference_bindings_present: true
+  selected_reference_strategy_present: true
+  no_video_generated: true
+
+skill_run_receipt:
+  run_id: noodle-video-prompt-manifest-2026-05-16
+  skill_id: video-model-adapter
+  input_artifacts:
+    - examples/live-user-sim-noodle/07-shot-list.yaml
+    - examples/live-user-sim-noodle/09-reference-pack-plan.yaml
+    - examples/live-user-sim-noodle/10-image-prompt-manifest.yaml
+  output_artifacts:
+    - examples/live-user-sim-noodle/11-video-prompt-manifest.yaml
+  decisions:
+    - "Export separate Seedance, Kling, Runway, and Veo prompts."
+  unresolved_questions: []
+  qa_gate:
+    status: pass
+    reasons:
+      - "Manifest includes reference map, anti-misread clause, audio policy, risk notes, and retry rules."
+  next_recommended_skill: generation-qa

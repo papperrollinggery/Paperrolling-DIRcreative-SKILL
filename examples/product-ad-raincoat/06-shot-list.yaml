@@ -1,0 +1,336 @@
+artifact:
+  artifact_id: rainlock-shot-list-v1
+  version: 1.0.0
+  source_artifact_ids:
+    - rainlock-ad-structure-v1
+  status: approved
+  owner_skill: shot-design
+  created_at: "2026-05-14"
+  locked_by_user: false
+
+shot_list:
+  project_title: "RainLock Commuter Shell"
+  deliverable: "15s vertical social ad"
+  channel: "commercial_product_film"
+  aspect_ratio: "9:16"
+  total_duration: "15s"
+  professional_standard: "docs/film-preproduction/shot-language-standard.md"
+  shots:
+    - shot_id: R01
+      timecode: "00:00-00:02"
+      duration: "2s"
+      story_beat: "Rain-pressure hook"
+      narrative_purpose: "Show the commuter entering weather without hesitation, making the product need instantly legible."
+      shot_type: "hook / exterior transition"
+      shot_size: "MS vertical, dry lobby to rain threshold"
+      camera_angle: "eye level"
+      lens: "28mm"
+      lens_reason: "Wide enough to hold the dry interior, rain wall, and full jacket silhouette in a narrow vertical frame."
+      camera_support: "stabilized gimbal push"
+      camera_motion: "slow push from inside the lobby through the doorway, ending as the subject crosses into the rain wall"
+      focus: "deep focus across glass edge and jacket silhouette; background city stays slightly soft"
+      composition: "dry lobby foreground, glass door midline, rain wall background, subject crossing into screen-right third"
+      subject_action: "Commuter steps from dry lobby into heavy rain without changing pace."
+      blocking:
+        start_position: "Subject begins just inside the dry lobby, left third."
+        end_position: "Subject exits into rain on right third, body still upright and calm."
+        path: "Left-to-right crossing through the doorway."
+        eyeline: "Forward toward street, not camera."
+        screen_direction: "Left-to-right."
+        axis_note: "Dry side remains camera-left; rain side remains camera-right through the cut."
+      scene:
+        location: "Office lobby entrance opening to rainy street"
+        foreground: "Glass door edge and dry floor reflection"
+        midground: "Commuter in graphite shell"
+        background: "Heavy rain, taxi light, wet sidewalk"
+        weather: "Heavy rain outside, dry lobby inside"
+        lighting: "Neutral lobby light meeting cool wet street reflections"
+      audio:
+        dialogue: []
+        voiceover: []
+        ambience:
+          - "rain hitting glass"
+          - "city air"
+        sfx:
+          - "door seal opening"
+        foley:
+          - "first step onto wet pavement"
+        music: "restrained pulse starts low"
+        silence: "no dialogue"
+      continuity:
+        characters:
+          - "commuter_01"
+        props:
+          - "leather_work_bag"
+        wardrobe:
+          - "graphite RainLock shell"
+        state_locks:
+          - "hood down"
+          - "shell zipped to upper chest"
+          - "shirt collar dry"
+          - "no visible product copy yet"
+      transition_in: "cut from black"
+      transition_out: "cut to macro waterproof proof"
+      model_notes:
+        seedance: "Use as opening of 15s flow; maintain dry/rain geography."
+        kling: "Clean frame must have no labels; prompt subject walk, rain movement, and gimbal push separately."
+        runway: "Strong single-beat I2V; avoid extra gestures beyond the threshold crossing."
+        veo: "Structure as subject/action/scene/camera/weather/audio; no VO required."
+    - shot_id: R02
+      timecode: "00:02-00:05"
+      duration: "3s"
+      story_beat: "Waterproof proof"
+      narrative_purpose: "Make the functional benefit visible through a tactile material close-up."
+      shot_type: "macro product proof insert"
+      shot_size: "ECU fabric insert"
+      camera_angle: "slight high angle"
+      lens: "85mm macro"
+      lens_reason: "Macro lens shows bead behavior and seam detail without needing explanatory copy."
+      camera_support: "locked tripod macro"
+      camera_motion: "locked-off camera; water beads provide the only visible motion"
+      focus: "sharp focus on zipper seam and nearest beads; shallow falloff across fabric grain"
+      composition: "graphite fabric fills frame, zipper line on right third, beads moving diagonally across negative space"
+      subject_action: "Water beads roll diagonally across graphite fabric and away from the sealed zipper seam."
+      blocking:
+        start_position: "Zipper seam enters right third; water beads gather upper-left."
+        end_position: "Beads roll down and away from seam, leaving fabric visibly dry."
+        path: "Diagonal bead movement upper-left to lower-right."
+        eyeline: "Object-only insert."
+        screen_direction: "Upper-left to lower-right."
+        axis_note: "Preserve jacket color and zipper orientation from R01."
+      scene:
+        location: "Exterior rain, macro on jacket shoulder/chest"
+        foreground: "Large water bead and fabric grain"
+        midground: "Sealed zipper seam"
+        background: "Soft gray rain reflections"
+        weather: "Heavy rain"
+        lighting: "Cool overcast rain light with small white bead highlights"
+      audio:
+        dialogue: []
+        voiceover: []
+        ambience:
+          - "close rain bed"
+        sfx:
+          - "water beads tapping fabric"
+        foley: []
+        music: "pulse remains low"
+        silence: "no dialogue"
+      continuity:
+        characters:
+          - "commuter_01_partial"
+        props: []
+        wardrobe:
+          - "graphite RainLock shell"
+        state_locks:
+          - "sealed zipper"
+          - "no soaked patches"
+          - "approved copy if text is used: Arrive dry."
+      transition_in: "cut from threshold crossing"
+      transition_out: "cut on water bead direction into walking movement"
+      model_notes:
+        seedance: "Use product/material board to keep fabric texture non-plastic."
+        kling: "Generate as separate macro shot; subject movement is water only."
+        runway: "Motion prompt should only mention water bead travel and locked camera."
+        veo: "Describe material truth and rain audio separately."
+    - shot_id: R03
+      timecode: "00:05-00:08"
+      duration: "3s"
+      story_beat: "Mobility through weather"
+      narrative_purpose: "Prove the shell works during a normal commute, not only in a staged macro."
+      shot_type: "tracking use-case shot"
+      shot_size: "MS lateral tracking"
+      camera_angle: "waist height"
+      lens: "35mm"
+      lens_reason: "35mm holds body movement and wet street context without making the subject tiny."
+      camera_support: "side-tracking gimbal or dolly"
+      camera_motion: "lateral tracking move parallel to the commuter across the wet crosswalk"
+      focus: "continuous focus on torso, hood, and protected bag; background traffic blurred"
+      composition: "commuter foreground center, bag under shell line, taxi reflections background, rain streaks crossing frame"
+      subject_action: "Commuter walks steadily while keeping a leather work bag dry under the shell line."
+      blocking:
+        start_position: "Subject enters frame left at crosswalk edge."
+        end_position: "Subject exits frame right toward station entrance."
+        path: "Straight left-to-right walk across wet crosswalk."
+        eyeline: "Forward toward station entrance."
+        screen_direction: "Left-to-right, matching R01."
+        axis_note: "Keep commute direction consistent toward the station."
+      scene:
+        location: "Rainy city crosswalk"
+        foreground: "Wet pavement and shallow water"
+        midground: "Commuter and protected work bag"
+        background: "Taxi lights, station entrance glow, blurred pedestrians"
+        weather: "Heavy rain with puddle splashes"
+        lighting: "Cool street light with amber taxi reflections"
+      audio:
+        dialogue: []
+        voiceover: []
+        ambience:
+          - "traffic wash"
+          - "rain bed"
+        sfx:
+          - "footsteps through shallow water"
+        foley:
+          - "fabric movement around bag"
+        music: "pulse gains momentum"
+        silence: "no dialogue"
+      continuity:
+        characters:
+          - "commuter_01"
+        props:
+          - "leather_work_bag"
+        wardrobe:
+          - "graphite RainLock shell"
+        state_locks:
+          - "hood raised"
+          - "same zipper line"
+          - "bag remains dry"
+      transition_in: "directional cut from diagonal water movement"
+      transition_out: "cut to fit/detail close-up"
+      model_notes:
+        seedance: "Keep same subject and shell continuity from R01."
+        kling: "Single I2V shot should prioritize walking, rain, and side-track camera."
+        runway: "Avoid asking for product proof and emotional payoff in same shot."
+        veo: "Can carry traffic and rain ambience; no readable text needed."
+    - shot_id: R04
+      timecode: "00:08-00:11"
+      duration: "3s"
+      story_beat: "Fit and comfort detail"
+      narrative_purpose: "Show the garment is protective but still wearable and composed."
+      shot_type: "fit detail / reaction close-up"
+      shot_size: "CU three-quarter profile"
+      camera_angle: "three-quarter profile"
+      lens: "50mm"
+      lens_reason: "Normal lens keeps face and hood proportions natural while showing seam detail."
+      camera_support: "restrained handheld follow"
+      camera_motion: "small handheld follow beside the subject, settling as the hood adjustment completes"
+      focus: "focus on hood rim and face; shoulder seam remains readable"
+      composition: "face in upper third, hood rim catches station light, shoulder seam leads down frame"
+      subject_action: "Subject adjusts the hood once, keeping the face visible and calm."
+      blocking:
+        start_position: "Subject approaches station entrance, hood already raised."
+        end_position: "Hood seated cleanly; subject keeps walking into station light."
+        path: "One hand lifts to hood rim and returns down."
+        eyeline: "Forward, not into camera."
+        screen_direction: "Continues left-to-right."
+        axis_note: "Do not reverse commute direction before arrival payoff."
+      scene:
+        location: "Station entrance under rain cover"
+        foreground: "Rain streaks and shoulder seam"
+        midground: "Subject face, hood rim, collar"
+        background: "Station entrance light and blurred stairs"
+        weather: "Rain tapering under cover"
+        lighting: "Warm station practical light on hood edge, cool street fill"
+      audio:
+        dialogue: []
+        voiceover: []
+        ambience:
+          - "subway air"
+          - "rain outside cover"
+        sfx:
+          - "fabric rustle"
+        foley:
+          - "hand brushing hood rim"
+        music: "pulse softens"
+        silence: "no dialogue"
+      continuity:
+        characters:
+          - "commuter_01"
+        props:
+          - "leather_work_bag"
+        wardrobe:
+          - "graphite RainLock shell"
+        state_locks:
+          - "hood fit clean"
+          - "collar dry"
+          - "face visible"
+      transition_in: "cut from walking use-case"
+      transition_out: "cut with movement into train-door payoff"
+      model_notes:
+        seedance: "Keep face and shell identity stable; this is a continuity-sensitive reaction/detail shot."
+        kling: "Prompt hand-to-hood motion only; prevent extra clothing transformations."
+        runway: "Good clean-frame I2V if hand and hood are clearly visible."
+        veo: "Keep performance understated and practical."
+    - shot_id: R05
+      timecode: "00:11-00:15"
+      duration: "4s"
+      story_beat: "Dry arrival payoff"
+      narrative_purpose: "Resolve the commute with visible dry proof and product recall."
+      shot_type: "payoff / end packshot behavior"
+      shot_size: "MCU arrival frame"
+      camera_angle: "eye level"
+      lens: "50mm"
+      lens_reason: "Normal lens gives believable face scale while preserving the shell and dry collar proof."
+      camera_support: "short dolly or stabilized push that settles into a locked end frame"
+      camera_motion: "gentle dolly stop as train doors open behind the subject, ending on a stable product/face frame"
+      focus: "focus holds on dry collar and face; train doors remain readable but soft"
+      composition: "subject center, dry collar visible, shell front readable, rain behind platform glass, train doors opening background"
+      subject_action: "Commuter lowers hood, revealing a dry collar and calm expression."
+      blocking:
+        start_position: "Subject stands near platform glass with rain behind."
+        end_position: "Hood lowered; subject faces forward as train doors open behind."
+        path: "Hands lower hood, then stop; body remains centered."
+        eyeline: "Forward toward arriving train, then calm neutral ahead."
+        screen_direction: "Minimal vertical hand motion; background doors open laterally."
+        axis_note: "Arrival direction completes left-to-right commute path."
+      scene:
+        location: "Covered train platform"
+        foreground: "Dry collar and shell zipper line"
+        midground: "Commuter face and hood"
+        background: "Rain behind glass, opening train doors"
+        weather: "Rain outside platform glass"
+        lighting: "Soft station practicals with cool rain fill"
+      audio:
+        dialogue: []
+        voiceover: []
+        ambience:
+          - "rain muted behind glass"
+          - "platform air"
+        sfx:
+          - "train door chime"
+        foley:
+          - "hood fabric lowering"
+        music: "brief resolved hit"
+        silence: "no dialogue"
+      continuity:
+        characters:
+          - "commuter_01"
+        props:
+          - "leather_work_bag"
+        wardrobe:
+          - "graphite RainLock shell"
+        state_locks:
+          - "shell beads intact"
+          - "shirt collar dry"
+          - "approved product name if text is used: RainLock Commuter Shell"
+      transition_in: "cut from hood detail"
+      transition_out: "hold to end"
+      model_notes:
+        seedance: "Final payoff should preserve same commuter and shell; do not invent new logo placement."
+        kling: "Use clean frame with no text if generating direct I2V; add product name in post or separate title workflow."
+        runway: "Animate hood lowering and train doors only; no extra crowd action."
+        veo: "Can include train chime and muted rain as audio cues."
+
+qa:
+  all_required_fields_present: true
+  professional_shot_language: true
+  no_overloaded_shots: true
+  product_benefit_visible: true
+  audio_policy_present: true
+  generation_boundary: "No real video generated."
+
+skill_run_receipt:
+  run_id: rainlock-shot-list-2026-05-14
+  skill_id: shot-design
+  input_artifacts:
+    - examples/product-ad-raincoat/05-ad-structure.md
+  output_artifacts:
+    - examples/product-ad-raincoat/06-shot-list.yaml
+  decisions:
+    - "Use five shots for the 15s proof ad."
+  unresolved_questions:
+    - "30s version can expand from the same structure after product specs are confirmed."
+  qa_gate:
+    status: pass
+    reasons:
+      - "Every shot includes duration, purpose, shot size, angle, lens, motion, action, blocking, and audio."
+  next_recommended_skill: reference-image-planner

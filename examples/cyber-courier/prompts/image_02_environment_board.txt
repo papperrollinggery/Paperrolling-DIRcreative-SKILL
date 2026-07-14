@@ -1,0 +1,52 @@
+Pre-generation contract:
+Largest title on the page: SCENE GEOGRAPHY + CAMERA FOV REFERENCE / ENVIRONMENT BLOCKING BOARD
+Smaller metadata only: Project: Cyber Courier: The Alley Accepts The Package
+Do not make Cyber Courier: The Alley Accepts The Package the largest title.
+Direct video input policy: PLANNING ONLY; use this board to lock alley geography, camera axis, subject path, sign anchors, and destination door.
+
+Create the reference image from this JSON-first prompt config. Render a single 16:9 film production environment blocking board, not final footage.
+
+{
+  "meta": {
+    "config_id": "cyber_courier_environment_board_v1",
+    "image_type": "environment_blocking_board",
+    "source_patterns": ["art_directed_asymmetric_layout_v1", "json_config_prompt_v1", "surface_integrity_guard_v1"]
+  },
+  "artifact": {
+    "title": "Alley Environment Blocking Board",
+    "role": "lock alley geography, camera axis, subject path, sign anchors, and destination door",
+    "canvas": "16:9 landscape, high-density but readable production board"
+  },
+  "art_direction_policy": {
+    "non_negotiables": [
+      "do not use a generic layout",
+      "do not make an evenly distributed grid unless inside the top-down map sub-section",
+      "composition must feel art-directed, intentional, and slightly asymmetric",
+      "every section must have a visible production reason"
+    ]
+  },
+  "layout_system": {
+    "hero_region": "large alley hero view from entrance into depth",
+    "secondary_regions": ["top-down blocking map", "destination metal door detail", "red sign anchor", "blue 24-hour sign anchor"],
+    "exact_text_labels": ["ALLEY AXIS", "RED SIGN LEFT", "BLUE 24H SIGN", "DESTINATION DOOR", "COURIER PATH"]
+  },
+  "visual_systems": {
+    "environment": "narrow cyber-noir service alley in heavy rain, wet reflective pavement, exposed pipes, closed service panels, steam haze",
+    "geography": "public street entrance behind courier, straight path into depth, red sign on left near entrance, blue 24-hour sign deeper/right, sealed metal service door at far end",
+    "camera_markers": "SH01 threshold, SH02 tracking entry, SH03 bag insert location, SH04 mid-alley reaction, SH05 far door activation",
+    "lighting": "red sign glow left, cold cyan depth, wet ground reflections"
+  },
+  "consistency_locks": {
+    "location": "same alley axis, same sign positions, same door endpoint",
+    "forbidden": ["wide plaza", "open storefront", "crowd", "door already open", "extra destination"]
+  },
+  "quality_and_artifact_control": {
+    "surface_integrity_guard": {
+      "required": ["coherent wet pavement reflections", "distinct depth layers", "complete wall and pipe geometry"],
+      "avoid": ["fish-scale rain texture", "noisy speckles", "warped pipes", "collapsed building geometry"]
+    }
+  },
+  "avoid": ["generic cyberpunk street poster", "fake text", "tiny unreadable map markers", "decorative filler"]
+}
+
+QA notes: the map must be readable by humans; downstream video prompts will restate all reference mappings and will not rely on OCR.

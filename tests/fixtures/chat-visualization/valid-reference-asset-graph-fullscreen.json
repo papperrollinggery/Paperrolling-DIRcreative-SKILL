@@ -1,0 +1,97 @@
+{
+  "spec_version": "1.0",
+  "view_id": "reference-asset-graph-inline",
+  "execution_context": "standalone_chat",
+  "controller": {"surface_owner": "dircreative", "user_facing": true},
+  "stage_gate": {"id": "global_reference_pack_03", "type": "global_reference_pack_gate", "status": "needs_user", "decision_owner": "user"},
+  "view": {"intent": "graph", "display_mode": "inline", "customer_stage_label": "参考图方案", "decision_prompt": "这套参考资产职责和镜头绑定是否正确？"},
+  "source_truth": {"artifacts": [
+    {"artifact_id": "reference-pack-03", "version": "1.0.0", "sha256": "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd"},
+    {"artifact_id": "shot-list-03", "version": "1.0.0", "sha256": "efefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefef"}
+  ]},
+  "presentation": {
+    "fields": [
+      {"id": "current_stage", "label": "当前阶段", "value": "参考图方案", "classification": "presentation_only", "source_ref": null},
+      {"id": "assets", "label": "参考资产", "value": [
+        {"asset_id": "char-father", "label": "父亲身份参考", "role": "保持脸型、年龄、发型与灰蓝衬衫一致", "status": "待制作", "shot_bindings": ["SH01", "SH03", "SH05"], "planning_only": false, "direct_video_input": true},
+        {"asset_id": "char-daughter", "label": "女儿身份参考", "role": "保持脸型、发型与米色针织衫一致", "status": "待制作", "shot_bindings": ["SH01", "SH02", "SH04", "SH05"], "planning_only": false, "direct_video_input": true},
+        {"asset_id": "product-material", "label": "产品材质参考", "role": "保持暖白哑光机身和拉丝金属旋钮一致", "status": "待制作", "shot_bindings": ["SH02", "SH03", "SH04"], "planning_only": false, "direct_video_input": true},
+        {"asset_id": "kitchen-layout", "label": "厨房空间图", "role": "保持左窗、岛台、人物轴线与产品位置一致", "status": "可复用", "shot_bindings": ["全片"], "planning_only": false, "direct_video_input": true},
+        {"asset_id": "motion-board", "label": "分镜运动板", "role": "解释节奏、轴线和镜头运动，不提供外观身份", "status": "已规划", "shot_bindings": ["SH01–SH05"], "planning_only": true, "direct_video_input": false}
+      ], "classification": "source_bound", "source_ref": "reference-pack-03#/assets"},
+      {
+        "id": "asset_graph",
+        "label": "参考素材关系图",
+        "value": {
+          "summary": "五类参考素材连接五个镜头；身份、产品和空间素材直接用于对应镜头，分镜运动板仅用于策划参考。",
+          "nodes": [
+            {"id": "father", "label": "父亲身份", "type": "asset", "detail": "直接保持父亲脸型、年龄、发型与灰蓝衬衫一致。"},
+            {"id": "daughter", "label": "女儿身份", "type": "asset", "detail": "直接保持女儿脸型、发型与米色针织衫一致。"},
+            {"id": "product", "label": "产品材质", "type": "asset", "detail": "直接保持暖白哑光机身与拉丝金属旋钮一致。"},
+            {"id": "kitchen", "label": "厨房空间", "type": "asset", "detail": "直接保持左窗、岛台、人物轴线与产品位置一致。"},
+            {"id": "motion", "label": "分镜运动", "type": "asset", "detail": "只解释节奏、轴线和镜头运动，不提供人物或产品外观。"},
+            {"id": "sh01", "label": "SH01 建立", "type": "shot", "detail": "建立父女身份、厨房空间和全片轴线。"},
+            {"id": "sh02", "label": "SH02 习惯", "type": "shot", "detail": "父亲动作、女儿身份与产品第一次介入。"},
+            {"id": "sh03", "label": "SH03 发现", "type": "shot", "detail": "父亲反应与产品材质细节共同出现。"},
+            {"id": "sh04", "label": "SH04 共同动作", "type": "shot", "detail": "女儿、产品和手部连续性是主要控制项。"},
+            {"id": "sh05", "label": "SH05 回应", "type": "shot", "detail": "父女身份与空间关系共同收束。"}
+          ],
+          "edges": [
+            {"id": "e01", "source": "father", "target": "sh01", "kind": "direct_input"},
+            {"id": "e02", "source": "father", "target": "sh03", "kind": "direct_input"},
+            {"id": "e03", "source": "father", "target": "sh05", "kind": "direct_input"},
+            {"id": "e04", "source": "daughter", "target": "sh01", "kind": "direct_input"},
+            {"id": "e05", "source": "daughter", "target": "sh02", "kind": "direct_input"},
+            {"id": "e06", "source": "daughter", "target": "sh04", "kind": "direct_input"},
+            {"id": "e07", "source": "daughter", "target": "sh05", "kind": "direct_input"},
+            {"id": "e08", "source": "product", "target": "sh02", "kind": "direct_input"},
+            {"id": "e09", "source": "product", "target": "sh03", "kind": "direct_input"},
+            {"id": "e10", "source": "product", "target": "sh04", "kind": "direct_input"},
+            {"id": "e11", "source": "kitchen", "target": "sh01", "kind": "direct_input"},
+            {"id": "e12", "source": "kitchen", "target": "sh02", "kind": "direct_input"},
+            {"id": "e13", "source": "kitchen", "target": "sh03", "kind": "direct_input"},
+            {"id": "e14", "source": "kitchen", "target": "sh04", "kind": "direct_input"},
+            {"id": "e15", "source": "kitchen", "target": "sh05", "kind": "direct_input"},
+            {"id": "e16", "source": "motion", "target": "sh01", "kind": "planning_reference"},
+            {"id": "e17", "source": "motion", "target": "sh02", "kind": "planning_reference"},
+            {"id": "e18", "source": "motion", "target": "sh03", "kind": "planning_reference"},
+            {"id": "e19", "source": "motion", "target": "sh04", "kind": "planning_reference"},
+            {"id": "e20", "source": "motion", "target": "sh05", "kind": "planning_reference"}
+          ]
+        },
+        "classification": "source_bound",
+        "source_ref": "reference-pack-03#/asset_graph"
+      },
+      {"id": "shot_binding_source", "label": "镜头绑定来源", "value": "专业分镜头表 v1.0.0", "classification": "source_bound", "source_ref": "shot-list-03#/shots"}
+    ],
+    "options": [],
+    "recommendation": null,
+    "downstream_effects": [
+      {"stage": "image_prompt", "effect": "只为待制作资产编译提示词。"},
+      {"stage": "video_prompt", "effect": "分镜运动板只用于策划说明，不进入视频模型参考输入。"}
+    ]
+  },
+  "interactions": {
+    "local": ["filter", "expand"],
+    "actions": [
+      {"id": "approve", "label": "参考职责正确", "kind": "submit_selection", "target_gate_id": "global_reference_pack_03", "conversation_intent": "提交参考资产职责确认，请先核对资产角色、状态和镜头绑定。"},
+      {"id": "revise", "label": "调整资产职责", "kind": "request_revision", "target_gate_id": "global_reference_pack_03", "conversation_intent": "保持当前参考包不变，先询问我要调整的一个资产职责或绑定。"}
+    ],
+    "max_actions": 2,
+    "deep_navigation": false,
+    "nested_scroll": false
+  },
+  "write_boundary": {
+    "preview_only": true,
+    "confirmation_required": true,
+    "writes_authoritative_state": false,
+    "write_owner": "dircreative",
+    "possible_write_targets": ["reference-pack-manifest", "co-creation-run.gates", "skill_run_receipt.decisions"],
+    "forbidden_claims": ["lock", "readiness", "acceptance", "completion", "generation_authorization"]
+  },
+  "fallback": {
+    "format": "mermaid",
+    "required_visible_fields": ["current_stage", "decision_prompt", "assets", "asset_graph", "downstream_effects", "shot_bindings"],
+    "decision_question": "参考职责正确，还是要调整一个资产职责或镜头绑定？"
+  }
+}

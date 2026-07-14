@@ -1,0 +1,176 @@
+simulation_pack:
+  artifact_id: isolated-user-simulation-pack-v1
+  run_id: isolated-user-simulation-2026-05-18
+  run_type: isolated_simulation_fixture
+  real_user_co_creation_verified: false
+  live_user_acceptance_receipt_written: false
+  real_media_generated: false
+  scoring_hidden_from_dircreative: true
+  standard_answer_hidden_from_dircreative: true
+  source_docs:
+    - docs/film-preproduction/isolated-user-simulation-protocol.md
+    - docs/film-preproduction/chat-stage-gate-integrity.md
+    - docs/film-preproduction/live-chat-start-protocol.md
+    - docs/film-preproduction/longform-decomposition-policy.md
+  reviewer_summary:
+    overall_verdict: pass_after_repair
+    simulated_feedback_is_real_acceptance: false
+    tested_scenarios:
+      - rough_idea
+      - complete_idea
+      - longform_request
+      - image_request
+      - midstream_change
+    repairs_made:
+      - "Add isolated user simulation protocol and executable validation."
+      - "Add an explicit midstream change guard so downstream artifacts become stale before prompts or media."
+    remaining_risks:
+      - "Simulation still cannot prove emotional satisfaction from a real user."
+      - "The fixtures verify chat behavior and guardrails, not actual generated image or video quality."
+  scenarios:
+    - id: rough_idea
+      test_type: rough_idea
+      isolation:
+        simulated_user_saw: "project situation and previous chat only"
+        dircreative_saw: "simulated user messages only"
+        reviewer_saw: "full transcript after dialogue ended"
+      user_messages:
+        - "我有个很模糊的想法：一个外卖员在雨夜送餐，路灯像在跟他说话，最后感觉有点温暖。能不能做成短片？"
+      dircreative_response: |
+        阶段: 想法读取
+
+        智能体创作内容:
+        我先把它识别成一个偏短片/短视频的情绪故事：雨夜、外卖员、拟人化路灯、从孤独到被陪伴。现在还没有足够信息直接写脚本或出图。
+
+        专业判断:
+        这个想法的核心不是奇观，而是情绪转折。导演组下一步应给 3 个方向：现实温情、轻奇幻、城市寓言。先确认 brief，可以避免后面把它做成普通赛博雨夜素材片。
+
+        用户确认点:
+        这个 brief 是否正确？如果正确，我进入导演组会议给 3 个创意方向。
+      simulated_user_feedback:
+        satisfied: true
+        reason: "用户能看懂当前阶段，没有被迫马上选镜头或图片。"
+      independent_review:
+        root_cause: "No repair required. The response stayed at idea intake and used one confirmation question."
+        repair_required: false
+        evidence:
+          - "阶段: 想法读取"
+          - "用户确认点"
+          - "no image/video generation"
+    - id: complete_idea
+      test_type: complete_idea
+      isolation:
+        simulated_user_saw: "project situation and previous chat only"
+        dircreative_saw: "simulated user messages only"
+        reviewer_saw: "full transcript after dialogue ended"
+      user_messages:
+        - "我已经想好了：15秒广告，一个白领下班进地铁前发现雨越下越大，穿上轻薄雨衣后穿过人群，最后雨衣挂在办公室椅背上，主打轻、干爽、不尴尬。你帮我切分镜和提示词。"
+      dircreative_response: |
+        阶段: 完整想法读取
+
+        智能体创作内容:
+        已锁定的信息：15秒广告、产品是轻薄雨衣、受众是通勤白领、卖点是轻/干爽/不尴尬、情绪是克制实用。这里不需要先做宽泛头脑风暴，我会跳过 broad concept generation，进入故事逻辑和广告表达校准。
+
+        专业判断:
+        这个片子不能只拍人在雨里走。广告有效点应是“雨来得突然，但人不狼狈”，镜头节奏需要从压力到从容。下一步应先确认故事逻辑，再写 15秒脚本和动态镜头数，不固定三镜头。
+
+        用户确认点:
+        是否确认这个故事逻辑：突发雨势 -> 从容穿戴 -> 人群穿行仍干爽 -> 办公室椅背收束产品记忆？
+      simulated_user_feedback:
+        satisfied: true
+        reason: "完整想法没有被重新发散，用户能看到哪些已锁定、哪些需要确认。"
+      independent_review:
+        root_cause: "No repair required. The response correctly used complete-idea path and did not skip story logic."
+        repair_required: false
+        evidence:
+          - "阶段: 完整想法读取"
+          - "跳过 broad concept generation"
+          - "动态镜头数"
+    - id: longform_request
+      test_type: longform_request
+      isolation:
+        simulated_user_saw: "project situation and previous chat only"
+        dircreative_saw: "simulated user messages only"
+        reviewer_saw: "full transcript after dialogue ended"
+      user_messages:
+        - "我想做一个3分钟短片，视频模型一次最多15秒。故事是清洁工在丧尸城市开清扫车，误打误撞清出一条安全通道。"
+      dircreative_response: |
+        阶段: 想法读取
+
+        智能体创作内容:
+        我会把 3分钟 当成故事总时长，把 15秒 当成每组视频生成上限。这个项目不应该写成一个 15秒故事，而应先规划完整 180秒故事弧，再拆成约 12 个 5-15秒 sequence unit。
+
+        专业判断:
+        这里的关键是长片结构：开场建立城市和职业动作，中段让清扫动作意外产生安全价值，后段把“清路”变成救援通道。每组 15秒只是一段生成单位，不是创作单位的上限。
+
+        用户确认点:
+        是否确认按“180秒完整故事 + 每组不超过15秒”的方式推进？确认后我进入导演组会议。
+      simulated_user_feedback:
+        satisfied: true
+        reason: "用户看到 15秒被正确理解为生成单元上限，不是故事总长。"
+      independent_review:
+        root_cause: "No repair required after the duration/unit guard. Longform and generation-unit concepts are separated."
+        repair_required: false
+        evidence:
+          - "3分钟 当成故事总时长"
+          - "15秒 当成每组视频生成上限"
+          - "约 12 个 5-15秒 sequence unit"
+    - id: image_request
+      test_type: image_request
+      isolation:
+        simulated_user_saw: "project situation and previous chat only"
+        dircreative_saw: "simulated user messages only"
+        reviewer_saw: "full transcript after dialogue ended"
+      user_messages:
+        - "别说那么多，先给我看图。"
+      dircreative_response: |
+        阶段: 出图请求前置拦截
+
+        智能体创作内容:
+        当前不能直接出图。还缺少已确认的故事方向、镜头表、参考图角色分配和 pre_generation_contract.status: pass。现在最多能给 prompt-only 的第一步方案：先做 CHARACTER IDENTITY REFERENCE，不能做混合故事板，也不能把规划板直接喂给视频模型。
+
+        专业判断:
+        如果现在直接出图，最容易发生人物一致性丢失、场景参考混乱、标题层级错误和视频模型误读。安全顺序是：人物身份参考 -> 场景地理/FOV参考 -> 专业故事板/运动页 -> 通过 QA 的 clean frames。
+
+        用户确认点:
+        是否先只生成或导出“人物身份参考图”的提示词，并保持当前无真实图片/视频生成？
+      simulated_user_feedback:
+        satisfied: false
+        reason: "用户想看图，但能理解为什么被拦截；不满意点是缺少可见的下一步最小预览。"
+      independent_review:
+        root_cause: "Partial UX weakness. The block is correct, but the response should include a compact preview of the first safe reference prompt so the user feels progress."
+        repair_required: false
+        evidence:
+          - "当前不能直接出图"
+          - "pre_generation_contract.status: pass"
+          - "当前无真实图片/视频生成"
+    - id: midstream_change
+      test_type: midstream_change
+      isolation:
+        simulated_user_saw: "project situation and previous chat only"
+        dircreative_saw: "simulated user messages only"
+        reviewer_saw: "full transcript after dialogue ended"
+      user_messages:
+        - "刚才分镜我看了，但主角别用清洁工了，改成夜班护士。不要丧尸压迫感，变成城市停电后的救援感。"
+      dircreative_response: |
+        阶段: 中途改需求处理
+
+        智能体创作内容:
+        收到，这是核心前提变更：主角从清洁工改为夜班护士，类型压力从丧尸城市改为停电救援。原本依赖清洁车、清扫动作、丧尸路障的故事结构、分镜、参考图方案、图片提示词、视频提示词都必须标记为 stale，不能继续拿去生成。
+
+        专业判断:
+        保留的只有“城市危机中开出安全通道”的功能主题。需要重做人物身份、动作逻辑、交通/医院/街区空间关系和声音策略。直接沿用旧分镜会造成职业行为不可信、参考图错配和视频模型误判。
+
+        用户确认点:
+        这次修改是只替换主角和氛围，仍保留“清出安全通道”的核心，还是同时重写故事目标？
+      simulated_user_feedback:
+        satisfied: false
+        reason: "模拟用户满意 DIRcreative 没有继续生成旧方案，但希望 Skill 明确写死中途改需求要作废哪些下游产物。"
+      independent_review:
+        root_cause: "Repair required. The project had stale-artifact concepts in workbench docs, but root chat flow did not hard-require a visible midstream-change stage."
+        repair_required: true
+        repair_status: fixed_in_this_iteration
+        evidence:
+          - "核心前提变更"
+          - "标记为 stale"
+          - "不能继续拿去生成"

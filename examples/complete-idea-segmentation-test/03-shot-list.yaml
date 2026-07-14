@@ -1,0 +1,407 @@
+artifact:
+  artifact_id: complete-idea-shot-list-v1
+  version: 1.0.0
+  source_artifact_ids:
+    - complete-idea-segmentation-intake-v1
+    - complete-idea-director-room-v1
+  status: approved
+  owner_skill: shot-design
+
+shot_list:
+  project_title: "Fog Route Cleaner"
+  deliverable: "15s vertical AI short film"
+  channel: "ai_short_film"
+  aspect_ratio: "9:16"
+  total_duration: "15s"
+  professional_standard: "docs/film-preproduction/shot-language-standard.md"
+  segmentation_mode: "complete_idea_to_shot_cards"
+  shot_count_rationale: "Use 6 shots because the idea needs setup, equipment proof, route-clearing action, controlled threat, ambulance release, and quiet proof. Three shots would overload action and model references."
+  shots:
+    - shot_id: FRC01
+      timecode: "00:00-00:02"
+      duration: "2s"
+      story_beat: "Route blocked"
+      narrative_purpose: "Establish that the street is blocked and the ambulance needs one narrow lane cleared."
+      shot_type: "hook / geography setup"
+      shot_size: "WS vertical street view"
+      camera_angle: "low curb-level angle looking down the foggy street"
+      lens: "24mm wide-angle equivalent"
+      lens_reason: "Wide enough to hold route, ambulance, fog depth, and cleaner entrance in one readable vertical frame."
+      camera_support: "locked-off tripod"
+      camera_motion: "no camera move; emergency light flicker and fog provide movement while geography stays clear"
+      focus: "deep focus on lane and ambulance silhouette; zombie silhouettes remain soft in background"
+      composition: "wet lane forms a center leading line, cleaner enters foreground left, ambulance blocks background right"
+      subject_action: "Sanitation worker steps into frame and pauses at the blocked lane before activating the cart."
+      blocking:
+        start_position: "Cleaner offscreen left; ambulance stopped in background right; zombie silhouettes distant center."
+        end_position: "Cleaner foreground left facing down-lane toward the ambulance."
+        path: "One calm step into frame, then stop."
+        eyeline: "Cleaner looks down the lane, not at camera."
+        screen_direction: "Cleaner attention moves left-to-right toward the ambulance."
+        axis_note: "Street axis runs foreground-left to background-right; preserve it through FRC05."
+      scene:
+        location: "Foggy municipal street at dawn"
+        foreground: "Wet asphalt, curb, warning tape"
+        midground: "Sanitation worker and disinfectant cart"
+        background: "Ambulance lights, fog, distant zombie silhouettes"
+        weather: "Cold dawn fog, damp street"
+        lighting: "Blue-gray dawn, red-blue ambulance pulses, weak sodium streetlight"
+      continuity:
+        characters:
+          - "sanitation_worker_01"
+        props:
+          - "disinfectant_cart_idle"
+          - "ambulance_blocked"
+        wardrobe:
+          - "municipal reflective jacket"
+          - "rubber gloves"
+          - "clear face shield"
+        state_locks:
+          - "no gore"
+          - "zombies distant and soft"
+          - "worker calm and professional"
+      audio:
+        dialogue: []
+        voiceover: []
+        ambience:
+          - "distant siren"
+          - "morning wind through street"
+        sfx:
+          - "ambulance light relay tick"
+        foley:
+          - "boot step in shallow water"
+        music: "low restrained pulse begins under siren"
+        silence: "no spoken line"
+      transition_in: "cut from black"
+      transition_out: "hard cut to equipment macro"
+      model_notes:
+        seedance: "Can be the opening shot in a 15s multi-shot sequence; bind street board and role labels."
+        kling: "Use clean start frame if generating alone; keep zombies distant and soft."
+        runway: "Good clean first-frame candidate; animate fog, lights, and one worker step only."
+        veo: "Describe route geography explicitly and keep violence restrictions in scene constraints."
+    - shot_id: FRC02
+      timecode: "00:02-00:04"
+      duration: "2s"
+      story_beat: "Tool activation"
+      narrative_purpose: "Prove this is professional cleaning work, not combat."
+      shot_type: "equipment proof insert"
+      shot_size: "ECU macro"
+      camera_angle: "slight high angle over gloved hand"
+      lens: "85mm macro"
+      lens_reason: "Macro lens makes switch, pressure gauge, glove texture, and municipal equipment tactile."
+      camera_support: "locked tripod macro"
+      camera_motion: "locked camera; motion comes from one switch press and pressure needle lift"
+      focus: "focus starts on glove and switch, then racks to pressure gauge"
+      composition: "switch lower third, pressure gauge upper third, reflective sleeve diagonal across frame"
+      subject_action: "Gloved thumb presses the disinfectant cart switch once and the pressure gauge rises."
+      blocking:
+        start_position: "Gloved thumb rests beside the switch."
+        end_position: "Switch is pressed; pressure gauge needle rises."
+        path: "Single downward press."
+        eyeline: "No face; object-only shot."
+        screen_direction: "Thumb motion top-to-bottom."
+        axis_note: "Cart orientation matches FRC01: handle on worker side, nozzle points down-lane."
+      scene:
+        location: "Disinfectant cart handle close-up"
+        foreground: "Glove and switch"
+        midground: "Pressure gauge and metal casing"
+        background: "Ambulance color pulses through fog"
+        weather: "Interior detail within outdoor fog"
+        lighting: "Cool dawn fill, red-blue emergency reflections, small amber indicator"
+      continuity:
+        characters:
+          - "sanitation_worker_01_partial_hand"
+        props:
+          - "disinfectant_cart_activated"
+          - "pressure_gauge"
+        wardrobe:
+          - "rubber glove"
+          - "reflective sleeve"
+        state_locks:
+          - "single switch press"
+          - "no weapon-like device"
+          - "no readable tiny gauge text required"
+      audio:
+        dialogue: []
+        voiceover: []
+        ambience:
+          - "distant siren under macro"
+        sfx:
+          - "switch click"
+          - "motor hum starts"
+        foley:
+          - "glove creak"
+        music: "low pulse tightens"
+        silence: "no dialogue"
+      transition_in: "hard cut from route setup"
+      transition_out: "sound bridge into cart movement"
+      model_notes:
+        seedance: "Bind equipment board to keep cart design stable."
+        kling: "Good separate I2V insert; prompt one switch press only."
+        runway: "Use macro clean frame if testing equipment detail."
+        veo: "Keep activation realistic; no sci-fi weapon transformation."
+    - shot_id: FRC03
+      timecode: "00:04-00:07"
+      duration: "3s"
+      story_beat: "Lane clearing push"
+      narrative_purpose: "Show the worker creating the narrow route with controlled, believable motion."
+      shot_type: "process action"
+      shot_size: "MS tracking"
+      camera_angle: "side-rear three-quarter angle at cart height"
+      lens: "35mm"
+      lens_reason: "Natural perspective keeps the worker human while showing cart edge, lane, and fog depth."
+      camera_support: "stabilized follow rig"
+      camera_motion: "slow side-rear tracking move matching cart speed from blocked lane toward open path"
+      focus: "focus locked on cart front edge and worker hands; background stays soft"
+      composition: "cart front edge cuts a clean diagonal lane, worker fills left third, ambulance lights pulse in right background"
+      subject_action: "Worker pushes the cart in a straight line while low disinfectant mist clears the ground ahead."
+      blocking:
+        start_position: "Worker and cart at lane entrance."
+        end_position: "Cart has cleared a narrow center path."
+        path: "Straight push along the street axis."
+        eyeline: "Worker watches the nozzle path and lane edge."
+        screen_direction: "Left foreground to right background."
+        axis_note: "Maintain street axis from FRC01 so the ambulance path remains understandable."
+      scene:
+        location: "Same foggy street lane"
+        foreground: "Low disinfectant mist and wet asphalt"
+        midground: "Worker, cart, reflective jacket"
+        background: "Ambulance lights and distant figures behind fog"
+        weather: "Thick dawn fog"
+        lighting: "Blue-gray ambient dawn with red-blue pulses cutting through mist"
+      continuity:
+        characters:
+          - "sanitation_worker_01"
+        props:
+          - "disinfectant_cart_spraying"
+          - "clearing_lane"
+        wardrobe:
+          - "reflective municipal jacket"
+          - "rubber gloves"
+          - "face shield"
+        state_locks:
+          - "mist stays low and practical"
+          - "no explosions"
+          - "worker keeps calm posture"
+      audio:
+        dialogue: []
+        voiceover: []
+        ambience:
+          - "foggy street bed"
+          - "distant siren"
+        sfx:
+          - "electric motor hum"
+          - "low spray hiss"
+        foley:
+          - "cart wheels through shallow water"
+          - "boots on wet asphalt"
+        music: "restrained pulse continues"
+        silence: "no dialogue"
+      transition_in: "motor sound bridge from FRC02"
+      transition_out: "pan cut toward controlled threat"
+      model_notes:
+        seedance: "Works in multi-shot sequence with motion board and street board."
+        kling: "Use clean key frame if generated alone; specify low mist and no magical light."
+        runway: "Strong single-shot test; one subject action, clear camera path."
+        veo: "Separate subject movement, cart movement, and background figures."
+    - shot_id: FRC04
+      timecode: "00:07-00:09"
+      duration: "2s"
+      story_beat: "Controlled threat"
+      narrative_purpose: "Add tension while keeping the worker professional and the scene non-gory."
+      shot_type: "reaction / threat control"
+      shot_size: "MCU"
+      camera_angle: "over-shoulder from worker side toward fog"
+      lens: "50mm"
+      lens_reason: "Normal lens keeps threat close enough to feel present without turning it into a monster close-up."
+      camera_support: "stabilized shoulder-level pan"
+      camera_motion: "small pan from reflective shoulder patch to a soft zombie silhouette beyond the spray line"
+      focus: "focus stays on worker shoulder and nozzle; silhouette remains soft"
+      composition: "reflective shoulder foreground left, nozzle center, silhouette background right behind fog"
+      subject_action: "Worker stops for half a beat, adjusts the nozzle angle, and resumes the lane instead of confronting the figure."
+      blocking:
+        start_position: "Worker beside cart with nozzle forward."
+        end_position: "Nozzle angled slightly lower; worker returns to route."
+        path: "Half-step pause, no retreat."
+        eyeline: "Worker checks the silhouette, then the lane."
+        screen_direction: "Attention moves foreground-left to background-right, then back to lane center."
+        axis_note: "Threat stays outside the cleared lane; worker never crosses axis."
+      scene:
+        location: "Foggy lane near ambulance route"
+        foreground: "Reflective shoulder patch and nozzle"
+        midground: "Low disinfectant spray"
+        background: "Soft zombie silhouette beyond fog"
+        weather: "Dense fog and damp street"
+        lighting: "Emergency light rim on jacket, cool fog fill"
+      continuity:
+        characters:
+          - "sanitation_worker_01"
+          - "distant_zombie_silhouette_01"
+        props:
+          - "disinfectant_nozzle"
+          - "clearing_lane"
+        wardrobe:
+          - "reflective jacket"
+          - "face shield"
+        state_locks:
+          - "no attack"
+          - "no gore"
+          - "professional restraint"
+      audio:
+        dialogue: []
+        voiceover: []
+        ambience:
+          - "street hum under fog"
+        sfx:
+          - "spray angle change"
+          - "distant scrape behind fog"
+        foley:
+          - "jacket fabric shift"
+        music: "pulse dips for half beat"
+        silence: "no scream"
+      transition_in: "pan cut from moving cart"
+      transition_out: "cut on nozzle adjustment to lane reveal"
+      model_notes:
+        seedance: "Use anti-gore constraints; keep zombie as background shape."
+        kling: "Avoid uploading dense storyboard as first frame; clean over-shoulder frame only."
+        runway: "Prompt controlled pause, not confrontation."
+        veo: "Use safety language: no blood, no attack, threat stays distant."
+    - shot_id: FRC05
+      timecode: "00:09-00:12"
+      duration: "3s"
+      story_beat: "Ambulance release"
+      narrative_purpose: "Show the result of the work: the ambulance now has a clear path."
+      shot_type: "payoff geography"
+      shot_size: "WS to MS"
+      camera_angle: "low three-quarter angle from cart front toward ambulance path"
+      lens: "32mm"
+      lens_reason: "Slightly wide lens keeps the cleared lane and vehicle movement readable."
+      camera_support: "short dolly-back"
+      camera_motion: "dolly back from cart edge to reveal the cleared narrow lane as the ambulance begins moving"
+      focus: "focus rides from wet cleared lane to ambulance grille; worker stays readable at frame edge"
+      composition: "cleared lane center, worker left edge, ambulance enters from background right, fog frames path"
+      subject_action: "Worker steps aside and the ambulance rolls slowly through the narrow cleared lane."
+      blocking:
+        start_position: "Cart near center lane, worker beside it, ambulance stopped."
+        end_position: "Worker left edge, cart angled off lane, ambulance moving forward."
+        path: "Worker steps one pace left; ambulance moves straight down cleared path."
+        eyeline: "Worker watches tire path, not the camera."
+        screen_direction: "Ambulance moves background-right toward foreground-center."
+        axis_note: "Preserve route direction established in FRC01 and FRC03."
+      scene:
+        location: "Cleared lane in same foggy street"
+        foreground: "Cart edge, wet tire track"
+        midground: "Clear narrow lane"
+        background: "Ambulance grille and fog lights"
+        weather: "Fog thinning over cleared path"
+        lighting: "Ambulance headlights bloom through fog; dawn blue remains restrained"
+      continuity:
+        characters:
+          - "sanitation_worker_01"
+        props:
+          - "ambulance_moving_slowly"
+          - "disinfectant_cart_off_lane"
+        wardrobe:
+          - "reflective jacket"
+        state_locks:
+          - "ambulance moves slowly"
+          - "lane is narrow, not magically empty"
+          - "worker does not pose"
+      audio:
+        dialogue: []
+        voiceover: []
+        ambience:
+          - "foggy street bed"
+        sfx:
+          - "ambulance engine low idle"
+          - "wet tire roll"
+        foley:
+          - "worker boot step aside"
+        music: "restrained pulse opens into warmer note"
+        silence: "no dialogue"
+      transition_in: "cut on nozzle adjustment"
+      transition_out: "cut on ambulance passing frame edge"
+      model_notes:
+        seedance: "Sequence payoff shot; bind street geometry and ambulance path."
+        kling: "Use clean frame if precision matters; slow vehicle motion only."
+        runway: "Keep prompt concise to avoid extra people entering lane."
+        veo: "Explicitly describe vehicle speed and worker non-hero posture."
+    - shot_id: FRC06
+      timecode: "00:12-00:15"
+      duration: "3s"
+      story_beat: "Quiet proof"
+      narrative_purpose: "End on professional completion, not a victory pose."
+      shot_type: "quiet ending / proof frame"
+      shot_size: "CU"
+      camera_angle: "desk-height equivalent close view of gloves and nozzle at street level"
+      lens: "70mm short telephoto"
+      lens_reason: "Compresses background ambulance tail lights and foreground glove detail for a restrained emotional finish."
+      camera_support: "locked-off tripod"
+      camera_motion: "locked frame; only water drops, fog, and ambulance tail lights move"
+      focus: "sharp on glove returning nozzle to cart; ambulance tail lights soft in background"
+      composition: "gloved hand and dripping nozzle foreground, reflective sleeve midground, departing ambulance tail lights background"
+      subject_action: "Worker lowers the nozzle back into its holder and looks down to inspect the cleared strip."
+      blocking:
+        start_position: "Worker hand holds nozzle above cart holder."
+        end_position: "Nozzle rests in holder; worker gaze drops to cleaned ground."
+        path: "Small downward hand movement."
+        eyeline: "Down to cleared lane."
+        screen_direction: "Hand moves top-right to lower-center."
+        axis_note: "Ending faces the same lane direction; no reverse geography."
+      scene:
+        location: "Cleared lane edge"
+        foreground: "Dripping nozzle, rubber glove, cart holder"
+        midground: "Reflective sleeve and wet asphalt"
+        background: "Ambulance tail lights fading into fog"
+        weather: "Dawn fog softening"
+        lighting: "Cool dawn with warm tail-light reflection on wet street"
+      continuity:
+        characters:
+          - "sanitation_worker_01"
+        props:
+          - "disinfectant_nozzle_resting"
+          - "ambulance_departing"
+        wardrobe:
+          - "rubber gloves"
+          - "reflective sleeve"
+        state_locks:
+          - "no victory pose"
+          - "no gore"
+          - "municipal work completed quietly"
+      audio:
+        dialogue: []
+        voiceover: []
+        ambience:
+          - "city fog room tone"
+        sfx:
+          - "motor winding down"
+          - "distant siren fading"
+        foley:
+          - "nozzle placed in holder"
+          - "water drops on asphalt"
+        music: "warm restrained final note"
+        silence: "no final line"
+      transition_in: "cut after ambulance clears frame"
+      transition_out: "fade out"
+      model_notes:
+        seedance: "Use as final emotional proof; keep worker anonymous and restrained."
+        kling: "Strong clean end-frame candidate; animate only water drops, fog, and tail lights."
+        runway: "Good standalone ending loop if prompt keeps hand movement minimal."
+        veo: "Use no-dialogue audio section and restrained civic tone."
+
+skill_run_receipt:
+  run_id: complete-idea-shot-list-2026-05-16
+  skill_id: shot-design
+  input_artifacts:
+    - examples/complete-idea-segmentation-test/01-complete-idea.md
+  output_artifacts:
+    - examples/complete-idea-segmentation-test/03-shot-list.yaml
+  decisions:
+    - "Use six shots for a fast but readable 15-second complete idea."
+  unresolved_questions:
+    - "A real user should approve whether six shots is the desired rhythm before reference planning."
+  qa_gate:
+    status: pass
+    reasons:
+      - "Each shot includes story function, camera, blocking, scene layers, audio, continuity, and model notes."
+  next_recommended_skill: visual-bible

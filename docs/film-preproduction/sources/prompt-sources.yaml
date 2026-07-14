@@ -1,0 +1,201 @@
+source_registry:
+  version: "2.0.0"
+  verified_date: "2026-07-10"
+  accessed_on: "2026-07-10"
+  purpose: "Track version-scoped prompt mechanisms without treating prompt examples as model capability evidence."
+  authority_rule: "Prompt sources may shape wording; only model capability cards may authorize model behavior."
+  refresh_policy:
+    stale_after_days: 90
+    fail_closed_when_stale_or_ambiguous: true
+
+source_tiers:
+  S1: "official API reference or product manual"
+  S2: "original research paper"
+  S3: "version-scoped official prompting or product guide"
+  S4: "community or GitHub clue; never authoritative without promotion evidence"
+  USER: "user-supplied internal pattern; usable only under the declared activation policy"
+
+sources:
+  - source_key: user_character_board_prompt
+    version: "internal-pattern-v1"
+    status: active_internal_pattern
+    source_type: user_supplied_pattern
+    evidence_level: USER
+    url: ""
+    last_verified: "2026-07-10"
+    accessed_on: "2026-07-10"
+    extracted_mechanisms:
+      - "Art-directed asymmetric board layout."
+      - "Production-audience framing."
+      - "Performance direction with transitional emotion."
+      - "Material truth and consistency locks across panels."
+    active_pattern_ids:
+      - art_directed_asymmetric_layout_v1
+      - multi_panel_identity_lock_v1
+    reuse_policy: "Extract mechanisms into JSON style configs; do not hard-code the full character-board prompt into every artifact."
+
+  - source_key: user_surface_integrity_guard
+    version: "optional-internal-qa-macro-v1"
+    status: optional_internal_qa_macro
+    source_type: user_supplied_pattern
+    evidence_level: USER
+    url: ""
+    last_verified: "2026-07-10"
+    accessed_on: "2026-07-10"
+    activation_policy:
+      default_application: false
+      allowed_when:
+        - observed_surface_noise_or_geometry_failure
+        - explicit_internal_qa_experiment
+      forbidden_when:
+        - treated_as_platform_capability
+        - used_to_claim_transparent_background_support
+        - appended_to_every_image_prompt
+      evidence_required: "Record the observed failure ID and compare a control prompt without the macro."
+    macro_text: "The image is clean and transparent, with complete and natural materials, smooth and uniform texture, and the main subject Be clear, with distinct background layers, and avoid excessive sharpening, color spots, and noise Cracks, collapse, and distortion"
+    extracted_mechanisms:
+      - "Clean natural materials and coherent surface texture."
+      - "Targeted avoidance of scale-like texture, color speckles, random noise, cracks, collapsed surfaces, and distorted geometry."
+      - "Transparent background remains a separate capability-controlled output option; the word transparent in this macro is not evidence of alpha support."
+    active_pattern_ids:
+      - surface_integrity_guard_v1
+    reuse_policy: "Optional internal QA macro only. Prefer a concise failure-specific avoid list; never require this exact wording for Image2, GPT Image, or any provider family."
+
+  - source_key: wuyoscar_gpt_image_2_skill
+    version: "observed-2026-07-10"
+    status: clue_only
+    source_type: github_prompt_skill
+    evidence_level: S4
+    url: "https://github.com/wuyoscar/gpt_image_2_skill"
+    last_verified: "2026-07-10"
+    accessed_on: "2026-07-10"
+    extracted_mechanisms:
+      - "JSON/config-style image prompt construction."
+      - "Canvas, aspect ratio, and layout before subject detail."
+      - "Multi-panel consistency constraints."
+      - "Targeted avoid lines."
+    active_pattern_ids:
+      - json_config_prompt_v1
+    reuse_policy: "S4 clue only. Promote structural patterns through local eval; never import its model claims or full prompts as source truth."
+
+  - source_key: youmind_gpt_image_2_prompts_search
+    version: "observed-2026-07-10"
+    status: clue_only
+    source_type: github_prompt_search
+    evidence_level: S4
+    url: "https://github.com/YouMind-OpenLab/gpt-image-2-prompts-search"
+    last_verified: "2026-07-10"
+    accessed_on: "2026-07-10"
+    extracted_mechanisms:
+      - "Curated prompt library by use case."
+      - "Search, classify, remix, and promote loop."
+      - "Selective loading instead of reading a whole prompt dump."
+    active_pattern_ids:
+      - search_remix_update_loop_v1
+    reuse_policy: "S4 clue only. Use the registry workflow after local eval; do not import prompt collections wholesale."
+
+  - source_key: openai_gpt_image_2_generation_and_editing
+    version: "gpt-image-2-api-2026-07-10"
+    status: current
+    source_type: official_api_guide
+    evidence_level: S1
+    url: "https://developers.openai.com/api/docs/guides/image-generation"
+    last_verified: "2026-07-10"
+    accessed_on: "2026-07-10"
+    extracted_mechanisms:
+      - "Separate one-shot Image API generation/editing from conversational Responses API multi-turn editing."
+      - "Name each image reference role; one or more reference images may be used in an edit request."
+      - "For edits, declare what must be preserved and what may change."
+      - "Output controls are capability-card fields, not prose assumptions."
+    active_pattern_ids:
+      - json_config_prompt_v1
+    reuse_policy: "Use for GPT Image 2 prompt hygiene only after resolving gpt_image_2_openai_api."
+
+  - source_key: openai_sora_2_prompting
+    version: "sora-2-guide-march-2026"
+    status: current
+    source_type: version_scoped_official_prompt_guide
+    evidence_level: S3
+    url: "https://developers.openai.com/cookbook/examples/sora/sora2_prompting_guide"
+    last_verified: "2026-07-10"
+    accessed_on: "2026-07-10"
+    extracted_mechanisms:
+      - "Treat each shot as a creative unit with explicit subject, action, camera, light, timing, and sound."
+      - "Use image input as a first-frame anchor, not a general-purpose board."
+      - "Use one targeted edit at a time and keep preserve/change language explicit."
+    active_pattern_ids: []
+    reuse_policy: "Apply only to an exact Sora 2 or Sora 2 Pro capability card and provider surface."
+
+  - source_key: seedance_2_0_official_prompt_examples
+    version: "2.0"
+    status: current_version_scoped
+    source_type: version_scoped_official_guide
+    evidence_level: S3
+    url: "https://seed.bytedance.com/en/blog/seedance-2-0-official-launch"
+    last_verified: "2026-07-10"
+    accessed_on: "2026-07-10"
+    extracted_mechanisms:
+      - "Bind shooting script, character, scene, prop, video, and audio references by explicit role."
+      - "Mark storyboard content as shot-language guidance instead of literal output content."
+      - "Keep numeric reference limits scoped to Seedance 2.0."
+    active_pattern_ids: []
+    reuse_policy: "Version-scoped to Seedance 2.0; never carry limits into a family alias or later version."
+
+  - source_key: kling_video_3_0_prompting
+    version: "3.0"
+    status: current_version_scoped
+    source_type: version_scoped_official_guide
+    evidence_level: S3
+    url: "https://app.klingai.com/cn/quickstart/klingai-video-3-model-user-guide"
+    last_verified: "2026-07-10"
+    accessed_on: "2026-07-10"
+    extracted_mechanisms:
+      - "Separate single-shot and multi-shot intent."
+      - "Bind start/end frames, elements, speaker/voice, and scene actions explicitly."
+      - "Use flexible duration only through the exact VIDEO 3.0 capability card."
+    active_pattern_ids: []
+    reuse_policy: "Do not mix VIDEO 3.0 prompt rules with the legacy 5/10-second image-to-video card."
+
+  - source_key: runway_gen_4_5_prompting
+    version: "Gen-4.5"
+    status: current_version_scoped
+    source_type: version_scoped_official_guide
+    evidence_level: S3
+    url: "https://help.runwayml.com/hc/en-us/articles/46974685288467-Creating-with-Gen-4-5"
+    last_verified: "2026-07-10"
+    accessed_on: "2026-07-10"
+    extracted_mechanisms:
+      - "Image-to-video prompts focus on scene motion; text-to-video prompts cover both visuals and motion."
+      - "Generation prompts are distinct from Aleph edit prompts."
+    active_pattern_ids: []
+    reuse_policy: "Use only with runway_gen_4_5_web; route existing-video changes to a current edit card."
+
+  - source_key: runway_aleph_2_0_edit_prompting
+    version: "Aleph 2.0"
+    status: current_version_scoped
+    source_type: version_scoped_official_guide
+    evidence_level: S3
+    url: "https://help.runwayml.com/hc/en-us/articles/52150503729171-Aleph-2-0-Prompting-Guide"
+    last_verified: "2026-07-10"
+    accessed_on: "2026-07-10"
+    extracted_mechanisms:
+      - "State one action verb and the desired transformation."
+      - "Separate preserve fields from change fields."
+      - "Use optional extra motion only when the edit needs motion not present in source or keyframe."
+    active_pattern_ids: []
+    reuse_policy: "Use only with runway_aleph_2_0_web; Gen-4 Aleph is a separate deprecated capability card."
+
+  - source_key: veo_3_1_vertex_prompting
+    version: "veo-3.1-stable-001"
+    status: current_endpoint_scoped
+    source_type: official_api_and_prompt_guidance
+    evidence_level: S1
+    url: "https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/veo-video-generation"
+    last_verified: "2026-07-10"
+    accessed_on: "2026-07-10"
+    extracted_mechanisms:
+      - "Set duration and generateAudio as API parameters rather than asking prose to change them."
+      - "Keep subject, action, scene, camera, light, style, and desired audio as explicit prompt systems."
+      - "Resolve stable endpoint and provider surface before choosing reference modes."
+    active_pattern_ids: []
+    reuse_policy: "Apply only after selecting a stable endpoint capability card; retain any official surface conflict in the receipt."

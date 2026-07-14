@@ -1,0 +1,37 @@
+Clean frame contract:
+No visible title, project metadata, labels, arrows, panels, maps, swatches, callouts, or text in the image.
+Direct video input policy: allowed for Kling and Runway after user lock; this is the SH05 clean end frame.
+
+Create one clean cinematic end frame for direct image-to-video generation. Do not create a board.
+
+{
+  "meta": {
+    "config_id": "cyber_courier_clean_sh05_end_v1",
+    "image_type": "clean_end_frame",
+    "shot_id": "SH05",
+    "frame_role": "final door activation clean end frame for Kling and Runway"
+  },
+  "artifact": {
+    "title": "SH05 Clean End Frame",
+    "canvas": "16:9 cinematic frame, final footage style, no labels or panels",
+    "primary_job": "provide direct I2V final frame or end-state reference for the door activation shot"
+  },
+  "strict_clean_frame_rules": {
+    "forbidden": ["text", "labels", "arrows", "panel borders", "storyboard strip", "floor plan", "swatches", "callouts", "watermark", "UI overlay"],
+    "must_show": "only the cinematic scene"
+  },
+  "shot": {
+    "shot_size": "medium wide shot",
+    "camera_angle": "low eye-level from behind courier toward the far door",
+    "lens": "35mm normal-wide",
+    "composition": "courier in red rain jacket stands still in foreground or midground facing a sealed metal service door, black delivery bag held close, intercom panel glowing at the far door, red reflection in a puddle",
+    "lighting": "cold blue-black rain ambience, narrow intercom light, subtle red package reflection, wet metal and pavement highlights",
+    "subject_state": "courier stopped short of the door, watching the intercom light; door remains closed",
+    "background_state": "rain continues, sealed door and intercom glow, no recipient appears",
+    "continuity_locks": ["same courier silhouette", "same black delivery bag", "door activates but does not open", "no extra characters"]
+  },
+  "quality_and_artifact_control": {
+    "required": ["clear door endpoint", "coherent wet pavement reflection", "complete courier silhouette", "natural rain texture", "stable intercom glow"],
+    "avoid": ["door opening", "person behind door", "extra attackers", "fake text", "storyboard look", "noisy rain speckles", "warped door geometry"]
+  }
+}

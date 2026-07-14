@@ -1,0 +1,294 @@
+fixture_authority: none
+live_state_authority: false
+live_acceptance_authority: false
+host_attestation_authority: false
+
+artifact:
+  artifact_id: thread-dispatch-harness-loop-20260627T083852Z
+  version: 1.0.0
+  source_artifact_ids:
+    - docs/film-preproduction/thread-orchestration-protocol.md
+    - docs/film-preproduction/workspace-cleanliness-protocol.md
+    - docs/film-preproduction/05-skill-integration-architecture.md
+    - docs/film-preproduction/06-gstack-execution-goal.md
+  status: ready
+  owner_skill: dircreative
+
+run:
+  run_id: thread-dispatch-harness-loop-20260627T083852Z
+  run_type: real_thread_cleanup_record
+  main_controller_thread:
+    thread_id: "00000000-0000-7000-8000-000000000014"
+    title: "规划 Codex thread 人性化优化"
+    cwd: "/Users/example-user/work/DIR SKILL"
+    pinned: true
+    role: pinned_user_facing_controller
+  disposable_workers_archived:
+    - thread_id: "00000000-0000-7000-8000-00000000001a"
+      role: cold_review_worker
+      result: consumed_partial_finding_adopted
+      archived: true
+  isolated_worktree_workers_archived:
+    - thread_id: "00000000-0000-7000-8000-000000000018"
+      role: harness_loop_protocol_implementation_worker
+      original_worktree: "/Users/example-user/.codex/worktrees/8e73/DIR SKILL"
+      result: adopted_with_controller_synthesis
+      archived: true
+      worktree_removed: true
+    - thread_id: "00000000-0000-7000-8000-000000000019"
+      role: loop_engineering_validation_worker
+      original_worktree: "/Users/example-user/.codex/worktrees/36eb/DIR SKILL"
+      result: adopted_with_controller_synthesis
+      archived: true
+      worktree_removed: true
+  worktree_evidence:
+    command: "git worktree list --porcelain"
+    result_summary: "Only /Users/example-user/work/DIR SKILL on main was listed after worker archival and worktree removal."
+    unintended_worker_worktrees_present: false
+  cleanup_policy:
+    task_owned_worktrees_archived: true
+    unrelated_project_threads_archived: false
+    reason: "Only the two harness-loop workers and one cold-review worker were in scope."
+
+thread_dispatch_record:
+  record_id: "thread-dispatch-harness-loop-20260627T083852Z"
+  version: "1.0.0"
+  project_title: "DIRcreative harness and loop engineering integration"
+  main_controller_thread_id: "00000000-0000-7000-8000-000000000014"
+  active_goal_summary: "Fuse agent harness construction with continuous loop engineering in DIRcreative through typed stage gates, receipts, retry routing, council/cold-review, Codex Thread cleanup, validation wiring, release gate integration, and global install readiness."
+  acceptance_standard: "Docs, root skill, release gate, and executable audits must prove harness+loop contract wiring without claiming live user acceptance or OBJECTIVE_COMPLETE."
+  created_at: "2026-06-27T08:38:52Z"
+
+thread_class_policy:
+  allowed_thread_classes:
+    - pinned_user_facing_controller
+    - disposable_read_only_worker
+    - isolated_worktree_worker
+    - reusable_research_thread
+  default_user_facing_thread_class: pinned_user_facing_controller
+  same_directory_worker_default: read_only
+  substantive_output_default_thread_class: isolated_worktree_worker
+  read_only_worker_use: review_research_cold_review_only
+  main_controller_write_boundary: receipts_adoption_merge_rollback_validation_only
+  hidden_thread_state_is_truth: false
+
+thread_budget:
+  max_active_workers: 3
+  active_worker_count: 0
+  approval_required_above: 5
+  over_budget_reason: ""
+
+dispatches:
+  - thread_id: "00000000-0000-7000-8000-000000000014"
+    thread_class: pinned_user_facing_controller
+    role: "CONTROL main-controller for dispatch, worker adoption, validation, cleanup, install, commit, push, and final user report."
+    professional_identity: "main-controller delivery lead"
+    viewpoint: main-controller
+    read_scope:
+      - "repo files"
+      - ".dircreative/runs/"
+      - "Codex app thread status"
+      - "validation output"
+      - "worker receipts"
+    write_scope: main_controller_only
+    worktree_path: "/Users/example-user/work/DIR SKILL"
+    allowed_actions:
+      - "write dispatch and cleanup records"
+      - "adopt or reject worker diffs"
+      - "merge or synthesize adopted worker changes"
+      - "run validation"
+      - "archive worker threads"
+      - "install local skill package"
+      - "stage, commit, and push after validation"
+      - "report user-facing status"
+    expected_output: "Adopted harness+loop integration, validation output, install evidence, cleanup evidence, commit/push evidence, and final report."
+    stop_condition: "Finish only after worker output is consumed, validation passes or exact failures are reported, install parity is verified, cleanup evidence is recorded, and no live acceptance or objective completion is claimed."
+    cleanup_rule: keep_pinned
+    may_mark_goal_complete: false
+    output_status: consumed
+    findings_summary:
+      - "Controller adopted worker findings into repo docs, root skill rules, validation script, release gate, loop audit script, and dispatch record."
+    adopted_into:
+      - "tests/fixtures/runtime/runs/thread-dispatch-harness-loop-20260627T083852Z.yaml"
+      - "skills/dircreative/SKILL.md"
+      - "docs/film-preproduction/05-skill-integration-architecture.md"
+      - "docs/film-preproduction/06-gstack-execution-goal.md"
+      - "scripts/dircreative_loop_engineering_audit.py"
+      - "scripts/validate_project.py"
+      - "scripts/dircreative_release_gate.py"
+    consumed_at: "2026-06-27T08:38:52Z"
+    cleanup_verified_by: main-controller
+    archived: false
+    pinned: true
+
+  - thread_id: "00000000-0000-7000-8000-000000000018"
+    thread_class: isolated_worktree_worker
+    role: "IMPLEMENTATION_WORKER"
+    professional_identity: "DIRcreative harness + loop engineering protocol implementer"
+    viewpoint: "product-grade skill architecture, Goal-mode execution discipline, production harness design"
+    read_scope:
+      - "README.md"
+      - "skills/dircreative/SKILL.md"
+      - "docs/film-preproduction/05-skill-integration-architecture.md"
+      - "docs/film-preproduction/06-gstack-execution-goal.md"
+      - "docs/film-preproduction/goal-autorun-completion-protocol.md"
+      - "docs/film-preproduction/council-adversarial-review.md"
+      - "docs/film-preproduction/thread-orchestration-protocol.md"
+      - "docs/film-preproduction/qa/retry-rules.md"
+      - "docs/film-preproduction/qa/failure-taxonomy.yaml"
+      - "docs/film-preproduction/research/thread-orchestration-community-lessons.md"
+    write_scope: isolated_worktree_only
+    worktree_path: "/Users/example-user/.codex/worktrees/8e73/DIR SKILL"
+    allowed_actions:
+      - "edit scoped docs and root skill in isolated worktree"
+      - "run focused validation"
+      - "return receipt"
+    expected_output: "Harness+loop protocol text, root skill wiring, validation output, unresolved risks, and adoption notes."
+    stop_condition: "Return after scoped docs/root-skill edits and focused validation; do not commit, push, install, or mark objective complete."
+    cleanup_rule: archive_after_adoption_or_rejection
+    may_mark_goal_complete: false
+    output_status: adopted
+    findings_summary:
+      - "Added root harness contract, typed stage gate receipt fields, retry loop/session persistence rules, and Goal/live acceptance boundaries."
+      - "Noted full project validation was blocked only while validation worker worktree was still present."
+    adopted_into:
+      - "skills/dircreative/SKILL.md"
+      - "docs/film-preproduction/05-skill-integration-architecture.md"
+      - "docs/film-preproduction/06-gstack-execution-goal.md"
+    consumed_at: "2026-06-27T08:30:00Z"
+    cleanup_verified_by: main-controller
+    archived: true
+    pinned: false
+
+  - thread_id: "00000000-0000-7000-8000-000000000019"
+    thread_class: isolated_worktree_worker
+    role: "VALIDATION_WORKER"
+    professional_identity: "DIRcreative validation harness engineer"
+    viewpoint: "executable audit coverage, release-gate readiness, regression prevention"
+    read_scope:
+      - "scripts/validate_project.py"
+      - "scripts/dircreative_goal_autorun_audit.py"
+      - "scripts/dircreative_quality_audit.py"
+      - "scripts/dircreative_release_gate.py"
+      - "scripts/dircreative_thread_audit.py"
+      - "docs/film-preproduction/05-skill-integration-architecture.md"
+      - "docs/film-preproduction/06-gstack-execution-goal.md"
+      - "docs/film-preproduction/goal-autorun-completion-protocol.md"
+      - "docs/film-preproduction/council-adversarial-review.md"
+      - "docs/film-preproduction/qa/retry-rules.md"
+      - "docs/film-preproduction/qa/failure-taxonomy.yaml"
+      - "skills/dircreative/SKILL.md"
+    write_scope: isolated_worktree_only
+    worktree_path: "/Users/example-user/.codex/worktrees/36eb/DIR SKILL"
+    allowed_actions:
+      - "edit scoped validation files in isolated worktree"
+      - "run focused validation"
+      - "return receipt"
+    expected_output: "Loop engineering audit, validation/release-gate wiring, command results, adoption recommendation, and remaining risks."
+    stop_condition: "Return after scoped validation edits and focused validation; do not commit, push, install, or mark objective complete."
+    cleanup_rule: archive_after_adoption_or_rejection
+    may_mark_goal_complete: false
+    output_status: adopted
+    findings_summary:
+      - "Added dircreative_loop_engineering_audit.py and wired it into validate_project.py and dircreative_release_gate.py."
+      - "Controller adopted the script with a narrower persistent-thread-contract check and preserved live worktree cleanup in dircreative_thread_audit.py."
+    adopted_into:
+      - "scripts/dircreative_loop_engineering_audit.py"
+      - "scripts/validate_project.py"
+      - "scripts/dircreative_release_gate.py"
+    consumed_at: "2026-06-27T08:32:00Z"
+    cleanup_verified_by: main-controller
+    archived: true
+    pinned: false
+
+  - thread_id: "00000000-0000-7000-8000-00000000001a"
+    thread_class: disposable_read_only_worker
+    role: "COLD_REVIEW_WORKER"
+    professional_identity: "independent product-grade release/council reviewer"
+    viewpoint: "overreach, missing validation, harness-loop contract quality, humanizer regression, thread discipline, completion-boundary risk"
+    read_scope:
+      - "git diff"
+      - "git status --short"
+      - "git worktree list --porcelain"
+      - "skills/dircreative/SKILL.md"
+      - "docs/film-preproduction/05-skill-integration-architecture.md"
+      - "docs/film-preproduction/06-gstack-execution-goal.md"
+      - "scripts/dircreative_loop_engineering_audit.py"
+      - "scripts/validate_project.py"
+      - "scripts/dircreative_release_gate.py"
+      - "tests/fixtures/runtime/runs/thread-dispatch-humanizer-20260627T081229Z.yaml"
+      - "docs/film-preproduction/thread-orchestration-protocol.md"
+    write_scope: none
+    worktree_path: ""
+    allowed_actions:
+      - "read-only review"
+      - "run read-only validation commands"
+      - "report findings"
+    expected_output: "Severity-ordered findings and adopt/reject recommendation."
+    stop_condition: "Return after diff review and focused read-only checks; do not edit files or mark goal complete."
+    cleanup_rule: archive_after_consumed
+    may_mark_goal_complete: false
+    output_status: consumed
+    findings_summary:
+      - "Raised a receipt self-audit risk: the current thread dispatch receipt should itself be validated, not only written."
+      - "Controller adopted this by adding the current dispatch record and validating it with dircreative_thread_audit.py --dispatch-record."
+    adopted_into:
+      - "tests/fixtures/runtime/runs/thread-dispatch-harness-loop-20260627T083852Z.yaml"
+    consumed_at: "2026-06-27T08:38:52Z"
+    cleanup_verified_by: main-controller
+    archived: true
+    pinned: false
+
+worktree_audit:
+  command: "git worktree list --porcelain"
+  expected_main_worktree: "/Users/example-user/work/DIR SKILL"
+  unintended_worker_worktrees_present: false
+  stale_worker_checkout_present: false
+  checked_paths:
+    - "/Users/example-user/work/DIR SKILL"
+    - "/Users/example-user/.codex/worktrees/8e73/DIR SKILL"
+    - "/Users/example-user/.codex/worktrees/36eb/DIR SKILL"
+  evidence_source: git
+
+completion_boundary:
+  live_user_acceptance_receipt_exists: false
+  release_gate_passed: true
+  objective_complete: false
+  completion_claim_allowed: false
+
+qa:
+  main_controller_pinned: true
+  disposable_workers_archived: true
+  stale_worker_threads_visible_for_project: false
+  useful_findings_reconciled: true
+  no_hidden_thread_truth: true
+  no_unintended_worktrees: true
+  unintended_worker_worktrees_present: false
+  no_completion_claim: true
+  failures: []
+
+skill_run_receipt:
+  run_id: thread-dispatch-harness-loop-20260627T083852Z
+  skill_id: dircreative
+  input_artifacts:
+    - docs/film-preproduction/thread-orchestration-protocol.md
+    - docs/film-preproduction/05-skill-integration-architecture.md
+    - docs/film-preproduction/06-gstack-execution-goal.md
+    - scripts/dircreative_quality_audit.py
+  output_artifacts:
+    - tests/fixtures/runtime/runs/thread-dispatch-harness-loop-20260627T083852Z.yaml
+    - scripts/dircreative_loop_engineering_audit.py
+    - scripts/validate_project.py
+    - scripts/dircreative_release_gate.py
+  decisions:
+    - "Adopt implementation worker protocol changes with controller synthesis."
+    - "Adopt validation worker loop audit and release-gate wiring with persistent-contract adjustment."
+    - "Adopt cold-review receipt self-audit concern by validating this dispatch record directly."
+  unresolved_questions: []
+  qa_gate:
+    status: pass
+    reasons:
+      - "No live user acceptance or OBJECTIVE_COMPLETE is claimed."
+      - "Worker output was reconciled into durable repo files and this dispatch receipt."
+      - "All task-owned worker worktrees were removed."
+  next_recommended_skill: checkpoint

@@ -1,0 +1,19 @@
+Asset role: CLEAN FIRST FRAME
+Role purity: provide one text-free direct visual anchor for the opening state
+Inherited sources: PRODUCT IDENTITY REFERENCE, SCENE GEOGRAPHY + CAMERA FOV REFERENCE, LIGHTING + MATERIAL STYLE REFERENCE
+No visible title, no labels, no arrows, no panels, no grid, no logo, no watermark, no text.
+
+Canvas and composition:
+- 9:16 vertical portrait
+- Product-only display object in a stable three-quarter opening composition
+- Product is the visual center; mirror echo is secondary
+- Clean negative space around the silhouette and at the final copy-safe side
+- Dark studio, smoky mirror, black reflective floor
+
+Capture and look:
+- Eye-level display-object height, normal product perspective, stable axis
+- Soft neutral fill and restrained deep-burgundy edge source
+- Textured black level, readable satin and lace, no full-frame flare
+- No human body, face, skin, hand, or wearer
+
+Finish as a single stable opening state with the full product silhouette readable, no visible production graphics, and no geometry drift.

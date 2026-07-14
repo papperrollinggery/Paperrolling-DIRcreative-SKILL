@@ -1,0 +1,110 @@
+{
+  "spec_version": "1.0",
+  "view_id": "story-beat-ribbon-inline",
+  "execution_context": "standalone_chat",
+  "controller": {"surface_owner": "dircreative", "user_facing": true},
+  "stage_gate": {"id": "story_approval_02", "type": "story_approval_gate", "status": "needs_user", "decision_owner": "user"},
+  "view": {"intent": "timeline", "display_mode": "inline", "customer_stage_label": "故事逻辑确认", "decision_prompt": "这条故事推进是否成立？"},
+  "source_truth": {"artifacts": [{"artifact_id": "story-package-02", "version": "1.0.0", "sha256": "7777777777777777777777777777777777777777777777777777777777777777"}]},
+  "presentation": {
+    "fields": [
+      {"id": "current_stage", "label": "当前阶段", "value": "故事逻辑确认", "classification": "presentation_only", "source_ref": null},
+      {"id": "beginning", "label": "建立", "value": "父女在清晨厨房里各自忙碌，关系亲近但交流克制。", "classification": "source_bound", "source_ref": "story-package-02#/beats/beginning"},
+      {"id": "turn", "label": "转折", "value": "父亲发现女儿一直默默记住他的旧习惯。", "classification": "source_bound", "source_ref": "story-package-02#/beats/turn"},
+      {"id": "proof", "label": "证明", "value": "产品成为两人共同完成早餐仪式的具体证据。", "classification": "source_bound", "source_ref": "story-package-02#/beats/proof"},
+      {"id": "ending", "label": "收束", "value": "没有解释性台词，只留下动作回应和品牌落点。", "classification": "source_bound", "source_ref": "story-package-02#/beats/ending"},
+      {"id": "tension", "label": "张力", "value": "从未说出口的理解，到被一个动作确认。", "classification": "source_bound", "source_ref": "story-package-02#/tension"},
+      {
+        "id": "story_curve",
+        "label": "故事曲线",
+        "value": {
+          "duration": 30,
+          "unit": "相对强度",
+          "source_kind": "creative_projection",
+          "summary": "情绪逐步累积，注意力在开场和揭示处形成双峰，品牌在共同动作后自然进入。",
+          "series": [
+            {
+              "id": "emotion",
+              "label": "情绪",
+              "insight": "情绪从克制关系逐步累积，在 22 秒动作回应处达到最高点。",
+              "points": [
+                {"time": 0, "value": 24},
+                {"time": 4, "value": 32},
+                {"time": 9, "value": 40},
+                {"time": 14, "value": 58},
+                {"time": 18, "value": 72},
+                {"time": 22, "value": 92},
+                {"time": 26, "value": 78},
+                {"time": 30, "value": 66}
+              ]
+            },
+            {
+              "id": "hook",
+              "label": "钩子/注意力",
+              "insight": "开场动作先形成注意力，9–14 秒略有回落，发现旧习惯后重新抬升。",
+              "points": [
+                {"time": 0, "value": 70},
+                {"time": 4, "value": 82},
+                {"time": 9, "value": 55},
+                {"time": 14, "value": 76},
+                {"time": 18, "value": 86},
+                {"time": 22, "value": 80},
+                {"time": 26, "value": 68},
+                {"time": 30, "value": 58}
+              ]
+            },
+            {
+              "id": "brand",
+              "label": "品牌存在感",
+              "insight": "品牌在 14 秒前保持克制，随后伴随共同动作进入，不抢走关系建立。",
+              "points": [
+                {"time": 0, "value": 4},
+                {"time": 4, "value": 6},
+                {"time": 9, "value": 10},
+                {"time": 14, "value": 24},
+                {"time": 18, "value": 56},
+                {"time": 22, "value": 64},
+                {"time": 26, "value": 76},
+                {"time": 30, "value": 88}
+              ]
+            }
+          ],
+          "annotations": [
+            {"time": 0, "label": "关系建立"},
+            {"time": 9, "label": "发现习惯"},
+            {"time": 18, "label": "共同动作"},
+            {"time": 26, "label": "品牌落点"}
+          ]
+        },
+        "classification": "source_bound",
+        "source_ref": "story-package-02#/curve_projection"
+      }
+    ],
+    "options": [],
+    "recommendation": null,
+    "downstream_effects": [{"stage": "script", "effect": "确认后按四段节拍分配对白、动作和时长。"}]
+  },
+  "interactions": {
+    "local": ["expand"],
+    "actions": [
+      {"id": "approve", "label": "故事逻辑成立", "kind": "submit_selection", "target_gate_id": "story_approval_02", "conversation_intent": "提交故事逻辑确认，请先核对当前进度和故事内容。"},
+      {"id": "revise", "label": "调整一个节拍", "kind": "request_revision", "target_gate_id": "story_approval_02", "conversation_intent": "保持当前故事不变，先询问我要调整的一个关键节拍。"}
+    ],
+    "max_actions": 2,
+    "deep_navigation": false,
+    "nested_scroll": false
+  },
+  "write_boundary": {
+    "preview_only": true,
+    "confirmation_required": true,
+    "writes_authoritative_state": false,
+    "write_owner": "dircreative",
+    "possible_write_targets": ["story-package", "co-creation-run.gates", "skill_run_receipt.decisions"],
+    "forbidden_claims": ["lock", "readiness", "acceptance", "completion", "generation_authorization"]
+  },
+  "fallback": {
+    "format": "mermaid",
+    "required_visible_fields": ["current_stage", "decision_prompt", "story_beats", "story_curve", "downstream_effects"],
+    "decision_question": "故事逻辑成立，还是要调整一个关键节拍？"
+  }
+}

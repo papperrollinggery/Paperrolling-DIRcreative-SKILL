@@ -1,0 +1,182 @@
+co_creation_run:
+  run_id: goal-mode-simulation-2026-05-17
+  project_title: "Goal Mode Fog Route Cleaner Simulation"
+  run_type: dry_run_fixture
+  visual_output_mode: prompt_only
+  longform_generation_mode: single_sequence
+  simulated_choices_allowed: true
+  real_user_co_creation_verified: false
+  live_user_acceptance_receipt_written: false
+  source_artifacts:
+    - docs/film-preproduction/goal-mode-simulation-protocol.md
+    - examples/goal-mode-simulation-test/01-chat-transcript.md
+
+gate_policy:
+  required_gates:
+    - concept_options_gate
+    - story_approval_gate
+    - script_approval_gate
+    - shot_list_approval_gate
+    - visual_direction_gate
+    - visual_bible_approval_gate
+    - sequence_plan_gate
+    - global_reference_pack_gate
+    - sequence_reference_pack_gate
+    - clean_frame_gate
+    - video_prompt_gate
+  simulation_policy:
+    continue_without_manual_numeric_choices: true
+    mark_every_automatic_choice_as: simulated_fixture
+    real_user_acceptance_forbidden: true
+
+gates:
+  - gate_id: goal_sim_concept_options
+    gate_type: concept_options_gate
+    status: skipped_with_risk
+    decision_source: simulated_fixture
+    options_presented:
+      - "Keep complete-idea execution mode"
+      - "Reopen broad ideation"
+      - "Convert to product ad"
+    selected_option: "Keep complete-idea execution mode"
+    rationale: "The test brief already has a complete story; broad ideation would hide the segmentation problem being tested."
+    blocks: []
+  - gate_id: goal_sim_story_approval
+    gate_type: story_approval_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented:
+      - "Pass the municipal realism story"
+      - "Make it more action-led"
+      - "Make it slower and more atmospheric"
+    selected_option: "Pass the municipal realism story"
+    rationale: "The story has a single visible task, a clear obstacle, and a professional outcome."
+    blocks: []
+  - gate_id: goal_sim_script_approval
+    gate_type: script_approval_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented:
+      - "Pass the six-beat 15-second script"
+      - "Compress to four beats"
+      - "Expand to eight fast cuts"
+    selected_option: "Pass the six-beat 15-second script"
+    rationale: "Six beats preserve setup, tool proof, clearing action, risk control, ambulance release, and quiet proof."
+    blocks: []
+  - gate_id: goal_sim_shot_list_approval
+    gate_type: shot_list_approval_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented:
+      - "Approve the six professional shot cards"
+      - "Reduce to three shots"
+      - "Add more montage inserts"
+    selected_option: "Approve the six professional shot cards"
+    rationale: "Each card carries timecode, duration, lens, movement, blocking, scene layers, sound, and model risk."
+    blocks: []
+  - gate_id: goal_sim_visual_direction
+    gate_type: visual_direction_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented:
+      - "Restrained municipal realism"
+      - "Genre horror atmosphere"
+      - "Heroic emergency-service ad"
+    selected_option: "Restrained municipal realism"
+    rationale: "This look protects the user's no-gore, no-hero-pose requirement."
+    blocks: []
+  - gate_id: goal_sim_visual_bible
+    gate_type: visual_bible_approval_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented:
+      - "Lock one sanitation worker identity and one fog street geography"
+      - "Let each reference image reinterpret the look"
+      - "Delay visual locks until clean frames"
+    selected_option: "Lock one sanitation worker identity and one fog street geography"
+    rationale: "Character and scene consistency must be locked before any clean video frame."
+    blocks: []
+  - gate_id: goal_sim_sequence_plan
+    gate_type: sequence_plan_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented:
+      - "Single 15-second sequence"
+      - "Two 7.5-second sequences"
+      - "Six separate shot generations"
+    selected_option: "Single 15-second sequence"
+    rationale: "The test is a 15-second short; the reference strategy can still advise per-shot I2V if generation begins."
+    blocks: []
+  - gate_id: goal_sim_global_reference_pack
+    gate_type: global_reference_pack_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented:
+      - "V2 sequential pack: character, scene/FOV, storyboard/motion, clean frames"
+      - "One dense master board"
+      - "Only clean start/end frames"
+    selected_option: "V2 sequential pack: character, scene/FOV, storyboard/motion, clean frames"
+    rationale: "Fewer assets with clear roles reduce character drift and model misread."
+    blocks: []
+  - gate_id: goal_sim_sequence_reference_pack
+    gate_type: sequence_reference_pack_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented:
+      - "Use global locks for the whole 15-second sequence"
+      - "Create separate packs for every shot"
+      - "Only use text prompts"
+    selected_option: "Use global locks for the whole 15-second sequence"
+    rationale: "One short sequence should inherit the same character and street atlas."
+    blocks: []
+  - gate_id: goal_sim_clean_frame_gate
+    gate_type: clean_frame_gate
+    status: pending
+    decision_source: pending
+    options_presented:
+      - "Authorize character identity reference first"
+      - "Stay prompt-only"
+      - "Import external clean frames"
+    selected_option: ""
+    rationale: "Goal-mode simulation cannot authorize real image generation."
+    blocks:
+      - media_generation
+  - gate_id: goal_sim_video_prompt_gate
+    gate_type: video_prompt_gate
+    status: approved
+    decision_source: simulated_fixture
+    options_presented:
+      - "Export Seedance, Kling, Runway, and Veo prompt summaries only"
+      - "Test one model immediately"
+      - "Generate video from dense storyboard board"
+    selected_option: "Export Seedance, Kling, Runway, and Veo prompt summaries only"
+    rationale: "Prompt-only keeps model adapters visible without creating unapproved media."
+    blocks: []
+
+qa:
+  all_required_gates_present: true
+  simulated_choices_labeled: true
+  live_user_choices_required: true
+  pending_gates_block_media: true
+  no_creative_system_defaults: true
+  goal_mode_does_not_wait_for_manual_choices: true
+  live_acceptance_receipt_written: false
+
+skill_run_receipt:
+  run_id: goal-mode-simulation-2026-05-17
+  skill_id: co-creation-gate-runtime
+  input_artifacts:
+    - docs/film-preproduction/goal-mode-simulation-protocol.md
+    - examples/goal-mode-simulation-test/01-chat-transcript.md
+  output_artifacts:
+    - examples/goal-mode-simulation-test/15-co-creation-run.yaml
+  decisions:
+    - "Represent goal-mode chat dogfood as dry_run_fixture gates."
+    - "Leave clean_frame_gate pending because media generation still needs real authorization."
+  unresolved_questions:
+    - "Real user acceptance is still required before goal completion."
+  qa_gate:
+    status: pass
+    reasons:
+      - "All automatic choices are simulated_fixture and media generation remains blocked."
+  next_recommended_skill: checkpoint

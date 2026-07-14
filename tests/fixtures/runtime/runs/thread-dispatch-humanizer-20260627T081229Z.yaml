@@ -1,0 +1,282 @@
+fixture_authority: none
+live_state_authority: false
+live_acceptance_authority: false
+host_attestation_authority: false
+
+artifact:
+  artifact_id: thread-dispatch-humanizer-20260627T081229Z
+  version: 1.0.0
+  source_artifact_ids:
+    - docs/film-preproduction/thread-orchestration-protocol.md
+    - docs/film-preproduction/workspace-cleanliness-protocol.md
+    - docs/film-preproduction/professional-agent-voice-standard.md
+  status: ready
+  owner_skill: dircreative
+
+run:
+  run_id: thread-dispatch-humanizer-20260627T081229Z
+  run_type: real_thread_cleanup_record
+  main_controller_thread:
+    thread_id: "00000000-0000-7000-8000-000000000014"
+    title: "规划 Codex thread 人性化优化"
+    cwd: "/Users/example-user/work/DIR SKILL"
+    pinned: true
+    role: pinned_user_facing_controller
+  disposable_workers_archived:
+    - thread_id: "00000000-0000-7000-8000-000000000017"
+      role: cold_review_worker
+      result: consumed
+      archived: true
+  isolated_worktree_workers_archived:
+    - thread_id: "00000000-0000-7000-8000-000000000015"
+      role: humanizer_rule_integration_worker
+      original_worktree: "/Users/example-user/.codex/worktrees/d2d7/DIR SKILL"
+      result: adopted_with_controller_synthesis
+      archived: true
+      worktree_removed: true
+    - thread_id: "00000000-0000-7000-8000-000000000016"
+      role: humanized_copy_validation_worker
+      original_worktree: "/Users/example-user/.codex/worktrees/1634/DIR SKILL"
+      result: adopted_with_controller_synthesis
+      archived: true
+      worktree_removed: true
+  worktree_evidence:
+    command: "git worktree list --porcelain"
+    result_summary: "Only /Users/example-user/work/DIR SKILL on main was listed after worker archival."
+    unintended_worker_worktrees_present: false
+  cleanup_policy:
+    task_owned_worktrees_archived: true
+    unrelated_project_threads_archived: false
+    reason: "Only the two humanizer workers and one cold-review worker were in scope."
+
+thread_dispatch_record:
+  record_id: "thread-dispatch-humanizer-20260627T081229Z"
+  version: "1.0.0"
+  project_title: "DIRcreative humanizer integration"
+  main_controller_thread_id: "00000000-0000-7000-8000-000000000014"
+  active_goal_summary: "Integrate humanizer and humanizer-zh into DIRcreative user-visible copy, creative directions, production plans, prompt handoffs, QA/retry notes, and summaries."
+  acceptance_standard: "Docs and validation must make the humanized-copy standard explicit; worker diffs require controller adoption; live user acceptance and objective completion are not claimed by this receipt."
+  created_at: "2026-06-27T08:12:29Z"
+
+thread_class_policy:
+  allowed_thread_classes:
+    - pinned_user_facing_controller
+    - disposable_read_only_worker
+    - isolated_worktree_worker
+    - reusable_research_thread
+  default_user_facing_thread_class: pinned_user_facing_controller
+  same_directory_worker_default: read_only
+  substantive_output_default_thread_class: isolated_worktree_worker
+  read_only_worker_use: review_research_cold_review_only
+  main_controller_write_boundary: receipts_adoption_merge_rollback_validation_only
+  hidden_thread_state_is_truth: false
+
+thread_budget:
+  max_active_workers: 3
+  active_worker_count: 0
+  approval_required_above: 5
+  over_budget_reason: ""
+
+dispatches:
+  - thread_id: "00000000-0000-7000-8000-000000000014"
+    thread_class: pinned_user_facing_controller
+    role: "CONTROL main-controller for dispatch, worker adoption, validation, cleanup, and final user report."
+    professional_identity: "main-controller delivery lead"
+    viewpoint: main-controller
+    read_scope:
+      - "repo files"
+      - ".dircreative/runs/"
+      - "Codex app thread status"
+      - "validation output"
+      - "worker receipts"
+    write_scope: main_controller_only
+    worktree_path: "/Users/example-user/work/DIR SKILL"
+    allowed_actions:
+      - "write dispatch and cleanup records"
+      - "adopt or reject worker diffs"
+      - "merge or synthesize adopted worker changes"
+      - "run validation"
+      - "archive worker threads"
+      - "report user-facing status"
+    expected_output: "Adopted humanizer integration, validation output, cleanup evidence, and final report."
+    stop_condition: "Finish only after worker output is consumed, validation passes or exact failures are reported, and cleanup evidence is recorded."
+    cleanup_rule: keep_pinned
+    may_mark_goal_complete: false
+    output_status: consumed
+    findings_summary:
+      - "Controller adopted useful worker findings into repo docs, root skill rules, validation script, and dispatch record."
+    adopted_into:
+      - "tests/fixtures/runtime/runs/thread-dispatch-humanizer-20260627T081229Z.yaml"
+      - "skills/dircreative/SKILL.md"
+      - "docs/film-preproduction/professional-agent-voice-standard.md"
+      - "docs/film-preproduction/chat-co-creation-interface.md"
+      - "scripts/dircreative_quality_audit.py"
+    consumed_at: "2026-06-27T08:40:00Z"
+    cleanup_verified_by: main-controller
+    archived: false
+    pinned: true
+
+  - thread_id: "00000000-0000-7000-8000-000000000015"
+    thread_class: isolated_worktree_worker
+    role: "IMPLEMENTATION_WORKER"
+    professional_identity: "DIRcreative voice and copy workflow implementer"
+    viewpoint: "skill and frontstage writing standards"
+    read_scope:
+      - "skills/dircreative/SKILL.md"
+      - "docs/film-preproduction/professional-agent-voice-standard.md"
+      - "docs/film-preproduction/chat-co-creation-interface.md"
+      - "docs/film-preproduction/production-prompt-discipline.md"
+      - "/Users/example-user/.codex/skills/humanizer/SKILL.md"
+      - "/Users/example-user/.codex/skills/humanizer-zh/SKILL.md"
+    write_scope: isolated_worktree_only
+    worktree_path: "/Users/example-user/.codex/worktrees/d2d7/DIR SKILL"
+    allowed_actions:
+      - "edit scoped docs in isolated worktree"
+      - "run scoped validation"
+      - "return receipt"
+    expected_output: "Humanizer trigger rules, pre-delivery self-check, changed files, validation output, and adoption notes."
+    stop_condition: "Return after user-visible humanizer rules and chat handoff boundaries are explicit."
+    cleanup_rule: archive_after_adoption_or_rejection
+    may_mark_goal_complete: false
+    output_status: adopted
+    findings_summary:
+      - "Added user-visible humanizer checks to the root skill, professional voice standard, and chat interface."
+      - "Validation content passed; full worker validation was blocked only by the other active worker worktree."
+    adopted_into:
+      - "skills/dircreative/SKILL.md"
+      - "docs/film-preproduction/professional-agent-voice-standard.md"
+      - "docs/film-preproduction/chat-co-creation-interface.md"
+    consumed_at: "2026-06-27T08:32:00Z"
+    cleanup_verified_by: main-controller
+    archived: true
+    pinned: false
+
+  - thread_id: "00000000-0000-7000-8000-000000000016"
+    thread_class: isolated_worktree_worker
+    role: "VALIDATION_WORKER"
+    professional_identity: "DIRcreative validation implementer"
+    viewpoint: "audit coverage and release-gate evidence"
+    read_scope:
+      - "scripts/dircreative_quality_audit.py"
+      - "scripts/validate_project.py"
+      - "docs/film-preproduction/professional-agent-voice-standard.md"
+      - "docs/film-preproduction/chat-co-creation-interface.md"
+      - "docs/film-preproduction/production-prompt-discipline.md"
+      - "/Users/example-user/.codex/skills/humanizer/SKILL.md"
+      - "/Users/example-user/.codex/skills/humanizer-zh/SKILL.md"
+    write_scope: isolated_worktree_only
+    worktree_path: "/Users/example-user/.codex/worktrees/1634/DIR SKILL"
+    allowed_actions:
+      - "edit scoped validation files in isolated worktree"
+      - "run scoped validation"
+      - "return receipt"
+    expected_output: "Humanized-copy quality gate, command results, unresolved risks, and adoption notes."
+    stop_condition: "Return after the quality gate can verify the humanized-copy standard."
+    cleanup_rule: archive_after_adoption_or_rejection
+    may_mark_goal_complete: false
+    output_status: adopted
+    findings_summary:
+      - "Added a stable humanized-copy quality gate to dircreative_quality_audit.py."
+      - "Controller strengthened the gate with skill and chat wiring anchors after cold review."
+    adopted_into:
+      - "scripts/dircreative_quality_audit.py"
+      - "docs/film-preproduction/professional-agent-voice-standard.md"
+    consumed_at: "2026-06-27T08:32:00Z"
+    cleanup_verified_by: main-controller
+    archived: true
+    pinned: false
+
+  - thread_id: "00000000-0000-7000-8000-000000000017"
+    thread_class: disposable_read_only_worker
+    role: "COLD_REVIEW_WORKER"
+    professional_identity: "independent cold reviewer"
+    viewpoint: "overreach, missing validation, thread compliance, and user-facing copy standard quality"
+    read_scope:
+      - "git diff"
+      - "skills/dircreative/SKILL.md"
+      - "docs/film-preproduction/professional-agent-voice-standard.md"
+      - "docs/film-preproduction/chat-co-creation-interface.md"
+      - "scripts/dircreative_quality_audit.py"
+      - "tests/fixtures/runtime/runs/thread-dispatch-humanizer-20260627T081229Z.yaml"
+      - "docs/film-preproduction/thread-orchestration-protocol.md"
+      - "docs/film-preproduction/workspace-cleanliness-protocol.md"
+    write_scope: none
+    worktree_path: ""
+    allowed_actions:
+      - "read-only review"
+      - "run read-only validation commands"
+      - "report findings"
+    expected_output: "Severity-ordered findings and adopt or reject recommendation."
+    stop_condition: "Return after validation commands and blocker review; do not edit files or mark goal complete."
+    cleanup_rule: archive_after_consumed
+    may_mark_goal_complete: false
+    output_status: consumed
+    findings_summary:
+      - "Found dispatch record schema blockers and a P2 audit-anchor gap."
+      - "Controller fixed the dispatch record and strengthened quality audit wiring anchors."
+    adopted_into:
+      - "tests/fixtures/runtime/runs/thread-dispatch-humanizer-20260627T081229Z.yaml"
+      - "scripts/dircreative_quality_audit.py"
+    consumed_at: "2026-06-27T08:40:00Z"
+    cleanup_verified_by: main-controller
+    archived: true
+    pinned: false
+
+worktree_audit:
+  command: "git worktree list --porcelain"
+  expected_main_worktree: "/Users/example-user/work/DIR SKILL"
+  unintended_worker_worktrees_present: false
+  stale_worker_checkout_present: false
+  checked_paths:
+    - "/Users/example-user/work/DIR SKILL"
+    - "/Users/example-user/.codex/worktrees/d2d7/DIR SKILL"
+    - "/Users/example-user/.codex/worktrees/1634/DIR SKILL"
+  evidence_source: git
+
+completion_boundary:
+  live_user_acceptance_receipt_exists: false
+  release_gate_passed: false
+  objective_complete: false
+  completion_claim_allowed: false
+
+qa:
+  main_controller_pinned: true
+  disposable_workers_archived: true
+  stale_worker_threads_visible_for_project: false
+  unintended_worker_worktrees_present: false
+  worker_findings_reconciled_into_repo: true
+  one_pinned_main_controller: true
+  useful_findings_reconciled: true
+  no_hidden_thread_truth: true
+  no_unintended_worktrees: true
+  no_completion_claim: true
+  live_user_acceptance_written: false
+  objective_complete_claimed: false
+  failures: []
+
+skill_run_receipt:
+  run_id: thread-dispatch-humanizer-20260627T081229Z
+  skill_id: dircreative
+  input_artifacts:
+    - "codex_app.read_thread(00000000-0000-7000-8000-000000000015)"
+    - "codex_app.read_thread(00000000-0000-7000-8000-000000000016)"
+    - "codex_app.read_thread(00000000-0000-7000-8000-000000000017)"
+    - "/Users/example-user/.codex/skills/humanizer/SKILL.md"
+    - "/Users/example-user/.codex/skills/humanizer-zh/SKILL.md"
+    - "git worktree list --porcelain"
+  output_artifacts:
+    - "tests/fixtures/runtime/runs/thread-dispatch-humanizer-20260627T081229Z.yaml"
+    - "skills/dircreative/SKILL.md"
+    - "docs/film-preproduction/professional-agent-voice-standard.md"
+    - "docs/film-preproduction/chat-co-creation-interface.md"
+    - "scripts/dircreative_quality_audit.py"
+  decisions:
+    - "Adopted the implementation worker's root skill and chat-surface wiring."
+    - "Adopted the validation worker's quality gate and strengthened it with skill/chat anchors after cold review."
+    - "Archived all worker/reviewer threads and verified no worker worktrees remain."
+    - "Did not create live-user acceptance or objective-completion receipts."
+  unresolved_questions: []
+  qa_gate:
+    status: pass
+    reasons: []
+  next_recommended_skill: ""

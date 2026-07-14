@@ -1,0 +1,52 @@
+{
+  "protocol_id": "adco.specialist-exchange",
+  "message_type": "descriptor",
+  "descriptor_version": "1.0",
+  "supported_contract_versions": [
+    "1.0"
+  ],
+  "provider": {
+    "id": "dircreative",
+    "display_name": "DIRcreative",
+    "skill_path": "skills/dircreative/SKILL.md",
+    "skill_sha256": "12c92e1d13b607014643b0e22d8393dc9182ca1271a81cd90dfab09a51fbd604"
+  },
+  "profiles": [
+    {
+      "profile_id": "dircreative.film-preproduction",
+      "capabilities": [
+        "film.story_package",
+        "film.treatment",
+        "film.script",
+        "film.shot_plan",
+        "film.visual_bible",
+        "film.reference_prompt_plan",
+        "domain.film_qa",
+        "workflow.needs_user_return",
+        "workflow.bounded_retry"
+      ],
+      "execution_modes": [
+        "inline",
+        "codex_thread",
+        "external_handoff"
+      ],
+      "workspace_modes": [
+        "isolated_workspace",
+        "worktree",
+        "read_only"
+      ],
+      "authority": {
+        "client_interaction": false,
+        "artifact_adoption": false,
+        "client_readiness": false,
+        "final_export": false,
+        "nested_dispatch": false
+      },
+      "receipt_extension": {
+        "id": "dircreative.domain-delivery",
+        "version": "1.0",
+        "required": true
+      }
+    }
+  ]
+}

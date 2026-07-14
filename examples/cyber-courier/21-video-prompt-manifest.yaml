@@ -1,0 +1,572 @@
+artifact:
+  artifact_id: cyber-courier-video-prompt-manifest-v1
+  version: 1.0.0
+  source_artifact_ids:
+    - cyber-courier-shot-list-v1
+    - cyber-courier-reference-pack-plan-v1
+    - cyber-courier-image-prompt-manifest-v1
+    - cyber-courier-audio-policy-v1
+  status: approved
+  owner_skill: video-model-adapter
+  created_at: "2026-05-14"
+  locked_by_user: false
+
+video_prompt_manifest:
+  project_title: "Cyber Courier: The Alley Accepts The Package"
+  target_sequence_duration: "15s"
+  longform_generation_mode: "single_sequence"
+  visual_output_mode: "prompt_only"
+  sequence_plan: ""
+  sequence_ids:
+    - cyber-courier-seq-01
+  selected_reference_strategy: hybrid
+  reference_pack:
+    - "image_01 character identity and wardrobe"
+    - "image_02 alley geography and blocking"
+    - "image_03 delivery bag, package, scanner state"
+    - "image_04 five-shot storyboard board"
+    - "image_05 lighting, palette, and texture"
+    - "image_06_clean_sh01 clean first frame for SH01"
+    - "image_07_clean_sh03 clean package key frame for SH03"
+    - "image_08_clean_sh05 clean end frame for SH05"
+
+capability_resolution:
+  registry_path: "docs/film-preproduction/sources/model-sources.yaml"
+  registry_version: "2.0.0"
+  selected_cards:
+    - capability_card_id: seedance_2_0_official_launch
+      model_key: seedance
+      version: "2.0"
+      status: current
+      provider_surface: "Seedance 2.0 launch product surfaces described by ByteDance Seed"
+      verified_on: "2026-07-10"
+      accessed_on: "2026-07-10"
+      evidence_level: S2
+      source_urls:
+        - "https://seed.bytedance.com/en/blog/seedance-2-0-official-launch"
+        - "https://arxiv.org/abs/2604.14148"
+      source_conflicts: []
+      access_mode: documented_product
+      execution_mode: manual_export
+      execution_verification_status: unverified
+      resolution_status: resolved
+    - capability_card_id: kling_video_3_0_official_guide
+      model_key: kling
+      version: "3.0"
+      status: current
+      provider_surface: "Kling AI VIDEO 3.0 product guide"
+      verified_on: "2026-07-10"
+      accessed_on: "2026-07-10"
+      evidence_level: S3
+      source_urls:
+        - "https://app.klingai.com/cn/quickstart/klingai-video-3-model-user-guide"
+      source_conflicts: []
+      access_mode: documented_product
+      execution_mode: manual_export
+      execution_verification_status: unverified
+      resolution_status: resolved
+    - capability_card_id: runway_gen_4_5_web
+      model_key: runway
+      version: "Gen-4.5"
+      status: current
+      provider_surface: "Runway web Gen-4.5 generation"
+      verified_on: "2026-07-10"
+      accessed_on: "2026-07-10"
+      evidence_level: S3
+      source_urls:
+        - "https://help.runwayml.com/hc/en-us/articles/46974685288467-Creating-with-Gen-4-5"
+        - "https://help.runwayml.com/hc/en-us/articles/42460036199443-Text-to-Video-Prompting-Guide"
+      source_conflicts: []
+      resolution_status: resolved
+    - capability_card_id: veo_3_1_generate_001_vertex_api
+      model_key: veo
+      version: "veo-3.1-generate-001"
+      status: current
+      provider_surface: "Vertex AI publisher model predictLongRunning API"
+      verified_on: "2026-07-11"
+      accessed_on: "2026-07-11"
+      evidence_level: S1
+      source_urls:
+        - "https://docs.cloud.google.com/vertex-ai/generative-ai/docs/models/veo/3-1-generate"
+        - "https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/veo-video-generation"
+        - "https://docs.cloud.google.com/vertex-ai/generative-ai/docs/release-notes"
+        - "https://cloud.google.com/blog/products/ai-machine-learning/veo-3-1-lite-and-a-new-veo-upscaling-capability-on-vertex-ai/"
+      source_conflicts:
+        - "The exact stable page says sound generation is not supported; family-level audio claims and the generic API URL do not authorize audio for this exact card."
+      resolution_status: resolved
+
+rights_gate:
+  status: unverified
+  conditions: []
+  source_asset_rights: "Prompt-only artifact; rights must be verified before any upload or generation."
+  likeness_authorization: unverified
+  voice_authorization: unverified
+  brand_or_character_authorization: unverified
+  music_or_audio_rights: unverified
+  provider_restrictions_checked: true
+  evidence_refs: []
+  generation_allowed: false
+
+audio_plan:
+  desired_audio:
+    dialogue: "none"
+    voiceover: "none"
+    music: "optional_postproduction"
+    ambience: "project_specific"
+    sound_effects:
+      - "See each model prompt."
+    silence: false
+  per_model_routes:
+    - model_key: seedance
+      capability_card_id: seedance_2_0_official_launch
+      generation_audio_route: postproduction
+      generate_audio_parameter: not_applicable
+      route_evidence:
+        - "Execution surface is documented-product/manual-export and remains unverified."
+      postproduction_handoff: "Export ambience and effects notes to editorial; do not claim native execution."
+    - model_key: kling
+      capability_card_id: kling_video_3_0_official_guide
+      generation_audio_route: postproduction
+      generate_audio_parameter: not_applicable
+      route_evidence:
+        - "Execution surface is documented-product/manual-export and remains unverified."
+      postproduction_handoff: "Export ambience and effects notes to editorial; do not claim native execution."
+    - model_key: runway
+      capability_card_id: runway_gen_4_5_web
+      generation_audio_route: postproduction
+      generate_audio_parameter: not_applicable
+      route_evidence:
+        - "Exact Gen-4.5 web card does not verify native audio."
+      postproduction_handoff: "Build dialogue, ambience, music, and effects in editorial."
+    - model_key: veo
+      capability_card_id: veo_3_1_generate_001_vertex_api
+      generation_audio_route: postproduction
+      generate_audio_parameter: not_applicable
+      route_evidence:
+        - "The exact stable model page marks sound generation as not supported; the generic API URL does not prove generateAudio for this card."
+      postproduction_handoff: "Build the declared dialogue, music, ambience, and effects as an editorial audio package."
+
+
+execution_capabilities:
+  image_generation:
+    available: false
+    provider: none
+    allowed_by_user: false
+  video_generation:
+    available: false
+    provider: none
+    allowed_by_user: false
+    external_upload_authorized: false
+    external_execution_state: instructions_only
+    external_execution_evidence: []
+  file_write:
+    available: true
+  browser_review:
+    available: false
+
+reference_map:
+  - ref_id: "image_01"
+    file_or_generation_id: "generated from prompts/image_01_character_board.txt"
+    role: "character_identity_reference"
+    asset_output_status: prompt_ready
+    use_for:
+      - "same courier face"
+      - "red jacket"
+      - "black delivery bag"
+      - "restrained dread expression"
+    do_not_use_for:
+      - "animating the character board layout"
+      - "adding extra characters"
+    external_generation_instructions: "Generate or import the character board before using as visual truth."
+  - ref_id: "image_02"
+    file_or_generation_id: "generated from prompts/image_02_environment_board.txt"
+    role: "environment_blocking_reference"
+    asset_output_status: prompt_ready
+    use_for:
+      - "alley axis"
+      - "red sign left"
+      - "blue sign deeper right"
+      - "destination door"
+      - "camera and courier path"
+    do_not_use_for:
+      - "showing a map overlay in final video"
+      - "animating board labels"
+    external_generation_instructions: "Generate or import the environment board, then export clean first frames separately."
+  - ref_id: "image_03"
+    file_or_generation_id: "generated from prompts/image_03_prop_board.txt"
+    role: "prop_state_reference"
+    asset_output_status: prompt_ready
+    use_for:
+      - "black bag"
+      - "compact sealed package"
+      - "red scanner pulse"
+      - "hand interaction"
+    do_not_use_for:
+      - "turning package into weapon"
+      - "showing product board layout"
+    external_generation_instructions: "Generate or import the prop board before using as visual truth."
+  - ref_id: "image_04"
+    file_or_generation_id: "generated from prompts/image_04_storyboard_board.txt"
+    role: "shot_order_reference_only"
+    asset_output_status: prompt_ready
+    use_for:
+      - "five-shot order"
+      - "timing"
+      - "camera plan"
+    do_not_use_for:
+      - "showing or animating storyboard panels"
+      - "showing labels, arrows, grids, or tables"
+    external_generation_instructions: "Use as planning/Seedance/Veo guidance only; do not use as direct Kling/Runway first frame."
+  - ref_id: "image_05"
+    file_or_generation_id: "generated from prompts/image_05_style_board.txt"
+    role: "lighting_style_reference"
+    asset_output_status: prompt_ready
+    use_for:
+      - "blue-black rain"
+      - "red scanner glow"
+      - "cyan depth light"
+      - "wet material behavior"
+    do_not_use_for:
+      - "random neon palette expansion"
+      - "mood collage animation"
+    external_generation_instructions: "Generate or import the style board before using as visual truth."
+  - ref_id: "image_06_clean_sh01"
+    file_or_generation_id: "generated from prompts/image_06_clean_sh01_start.txt"
+    role: "clean_first_frame"
+    asset_output_status: prompt_ready
+    use_for:
+      - "SH01 primary direct I2V start frame"
+      - "opening geography and courier start state"
+    do_not_use_for:
+      - "labels or board layout"
+      - "package glow"
+    external_generation_instructions: "Generate or import this clean frame and user-lock it before SH01 direct I2V."
+  - ref_id: "image_07_clean_sh03"
+    file_or_generation_id: "generated from prompts/image_07_clean_sh03_package.txt"
+    role: "clean_key_frame"
+    asset_output_status: prompt_ready
+    use_for:
+      - "SH03 primary direct I2V macro input"
+      - "package scanner pulse state"
+    do_not_use_for:
+      - "turning package into a weapon"
+      - "showing labels or board layout"
+    external_generation_instructions: "Generate or import this clean macro frame and user-lock it before SH03 direct I2V."
+  - ref_id: "image_08_clean_sh05"
+    file_or_generation_id: "generated from prompts/image_08_clean_sh05_end.txt"
+    role: "clean_end_frame"
+    asset_output_status: prompt_ready
+    use_for:
+      - "SH05 end-state reference"
+      - "sealed door intercom activation"
+    do_not_use_for:
+      - "door opening"
+      - "recipient reveal"
+      - "labels or board layout"
+    external_generation_instructions: "Generate or import this clean end frame and user-lock it before SH05 direct I2V."
+
+reference_bindings:
+  - model: seedance
+    capability_card_id: seedance_2_0_official_launch
+    version: "2.0"
+    status: current
+    provider_surface: "Seedance 2.0 launch product surfaces described by ByteDance Seed"
+    shot_id: SEQUENCE
+    ref_id: image_01
+    upload_slot: "@image1"
+    role: secondary_reference
+    required_for_generation: true
+    prompt_file: "examples/cyber-courier/prompts/video_seedance.txt"
+    risk_note: "Character identity and wardrobe reference."
+  - model: seedance
+    capability_card_id: seedance_2_0_official_launch
+    version: "2.0"
+    status: current
+    provider_surface: "Seedance 2.0 launch product surfaces described by ByteDance Seed"
+    shot_id: SEQUENCE
+    ref_id: image_02
+    upload_slot: "@image2"
+    role: secondary_reference
+    required_for_generation: true
+    prompt_file: "examples/cyber-courier/prompts/video_seedance.txt"
+    risk_note: "Environment and camera-path reference."
+  - model: seedance
+    capability_card_id: seedance_2_0_official_launch
+    version: "2.0"
+    status: current
+    provider_surface: "Seedance 2.0 launch product surfaces described by ByteDance Seed"
+    shot_id: SEQUENCE
+    ref_id: image_03
+    upload_slot: "@image3"
+    role: secondary_reference
+    required_for_generation: true
+    prompt_file: "examples/cyber-courier/prompts/video_seedance.txt"
+    risk_note: "Prop state reference."
+  - model: seedance
+    capability_card_id: seedance_2_0_official_launch
+    version: "2.0"
+    status: current
+    provider_surface: "Seedance 2.0 launch product surfaces described by ByteDance Seed"
+    shot_id: SEQUENCE
+    ref_id: image_04
+    upload_slot: "@image4"
+    role: planning_only
+    required_for_generation: false
+    prompt_file: "examples/cyber-courier/prompts/video_seedance.txt"
+    risk_note: "Storyboard board must not appear in final video."
+  - model: seedance
+    capability_card_id: seedance_2_0_official_launch
+    version: "2.0"
+    status: current
+    provider_surface: "Seedance 2.0 launch product surfaces described by ByteDance Seed"
+    shot_id: SEQUENCE
+    ref_id: image_05
+    upload_slot: "@image5"
+    role: style_reference
+    required_for_generation: true
+    prompt_file: "examples/cyber-courier/prompts/video_seedance.txt"
+    risk_note: "Style board can dilute identity if over-weighted."
+  - model: kling
+    capability_card_id: kling_video_3_0_official_guide
+    version: "3.0"
+    status: current
+    provider_surface: "Kling AI VIDEO 3.0 product guide"
+    shot_id: SH01
+    ref_id: image_06_clean_sh01
+    upload_slot: "primary image"
+    role: primary_direct_input
+    required_for_generation: true
+    prompt_file: "examples/cyber-courier/prompts/video_kling.txt"
+    risk_note: "Direct I2V blocked until clean frame is generated/imported and user locked."
+  - model: kling
+    capability_card_id: kling_video_3_0_official_guide
+    version: "3.0"
+    status: current
+    provider_surface: "Kling AI VIDEO 3.0 product guide"
+    shot_id: SH03
+    ref_id: image_07_clean_sh03
+    upload_slot: "primary image"
+    role: primary_direct_input
+    required_for_generation: true
+    prompt_file: "examples/cyber-courier/prompts/video_kling.txt"
+    risk_note: "Direct I2V blocked until clean macro frame is generated/imported and user locked."
+  - model: kling
+    capability_card_id: kling_video_3_0_official_guide
+    version: "3.0"
+    status: current
+    provider_surface: "Kling AI VIDEO 3.0 product guide"
+    shot_id: SH05
+    ref_id: image_08_clean_sh05
+    upload_slot: "primary or end frame"
+    role: primary_direct_input
+    required_for_generation: true
+    prompt_file: "examples/cyber-courier/prompts/video_kling.txt"
+    risk_note: "Direct I2V blocked until clean end frame is generated/imported and user locked."
+  - model: runway
+    capability_card_id: runway_gen_4_5_web
+    version: "Gen-4.5"
+    status: current
+    provider_surface: "Runway web Gen-4.5 generation"
+    shot_id: SH01
+    ref_id: image_06_clean_sh01
+    upload_slot: "primary image"
+    role: primary_direct_input
+    required_for_generation: true
+    prompt_file: "examples/cyber-courier/prompts/video_runway.txt"
+    risk_note: "Direct I2V blocked until this clean frame is generated/imported and user locked; then use it as composition and style truth."
+  - model: runway
+    capability_card_id: runway_gen_4_5_web
+    version: "Gen-4.5"
+    status: current
+    provider_surface: "Runway web Gen-4.5 generation"
+    shot_id: SH03
+    ref_id: image_07_clean_sh03
+    upload_slot: "primary image"
+    role: primary_direct_input
+    required_for_generation: true
+    prompt_file: "examples/cyber-courier/prompts/video_runway.txt"
+    risk_note: "Direct I2V blocked until this clean macro frame is generated/imported and user locked; then animate scanner pulse only."
+  - model: runway
+    capability_card_id: runway_gen_4_5_web
+    version: "Gen-4.5"
+    status: current
+    provider_surface: "Runway web Gen-4.5 generation"
+    shot_id: SH05
+    ref_id: image_08_clean_sh05
+    upload_slot: "primary image"
+    role: primary_direct_input
+    required_for_generation: true
+    prompt_file: "examples/cyber-courier/prompts/video_runway.txt"
+    risk_note: "Direct I2V blocked until this clean end frame is generated/imported and user locked; then hold the door closed."
+  - model: veo
+    capability_card_id: veo_3_1_generate_001_vertex_api
+    version: "veo-3.1-generate-001"
+    status: current
+    provider_surface: "Vertex AI publisher model predictLongRunning API"
+    shot_id: SEQUENCE
+    ref_id: image_01
+    upload_slot: "reference map character"
+    role: secondary_reference
+    required_for_generation: true
+    prompt_file: "examples/cyber-courier/prompts/video_veo.txt"
+    risk_note: "Use structured prompt to keep character consistent."
+  - model: veo
+    capability_card_id: veo_3_1_generate_001_vertex_api
+    version: "veo-3.1-generate-001"
+    status: current
+    provider_surface: "Vertex AI publisher model predictLongRunning API"
+    shot_id: SEQUENCE
+    ref_id: image_04
+    upload_slot: "reference map shot order"
+    role: planning_only
+    required_for_generation: false
+    prompt_file: "examples/cyber-courier/prompts/video_veo.txt"
+    risk_note: "Storyboard board is guidance only, not final video content."
+
+model_prompts:
+  seedance:
+    enabled: true
+    operation: generate
+    capability_card_id: seedance_2_0_official_launch
+    version: "2.0"
+    status: current
+    provider_surface: "Seedance 2.0 launch product surfaces described by ByteDance Seed"
+    access_mode: documented_product
+    execution_mode: manual_export
+    execution_verification_status: unverified
+    desired_audio:
+      mode: planned_diegetic_audio
+    generation_audio_route: postproduction
+    rights_gate_status: unverified
+    transformation_contract:
+      preserve: []
+      change: []
+      forbidden_change: []
+      overlap_check: pass
+    best_for: "15s multi-reference cinematic previs with character, environment, prop, storyboard, and style references."
+    prompt_file: "examples/cyber-courier/prompts/video_seedance.txt"
+    reference_warning: "Storyboard/reference boards are production guidance only; do not show or animate boards, panels, layout, labels, arrows, grids, or printed text."
+    audio_policy: "Preferred MVP mode is silent visual previs with post-production audio; optional generated audio uses rain ambience, neon buzz, scanner beep, intercom relay, no dialogue, no music."
+    risk_notes:
+      - "Dense storyboard board may be interpreted literally."
+      - "Five-shot flow may compete with continuity locks."
+      - "Audio support depends on selected Seedance endpoint or UI."
+    retry_rules:
+      - "If board appears in output, remove storyboard board reference and use shot text only."
+      - "If courier identity drifts, prioritize image_01 and reduce shot count."
+      - "If package becomes wrong object, add image_03 as dominant prop reference."
+  kling:
+    enabled: true
+    operation: generate
+    capability_card_id: kling_video_3_0_official_guide
+    version: "3.0"
+    status: current
+    provider_surface: "Kling AI VIDEO 3.0 product guide"
+    access_mode: documented_product
+    execution_mode: manual_export
+    execution_verification_status: unverified
+    desired_audio:
+      mode: planned_diegetic_audio
+    generation_audio_route: postproduction
+    rights_gate_status: unverified
+    transformation_contract:
+      preserve: []
+      change: []
+      forbidden_change: []
+      overlap_check: pass
+    best_for: "Per-shot image-to-video motion control from selected clean frames. Use per-shot I2V mode if the user wants all five shots controlled."
+    prompt_file: "examples/cyber-courier/prompts/video_kling.txt"
+    reference_warning: "Use boards only to choose clean first frames; do not feed dense boards as the main image if avoidable."
+    audio_policy: "Generate visual motion only; handle rain ambience and SFX in post unless current workflow supports audio."
+    risk_notes:
+      - "Actions contradicting the input image can cause scene reinterpretation."
+      - "Prompt should focus on subject movement, background movement, and camera movement."
+      - "Hybrid pack has clean frames for SH01, SH03, and SH05 only; generate SH02/SH04 clean frames if tests drift."
+    retry_rules:
+      - "If model adds attackers, reduce prompt to one subject movement."
+      - "If camera motion fails, lock camera and animate rain/subject only."
+  runway:
+    enabled: true
+    operation: generate
+    generation_capability_card_id: runway_gen_4_5_web
+    edit_capability_card_id: ""
+    deprecated_card_ids_rejected:
+      - runway_gen_4_aleph_api_deprecated
+    version: "Gen-4.5"
+    status: current
+    provider_surface: "Runway web Gen-4.5 generation"
+    desired_audio:
+      mode: planned_diegetic_audio
+    generation_audio_route: postproduction
+    rights_gate_status: unverified
+    transformation_contract:
+      preserve: []
+      change: []
+      forbidden_change: []
+      overlap_check: pass
+    best_for: "Short single-shot image-to-video motion tests from strong still frames."
+    prompt_file: "examples/cyber-courier/prompts/video_runway.txt"
+    reference_warning: "Use clean shot stills rather than the full storyboard board for generation."
+    audio_policy: "Silent visual-only generation; audio planned in post-production."
+    risk_notes:
+      - "Long multi-shot prompts may overload the clip."
+      - "Negative phrasing can behave unreliably."
+      - "Hybrid pack has clean frames for SH01, SH03, and SH05 only; per-shot mode should add SH02 and SH04 clean frames."
+    retry_rules:
+      - "Split into one run per shot."
+      - "Use positive motion wording and one dominant action."
+  veo:
+    enabled: true
+    operation: generate
+    capability_card_id: veo_3_1_generate_001_vertex_api
+    version: "veo-3.1-generate-001"
+    status: current
+    provider_surface: "Vertex AI publisher model predictLongRunning API"
+    source_conflicts:
+      - "The exact stable page says sound generation is not supported; keep the family/API ambiguity visible and use post-production audio."
+    desired_audio:
+      mode: planned_diegetic_audio
+    generation_audio_route: postproduction
+    generate_audio_parameter: not_applicable
+    rights_gate_status: unverified
+    transformation_contract:
+      preserve: []
+      change: []
+      forbidden_change: []
+      overlap_check: pass
+    best_for: "Structured cinematic prompt with subject, action, scene, camera, lighting, style, and optional audio."
+    prompt_file: "examples/cyber-courier/prompts/video_veo.txt"
+    reference_warning: "Reference boards are guidance for identity, geography, and shot order only; generated video should be the cinematic scene."
+    audio_policy: "Post-production only for this exact stable card: rain ambience, distant city hum, neon buzz, scanner beep, relay click, no dialogue, no music."
+    risk_notes:
+      - "Overloaded structured prompts can create conflicting priorities."
+      - "Audio behavior depends on selected Veo product/model."
+    retry_rules:
+      - "If shot sequence collapses, generate one 5-8s segment at a time."
+      - "If audio is wrong, switch to silent visual-only and post-production audio."
+
+universal_anti_misread_clause: |
+  Use storyboard/reference boards only as production guidance.
+  Do not show or animate the board, panels, text labels, arrows, grids, tables, or layout.
+  Generate the cinematic scene described by the shot list.
+
+qa:
+  video_prompt_gate: "pass"
+  missing_audio_policy: false
+  missing_reference_map: false
+  visual_output_mode_valid: true
+  capability_receipt_present: true
+  missing_generated_assets_blocked: true
+  longform_sequence_refs_valid: true
+  exact_capability_cards_resolved: true
+  deprecated_or_preview_aliases_rejected: true
+  rights_gate_passed: false
+  desired_audio_route_compatible: true
+  preserve_change_disjoint: true
+  storyboard_clean_frame_separation_valid: true
+  official_source_conflicts_preserved: true
+  conflicting_actions: []
+  model_prompts_differ_materially: true
+  reference_bindings_present: true
+  selected_reference_strategy_present: true
+  no_video_generated: true

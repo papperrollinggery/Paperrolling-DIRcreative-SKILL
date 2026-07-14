@@ -1,0 +1,580 @@
+artifact:
+  artifact_id: cyber-courier-reference-pack-plan-v1
+  version: 1.0.0
+  source_artifact_ids:
+    - cyber-courier-visual-bible-v1
+    - cyber-courier-shot-list-v1
+  status: approved
+  owner_skill: visual-bible
+  created_at: "2026-05-14"
+  locked_by_user: false
+
+reference_pack:
+  project_title: "Cyber Courier: The Alley Accepts The Package"
+  channel: "cinematic_short_test"
+  aspect_ratio: "16:9"
+  pack_strategy: "multi_image_reference_pack"
+  reason: "A single board would make character, alley geography, prop states, and shot sequence too small for reliable downstream use."
+  downstream_use:
+    - "image prompt compiler"
+    - "video model adapter"
+    - "continuity QA"
+
+images:
+  - image_id: "image_01"
+    type: "character_design_board"
+    title: "Courier Character Board"
+    purpose: "Lock courier identity, wardrobe, expression range, and bag handling."
+    downstream_role: "character identity reference"
+    required_panels:
+      - "full-body front in red waterproof jacket"
+      - "three-quarter walking pose with black bag"
+      - "side silhouette with hood/rain profile"
+      - "face close-up: tired focus"
+      - "face close-up: restrained dread"
+      - "material callouts for jacket, bag, boots"
+    text_labels:
+      - "COURIER IDENTITY"
+      - "RED RAIN JACKET"
+      - "BLACK DELIVERY BAG"
+      - "RESTRAINED DREAD"
+    continuity_locks:
+      - "same face and proportions across all panels"
+      - "same red jacket and black bag"
+      - "no helmet, armor, weapon, or second character"
+    layout_notes: "Art-directed board with large hero pose and supporting studies; not an evenly distributed generic grid."
+
+  - image_id: "image_02"
+    type: "environment_blocking_board"
+    title: "Alley Environment Blocking Board"
+    purpose: "Lock alley geography, entrance-to-door axis, signs, and camera path."
+    downstream_role: "location and blocking reference"
+    required_panels:
+      - "large hero view from alley entrance"
+      - "top-down blocking map"
+      - "destination door/intercom view"
+      - "red sign left anchor"
+      - "blue 24-hour sign depth anchor"
+      - "camera positions for SH01-SH05"
+    text_labels:
+      - "ALLEY AXIS"
+      - "RED SIGN LEFT"
+      - "BLUE 24H SIGN"
+      - "DESTINATION DOOR"
+      - "COURIER PATH"
+    continuity_locks:
+      - "red sign stays on left near entrance"
+      - "blue sign stays deeper/right"
+      - "metal door stays at far end"
+      - "wet reflective pavement throughout"
+    layout_notes: "Large environment hero image plus readable blocking map; map must be large enough for path and camera markers."
+
+  - image_id: "image_03"
+    type: "prop_product_board"
+    title: "Package And Bag Prop Board"
+    purpose: "Lock delivery bag, sealed package, scanner glow, and interaction states."
+    downstream_role: "prop continuity reference"
+    required_panels:
+      - "black delivery bag exterior"
+      - "half-open bag with compact sealed package"
+      - "package off state"
+      - "package red scanner pulse on state"
+      - "hand gripping bag strap"
+      - "scanner glow reflection on wet ground"
+    text_labels:
+      - "BAG CLOSED"
+      - "PACKAGE OFF"
+      - "SCANNER PULSE"
+      - "HAND INTERACTION"
+      - "WET REFLECTION"
+    continuity_locks:
+      - "package remains compact and sealed"
+      - "scanner glow is thin and mechanical"
+      - "no logo text required"
+      - "no weapon-like silhouette"
+    layout_notes: "Hero prop view with macro details and state-change strip; material callouts must be near visible material."
+
+  - image_id: "image_04"
+    type: "director_storyboard_board"
+    title: "Five-Shot Director Storyboard Board"
+    purpose: "Lock shot sequence, timing, camera movement, and action order."
+    downstream_role: "storyboard reference only"
+    required_panels:
+      - "SH01 threshold wide"
+      - "SH02 tracking entry"
+      - "SH03 macro package pulse"
+      - "SH04 courier reaction close-up"
+      - "SH05 door activation"
+      - "shot notes with duration, lens, camera motion"
+    text_labels:
+      - "SH01 0-3s THRESHOLD"
+      - "SH02 3-6s ENTRY"
+      - "SH03 6-8s PACKAGE PULSE"
+      - "SH04 8-12s REACTION"
+      - "SH05 12-15s DOOR ACTIVATION"
+    continuity_locks:
+      - "five shots only"
+      - "no door opening"
+      - "no extra characters"
+      - "do not animate this board as a board"
+    layout_notes: "Shot strip may use ordered panels, but whole board still needs hierarchy and readable shot information."
+
+  - image_id: "image_05"
+    type: "lighting_style_board"
+    title: "Rain Noir Lighting Style Board"
+    purpose: "Lock palette, rain texture, reflections, lens mood, and material behavior."
+    downstream_role: "style and lighting reference"
+    required_panels:
+      - "palette swatches"
+      - "red sign reflection sample"
+      - "cyan depth light sample"
+      - "scanner glow on black material"
+      - "intercom light on wet metal"
+      - "rain texture and pavement reflection sample"
+    text_labels:
+      - "BLUE-BLACK RAIN"
+      - "RED SCANNER GLOW"
+      - "CYAN DEPTH LIGHT"
+      - "WET ASPHALT"
+      - "NO FISH-SCALE TEXTURE"
+    continuity_locks:
+      - "limited red/cyan palette"
+      - "rain visible but not noisy"
+      - "materials remain natural"
+      - "no purple neon overload"
+    layout_notes: "Look bible board, not a random mood collage; every swatch or still must tie to a shot or asset."
+
+  - image_id: "image_06_clean_sh01"
+    type: "clean_first_frame"
+    title: "SH01 Clean Alley Threshold First Frame"
+    purpose: "Provide a no-text direct I2V start frame for the opening threshold shot."
+    downstream_role: "Kling/Runway primary image input"
+    required_panels:
+      - "single cinematic frame only"
+      - "red-jacket courier at alley threshold"
+      - "black delivery bag"
+      - "rainy alley depth and closed far door"
+    text_labels: []
+    continuity_locks:
+      - "no visible package glow yet"
+      - "door closed"
+      - "same red jacket and black bag"
+      - "no extra characters"
+    layout_notes: "No board layout. No labels, arrows, panels, map, swatches, or production notes."
+
+  - image_id: "image_07_clean_sh03"
+    type: "clean_key_frame"
+    title: "SH03 Clean Package Pulse Key Frame"
+    purpose: "Provide a no-text direct I2V frame for the macro package scanner pulse."
+    downstream_role: "Kling/Runway primary image input"
+    required_panels:
+      - "single cinematic macro frame only"
+      - "half-open black delivery bag"
+      - "compact sealed matte-black package"
+      - "thin red scanner pulse"
+    text_labels: []
+    continuity_locks:
+      - "package remains compact and sealed"
+      - "scanner pulse is thin and mechanical"
+      - "no brand text"
+      - "no weapon-like silhouette"
+    layout_notes: "No board layout. No labels, arrows, panels, map, swatches, or production notes."
+
+  - image_id: "image_08_clean_sh05"
+    type: "clean_end_frame"
+    title: "SH05 Clean Door Activation End Frame"
+    purpose: "Provide a no-text final-state frame for the sealed door/intercom activation shot."
+    downstream_role: "Kling/Runway end-state or primary image input"
+    required_panels:
+      - "single cinematic frame only"
+      - "courier stopped before sealed metal door"
+      - "intercom panel glowing"
+      - "rain and puddle reflection"
+    text_labels: []
+    continuity_locks:
+      - "door activates but does not open"
+      - "no recipient appears"
+      - "same courier silhouette and black bag"
+      - "no extra characters"
+    layout_notes: "No board layout. No labels, arrows, panels, map, swatches, or production notes."
+
+qa:
+  reference_pack_gate: "pass"
+  single_board_decision: "rejected because panels would become too small"
+  multi_image_decision: "approved"
+  video_model_safe: true
+  notes:
+    - "Storyboard board requires anti-misread clause in video prompts."
+    - "Image prompts must use JSON-first style config in Phase F."
+
+reference_pack_manifest:
+  project_title: "Cyber Courier: The Alley Accepts The Package"
+  version: "1.1.0"
+  strategy: "compressed_model_safe_pack"
+  longform_generation_mode: "single_sequence"
+  visual_output_mode: "prompt_only"
+  source_artifact_ids:
+    - cyber-courier-visual-bible-v1
+    - cyber-courier-shot-list-v1
+  execution_capabilities:
+    image_generation:
+      available: false
+      provider: none
+      allowed_by_user: false
+    video_generation:
+      available: false
+      provider: none
+      allowed_by_user: false
+    file_write:
+      available: true
+    browser_review:
+      available: false
+  user_decision_gate:
+    required: true
+    status: approved
+    options_presented: 3
+    selected_option: "five-board compact reference pack with clean first-frame exports"
+    user_lock_required_before_video_adapter: true
+    can_mix_options: true
+    batch_skip_per_sequence_gate: false
+    accepted_risk: []
+    notes:
+      - "Dense master board rejected; five production boards preserve readable identity, environment, prop, storyboard, and style information."
+      - "Kling and Runway use clean first-frame exports rather than dense boards."
+  sequence_scope:
+    target_duration_sec: 15
+    sequence_plan: ""
+    sequence_ids:
+      - cyber-courier-seq-01
+    generation_unit_sec: 15
+    global_reference_pack: true
+    per_sequence_reference_packs: false
+  reference_strategy:
+    selected: hybrid
+    rationale: "The 15s story has five shots. Seedance/Veo can use full reference boards for continuity, while Kling/Runway direct I2V should use clean frames for the opening, package pulse, and final door activation. SH02 and SH04 can be generated from neighboring clean frames plus motion prompts unless the user chooses per-shot I2V."
+    shot_count_policy: "5 shots for normal suspense rhythm; not fixed. Faster stories may use 6-10 shots and per-shot clean frames."
+    clean_frame_policy: selected_key_frames
+    user_options_presented:
+      - "All-reference sequence: 5 boards only, fastest, higher model interpretation risk."
+      - "Hybrid: 5 boards + 3 clean key frames, recommended for this test."
+      - "Per-shot I2V: 5 boards + 5 clean first frames, most controllable, more generation work."
+    accepted_risks:
+      - "SH02 and SH04 do not have dedicated clean first frames in the hybrid pack; add them if Kling/Runway struggles."
+  assets:
+    - asset_id: image_01
+      role: identity_product_board
+      primary_job: "Lock courier identity, wardrobe, face, bag, and material behavior."
+      supports:
+        - "Kling character element reference"
+        - "Seedance identity binding"
+      source_prompt_or_file: "examples/cyber-courier/prompts/image_01_character_board.txt"
+      status: locked
+      asset_output:
+        status: prompt_ready
+        prompt_file: "examples/cyber-courier/prompts/image_01_character_board.txt"
+        generated_file: ""
+        external_instructions: "Generate the character board externally or with an authorized image tool before using as a visual asset."
+        source_tool: none
+        user_lock_status: pending
+      direct_input_policy:
+        seedance: allowed
+        kling: element_only
+        runway: reference_only
+        veo: allowed
+      contains:
+        - "full-body courier"
+        - "face closeups"
+        - "red jacket"
+        - "black delivery bag"
+      text_policy: short_labels_only
+      must_not_animate:
+        - "labels"
+        - "turnaround layout"
+        - "callout lines"
+      model_risks:
+        - "Kling may animate the board if used as a first frame."
+      qa:
+        readable_at_video_resolution: true
+        one_primary_job: true
+        no_conflicting_subjects: true
+        clean_frame_available_if_needed: true
+        anti_misread_clause_required: true
+        anti_misread_clause_present: true
+    - asset_id: image_02
+      role: environment_camera_board
+      primary_job: "Lock alley geography, subject path, camera path, signs, and destination door."
+      supports:
+        - "Seedance environment and camera-path binding"
+        - "Veo structured scene/camera prompt"
+      source_prompt_or_file: "examples/cyber-courier/prompts/image_02_environment_board.txt"
+      status: locked
+      asset_output:
+        status: prompt_ready
+        prompt_file: "examples/cyber-courier/prompts/image_02_environment_board.txt"
+        generated_file: ""
+        external_instructions: "Generate the environment board externally or with an authorized image tool, then export clean first frames separately."
+        source_tool: none
+        user_lock_status: pending
+      direct_input_policy:
+        seedance: allowed
+        kling: planning_only
+        runway: planning_only
+        veo: allowed
+      contains:
+        - "large alley plate"
+        - "top-down blocking map"
+        - "subject path"
+        - "camera positions"
+        - "red sign and blue sign anchors"
+      text_policy: large_labels_only
+      must_not_animate:
+        - "map labels"
+        - "arrows"
+        - "camera markers"
+        - "board layout"
+      model_risks:
+        - "Literal I2V models can show labels or arrows."
+      qa:
+        readable_at_video_resolution: true
+        one_primary_job: true
+        no_conflicting_subjects: true
+        clean_frame_available_if_needed: true
+        anti_misread_clause_required: true
+        anti_misread_clause_present: true
+    - asset_id: image_03
+      role: prop_continuity_board
+      primary_job: "Lock package, bag, scanner glow, and prop state transitions."
+      supports:
+        - "Kling prop element reference"
+        - "Seedance prop binding"
+      source_prompt_or_file: "examples/cyber-courier/prompts/image_03_prop_board.txt"
+      status: locked
+      asset_output:
+        status: prompt_ready
+        prompt_file: "examples/cyber-courier/prompts/image_03_prop_board.txt"
+        generated_file: ""
+        external_instructions: "Generate the prop board externally or with an authorized image tool before using as prop reference."
+        source_tool: none
+        user_lock_status: pending
+      direct_input_policy:
+        seedance: allowed
+        kling: element_only
+        runway: reference_only
+        veo: allowed
+      contains:
+        - "bag closed"
+        - "package off state"
+        - "scanner pulse"
+        - "hand interaction"
+      text_policy: short_labels_only
+      must_not_animate:
+        - "state labels"
+        - "product board layout"
+      model_risks:
+        - "Package can become weapon-like if prop geometry is not prioritized."
+      qa:
+        readable_at_video_resolution: true
+        one_primary_job: true
+        no_conflicting_subjects: true
+        clean_frame_available_if_needed: true
+        anti_misread_clause_required: true
+        anti_misread_clause_present: true
+    - asset_id: image_04
+      role: storyboard_motion_board
+      primary_job: "Lock five-shot order, timing, camera movement, and action sequence."
+      supports:
+        - "Seedance shot-order binding"
+        - "Veo shot-order guidance"
+      source_prompt_or_file: "examples/cyber-courier/prompts/image_04_storyboard_board.txt"
+      status: locked
+      asset_output:
+        status: prompt_ready
+        prompt_file: "examples/cyber-courier/prompts/image_04_storyboard_board.txt"
+        generated_file: ""
+        external_instructions: "Generate only for planning or Seedance/Veo guidance; never use as direct Kling/Runway first frame."
+        source_tool: none
+        user_lock_status: pending
+      direct_input_policy:
+        seedance: conditional
+        kling: forbidden
+        runway: forbidden
+        veo: conditional
+      contains:
+        - "SH01 threshold wide"
+        - "SH02 tracking entry"
+        - "SH03 package pulse"
+        - "SH04 reaction close-up"
+        - "SH05 door activation"
+      text_policy: short_labels_only
+      must_not_animate:
+        - "panel borders"
+        - "shot labels"
+        - "timing notes"
+        - "storyboard sheet"
+      model_risks:
+        - "Storyboard sheet may be animated literally."
+      qa:
+        readable_at_video_resolution: true
+        one_primary_job: true
+        no_conflicting_subjects: true
+        clean_frame_available_if_needed: true
+        anti_misread_clause_required: true
+        anti_misread_clause_present: true
+    - asset_id: image_05
+      role: style_material_board
+      primary_job: "Lock blue-black rain, red scanner glow, cyan depth light, wet asphalt, and material integrity."
+      supports:
+        - "style binding"
+        - "surface artifact guard"
+      source_prompt_or_file: "examples/cyber-courier/prompts/image_05_style_board.txt"
+      status: locked
+      asset_output:
+        status: prompt_ready
+        prompt_file: "examples/cyber-courier/prompts/image_05_style_board.txt"
+        generated_file: ""
+        external_instructions: "Generate the style board externally or with an authorized image tool before using as style reference."
+        source_tool: none
+        user_lock_status: pending
+      direct_input_policy:
+        seedance: allowed
+        kling: reference_only
+        runway: reference_only
+        veo: allowed
+      contains:
+        - "palette"
+        - "rain texture"
+        - "wet asphalt"
+        - "scanner glow"
+      text_policy: short_labels_only
+      must_not_animate:
+        - "labels"
+        - "swatch layout"
+      model_risks:
+        - "Style boards can dilute identity if weighted above character and environment."
+      qa:
+        readable_at_video_resolution: true
+        one_primary_job: true
+        no_conflicting_subjects: true
+        clean_frame_available_if_needed: true
+        anti_misread_clause_required: true
+        anti_misread_clause_present: true
+    - asset_id: clean_first_frame_set
+      role: clean_first_frame
+      primary_job: "Provide text-free clean frames for Kling and Runway direct I2V."
+      supports:
+        - "Kling direct I2V input"
+        - "Runway direct I2V input"
+      source_prompt_or_file: "examples/cyber-courier/prompts/image_06_clean_sh01_start.txt"
+      status: selected
+      asset_output:
+        status: prompt_ready
+        prompt_file: "examples/cyber-courier/prompts/image_06_clean_sh01_start.txt"
+        generated_file: ""
+        external_instructions: "Generate or import the three clean frames, then user-lock them before direct Kling/Runway generation."
+        source_tool: none
+        user_lock_status: pending
+      clean_frame_prompts:
+        - shot_id: SH01
+          frame_role: clean_first_frame
+          prompt_file: "examples/cyber-courier/prompts/image_06_clean_sh01_start.txt"
+          primary_model_slots:
+            - "Kling primary image for SH01"
+            - "Runway primary image for SH01"
+        - shot_id: SH03
+          frame_role: clean_key_frame
+          prompt_file: "examples/cyber-courier/prompts/image_07_clean_sh03_package.txt"
+          primary_model_slots:
+            - "Kling primary image for SH03"
+            - "Runway primary image for SH03"
+        - shot_id: SH05
+          frame_role: clean_end_frame
+          prompt_file: "examples/cyber-courier/prompts/image_08_clean_sh05_end.txt"
+          primary_model_slots:
+            - "Kling end frame or primary image for SH05"
+            - "Runway primary image for SH05"
+      direct_input_policy:
+        seedance: allowed
+        kling: allowed
+        runway: allowed
+        veo: allowed
+      contains:
+        - "SH01 clean alley entrance first frame"
+        - "SH03 clean package macro first frame"
+        - "SH05 clean door activation first frame"
+      text_policy: no_text
+      must_not_animate: []
+      model_risks:
+        - "Frame must match shot start or motion prompt will fight the image."
+      qa:
+        readable_at_video_resolution: true
+        one_primary_job: true
+        no_conflicting_subjects: true
+        clean_frame_available_if_needed: true
+        anti_misread_clause_required: false
+        anti_misread_clause_present: false
+  model_pack_recipes:
+    seedance:
+      enabled: true
+      max_image_refs_policy: 9
+      max_video_refs_policy: 3
+      max_audio_refs_policy: 3
+      mixed_file_cap_policy: 12
+      allowed_asset_roles:
+        - identity_product_board
+        - environment_camera_board
+        - prop_continuity_board
+        - storyboard_motion_board
+        - style_material_board
+        - clean_first_frame
+      required_bindings:
+        - "@image1 courier identity and wardrobe"
+        - "@image2 alley geography and camera path"
+        - "@image3 package and bag prop state"
+        - "@image4 shot order only"
+        - "@image5 lighting and material style"
+      anti_misread_required_for_boards: true
+    kling:
+      enabled: true
+      prefer_clean_first_frame: true
+      prefer_clean_end_frame: false
+      element_reference:
+        enabled: true
+        max_images_per_element: 4
+        required_element_roles:
+          - "courier"
+          - "delivery_bag"
+          - "alley_scene"
+      forbidden_primary_input_roles:
+        - master_reference_board
+        - storyboard_motion_board
+        - environment_camera_board
+      required_motion_fields:
+        - subject_movement
+        - background_movement
+        - camera_movement
+    runway:
+      enabled: true
+      prefer_clean_first_frame: true
+      split_multi_shot: true
+      forbidden_primary_input_roles:
+        - master_reference_board
+        - storyboard_motion_board
+        - environment_camera_board
+    veo:
+      enabled: true
+      structured_prompt_required: true
+      reference_map_required: true
+      audio_section_required: true
+      anti_misread_required_for_boards: true
+  qa:
+    reference_pack_gate: "pass"
+    roles_unique: true
+    dense_board_policy_present: true
+    clean_first_frame_policy_present: true
+    visual_output_mode_valid: true
+    capability_receipt_present: true
+    asset_output_statuses_present: true
+    longform_mode_valid: true
+    model_budget_ok: true
+    video_model_safe: true
+    failures: []

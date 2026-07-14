@@ -1,0 +1,52 @@
+Pre-generation contract:
+Largest title on the page: LIGHTING + MATERIAL STYLE REFERENCE
+Smaller metadata only: Project: Cyber Courier: The Alley Accepts The Package
+Do not make Cyber Courier: The Alley Accepts The Package the largest title.
+Direct video input policy: PLANNING ONLY; use this board for palette, rain texture, reflections, lens mood, and material behavior.
+
+Create the reference image from this JSON-first prompt config. Render a single 16:9 lighting and style production board, not final footage.
+
+{
+  "meta": {
+    "config_id": "cyber_courier_lighting_style_board_v1",
+    "image_type": "lighting_style_board",
+    "source_patterns": ["art_directed_asymmetric_layout_v1", "json_config_prompt_v1", "surface_integrity_guard_v1"]
+  },
+  "artifact": {
+    "title": "Rain Noir Lighting Style Board",
+    "role": "lock palette, rain texture, reflections, lens mood, and material behavior",
+    "canvas": "16:9 landscape, cinematography look bible"
+  },
+  "art_direction_policy": {
+    "non_negotiables": [
+      "do not make a random mood collage",
+      "every swatch and texture sample must support a shot or material",
+      "layout must be art-directed and slightly asymmetric",
+      "negative space must support hierarchy, not decoration"
+    ]
+  },
+  "layout_system": {
+    "hero_region": "large mood frame of blue-black rain alley with red courier silhouette and restrained red/cyan light",
+    "secondary_regions": ["palette swatches", "red sign reflection sample", "cyan depth light sample", "scanner glow on black material", "intercom light on wet metal", "rain texture sample"],
+    "exact_text_labels": ["BLUE-BLACK RAIN", "RED SCANNER GLOW", "CYAN DEPTH LIGHT", "WET ASPHALT", "NO FISH-SCALE TEXTURE"]
+  },
+  "visual_systems": {
+    "palette": "red courier jacket, scanner red, cyan sign, blue-black rain, wet asphalt, intercom white",
+    "lighting": "motivated practical sources only: red sign, cyan sign, scanner pulse, intercom panel",
+    "texture": "natural wet nylon, matte black package, scratched metal door, smooth rain reflections",
+    "lens": "grounded cinematic realism, restrained shallow depth of field where needed"
+  },
+  "consistency_locks": {
+    "style": "limited red/cyan palette; no purple neon overload; no generic sci-fi glow",
+    "forbidden": ["random mood collage", "decorative bokeh filler", "oversaturated neon rainbow", "noisy rain texture"]
+  },
+  "quality_and_artifact_control": {
+    "surface_integrity_guard": {
+      "required": ["clean natural materials", "smooth rain texture", "distinct background depth layers", "complete reflections"],
+      "avoid": ["fish-scale texture", "excessive sharpening", "color speckles", "random noise", "broken material continuity"]
+    }
+  },
+  "avoid": ["fake text", "tiny swatches", "unrelated cyberpunk imagery", "muddy black crush"]
+}
+
+QA notes: swatches must be labeled; texture samples must be large enough to inspect; every style sample must map to the shot list or visual bible.

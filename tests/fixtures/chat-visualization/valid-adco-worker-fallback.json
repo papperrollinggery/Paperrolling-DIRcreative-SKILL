@@ -1,0 +1,38 @@
+{
+  "spec_version": "1.0",
+  "view_id": "adco-story-gate-fallback",
+  "execution_context": "orchestrated_worker",
+  "controller": {"surface_owner": "ad-creative-orchestrator", "user_facing": false},
+  "stage_gate": {"id": "story_approval_01", "type": "story_approval_gate", "status": "needs_user", "decision_owner": "controller"},
+  "view": {"intent": "timeline", "display_mode": "fallback", "customer_stage_label": "故事逻辑确认", "decision_prompt": "由 ADCO 向用户确认故事逻辑。"},
+  "source_truth": {"artifacts": [{"artifact_id": "story-package-01", "version": "1.2.0", "sha256": "6666666666666666666666666666666666666666666666666666666666666666"}]},
+  "presentation": {
+    "fields": [
+      {"id": "current_stage", "label": "当前阶段", "value": "故事逻辑确认", "classification": "presentation_only", "source_ref": null},
+      {"id": "turn", "label": "关键转折", "value": "产品从工具变成关系证据", "classification": "source_bound", "source_ref": "story-package-01#/beats/turn"}
+    ],
+    "options": [],
+    "recommendation": null,
+    "downstream_effects": [{"stage": "script", "effect": "ADCO 采纳后才进入脚本。"}]
+  },
+  "interactions": {
+    "local": ["expand"],
+    "actions": [{"id": "request-adco-decision", "label": "交由 ADCO 确认", "kind": "submit_selection", "target_gate_id": "story_approval_01", "conversation_intent": "向 ADCO 返回结构化用户决策请求，不直接联系客户。"}],
+    "max_actions": 2,
+    "deep_navigation": false,
+    "nested_scroll": false
+  },
+  "write_boundary": {
+    "preview_only": true,
+    "confirmation_required": true,
+    "writes_authoritative_state": false,
+    "write_owner": "ad-creative-orchestrator",
+    "possible_write_targets": ["adco adoption decision", "host current truth"],
+    "forbidden_claims": ["lock", "readiness", "acceptance", "completion", "generation_authorization"]
+  },
+  "fallback": {
+    "format": "markdown",
+    "required_visible_fields": ["current_stage", "decision_prompt", "story_beats", "downstream_effects"],
+    "decision_question": "故事逻辑是否可以进入脚本阶段？"
+  }
+}

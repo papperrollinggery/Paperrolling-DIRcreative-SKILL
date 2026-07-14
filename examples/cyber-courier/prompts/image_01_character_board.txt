@@ -1,0 +1,54 @@
+Pre-generation contract:
+Largest title on the page: CHARACTER IDENTITY REFERENCE / COURIER DESIGN BOARD
+Smaller metadata only: Project: Cyber Courier: The Alley Accepts The Package
+Do not make Cyber Courier: The Alley Accepts The Package the largest title.
+Direct video input policy: NOT DIRECT VIDEO INPUT; use this board only to lock identity, wardrobe, expression range, and bag handling.
+
+Create the reference image from this JSON-first prompt config. Render a single 16:9 film production character design board, not final footage.
+
+{
+  "meta": {
+    "config_id": "cyber_courier_character_board_v1",
+    "image_type": "character_design_board",
+    "source_patterns": ["art_directed_asymmetric_layout_v1", "json_config_prompt_v1", "surface_integrity_guard_v1", "multi_panel_identity_lock_v1"]
+  },
+  "artifact": {
+    "title": "Courier Character Board",
+    "role": "lock courier identity, wardrobe, expression range, and black bag handling for downstream video reference",
+    "canvas": "16:9 landscape, clean studio production board"
+  },
+  "art_direction_policy": {
+    "non_negotiables": [
+      "do not use a generic layout",
+      "do not use evenly distributed grids unless a technical sub-section requires it",
+      "do not make the layout symmetrical only for symmetry",
+      "composition must feel art-directed, intentional, and slightly asymmetric",
+      "every section must feel carefully placed, not automatically generated"
+    ]
+  },
+  "layout_system": {
+    "hero_region": "large full-body three-quarter courier in red waterproof jacket holding a black delivery bag",
+    "secondary_regions": ["front support view", "side silhouette", "face study tired focus", "face study restrained dread"],
+    "callouts": ["wet nylon jacket seams", "black bag strap", "rain-wet boots", "subtle courier ID patch"],
+    "exact_text_labels": ["COURIER IDENTITY", "RED RAIN JACKET", "BLACK DELIVERY BAG", "RESTRAINED DREAD"]
+  },
+  "visual_systems": {
+    "subject": "young adult cyber courier, lean practical build, tired focused face, controlled posture, no weapon",
+    "wardrobe": "red waterproof nylon courier jacket, black utility pants, black waterproof boots, black coated-fabric delivery bag",
+    "performance": "captured like a real actor during a tense key moment, not posing; micro-expression, tight jaw, alert eyes",
+    "lighting": "blue-black rainy night ambience with restrained red scanner bounce and cyan rim light"
+  },
+  "consistency_locks": {
+    "identity": "same face, proportions, jacket, bag, and silhouette across every panel",
+    "forbidden": ["helmeted faceless biker", "combat armor", "weapon", "second character", "different jacket design between panels"]
+  },
+  "quality_and_artifact_control": {
+    "surface_integrity_guard": {
+      "required": ["clean natural materials", "smooth coherent rain texture", "main subject remains clear", "complete body and bag geometry"],
+      "avoid": ["fish-scale texture", "excessive sharpening", "color speckles", "random noise", "plastic toy material", "distorted anatomy"]
+    }
+  },
+  "avoid": ["generic model sheet", "evenly distributed auto grid", "fake text", "decorative filler", "unreadable micro labels"]
+}
+
+QA notes: labels must be readable; hero figure must be largest; support panels must preserve the same person and costume.

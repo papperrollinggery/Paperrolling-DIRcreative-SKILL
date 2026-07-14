@@ -1,0 +1,17 @@
+fixture:
+  fixture_id: invalid-creative-copy-deck-unapproved-claim
+  description: Reject an audience-facing claim that remains pending even when evidence exists.
+  expectation: reject
+  mutations:
+    - operation: replace
+      path: project.copy_development.claims.1.approval_status
+      value: pending
+  expected_failure_ids:
+    - copy_dir_professional_judgment_missing
+    - copy_execution_status_inconsistent
+    - copy_unapproved_claim
+    - deck_source_constraints_invalid
+    - deck_beat_claim_evidence_binding_invalid
+    - deck_slide_claim_evidence_binding_invalid
+    - deck_qa_status_invalid
+  expected_review_ids: []

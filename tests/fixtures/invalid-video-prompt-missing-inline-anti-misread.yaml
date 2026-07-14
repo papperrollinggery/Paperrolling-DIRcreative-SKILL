@@ -1,0 +1,136 @@
+artifact:
+  artifact_id: invalid-video-prompt-missing-inline-anti-misread
+  version: 1.0.0
+  status: fixture_invalid
+  owner_skill: video-model-adapter
+
+video_prompt_manifest:
+  project_title: "Invalid Missing Inline Anti Misread"
+  target_sequence_duration: "15s"
+  longform_generation_mode: "single_sequence"
+  visual_output_mode: "prompt_only"
+  selected_reference_strategy: "minimal_test"
+  sequence_plan: ""
+  sequence_ids:
+    - invalid-seq-01
+  reference_pack:
+    - "invalid_ref_01"
+
+execution_capabilities:
+  image_generation:
+    available: false
+    provider: none
+    allowed_by_user: false
+  video_generation:
+    available: false
+    provider: none
+    allowed_by_user: false
+  file_write:
+    available: true
+  browser_review:
+    available: false
+
+reference_map:
+  - ref_id: invalid_ref_01
+    file_or_generation_id: "prompt-only"
+    role: "storyboard_motion_reference"
+    asset_output_status: prompt_ready
+    use_for:
+      - "shot order"
+      - "camera movement"
+    do_not_use_for:
+      - "showing board labels"
+      - "direct first frame"
+    external_generation_instructions: "Generate or import planning reference before use."
+
+reference_bindings:
+  - model: seedance
+    shot_id: SEQUENCE
+    ref_id: invalid_ref_01
+    upload_slot: "@image1"
+    role: planning_only
+    required_for_generation: false
+    prompt_file: "tests/fixtures/invalid-video-prompt-missing-inline-anti-misread.yaml#seedance"
+    risk_note: "Fixture binding for Seedance."
+  - model: kling
+    shot_id: SH01
+    ref_id: invalid_ref_01
+    upload_slot: "planning only"
+    role: planning_only
+    required_for_generation: false
+    prompt_file: "tests/fixtures/invalid-video-prompt-missing-inline-anti-misread.yaml#kling"
+    risk_note: "Fixture binding for Kling."
+  - model: runway
+    shot_id: SH01
+    ref_id: invalid_ref_01
+    upload_slot: "planning only"
+    role: planning_only
+    required_for_generation: false
+    prompt_file: "tests/fixtures/invalid-video-prompt-missing-inline-anti-misread.yaml#runway"
+    risk_note: "Fixture binding for Runway."
+  - model: veo
+    shot_id: SEQUENCE
+    ref_id: invalid_ref_01
+    upload_slot: "reference map"
+    role: planning_only
+    required_for_generation: false
+    prompt_file: "tests/fixtures/invalid-video-prompt-missing-inline-anti-misread.yaml#veo"
+    risk_note: "Fixture binding for Veo."
+
+model_prompts:
+  seedance:
+    enabled: true
+    best_for: "fixture"
+    prompt: "Generate a cinematic 15-second scene from the supplied shot order reference."
+    reference_warning: "Do not show reference boards, labels, arrows, grids, or panels."
+    audio_policy: "fixture audio"
+    risk_notes:
+      - "fixture risk seedance"
+    retry_rules:
+      - "fixture retry seedance"
+  kling:
+    enabled: true
+    best_for: "fixture"
+    prompt: "Animate the selected shot as a clean cinematic image-to-video clip."
+    reference_warning: "Do not show reference boards, labels, arrows, grids, or panels."
+    audio_policy: "fixture audio"
+    risk_notes:
+      - "fixture risk kling"
+    retry_rules:
+      - "fixture retry kling"
+  runway:
+    enabled: true
+    best_for: "fixture"
+    prompt: "Create a short motion test from the chosen still frame."
+    reference_warning: "Do not show reference boards, labels, arrows, grids, or panels."
+    audio_policy: "fixture audio"
+    risk_notes:
+      - "fixture risk runway"
+    retry_rules:
+      - "fixture retry runway"
+  veo:
+    enabled: true
+    best_for: "fixture"
+    prompt: "Subject, action, scene, camera, lighting, and audio are structured for the cinematic sequence."
+    reference_warning: "Do not show reference boards, labels, arrows, grids, or panels."
+    audio_policy: "fixture audio"
+    risk_notes:
+      - "fixture risk veo"
+    retry_rules:
+      - "fixture retry veo"
+
+universal_anti_misread_clause: |
+  Do not show reference boards, labels, arrows, grids, or panels.
+
+qa:
+  video_prompt_gate: "fail"
+  missing_audio_policy: false
+  missing_reference_map: false
+  visual_output_mode_valid: true
+  capability_receipt_present: true
+  missing_generated_assets_blocked: true
+  longform_sequence_refs_valid: true
+  conflicting_actions: []
+  model_prompts_differ_materially: true
+  reference_bindings_present: true
+  selected_reference_strategy_present: true

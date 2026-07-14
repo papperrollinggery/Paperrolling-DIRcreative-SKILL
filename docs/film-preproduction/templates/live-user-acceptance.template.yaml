@@ -1,0 +1,95 @@
+artifact:
+  artifact_id: live-user-acceptance-template-v1
+  version: 1.0.0
+  status: template
+  owner_skill: checkpoint
+
+acceptance_run:
+  run_type: live_user_acceptance_template
+  visual_output_mode: prompt_only
+  source_goal: active_thread_goal
+  required_receipt_path: .dircreative/runs/live-user-acceptance.yaml
+  template_policy:
+    copy_only_after_real_user_acceptance: true
+    simulated_fixture_allowed: false
+    terminal_only_demo_allowed: false
+
+user_acceptance:
+  status: not_accepted
+  accepted_by_user: false
+  real_user_co_creation_verified: false
+  accepted_at: ""
+  user_acceptance_statement: ""
+  user_prompt_used_for_acceptance: ""
+  transcript_summary: ""
+
+chat_evidence:
+  evidence_source: ""
+  observed_stages: []
+  user_decisions_recorded: []
+  council_adversarial_review:
+    triggered: false
+    viewpoints:
+      - user
+      - professional_film_expert
+      - product_manager
+      - skill_developer
+      - code_researcher
+    findings_summary: []
+    adopted_changes: []
+  thread_orchestration:
+    threads_used: []
+    main_controller_thread_id: ""
+    dispatch_record_artifacts: []
+    disposable_workers_archived: false
+    unintended_worker_worktrees_present: false
+    thread_audit_passed: false
+  chat_transcript_artifacts: []
+  gstack_or_visual_evidence:
+    - /tmp/dircreative-visual-dogfood/goal-audit.html
+  installed_skill_checked: false
+
+accepted_scope:
+  checklist:
+    - chat_first_flow
+    - director_room_collaboration
+    - professional_script
+    - dynamic_shot_design
+    - reference_pack_roles
+    - pre_generation_contracts
+    - image_prompt_summaries
+    - model_specific_video_prompts
+    - qa_retry_rules
+    - prompt_only_boundary
+    - assisted_generation_preflight
+    - installed_skill_behavior
+    - gstack_visual_dogfood
+    - council_adversarial_review_boundary
+    - thread_orchestration_cleanup
+  accepted_items: []
+
+unresolved_blockers:
+  items:
+    - real_user_acceptance_not_recorded
+
+qa_gate:
+  status: needs_user
+  reasons:
+    - "Template only. Goal completion requires a real user acceptance pass."
+
+skill_run_receipt:
+  run_id: live-user-acceptance-template-v1
+  skill_id: checkpoint
+  input_artifacts:
+    - docs/film-preproduction/live-user-acceptance-gate.md
+  output_artifacts:
+    - docs/film-preproduction/templates/live-user-acceptance.template.yaml
+  decisions:
+    - "Keep goal completion blocked until real user acceptance is recorded."
+  unresolved_questions:
+    - "Does the user accept the live chat workflow after a real pass?"
+  qa_gate:
+    status: needs_user
+    reasons:
+      - "No accepted live user receipt exists yet."
+  next_recommended_skill: dircreative-chat-facilitator

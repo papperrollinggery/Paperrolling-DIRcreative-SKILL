@@ -1,0 +1,165 @@
+client_film_gate_contract:
+  project_title: "Invalid Twelve Sections"
+  target_duration_sec: 60
+  gate_status:
+    story: pass
+    script: pass
+    shot: pass
+    asset_reference: pass
+    prompt_generation: pending
+    client_language: pass
+  client_visible_text_blocks:
+    - "这支一分钟片会把十年友谊拆成十二个客户故事段落。"
+  story_gate:
+    customer_readable_story_preview:
+      - "第一段从相册开始，主角翻看旧照片后看到朋友们留下的礼物。"
+      - "最后大家把新船票放回箱子，十年关系变成下一次同行。"
+    preserved_brief_requirements:
+      - "保留十二段客户故事结构。"
+    omitted_requirements_without_user_removal: []
+    prop_ellipsis_rule:
+      source_has_ellipsis: true
+      required_friend_count: 1
+      expansions:
+        - character_id: F01
+          role_identity: "朋友"
+          prop: "礼物"
+          action: "放到桌上"
+          shot_function: "展示关系"
+  script_gate:
+    target_duration_sec: 60
+    time_budget:
+      total_sec: 60
+      sections: []
+    vo_budget:
+      total_words_estimate: 80
+      lines:
+        - vo_id: VO01
+          text: "十年以后，每一段回忆都有人带回来。"
+          start_sec: 0
+          end_sec: 60
+          covered_shot_ids: [S01, S02, S03, S04, S05, S06, S07, S08, S09, S10, S11, S12]
+          covered_seconds: "00:00-01:00"
+  shot_gate:
+    story_sections_count: 12
+    rhythm_points_count: 12
+    shot_defaults: &bad_shot
+      shot_size: "MS"
+      camera_position: "front"
+      camera_movement: "slow push"
+      subject_action: "shows story section"
+      emotional_function: "summarizes one client story section"
+      props_characters: ["friend"]
+      asset_source: "existing"
+      vertical_framing: "center"
+      reference_motion: "simple movement note"
+    shots:
+      - <<: *bad_shot
+        shot_id: S01
+        timecode: "00:00-00:05"
+        start_sec: 0
+        end_sec: 5
+      - <<: *bad_shot
+        shot_id: S02
+        timecode: "00:05-00:10"
+        start_sec: 5
+        end_sec: 10
+      - <<: *bad_shot
+        shot_id: S03
+        timecode: "00:10-00:15"
+        start_sec: 10
+        end_sec: 15
+      - <<: *bad_shot
+        shot_id: S04
+        timecode: "00:15-00:20"
+        start_sec: 15
+        end_sec: 20
+      - <<: *bad_shot
+        shot_id: S05
+        timecode: "00:20-00:25"
+        start_sec: 20
+        end_sec: 25
+      - <<: *bad_shot
+        shot_id: S06
+        timecode: "00:25-00:30"
+        start_sec: 25
+        end_sec: 30
+      - <<: *bad_shot
+        shot_id: S07
+        timecode: "00:30-00:35"
+        start_sec: 30
+        end_sec: 35
+      - <<: *bad_shot
+        shot_id: S08
+        timecode: "00:35-00:40"
+        start_sec: 35
+        end_sec: 40
+      - <<: *bad_shot
+        shot_id: S09
+        timecode: "00:40-00:45"
+        start_sec: 40
+        end_sec: 45
+      - <<: *bad_shot
+        shot_id: S10
+        timecode: "00:45-00:50"
+        start_sec: 45
+        end_sec: 50
+      - <<: *bad_shot
+        shot_id: S11
+        timecode: "00:50-00:55"
+        start_sec: 50
+        end_sec: 55
+      - <<: *bad_shot
+        shot_id: S12
+        timecode: "00:55-01:00"
+        start_sec: 55
+        end_sec: 60
+    storyboard_pages:
+      - page_id: SB01
+        image_count: 4
+        image_aspect_ratio: "9:16"
+        crop_policy: "crop_safe_no_stretch"
+        min_image_width_px: 900
+        caption_standard:
+          story_first: true
+          camera_second: true
+          source_or_confirmation_last: true
+  asset_reference_gate:
+    user_claims_existing_browser_images: false
+    browser_or_local_intake:
+      completed: false
+      inspected_sources: []
+      blocked_reason: ""
+    per_shot_asset_contract:
+      - shot_id: S01
+        source_decision: existing_grok_image
+        source_status: available
+        use_case: ppt_storyboard
+        usage_page: "page 1"
+        blocker: ""
+    reference_video_music:
+      reference_motion_notes: []
+      reference_videos: []
+      music_tracks:
+        - source: "candidate"
+          usage: "warm build"
+          lock_status: needs_license_review
+  prompt_generation:
+    status: pending
+    input_gates_locked:
+      story: true
+      script: true
+      shot: false
+      asset_reference: false
+    prompts: []
+  acceptance_boundary:
+    validation_scope: structural_contract_only
+    structural_pass_not_client_deliverable: true
+    structural_pass_not_copy_quality: true
+    structural_pass_not_visual_quality: true
+    structural_pass_not_asset_authorization: true
+    structural_pass_not_live_acceptance: true
+qa:
+  client_film_gate_contract: fail
+  failures:
+    - story_sections_used_as_shot_list

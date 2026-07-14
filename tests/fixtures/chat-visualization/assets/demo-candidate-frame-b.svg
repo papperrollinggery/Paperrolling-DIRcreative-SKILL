@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675" role="img" aria-labelledby="title desc">
+  <title id="title">演示候选画面 B</title>
+  <desc id="desc">偏冷厨房中，两个人物与桌面产品形成较紧构图，产品方向用于演示差异审阅，不是真实生成候选。</desc>
+  <rect width="1200" height="675" fill="#1d252b"/>
+  <rect x="55" y="50" width="1090" height="575" rx="28" fill="#34444c" stroke="#7995a2" stroke-width="3"/>
+  <rect x="665" y="95" width="430" height="270" rx="16" fill="#9bb1ba"/>
+  <circle cx="380" cy="415" r="72" fill="#8d6558"/>
+  <circle cx="790" cy="400" r="64" fill="#a97a67"/>
+  <rect x="500" y="350" width="220" height="150" rx="32" fill="#e7e1d8" stroke="#8f9da2" stroke-width="8"/>
+  <circle cx="550" cy="425" r="42" fill="#77878d"/>
+  <path d="M380 490 L495 450 M790 465 L720 440" stroke="#c79a80" stroke-width="26" stroke-linecap="round"/>
+  <text x="90" y="585" fill="#edf3f5" font-family="sans-serif" font-size="30">演示参考图 B · 不代表真实候选</text>
+</svg>

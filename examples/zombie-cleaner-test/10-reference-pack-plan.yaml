@@ -1,0 +1,227 @@
+artifact:
+  artifact_id: zombie-cleaner-reference-pack-plan-v1
+  version: 1.0.0
+  source_artifact_ids:
+    - zombie-cleaner-visual-bible-v1
+    - zombie-cleaner-shot-list-v1
+  status: approved
+  owner_skill: reference-image-planner
+
+reference_pack_manifest:
+  project_title: "Wasteland Sanitation Route"
+  version: "1.0.0"
+  strategy: "compressed_model_safe_pack"
+  longform_generation_mode: hybrid
+  visual_output_mode: prompt_only
+  source_artifact_ids:
+    - zombie-cleaner-visual-bible-v1
+    - zombie-cleaner-shot-list-v1
+  execution_capabilities:
+    image_generation: {available: false, provider: none, allowed_by_user: false}
+    video_generation: {available: false, provider: none, allowed_by_user: false}
+    file_write: {available: true}
+    browser_review: {available: false}
+  user_decision_gate:
+    required: true
+    status: approved
+    options_presented: 3
+    selected_option: "global identity vehicle prop pack plus sequence clean frames"
+    user_lock_required_before_video_adapter: true
+    can_mix_options: true
+    batch_skip_per_sequence_gate: false
+    accepted_risk: []
+    notes:
+      - "Dense boards are for planning and Seedance/Veo reference only."
+      - "Kling and Runway need clean first frames."
+  sequence_scope:
+    target_duration_sec: 180
+    sequence_plan: "examples/zombie-cleaner-test/08-sequence-plan.yaml"
+    sequence_ids:
+      - zc-seq-01
+      - zc-seq-02
+      - zc-seq-03
+      - zc-seq-04
+      - zc-seq-05
+      - zc-seq-06
+      - zc-seq-07
+      - zc-seq-08
+      - zc-seq-09
+      - zc-seq-10
+      - zc-seq-11
+      - zc-seq-12
+    generation_unit_sec: 15
+    global_reference_pack: true
+    per_sequence_reference_packs: true
+  assets:
+    - asset_id: zc_image_01
+      role: identity_product_board
+      primary_job: "Lock sanitation worker identity, orange suit, face shield, gloves, clipboard, and expression range."
+      supports: ["Kling character element", "Seedance identity binding"]
+      source_prompt_or_file: "examples/zombie-cleaner-test/11-image-prompt-manifest.yaml#zc_image_01"
+      status: selected
+      asset_output:
+        status: prompt_ready
+        prompt_file: "examples/zombie-cleaner-test/11-image-prompt-manifest.yaml#zc_image_01"
+        generated_file: ""
+        external_instructions: "Generate or import before marking hero identity as user_locked."
+        source_tool: none
+        user_lock_status: pending
+      direct_input_policy: {seedance: allowed, kling: element_only, runway: reference_only, veo: allowed}
+      contains: ["worker front view", "face shield close-up", "clipboard", "glove details"]
+      text_policy: short_labels_only
+      must_not_animate: ["labels", "turnaround layout", "callout lines"]
+      model_risks: ["Kling may animate the board if used as direct first frame."]
+      qa:
+        readable_at_video_resolution: true
+        one_primary_job: true
+        no_conflicting_subjects: true
+        clean_frame_available_if_needed: true
+        anti_misread_clause_required: true
+        anti_misread_clause_present: true
+    - asset_id: zc_image_02
+      role: vehicle_continuity_board
+      primary_job: "Lock street sweeper vehicle geometry, rotating brushes, foam tank, UNIT 47 decal, and rust pattern."
+      supports: ["vehicle element reference", "Seedance vehicle binding"]
+      source_prompt_or_file: "examples/zombie-cleaner-test/11-image-prompt-manifest.yaml#zc_image_02"
+      status: selected
+      asset_output:
+        status: prompt_ready
+        prompt_file: "examples/zombie-cleaner-test/11-image-prompt-manifest.yaml#zc_image_02"
+        generated_file: ""
+        external_instructions: "Generate or import before using as vehicle reference."
+        source_tool: none
+        user_lock_status: pending
+      direct_input_policy: {seedance: allowed, kling: element_only, runway: reference_only, veo: allowed}
+      contains: ["vehicle side view", "front brush", "foam tank", "hazard lights"]
+      text_policy: short_labels_only
+      must_not_animate: ["labels", "technical layout"]
+      model_risks: ["Vehicle geometry may drift if not treated as an element reference."]
+      qa:
+        readable_at_video_resolution: true
+        one_primary_job: true
+        no_conflicting_subjects: true
+        clean_frame_available_if_needed: true
+        anti_misread_clause_required: true
+        anti_misread_clause_present: true
+    - asset_id: zc_image_03
+      role: environment_camera_board
+      primary_job: "Lock quarantine route geography, flooded alley, service lane, recycling yard, and camera path."
+      supports: ["Seedance geography binding", "Veo scene structure"]
+      source_prompt_or_file: "examples/zombie-cleaner-test/11-image-prompt-manifest.yaml#zc_image_03"
+      status: selected
+      asset_output:
+        status: prompt_ready
+        prompt_file: "examples/zombie-cleaner-test/11-image-prompt-manifest.yaml#zc_image_03"
+        generated_file: ""
+        external_instructions: "Generate as a planning board and export text-free scene plates separately."
+        source_tool: none
+        user_lock_status: pending
+      direct_input_policy: {seedance: allowed, kling: planning_only, runway: planning_only, veo: allowed}
+      contains: ["route map", "alley plate", "yard plate", "camera path"]
+      text_policy: large_labels_only
+      must_not_animate: ["map arrows", "labels", "floor plan", "board layout"]
+      model_risks: ["Literal I2V models can show map labels if used directly."]
+      qa:
+        readable_at_video_resolution: true
+        one_primary_job: true
+        no_conflicting_subjects: true
+        clean_frame_available_if_needed: true
+        anti_misread_clause_required: true
+        anti_misread_clause_present: true
+    - asset_id: zc_image_04
+      role: storyboard_motion_board
+      primary_job: "Lock 12-sequence order, comic escalation, action rhythm, and transition logic."
+      supports: ["Seedance shot-order guidance", "Veo structured sequence prompt"]
+      source_prompt_or_file: "examples/zombie-cleaner-test/11-image-prompt-manifest.yaml#zc_image_04"
+      status: selected
+      asset_output:
+        status: prompt_ready
+        prompt_file: "examples/zombie-cleaner-test/11-image-prompt-manifest.yaml#zc_image_04"
+        generated_file: ""
+        external_instructions: "Generate only as planning board. Do not use as direct Kling/Runway first frame."
+        source_tool: none
+        user_lock_status: pending
+      direct_input_policy: {seedance: conditional, kling: forbidden, runway: forbidden, veo: conditional}
+      contains: ["12 sequence strip", "camera notes", "audio beats"]
+      text_policy: short_labels_only
+      must_not_animate: ["shot labels", "timing text", "panel borders", "storyboard layout"]
+      model_risks: ["Model may animate the board if not blocked by anti-misread clause."]
+      qa:
+        readable_at_video_resolution: true
+        one_primary_job: true
+        no_conflicting_subjects: true
+        clean_frame_available_if_needed: true
+        anti_misread_clause_required: true
+        anti_misread_clause_present: true
+    - asset_id: zc_clean_first_frame_set
+      role: clean_first_frame
+      primary_job: "Provide text-free direct I2V start frames for selected sequences."
+      supports: ["Kling direct I2V", "Runway direct I2V", "TapNow start/end workflow"]
+      source_prompt_or_file: "planned text-free exports from sequence packs"
+      status: selected
+      asset_output:
+        status: external_pending
+        prompt_file: ""
+        generated_file: ""
+        external_instructions: "Create text-free clean start frames for each approved sequence pack before direct video generation."
+        source_tool: external
+        user_lock_status: pending
+      direct_input_policy: {seedance: allowed, kling: allowed, runway: allowed, veo: allowed}
+      contains: ["ZC01 clean start", "ZC03 clean brush start", "ZC10 clean compactor action", "ZC12 clean exit"]
+      text_policy: no_text
+      must_not_animate: []
+      model_risks: ["Prompt text cannot force motion that contradicts the first frame."]
+      qa:
+        readable_at_video_resolution: true
+        one_primary_job: true
+        no_conflicting_subjects: true
+        clean_frame_available_if_needed: true
+        anti_misread_clause_required: false
+        anti_misread_clause_present: false
+  model_pack_recipes:
+    seedance:
+      enabled: true
+      max_image_refs_policy: 9
+      max_video_refs_policy: 3
+      max_audio_refs_policy: 3
+      mixed_file_cap_policy: 12
+      allowed_asset_roles: [identity_product_board, vehicle_continuity_board, environment_camera_board, storyboard_motion_board, clean_first_frame]
+      required_bindings:
+        - "@image1 worker identity"
+        - "@image2 street sweeper vehicle"
+        - "@image3 route geography"
+        - "@image4 sequence order only"
+      anti_misread_required_for_boards: true
+    kling:
+      enabled: true
+      prefer_clean_first_frame: true
+      prefer_clean_end_frame: true
+      element_reference:
+        enabled: true
+        max_images_per_element: 4
+        required_element_roles: ["worker", "street_sweeper", "glowing_barrel"]
+      forbidden_primary_input_roles: [master_reference_board, storyboard_motion_board, environment_camera_board]
+      required_motion_fields: [subject_movement, background_movement, camera_movement]
+    runway:
+      enabled: true
+      prefer_clean_first_frame: true
+      split_multi_shot: true
+      forbidden_primary_input_roles: [master_reference_board, storyboard_motion_board, environment_camera_board]
+    veo:
+      enabled: true
+      structured_prompt_required: true
+      reference_map_required: true
+      audio_section_required: true
+      anti_misread_required_for_boards: true
+  qa:
+    reference_pack_gate: "pass"
+    roles_unique: true
+    dense_board_policy_present: true
+    clean_first_frame_policy_present: true
+    visual_output_mode_valid: true
+    capability_receipt_present: true
+    asset_output_statuses_present: true
+    longform_mode_valid: true
+    model_budget_ok: true
+    video_model_safe: true
+    failures: []

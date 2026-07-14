@@ -1,0 +1,153 @@
+{
+  "schema_version": "1.1.0",
+  "fixture_id": "minimal-character-scene-10s",
+  "project": {
+    "title": "Window Decision",
+    "intended_use": "10-second vertical character film",
+    "safety_boundary": "one fictional adult character; no identity redesign",
+    "source_of_truth": "two user-supplied references plus this Prompt IR"
+  },
+  "output": {
+    "aspect_ratio": "9:16",
+    "target_duration_sec": 10,
+    "generation_unit_sec": 10,
+    "text_policy": "no_text",
+    "visual_output_mode": "prompt_only"
+  },
+  "intake": {
+    "read_before_regenerate": true,
+    "source_precedence": ["user_supplied_locked_assets", "prompt_ir"],
+    "supplied_assets": [
+      {
+        "asset_id": "character_source",
+        "source_kind": "conversation_media",
+        "source_locator": "conversation://character-1",
+        "source_authorization": "user_provided",
+        "role": "identity",
+        "locked": true,
+        "reuse_action": "direct_reference",
+        "preserve": ["face", "short black hair", "cobalt coat", "adult proportions"],
+        "may_change": ["expression", "gaze", "hand position"],
+        "do_not_copy_or_animate": [],
+        "downstream_slots": ["@Image 1"]
+      },
+      {
+        "asset_id": "scene_source",
+        "source_kind": "conversation_media",
+        "source_locator": "conversation://scene-1",
+        "source_authorization": "user_provided",
+        "role": "scene_fov",
+        "locked": true,
+        "reuse_action": "direct_reference",
+        "preserve": ["window position", "table geometry", "camera axis", "rain direction"],
+        "may_change": ["character blocking", "rain intensity"],
+        "do_not_copy_or_animate": [],
+        "downstream_slots": ["@Image 2"]
+      }
+    ]
+  },
+  "references": [
+    {
+      "platform_slot": "@Image 1",
+      "asset_id": "character_source",
+      "role": "identity reference for the woman in the cobalt coat",
+      "direct_input_policy": "allowed",
+      "attached_to_run": true,
+      "required_for_shot": true,
+      "preserve": ["face", "hair", "coat", "age"],
+      "anti_misread": ["use only for character identity"]
+    },
+    {
+      "platform_slot": "@Image 2",
+      "asset_id": "scene_source",
+      "role": "room geography and camera-axis reference",
+      "direct_input_policy": "conditional",
+      "attached_to_run": true,
+      "required_for_shot": true,
+      "preserve": ["window", "table", "depth", "light direction"],
+      "anti_misread": ["do not add a second person"]
+    }
+  ],
+  "entities": [
+    {
+      "entity_id": "woman",
+      "external_name": "the woman in the cobalt coat",
+      "entity_type": "person",
+      "reference_asset_ids": ["character_source"],
+      "immutable": ["facial identity", "short black hair", "cobalt coat", "adult proportions"],
+      "starting_state": "standing beside the table and looking through the window",
+      "screen_position": "frame-left facing right"
+    }
+  ],
+  "global_locks": {
+    "identity": ["one woman only", "same face, hair, coat, and proportions"],
+    "product_or_prop": ["one ceramic cup remains on the table"],
+    "scene": ["same window, table, rainy exterior, and camera side"],
+    "composition_axis": ["left-to-right eyeline and movement room"],
+    "palette_material": ["cool daylight, warm ceramic cup, natural skin tone"],
+    "lens_grammar": ["one motivated camera move per shot"],
+    "audio_spine": ["rain ambience and one cup contact sound"]
+  },
+  "composition": {
+    "visual_center": "the woman's eyes and the window reflection",
+    "subject_hierarchy": "woman first, cup second, rain third",
+    "foreground_midground_background": "soft door edge, woman and table, rainy window",
+    "negative_space": "clean upper-right window area",
+    "movement_room": "space between the woman and the table",
+    "screen_direction": "the woman remains frame-left facing right",
+    "narrative_purpose": "turn hesitation into one visible decision"
+  },
+  "render_look": {
+    "lighting": {"condition": "soft overcast window light from camera-right", "effect": "preserve face and coat separation", "intensity": "subtle"},
+    "optics": {"condition": "no special optical effect is required", "intensity": "none"},
+    "atmosphere": {"condition": "rain remains outside the window", "intensity": "none"},
+    "grade": {"condition": "neutral balance with restrained cool-warm separation", "intensity": "subtle"},
+    "preserve": ["skin tone", "coat color", "window geography"],
+    "exit_or_continuity": "the light direction and neutral base remain continuous"
+  },
+  "shot_blocks": [
+    {
+      "shot_id": "opening",
+      "time_start": "00.00",
+      "time_end": "04.00",
+      "story_beat": "hesitation at the window",
+      "emotional_or_attention_beat": "guarded gaze softens into resolve",
+      "entity_actions": [
+        {"owner_entity_id": "woman", "initial_state": "watching the rain", "trigger": "a distant train sound", "path": "lower her gaze to the cup and take one quiet breath", "final_state": "right hand hovering beside the cup"}
+      ],
+      "environment_action": {"initial_state": "steady rain", "response": "one brighter reflection passes across the window", "final_state": "rain returns to steady motion"},
+      "camera": {"shot_size": "medium profile", "angle_height_axis": "eye level on the established axis", "lens_feel_reason": "natural perspective keeps the room readable", "support": "stabilized slider", "start_target": "window reflection", "path": "slow lateral move toward the woman's eyes", "end_target": "the woman's gaze", "speed_easing": "gentle constant motion", "focus": "hold the eyes", "motivation": "move attention from weather to decision"},
+      "composition_state": "woman frame-left, cup center, window depth frame-right",
+      "look_delta": "window reflection briefly brightens without changing color",
+      "audio_cues": ["steady rain", "distant train sound"],
+      "transition_in": "open on the window reflection",
+      "transition_out": "cut on her gaze toward the cup",
+      "continuity_locks": ["identity", "coat", "axis", "cup position"]
+    },
+    {
+      "shot_id": "decision",
+      "time_start": "04.00",
+      "time_end": "10.00",
+      "story_beat": "visible decision and exit",
+      "emotional_or_attention_beat": "calm resolve replaces hesitation",
+      "entity_actions": [
+        {"owner_entity_id": "woman", "initial_state": "hand beside the cup", "trigger": "her gaze settles on the door", "path": "lift the cup once, set it down closer to the door, then turn her shoulders right", "physical_consequence": "the cup makes one soft ceramic contact", "final_state": "standing ready to exit frame-right"}
+      ],
+      "environment_action": {"initial_state": "steady rain", "response": "door-edge foreground shifts as she turns", "final_state": "window and table remain unchanged"},
+      "camera": {"shot_size": "medium three-quarter", "angle_height_axis": "eye level on the same axis", "lens_feel_reason": "normal perspective protects facial proportions", "support": "locked tripod", "start_target": "hand and cup", "path": "one rack focus from the cup to her eyes", "end_target": "resolved expression", "speed_easing": "single deliberate focus move", "focus": "cup to eyes at 06.50", "motivation": "connect the physical choice to the emotional turn"},
+      "composition_state": "preserve frame-right exit room and the upper-right negative space",
+      "look_delta": "no new effect",
+      "audio_cues": ["one soft ceramic contact", "rain tail"],
+      "transition_in": "cut from eyeline to hand",
+      "transition_out": "hold the resolved expression for the final second",
+      "continuity_locks": ["identity", "coat", "cup", "screen direction"]
+    }
+  ],
+  "audio_plan": {"dialogue": "none", "voiceover": "none", "ambience": "rain", "music": "none", "foley": "cup contact", "sfx": "distant train", "silence": "final breath space", "generation_route": "postproduction"},
+  "transition_plan": [
+    {"boundary": "opening_to_decision", "visual_bridge": "the woman's eyeline leads to the cup", "audio_bridge": "rain continues under the cut", "continuity_state": "identity, axis, cup, and light direction remain unchanged", "risk": "an extra person or changed cup may appear"}
+  ],
+  "capability": {"capability_card_id": "seedance_2_0_official_launch", "model_key": "seedance", "version": "2.0", "provider_surface": "Seedance 2.0 launch product surfaces described by ByteDance Seed", "execution_verification_status": "unverified"},
+  "generation_plan": {"selected_adapter": "seedance", "units": [{"unit_id": "decision_unit", "time_start": "00.00", "time_end": "10.00", "shot_ids": ["opening", "decision"], "incoming_handoff_key": "window_decision_start", "outgoing_handoff_key": "exit_ready_final", "incoming_state": "woman at the window", "outgoing_state": "woman ready to exit", "audio_handoff": "rain and cup cue remain in post-production"}]},
+  "qa": {"structural_score": 100, "status": "passed", "pass_signals": ["two references only", "continuous timeline", "terminal surface sanitized"], "failure_ids": [], "retry_rules": ["change only the failing layer"], "next_action": "prompt-only handoff"}
+}

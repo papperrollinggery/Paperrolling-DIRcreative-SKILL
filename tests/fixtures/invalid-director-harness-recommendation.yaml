@@ -1,0 +1,12 @@
+fixture_type: "invalid_recommendation"
+expected_failure_contains:
+  - "director-room recommendation option_id must reference a user-facing option"
+  - "director-room recommendation missing reason"
+  - "director-room recommendation resolution_refs must reference valid resolutions"
+option_ids: ["1", "2"]
+resolution_ids: ["r1", "r2"]
+recommendation:
+  option_id: "99"
+  reason: ""
+  evidence_refs: []
+  resolution_refs: ["unknown"]
