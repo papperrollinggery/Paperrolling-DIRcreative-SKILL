@@ -457,6 +457,7 @@ def validate_required_paths() -> None:
         "tests/fixtures/invalid-video-prompt-direct-input-unlocked.yaml",
         "tests/fixtures/invalid-generation-qa-character-drift-approved.yaml",
         "scripts/dircreative_adco_native_exchange.py",
+        "scripts/dircreative_specialist_exchange_contract.py",
         "scripts/dircreative_activation_policy_audit.py",
         "scripts/dircreative_route.py",
         "scripts/dircreative_context_budget_audit.py",

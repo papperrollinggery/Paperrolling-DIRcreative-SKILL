@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import re
+import stat
 from pathlib import Path
 
 
@@ -108,8 +109,42 @@ def sanitize_package_bytes(
     return text.encode("utf-8")
 
 
+def _source_entry_exists(path: Path) -> bool:
+    try:
+        path.lstat()
+    except FileNotFoundError:
+        return False
+    return True
+
+
+def _validate_package_source_entry(root: Path, path: Path) -> None:
+    relative = path.relative_to(root)
+    label = relative.as_posix()
+    entry_stat = path.lstat()
+    if stat.S_ISLNK(entry_stat.st_mode):
+        raise ValueError(f"package source must not be a symbolic link: {label}")
+    if stat.S_ISREG(entry_stat.st_mode):
+        if entry_stat.st_nlink != 1:
+            raise ValueError(f"package source must not be hardlinked: {label}")
+    elif not stat.S_ISDIR(entry_stat.st_mode):
+        raise ValueError(f"package source must be a regular file or directory: {label}")
+
+    try:
+        path.resolve(strict=True).relative_to(root.resolve(strict=True))
+    except ValueError as exc:
+        raise ValueError(f"package source resolves outside the repository: {label}") from exc
+
+    if stat.S_ISDIR(entry_stat.st_mode):
+        for child in sorted(path.iterdir(), key=lambda item: item.name):
+            if should_ignore(child.relative_to(root)):
+                continue
+            _validate_package_source_entry(root, child)
+
+
 def validate_package_sources(root: Path) -> None:
-    missing = [item for item in PACKAGE_ITEMS if not (root / item).exists()]
-    missing.extend(relative for relative in PACKAGE_RUNTIME_FILES if not (root / relative).exists())
+    sources = [*(root / item for item in PACKAGE_ITEMS), *(root / relative for relative in PACKAGE_RUNTIME_FILES)]
+    missing = [path.relative_to(root).as_posix() for path in sources if not _source_entry_exists(path)]
     if missing:
         raise ValueError("missing package sources: " + ", ".join(missing))
+    for source in sources:
+        _validate_package_source_entry(root, source)

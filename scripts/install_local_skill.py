@@ -225,6 +225,63 @@ def self_test() -> int:
         raise AssertionError("package sanitizer modified relative-path regex evidence")
     with tempfile.TemporaryDirectory(prefix="dircreative-installer-self-test-") as raw:
         root = Path(raw)
+        source_fixture = root / "source-safety"
+        for item in PACKAGE_ITEMS:
+            path = source_fixture / item
+            if item in {"README.md", "VERSION", "CHANGELOG.md"}:
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("fixture\n", encoding="utf-8")
+            else:
+                path.mkdir(parents=True, exist_ok=True)
+        for relative in PACKAGE_RUNTIME_FILES:
+            path = source_fixture / relative
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("fixture\n", encoding="utf-8")
+        safe_source = source_fixture / "docs/safe.txt"
+        safe_source.write_text("safe\n", encoding="utf-8")
+        validate_package_sources(source_fixture)
+
+        symlink_source = source_fixture / "docs/external-link.txt"
+        try:
+            symlink_source.symlink_to(Path("/etc/hosts"))
+        except (NotImplementedError, OSError):
+            pass
+        else:
+            try:
+                validate_package_sources(source_fixture)
+            except ValueError as exc:
+                if "symbolic link" not in str(exc):
+                    raise
+            else:
+                raise AssertionError("package source validation accepted a symbolic link")
+            symlink_source.unlink()
+
+        hardlink_source = source_fixture / "docs/hardlink-source.txt"
+        hardlink_alias = source_fixture / "docs/hardlink-alias.txt"
+        hardlink_source.write_text("hardlink\n", encoding="utf-8")
+        os.link(hardlink_source, hardlink_alias)
+        try:
+            validate_package_sources(source_fixture)
+        except ValueError as exc:
+            if "hardlinked" not in str(exc):
+                raise
+        else:
+            raise AssertionError("package source validation accepted a hardlink")
+        hardlink_alias.unlink()
+        hardlink_source.unlink()
+
+        if hasattr(os, "mkfifo"):
+            special_source = source_fixture / "docs/special-source"
+            os.mkfifo(special_source)
+            try:
+                validate_package_sources(source_fixture)
+            except ValueError as exc:
+                if "regular file or directory" not in str(exc):
+                    raise
+            else:
+                raise AssertionError("package source validation accepted a special file")
+            special_source.unlink()
+
         for layout in (
             Path(".codex/dev-skills/dircreative"),
             Path(".codex/skills/dircreative"),

@@ -41,6 +41,24 @@ def parse_events(raw: str) -> tuple[list[dict[str, Any]], list[dict[str, Any]], 
     return events, list(tool_items_by_id.values()), usage
 
 
+def event_error_messages(events: list[dict[str, Any]]) -> list[str]:
+    messages: list[str] = []
+    for event in events:
+        candidates: list[object] = []
+        if event.get("type") == "error":
+            candidates.append(event.get("message"))
+        item = event.get("item")
+        if isinstance(item, dict) and item.get("type") == "error":
+            candidates.append(item.get("message"))
+        error = event.get("error")
+        if isinstance(error, dict):
+            candidates.append(error.get("message"))
+        for candidate in candidates:
+            if isinstance(candidate, str) and candidate.strip() and candidate not in messages:
+                messages.append(candidate.strip())
+    return messages
+
+
 def command_text(item: dict[str, Any]) -> str:
     for key in ("command", "cmd", "input"):
         value = item.get(key)
@@ -90,12 +108,16 @@ def self_test() -> int:
             json.dumps({"type": "item.completed", "item": {"type": "reasoning", "text": "x"}}),
             json.dumps({"type": "item.completed", "item": {"type": "command_execution", "command": "sed -n 1,40p ref.md"}}),
             json.dumps({"type": "item.completed", "item": {"type": "agent_message", "text": "answer"}}),
+            json.dumps({"type": "error", "message": "usage limit"}),
+            json.dumps({"type": "turn.failed", "error": {"message": "usage limit"}}),
             json.dumps({"type": "turn.completed", "usage": {"input_tokens": 100, "output_tokens": 20}}),
         ]
     )
     events, tools, usage = parse_events(sample)
-    if len(events) != 4 or len(tools) != 1 or usage.get("output_tokens") != 20:
+    if len(events) != 6 or len(tools) != 1 or usage.get("output_tokens") != 20:
         raise AssertionError("live model event parser self-test failed")
+    if event_error_messages(events) != ["usage limit"]:
+        raise AssertionError("live model error diagnostics self-test failed")
     command = build_command("codex", Path("/tmp/work"), "gpt-5.6-sol", Path("/tmp/answer"), "$dircreative test")
     if "--ignore-user-config" not in command or "--sandbox" not in command or "read-only" not in command:
         raise AssertionError("live model command lost isolation controls")
@@ -187,11 +209,13 @@ def main() -> int:
                 continue
             elapsed_seconds = round(time.perf_counter() - started, 3)
             events_path.write_text(proc.stdout, encoding="utf-8")
+            events, tool_items, usage = parse_events(proc.stdout)
             if proc.returncode != 0 or not answer_path.is_file():
-                failures.append(f"{case_id}: codex exec failed with exit {proc.returncode}: {proc.stderr[-800:]}")
+                event_diagnostics = " | ".join(event_error_messages(events))
+                diagnostic = event_diagnostics or proc.stderr.strip()[-1600:] or "no diagnostic output"
+                failures.append(f"{case_id}: codex exec failed with exit {proc.returncode}: {diagnostic}")
                 continue
             answer = answer_path.read_text(encoding="utf-8")
-            events, tool_items, usage = parse_events(proc.stdout)
             metrics, answer_errors = audit_answer(answer, case, payload["process_terms"])
             failures.extend(f"{case_id}: {error}" for error in answer_errors)
 

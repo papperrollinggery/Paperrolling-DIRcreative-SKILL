@@ -6,6 +6,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+from dircreative_specialist_exchange_contract import valid_v2_handoff
+
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE_SKILL_PATH = ROOT / "skills/dircreative/SKILL.md"
@@ -13,35 +15,11 @@ SKILL_PATH = SOURCE_SKILL_PATH if SOURCE_SKILL_PATH.exists() else ROOT / "SKILL.
 POLICY_PATH = ROOT / "skills/dircreative/agents/openai.yaml"
 CASES_PATH = ROOT / "tests/fixtures/activation-policy/cases.json"
 HANDOFF_PATH = ROOT / "tests/fixtures/activation-policy/valid-adco-v2-handoff.json"
-REQUIRED_V2_HANDOFF_FIELDS = {
-    "protocol_id",
-    "contract_version",
-    "task",
-    "brief_snapshot",
-    "locked_decisions",
-    "requested_outputs",
-    "quality_targets",
-    "execution_mode",
-}
 
 
 def activation_decision(text: str = "", handoff: dict[str, Any] | None = None) -> dict[str, Any]:
     if handoff is not None:
-        valid = (
-            set(handoff) == REQUIRED_V2_HANDOFF_FIELDS
-            and handoff.get("protocol_id") == "adco.specialist-exchange"
-            and handoff.get("contract_version") == "2.0"
-            and handoff.get("execution_mode") == "inline"
-            and all(isinstance(handoff.get(field), list) for field in (
-                "locked_decisions",
-                "requested_outputs",
-                "quality_targets",
-            ))
-            and all(isinstance(handoff.get(field), str) and handoff[field].strip() for field in (
-                "task",
-                "brief_snapshot",
-            ))
-        )
+        valid = valid_v2_handoff(handoff)
         return {
             "allowed": valid,
             "execution_context": "orchestrated_worker" if valid else None,
@@ -98,6 +76,15 @@ def audit() -> list[str]:
     invalid_handoff = dict(handoff, execution_mode="codex_thread")
     if activation_decision(handoff=invalid_handoff)["allowed"]:
         failures.append("non-inline ADCO v2 handoff was accepted")
+    invalid_shapes = [
+        dict(handoff, requested_outputs=[]),
+        dict(handoff, locked_decisions=[1]),
+        dict(handoff, quality_targets=[""]),
+        dict(handoff, requested_outputs=["storyboard_review", "storyboard_review"]),
+    ]
+    for index, invalid_shape in enumerate(invalid_shapes, start=1):
+        if activation_decision(handoff=invalid_shape)["allowed"]:
+            failures.append(f"schema-invalid ADCO v2 handoff {index} was accepted")
     return failures
 
 

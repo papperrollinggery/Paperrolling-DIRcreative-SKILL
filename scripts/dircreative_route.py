@@ -9,20 +9,12 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
+from dircreative_specialist_exchange_contract import valid_v2_handoff
+
 
 ROOT = Path(__file__).resolve().parents[1]
 POLICY_PATH = ROOT / "skills/dircreative/runtime/routing-policy.yaml"
 CASES_PATH = ROOT / "tests/fixtures/routing/cases.json"
-V2_HANDOFF_FIELDS = {
-    "protocol_id",
-    "contract_version",
-    "task",
-    "brief_snapshot",
-    "locked_decisions",
-    "requested_outputs",
-    "quality_targets",
-    "execution_mode",
-}
 
 
 @lru_cache(maxsize=1)
@@ -48,18 +40,6 @@ def load_policy() -> dict[str, Any]:
     return data
 
 
-def valid_v2_handoff(handoff: object) -> bool:
-    if not isinstance(handoff, dict) or set(handoff) != V2_HANDOFF_FIELDS:
-        return False
-    return (
-        handoff.get("protocol_id") == "adco.specialist-exchange"
-        and handoff.get("contract_version") == "2.0"
-        and handoff.get("execution_mode") == "inline"
-        and all(isinstance(handoff.get(field), str) and handoff[field].strip() for field in ("task", "brief_snapshot"))
-        and all(isinstance(handoff.get(field), list) for field in ("locked_decisions", "requested_outputs", "quality_targets"))
-    )
-
-
 def has(text: str, pattern: str) -> bool:
     return re.search(pattern, text, flags=re.IGNORECASE) is not None
 
@@ -68,7 +48,7 @@ def classify_route(request: str, handoff: dict[str, Any] | None = None) -> tuple
     if handoff is not None:
         if valid_v2_handoff(handoff):
             return "adco_specialist_exchange", ["valid_adco_v2_handoff", "inline_execution"]
-        return "source_maintenance", ["invalid_adco_handoff", "skill_runtime_forbidden"]
+        return "invalid_specialist_exchange", ["invalid_adco_handoff", "schema_validation_failed"]
 
     text = " ".join(request.split())
     maintenance_target = has(
@@ -121,6 +101,22 @@ def classify_route(request: str, handoff: dict[str, Any] | None = None) -> tuple
 def route_request(request: str, handoff: dict[str, Any] | None = None) -> dict[str, Any]:
     policy = load_policy()
     route, reason_codes = classify_route(request, handoff)
+    if route == "invalid_specialist_exchange":
+        return {
+            "execution_context": None,
+            "mode": None,
+            "route": route,
+            "required_files": [],
+            "optional_files": [],
+            "external_user_gate": None,
+            "action": "stop_skill_runtime",
+            "first_response_contract": "not_applicable",
+            "reuse_known_brief": False,
+            "state_persistence": "none",
+            "threads_allowed": False,
+            "full_receipt_required": False,
+            "reason_codes": [*reason_codes, "skill_runtime_forbidden"],
+        }
     config = policy["routes"][route]
     execution_context = (
         "orchestrated_worker"
@@ -201,8 +197,21 @@ def self_test() -> list[str]:
     if result["execution_context"] != "orchestrated_worker" or result["route"] != "adco_specialist_exchange":
         failures.append(f"valid ADCO handoff route mismatch: {result}")
     invalid = dict(handoff, execution_mode="codex_thread")
-    if route_request("", invalid)["execution_context"] == "orchestrated_worker":
-        failures.append("invalid ADCO handoff entered orchestrated_worker")
+    invalid_shapes = [
+        invalid,
+        dict(handoff, requested_outputs=[]),
+        dict(handoff, locked_decisions=[1]),
+        dict(handoff, quality_targets=[""]),
+        dict(handoff, requested_outputs=["storyboard_review", "storyboard_review"]),
+    ]
+    for index, invalid_shape in enumerate(invalid_shapes, start=1):
+        invalid_result = route_request("", invalid_shape)
+        if (
+            invalid_result["execution_context"] is not None
+            or invalid_result["route"] != "invalid_specialist_exchange"
+            or invalid_result["action"] != "stop_skill_runtime"
+        ):
+            failures.append(f"schema-invalid ADCO handoff {index} did not fail closed: {invalid_result}")
     return failures
 
 
