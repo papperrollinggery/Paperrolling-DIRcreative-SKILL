@@ -1,46 +1,24 @@
 # Fast Task Route Card
 
-Contract owner: this file owns Fast execution behavior.
-
-Use for a bounded copy, shot, storyboard, prompt, or existing-artifact revision.
+Use for one bounded copy, shot, storyboard, prompt, or existing-artifact change.
 
 ## Budget
 
-- One controlling agent.
-- Zero Threads and zero Director Room sessions.
-- Read the user's input plus no more than three files returned by the router.
-- Do not load ADCO, Thread, Goal, Delivery, or full-project validation contracts.
-- At most one external user gate, and only for a real blocker.
-- Do not run full-project validation or write a full receipt.
-- Read exactly this one Route Card.
+- One agent; zero Threads and zero Director Room.
+- One task reference, zero full-project validation, zero specialized receipt.
+- Zero routing or audit tool calls before an obvious standalone artifact.
+- At least 75% of the answer should be the artifact or decision-useful craft.
 
 ## Execution
 
-1. Preserve facts and decisions outside the requested edit scope.
-2. Load only `required_files` returned by the router; load an `optional_file` only
-   when its need is visible in the input.
-3. Apply the smallest useful professional change.
-4. Return the revised result first, followed by assumptions or one blocking
-   question only when necessary.
+1. Preserve facts and decisions outside the requested edit.
+2. Read only the selected task reference, if any.
+3. Make the smallest complete professional change.
+4. Return the revised result first. Add a short rationale only when it helps the
+   user judge the change.
+5. Ask at most one question, only when the missing answer prevents a faithful
+   revision. Otherwise make a clearly labeled safe assumption.
 
-Before user-visible creative output, follow the routed
-`docs/film-preproduction/professional-agent-voice-standard.md` humanizer check.
-
-Fast never backtracks a local edit to idea intake. It does not demand staged
-confirmation and does not persist state unless the user explicitly asks for a
-file update.
-
-## Fast Receipt
-
-When a file write needs a receipt, use only:
-
-```yaml
-status:
-route:
-input_refs:
-output_refs:
-assumptions:
-open_questions:
-```
-
-No file write means no receipt is required.
+Do not reopen intake, stage a confirmation sequence, persist state, or discuss
+paths, Git, gates, receipts, hashes, validation, and internal roles unless the
+user explicitly asks for that operational information.

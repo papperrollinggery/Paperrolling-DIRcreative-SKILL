@@ -1,6 +1,6 @@
 {
   "cases": [
-    {"id": "source_maintenance", "input": "维护 DIRcreative 源码仓库", "mode": "fast", "route": "source_maintenance", "external_user_gate": null, "action": "continue", "first_response_contract": "useful_artifact_first", "state_persistence": "memory_only"},
+    {"id": "source_maintenance", "input": "维护 DIRcreative 源码仓库", "mode": "fast", "route": "source_maintenance", "external_user_gate": null, "action": "stop_skill_runtime", "first_response_contract": "not_applicable", "state_persistence": "memory_only"},
     {"id": "continue", "input": "$dircreative 继续", "mode": "fast", "route": "bounded_revision", "external_user_gate": null, "action": "continue", "first_response_contract": "useful_artifact_first", "state_persistence": "memory_only"},
     {"id": "third_line", "input": "$dircreative 修改脚本第三句", "mode": "fast", "route": "copy_revision", "external_user_gate": null, "action": "continue", "first_response_contract": "useful_artifact_first", "state_persistence": "memory_only"},
     {"id": "single_shot", "input": "$dircreative 优化这个镜头", "mode": "fast", "route": "shot_optimization", "external_user_gate": null, "action": "continue", "first_response_contract": "useful_artifact_first", "state_persistence": "memory_only"},
@@ -10,6 +10,8 @@
     {"id": "complete_ad", "input": "$dircreative 开发完整广告片，brief 已完整", "mode": "studio", "route": "film_development", "external_user_gate": null, "action": "continue", "first_response_contract": "useful_artifact_first", "state_persistence": "pause_cross_session_or_multi_file_only"},
     {"id": "concept_conflict", "input": "$dircreative 两个创意方向不可兼容，需要选择", "mode": "studio", "route": "film_development", "external_user_gate": "concept_lock", "action": "stop_for_external_gate", "first_response_contract": "gate_question", "state_persistence": "pause_cross_session_or_multi_file_only"},
     {"id": "real_generation", "input": "$dircreative 申请真实生成", "mode": "delivery", "route": "generation_authorization", "external_user_gate": "generation_authorization", "action": "stop_for_external_gate", "first_response_contract": "gate_question", "state_persistence": "required"},
-    {"id": "client_delivery", "input": "$dircreative 准备客户交付", "mode": "delivery", "route": "client_delivery", "external_user_gate": "client_delivery_approval", "action": "stop_for_external_gate", "first_response_contract": "gate_question", "state_persistence": "required"}
+    {"id": "explicit_generation_authorization", "input": "$dircreative 现在直接生成这条已锁定镜头", "mode": "delivery", "route": "generation_authorization", "external_user_gate": null, "action": "continue", "first_response_contract": "useful_artifact_first", "state_persistence": "required"},
+    {"id": "client_delivery", "input": "$dircreative 准备客户交付", "mode": "delivery", "route": "client_delivery", "external_user_gate": "client_delivery_approval", "action": "stop_for_external_gate", "first_response_contract": "gate_question", "state_persistence": "required"},
+    {"id": "explicit_client_delivery_approval", "input": "$dircreative 客户交付已批准，现在正式交付给客户", "mode": "delivery", "route": "client_delivery", "external_user_gate": null, "action": "continue", "first_response_contract": "useful_artifact_first", "state_persistence": "required"}
   ]
 }

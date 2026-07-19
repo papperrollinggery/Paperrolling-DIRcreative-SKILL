@@ -15,6 +15,7 @@ from dircreative_package_layout import (
     HOST_USER_PATH_RE,
     PACKAGE_ITEMS,
     PACKAGE_RUNTIME_FILES,
+    ROOT_SKILL_RUNTIME_DIRS,
     THREAD_ID_RE,
     runtime_source_bytes,
     sanitize_package_bytes,
@@ -87,6 +88,13 @@ def populate(target: Path) -> None:
     if skill_agent_metadata.is_dir():
         copy_item(skill_agent_metadata, target / "agents")
         sanitize_copied_item(skill_agent_metadata, target / "agents", "agents", thread_ids)
+    for directory in ROOT_SKILL_RUNTIME_DIRS:
+        source = root_skill.parent / directory
+        if not source.is_dir():
+            continue
+        destination = target / directory
+        copy_item(source, destination)
+        sanitize_copied_item(source, destination, directory, thread_ids)
     release_metadata = ROOT / "RELEASE-METADATA.json"
     if release_metadata.exists():
         copy_item(release_metadata, target / "RELEASE-METADATA.json")
@@ -227,6 +235,17 @@ def self_test() -> int:
             policy = layout_target / "agents/openai.yaml"
             if not policy.is_file() or "allow_implicit_invocation: false" not in policy.read_text(encoding="utf-8"):
                 raise AssertionError(f"activation policy missing from isolated install layout: {layout}")
+            for relative in (
+                "routes/fast-task.md",
+                "routes/studio-development.md",
+                "routes/delivery-audit.md",
+                "references/copy-script.md",
+                "references/film-development.md",
+                "references/generation-delivery.md",
+                "runtime/routing-policy.yaml",
+            ):
+                if not (layout_target / relative).is_file():
+                    raise AssertionError(f"root runtime file missing from isolated install layout: {layout}/{relative}")
         target = root / "dircreative"
         target.mkdir()
         sentinel = target / "previous-install.txt"

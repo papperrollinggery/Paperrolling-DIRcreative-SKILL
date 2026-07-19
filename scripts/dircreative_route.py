@@ -82,7 +82,10 @@ def classify_route(request: str, handoff: dict[str, Any] | None = None) -> tuple
 
     if has(text, r"客户交付|客户可见|正式交付|client[- ]visible|client delivery|send[- ]ready"):
         return "client_delivery", ["client_delivery_intent"]
-    if has(text, r"真实生成|生成授权|授权生成|generation authorization|authorize (?:real )?generation"):
+    if has(text, r"真实生成|生成授权|授权生成|generation authorization|authorize (?:real )?generation") or (
+        has(text, r"(?:现在|立即|直接|马上|开始|(?<!申)请)\s*(?:真实)?生成|generate\s+now|start\s+generation")
+        and not has(text, r"Prompt|提示词|方案|计划|plan")
+    ):
         return "generation_authorization", ["real_generation_requires_authorization"]
 
     if has(
@@ -130,7 +133,27 @@ def route_request(request: str, handoff: dict[str, Any] | None = None) -> dict[s
     if route == "film_development" and "incompatible_creative_directions" not in reason_codes:
         external_user_gate = None
         reason_codes = [*reason_codes, "no_material_blocker"]
-    action = "stop_for_external_gate" if external_user_gate else "continue"
+    if route == "generation_authorization" and has(
+        request,
+        r"(?:现在|立即|直接|马上|开始|(?<!申)请)\s*(?:真实)?生成|(?:已|确认|明确)?授权(?:真实)?生成|"
+        r"generate\s+now|start\s+generation|generation\s+authorized",
+    ):
+        external_user_gate = None
+        reason_codes = [*reason_codes, "authorization_satisfied_by_current_request"]
+    if route == "client_delivery" and has(
+        request,
+        r"(?:现在|立即|直接|正式)\s*(?:交付|发送|发给)客户|批准客户交付|客户交付已批准|"
+        r"send\s+to\s+(?:the\s+)?client\s+now|client\s+delivery\s+approved",
+    ):
+        external_user_gate = None
+        reason_codes = [*reason_codes, "approval_satisfied_by_current_request"]
+    action = (
+        "stop_skill_runtime"
+        if route == "source_maintenance"
+        else "stop_for_external_gate"
+        if external_user_gate
+        else "continue"
+    )
     persistence = policy["interaction_contract"]["state_persistence"][config["mode"]]
     return {
         "execution_context": execution_context,
@@ -141,7 +164,11 @@ def route_request(request: str, handoff: dict[str, Any] | None = None) -> dict[s
         "external_user_gate": external_user_gate,
         "action": action,
         "first_response_contract": (
-            "gate_question" if action == "stop_for_external_gate" else "useful_artifact_first"
+            "not_applicable"
+            if action == "stop_skill_runtime"
+            else "gate_question"
+            if action == "stop_for_external_gate"
+            else "useful_artifact_first"
         ),
         "reuse_known_brief": True,
         "state_persistence": persistence,

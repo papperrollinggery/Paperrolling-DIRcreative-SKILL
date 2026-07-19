@@ -5,132 +5,129 @@ description: Use only after the user explicitly invokes $dircreative for film pr
 
 # DIRcreative
 
-DIRcreative is a film-preproduction router. It selects one execution context, one
-mode, one Route Card, and the smallest task-specific file set before calling a
-sub-capability.
+DIRcreative helps make the film work better. Spend attention on story, image,
+sound, performance, continuity, and model behavior; keep routing and evidence
+machinery subordinate to the requested result.
 
 ## Invocation Boundary
 
-Start only when either condition is true:
+Start only when the user explicitly writes `$dircreative`, or when a validated
+`adco.specialist-exchange` handoff selects `dircreative.film-preproduction`.
 
-- the user explicitly writes `$dircreative`; or
-- a validated `adco.specialist-exchange` handoff selects
-  `dircreative.film-preproduction`.
-
-Never activate for repository maintenance, ADCO maintenance, ordinary code work,
-fact questions, or generic advertising language without `$dircreative`.
+Never activate for this repository's maintenance, ADCO maintenance, ordinary
+code work, fact questions, or generic advertising language. If maintenance is
+misrouted here, classify it as `source_maintenance` and stop Skill execution.
 
 ## Router Contract
 
-1. Run `python3 scripts/dircreative_route.py "<request>"`. For an exchange, pass
-   `--handoff <path>` instead of copying the handoff into prose.
-2. Accept only the stable JSON fields `execution_context`, `mode`, `route`,
-   `required_files`, `optional_files`, `external_user_gate`, `action`,
-   `first_response_contract`, `reuse_known_brief`, `state_persistence`,
-   `threads_allowed`, `full_receipt_required`, and `reason_codes`.
-3. If the route is `source_maintenance` or the handoff is invalid, stop Skill
-   execution and return the reason code.
-4. Read exactly one selected Route Card:
-   - `fast` -> `skills/dircreative/routes/fast-task.md`
-   - `studio` -> `skills/dircreative/routes/studio-development.md`
-   - `delivery` -> `skills/dircreative/routes/delivery-audit.md`
-5. Read only `required_files`; read an optional file only when current evidence
-   shows it is needed. Never expand a file reference into a general preflight.
+Choose an obvious standalone route directly; do not run a script before useful
+creative work:
+
+| Request | Mode / route | Route Card | One task reference |
+| --- | --- | --- | --- |
+| bounded copy or script change | Fast / `copy_revision` | `routes/fast-task.md` | `references/copy-script.md` |
+| one shot or a few storyboard frames | Fast / `shot_optimization` or `storyboard_review` | `routes/fast-task.md` | `references/shot-storyboard.md` |
+| bounded model prompt change | Fast / `prompt_revision` | `routes/fast-task.md` | `references/prompt-model.md` |
+| other bounded revision | Fast / `bounded_revision` | `routes/fast-task.md` | none |
+| complete or multi-output film work | Studio / `film_development` | `routes/studio-development.md` | `references/film-development.md` |
+| real generation or client delivery | Delivery / `generation_authorization` or `client_delivery` | `routes/delivery-audit.md` | `references/generation-delivery.md` |
+| validated ADCO handoff | Delivery / `adco_specialist_exchange` | `routes/delivery-audit.md` | `references/specialist-exchange.md` plus the descriptor schema |
+
+Run `python3 scripts/dircreative_route.py` only to validate an ADCO handoff or
+when the request is genuinely ambiguous between modes. The script is a
+deterministic mirror for tests, not a mandatory creative preflight.
+
+Read exactly one selected Route Card, then only the task reference in the table.
+Do not follow references from that card into another protocol chain. Optional
+model/source evidence is fetched only when a current claim or real execution
+depends on it.
 
 ## Startup Reads
 
 - There are zero unconditional protocol reads.
-- The router selects one Route Card before any task contract is opened.
-- Route Card references are terminal for routing; do not follow a second routing
-  chain.
+- An obvious Fast or Studio request needs no router tool call before the result.
+- One Route Card and one task reference are the normal maximum.
 
 ## Execution Context
 
-`standalone_chat` owns the visible response and any local compact state.
+`standalone_chat` owns the response and any compact working state.
 
-`orchestrated_worker` exists only after a valid exchange handoff. ADCO remains the
-controller and owns Current Truth, versions, adoption, client visibility,
-readiness, completion, and cleanup. Specialist Exchange v2 executes inline,
-forbids nested dispatch, and returns only domain outputs, domain QA, status, and
-`open_questions`; it does not emit readiness claims. Read-only v1 receipts retain
-their six false client/PPT/final/send/project/control-plane claims.
-
-Repository maintenance is outside Skill runtime.
+`orchestrated_worker` exists only after a valid exchange handoff. ADCO owns host
+truth, versions, adoption, client visibility, readiness, completion, and cleanup.
+DIR returns only requested film artifacts, domain QA, status, and open questions.
+Nested dispatch is forbidden.
 
 ## Modes
 
 ### Fast
 
-Use for one bounded copy, shot, storyboard, prompt, or existing-artifact change.
-Fast uses one agent, zero Threads, zero Director Room, no full project state, no
-full receipt, no staged confirmation sequence, and at most three task files.
-Return the revised result directly. No file write means no receipt.
+Make one bounded change with one agent, zero Threads, zero Director Room, zero
+full-project audits, and no specialized receipt. Preserve facts outside the edit
+and return the revised artifact immediately.
 
 ### Studio
 
-Use for a complete concept, story plus script, script plus storyboard,
-multi-output preproduction, a 15-180 second project, or a complex visual system.
-Studio uses one controller, at most three dynamic professional perspectives, at
-most one independent critical pass, and zero Threads by default. It does not
-manufacture conflict or expose role-card ceremony before the work.
+Develop a complete concept or multiple connected preproduction artifacts with
+one controller. Use at most three dynamic professional perspectives and at most
+one critical pass, integrated into the work rather than shown as meeting
+ceremony. Threads default to zero.
 
 ### Delivery
 
-Use only for real generation authorization, formal assets or versions,
-client-visible delivery, final prompt or asset handoff, or a valid Specialist
-Exchange handoff. Only Delivery may use full receipts, hashes, authorization, and
-strict audit.
+Use strict evidence only when a real side effect, formal handoff, version, or
+client-visible asset is in scope. Bind evidence to the current artifact and its
+dependencies, not to unrelated project history.
 
 ## External User Gates
 
-The only v2 external gates are:
-
-- `concept_lock` for incompatible creative directions;
-- `generation_authorization` before real generation; and
-- `client_delivery_approval` before client-visible delivery.
+The only v2 gates are `concept_lock` for incompatible creative directions,
+`generation_authorization` before an unapproved real generation, and
+`client_delivery_approval` before an unapproved client-visible action. An
+explicit instruction to perform the same action may satisfy its gate; do not ask
+the user to approve twice.
 
 Story, script, shot, visual, reference, prompt, and QA states are reversible
-internal state. “Continue” continues when no real blocker exists. A bounded edit
-never returns to idea intake. A complete supplied brief is not re-asked. When the
-user requests an artifact, the first response contains useful artifact content.
+internal work. Reuse supplied brief facts. “Continue” continues. A bounded edit
+never returns to intake.
 
 ## Compact State
 
-Use `skills/dircreative/runtime/state-snapshot.schema.json`.
-
-- Fast keeps state in memory and normally writes nothing.
-- Studio persists only for pause, cross-session resume, or multi-file output.
-- Delivery persists.
-- Run the full state audit only for resume, handoff, Delivery, or a completion
-  claim.
+Use `skills/dircreative/runtime/state-snapshot.schema.json` only when state must
+survive the answer. Fast stays in memory. Studio persists for pause,
+cross-session resume, or multi-file output. Delivery persists when an actual
+handoff or execution record exists.
 
 ## Sub-Capability Dispatch
 
-Invoke only the capability selected by `route` and `required_files`. Do not enter
-adjacent stages speculatively. Preserve locked facts, mark changed downstream
-outputs stale, and make the smallest valid edit.
+Use the selected task reference as craft guidance, not as a checklist to expose.
+Do not enter adjacent stages speculatively. Preserve locked facts, mark only
+affected downstream material stale, and make the smallest complete change.
 
-Prompt compilation keeps Prompt IR model-neutral and uses exactly one selected
-model adapter. Media generation is outside prompt compilation.
+Prompt work keeps Prompt IR model-neutral and applies one model surface at a
+time. Verify volatile model claims from current official evidence only when they
+affect the answer or execution.
 
 ## Result Contract
 
-Lead with the requested creative result. Add only the professional judgment that
-changes the decision, then assumptions, limitations, or one blocking question.
-Do not put meetings, role lists, gates, receipts, or terminal logs before the
-artifact.
+Lead with the requested artifact or recommendation. Then include only judgment
+that changes a creative or production decision, followed by assumptions,
+limitations, or one indispensable question.
 
-Stop when the selected Route Card's output is delivered, a declared external gate
-is reached, a required input is missing, or validation fails. Never claim work,
-generation, client approval, external execution, or completion without current
-evidence.
+For Fast and Studio, do not narrate routes, paths, Git, receipts, hashes, gates,
+state files, validation commands, or role meetings unless the user requested
+that operational information. A complete brief must yield useful content in the
+first response.
+
+Validate the current task and its direct dependencies. Unrelated historical or
+project-wide debt may be reported separately, but it cannot block or downgrade a
+scoped result that does not depend on it.
+
+Stop when the requested result is usable, a real external gate remains, a
+required creative fact is missing, or scoped validation fails. Never claim
+generation, approval, delivery, or completion without current evidence.
 
 ## Compatibility
 
-Legacy v1 project, Director Room, gate, state, and exchange records are read-only
-compatible. New runs use v2 routing, dynamic perspectives, three external gates,
-compact state, model adapters, and version-selected exchange validation.
-
-The canonical owner index is
-`docs/film-preproduction/runtime-contracts.md`. Supporting guides never override
-the machine-readable owners listed there.
+Legacy v1 role, gate, state, Thread, and exchange records remain read-only. They
+are not active templates. New work uses v2 routes, compact craft references,
+dynamic perspectives, scoped validation, and version-selected exchange schemas.

@@ -5,6 +5,7 @@ import json
 import re
 import time
 from pathlib import Path
+from typing import Any
 
 from dircreative_route import load_policy, route_request, self_test as route_self_test
 
@@ -21,10 +22,22 @@ FORBIDDEN_FAST_TERMS = (
     "finaldelivery",
     "client-film-hard-gates.md",
 )
+LEGACY_ACTIVE_CONTEXT = {
+    "docs/film-preproduction/professional-agent-voice-standard.md",
+    "docs/film-preproduction/schemas/director-role-harness.yaml",
+    "docs/film-preproduction/capability-aware-generation-policy.md",
+    "docs/film-preproduction/client-film-hard-gates.md",
+    "docs/film-preproduction/adco-integration-contract.md",
+    "skills/dircreative/script-treatment/SKILL.md",
+    "skills/dircreative/shot-design/SKILL.md",
+    "skills/dircreative/video-model-adapter/SKILL.md",
+    "skills/dircreative/director-room/SKILL.md",
+    "skills/dircreative/generation-qa/SKILL.md",
+}
 WARM_ROUTE_P95_BUDGET_MS = 25.0
 
 
-def audit() -> tuple[list[str], dict[str, int | float | bool]]:
+def audit() -> tuple[list[str], dict[str, Any]]:
     failures = route_self_test()
     policy = load_policy()
     expected_contract_owners = {
@@ -79,6 +92,13 @@ def audit() -> tuple[list[str], dict[str, int | float | bool]]:
         failures.append(f"main SKILL has more than three unconditional reads: {len(unconditional)}")
     if "read exactly one selected route card" not in main_text.casefold():
         failures.append("main SKILL does not constrain execution to one Route Card")
+    for phrase in (
+        "only to validate an ADCO handoff",
+        "not a mandatory creative preflight",
+        "obvious Fast or Studio request needs no router tool call",
+    ):
+        if phrase.casefold() not in main_text.casefold():
+            failures.append(f"main SKILL lost zero-tool obvious-route rule: {phrase}")
 
     route_cards = policy.get("route_cards", {})
     if set(route_cards) != {"fast", "studio", "delivery"}:
@@ -97,12 +117,24 @@ def audit() -> tuple[list[str], dict[str, int | float | bool]]:
             failures.append("Studio Route Card loads final-delivery contracts")
 
     routes = policy.get("routes", {})
+    route_context_metrics: dict[str, dict[str, Any]] = {}
+    budgets = policy.get("performance_budgets", {})
     for route_id, config in routes.items():
         if config.get("route_card") != route_cards.get(config.get("mode")):
             failures.append(f"{route_id}: route card does not match mode")
         required = config.get("required_files", [])
-        if config.get("mode") == "fast" and len(required) > 3:
-            failures.append(f"{route_id}: Fast route exceeds three task files")
+        mode = config.get("mode")
+        mode_budget = budgets.get(mode, {})
+        task_files_max = int(mode_budget.get("task_files_max", 0))
+        if len(required) > task_files_max:
+            failures.append(f"{route_id}: {mode} route exceeds {task_files_max} task files")
+        legacy = sorted(set(required + config.get("optional_files", [])) & LEGACY_ACTIVE_CONTEXT)
+        if legacy:
+            failures.append(f"{route_id}: active v2 route loads legacy-heavy context: {legacy}")
+        if mode in {"fast", "studio"}:
+            non_craft = [item for item in required if not item.startswith("skills/dircreative/references/")]
+            if non_craft:
+                failures.append(f"{route_id}: {mode} route loads non-craft runtime context: {non_craft}")
         for relative in required + config.get("optional_files", []):
             target = ROOT / relative
             if not target.exists() and relative.endswith("/SKILL.md"):
@@ -112,6 +144,32 @@ def audit() -> tuple[list[str], dict[str, int | float | bool]]:
         adco_refs = [item for item in required if item.endswith("adco-integration-contract.md")]
         if adco_refs and route_id != "adco_specialist_exchange":
             failures.append(f"{route_id}: ADCO integration contract is outside valid handoff route")
+
+        relative_paths = [config.get("route_card"), *required]
+        resolved_paths = [MAIN_SKILL]
+        for relative in relative_paths:
+            target = ROOT / relative
+            if not target.exists() and str(relative).endswith("/SKILL.md"):
+                target = target.with_name("INTERNAL_SKILL.md")
+            if target.is_file():
+                resolved_paths.append(target)
+        loaded_bytes = sum(len(path.read_bytes()) for path in resolved_paths)
+        loaded_lines = sum(len(path.read_text(encoding="utf-8").splitlines()) for path in resolved_paths)
+        loaded_files = len(resolved_paths)
+        max_bytes = int(mode_budget.get("loaded_context_bytes_max", 0))
+        max_files = int(mode_budget.get("loaded_context_files_max", 0))
+        if loaded_bytes > max_bytes:
+            failures.append(f"{route_id}: loaded context {loaded_bytes} bytes exceeds {max_bytes}")
+        if loaded_files > max_files:
+            failures.append(f"{route_id}: loaded context {loaded_files} files exceeds {max_files}")
+        route_context_metrics[route_id] = {
+            "mode": mode,
+            "files": loaded_files,
+            "bytes": loaded_bytes,
+            "lines": loaded_lines,
+            "bytes_budget": max_bytes,
+            "task_files": len(required),
+        }
 
     interaction = policy.get("interaction_contract", {})
     if interaction.get("external_user_gates") != [
@@ -154,7 +212,6 @@ def audit() -> tuple[list[str], dict[str, int | float | bool]]:
     if set(schema.get("required", [])) != expected_state_fields:
         failures.append("compact state snapshot required fields drifted")
 
-    budgets = policy.get("performance_budgets", {})
     fast = budgets.get("fast", {})
     expected_fast = {
         "threads": 0,
@@ -164,7 +221,13 @@ def audit() -> tuple[list[str], dict[str, int | float | bool]]:
         "full_project_validation": False,
         "adco_documents": 0,
         "route_cards": 1,
-        "task_files_max": 3,
+        "task_files_max": 1,
+        "loaded_context_files_max": 3,
+        "loaded_context_bytes_max": 14000,
+        "pre_artifact_routing_or_audit_tool_calls_max": 0,
+        "task_context_reads_max": 2,
+        "useful_content_ratio_min": 0.75,
+        "process_narration_ratio_max": 0.10,
     }
     for key, expected in expected_fast.items():
         if fast.get(key) != expected:
@@ -175,12 +238,35 @@ def audit() -> tuple[list[str], dict[str, int | float | bool]]:
         "perspectives_max": 3,
         "independent_critics_max": 1,
         "route_cards": 1,
+        "task_files_max": 1,
+        "loaded_context_files_max": 3,
+        "loaded_context_bytes_max": 20000,
+        "pre_artifact_routing_or_audit_tool_calls_max": 0,
+        "task_context_reads_max": 2,
+        "useful_content_ratio_min": 0.70,
+        "process_narration_ratio_max": 0.15,
+        "full_project_validation": False,
     }.items():
         if studio.get(key) != expected:
             failures.append(f"Studio performance budget {key} drifted")
     delivery = budgets.get("delivery", {})
     if delivery.get("duplicate_state_owners_allowed") is not False:
         failures.append("Delivery allows duplicate state owners")
+    for key, expected in {
+        "task_files_max": 2,
+        "loaded_context_files_max": 4,
+        "loaded_context_bytes_max": 30000,
+        "scoped_validation_required": True,
+    }.items():
+        if delivery.get(key) != expected:
+            failures.append(f"Delivery performance budget {key} drifted")
+    for key, expected in {
+        "obvious_route_without_router_tool": True,
+        "scoped_validation_policy": "current_task_and_direct_dependencies_only",
+        "unrelated_global_debt_blocks_scoped_work": False,
+    }.items():
+        if interaction.get(key) != expected:
+            failures.append(f"interaction content-first policy {key} drifted")
 
     latency_requests = [
         "$dircreative 修改脚本第三句",
@@ -200,7 +286,7 @@ def audit() -> tuple[list[str], dict[str, int | float | bool]]:
             f"warm route p95 latency {route_warm_p95_ms}ms exceeds {WARM_ROUTE_P95_BUDGET_MS}ms"
         )
 
-    metrics: dict[str, int | float | bool] = {
+    metrics: dict[str, Any] = {
         "main_skill_lines": main_lines,
         "main_skill_bytes": main_bytes,
         "unconditional_startup_reads": len(unconditional),
@@ -216,6 +302,7 @@ def audit() -> tuple[list[str], dict[str, int | float | bool]]:
         "warm_route_p95_ms": route_warm_p95_ms,
         "warm_route_p95_budget_ms": WARM_ROUTE_P95_BUDGET_MS,
         "runtime_contract_owners": len(expected_contract_owners),
+        "route_contexts": route_context_metrics,
     }
     return failures, metrics
 

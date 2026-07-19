@@ -322,12 +322,19 @@ def validate_required_paths() -> None:
         "skills/dircreative/routes/fast-task.md",
         "skills/dircreative/routes/studio-development.md",
         "skills/dircreative/routes/delivery-audit.md",
+        "skills/dircreative/references/copy-script.md",
+        "skills/dircreative/references/shot-storyboard.md",
+        "skills/dircreative/references/film-development.md",
+        "skills/dircreative/references/prompt-model.md",
+        "skills/dircreative/references/generation-delivery.md",
+        "skills/dircreative/references/specialist-exchange.md",
         "tests/fixtures/activation-policy/cases.json",
         "tests/fixtures/activation-policy/valid-adco-v2-handoff.json",
         "tests/fixtures/routing/cases.json",
         "tests/fixtures/headless-runtime/cases.json",
         "tests/fixtures/headless-runtime/expected/fast-copy-revision.md",
         "tests/fixtures/headless-runtime/expected/studio-complete-film.md",
+        "tests/fixtures/content-first/cases.json",
         "scripts/dircreative_adapters/__init__.py",
         "scripts/dircreative_adapters/base.py",
         "scripts/dircreative_adapters/seedance.py",
@@ -339,6 +346,8 @@ def validate_required_paths() -> None:
         "tests/fixtures/prompt-system/adapter-negative-cases.json",
         "tests/fixtures/prompt-system/adapter-contract-matrix.json",
         "scripts/dircreative_headless_acceptance_audit.py",
+        "scripts/dircreative_content_first_audit.py",
+        "scripts/dircreative_live_model_eval.py",
         "docs/film-preproduction/prompt-pattern-registry.json",
         "docs/film-preproduction/templates/image-prompt-style-config.template.json",
         "docs/film-preproduction/qa/qa-checklist.md",
@@ -1520,6 +1529,30 @@ def validate_headless_acceptance() -> None:
         require(marker in proc.stdout, f"headless acceptance missing evidence: {marker}")
 
 
+def validate_content_first_behavior() -> None:
+    content = run(["python3", "scripts/dircreative_content_first_audit.py"])
+    require(
+        content.returncode == 0,
+        f"content-first answer audit failed:\n{content.stderr}\n{content.stdout}",
+    )
+    for marker in [
+        "DIRCREATIVE_CONTENT_FIRST_AUDIT: PASS",
+        '"negative_control_rejected": true',
+        '"process_narration_ratio": 0.0',
+    ]:
+        require(marker in content.stdout, f"content-first audit missing evidence: {marker}")
+
+    live_harness = run(["python3", "scripts/dircreative_live_model_eval.py", "--self-test"])
+    require(
+        live_harness.returncode == 0,
+        f"live model eval harness self-test failed:\n{live_harness.stderr}\n{live_harness.stdout}",
+    )
+    require(
+        "DIRCREATIVE_LIVE_MODEL_EVAL_SELF_TEST: PASS" in live_harness.stdout,
+        "live model eval harness missing PASS marker",
+    )
+
+
 def validate_v2_interaction_contract() -> None:
     policy = load_yaml(require_path("skills/dircreative/runtime/routing-policy.yaml"))
     interaction = policy.get("interaction_contract", {})
@@ -1530,6 +1563,15 @@ def validate_v2_interaction_contract() -> None:
     )
     require(interaction.get("first_response_contract") == "useful_artifact_first", "v2 is not result-first")
     require(interaction.get("known_brief_policy") == "reuse_without_reasking", "v2 re-asks known briefs")
+    require(interaction.get("obvious_route_without_router_tool") is True, "obvious routes require a router tool")
+    require(
+        interaction.get("scoped_validation_policy") == "current_task_and_direct_dependencies_only",
+        "scoped validation boundary drifted",
+    )
+    require(
+        interaction.get("unrelated_global_debt_blocks_scoped_work") is False,
+        "unrelated global debt can block scoped work",
+    )
     require(interaction.get("state_persistence") == {
         "fast": "memory_only",
         "studio": "pause_cross_session_or_multi_file_only",
@@ -1605,14 +1647,34 @@ def validate_v2_interaction_contract() -> None:
     route_test = run(["python3", "scripts/dircreative_route.py", "--self-test"])
     require(route_test.returncode == 0, f"v2 route behavior self-test failed:\n{route_test.stderr}\n{route_test.stdout}")
     cases = {case["id"]: case for case in load_json(require_path("tests/fixtures/routing/cases.json"))["cases"]}
-    for case_id in ["continue", "third_line", "single_shot", "complete_ad", "concept_conflict", "real_generation", "client_delivery"]:
+    for case_id in [
+        "continue",
+        "third_line",
+        "single_shot",
+        "complete_ad",
+        "concept_conflict",
+        "real_generation",
+        "explicit_generation_authorization",
+        "client_delivery",
+        "explicit_client_delivery_approval",
+    ]:
         require(case_id in cases, f"missing v2 interaction case: {case_id}")
     for case_id in ["continue", "third_line", "single_shot", "complete_ad"]:
         require(cases[case_id]["action"] == "continue", f"{case_id} must continue without a gate")
         require(cases[case_id]["first_response_contract"] == "useful_artifact_first", f"{case_id} is not result-first")
     require(cases["concept_conflict"]["external_user_gate"] == "concept_lock", "concept conflict gate mismatch")
     require(cases["real_generation"]["external_user_gate"] == "generation_authorization", "generation gate mismatch")
+    require(
+        cases["explicit_generation_authorization"]["action"] == "continue"
+        and cases["explicit_generation_authorization"]["external_user_gate"] is None,
+        "explicit generation authorization is asked twice",
+    )
     require(cases["client_delivery"]["external_user_gate"] == "client_delivery_approval", "delivery gate mismatch")
+    require(
+        cases["explicit_client_delivery_approval"]["action"] == "continue"
+        and cases["explicit_client_delivery_approval"]["external_user_gate"] is None,
+        "explicit client delivery approval is asked twice",
+    )
 
 
 def validate_skills() -> None:
@@ -1719,9 +1781,9 @@ def validate_adco_native_integration_contract() -> None:
                 "orchestrated_worker",
                 "adco.specialist-exchange",
                 "dircreative.film-preproduction",
-                "executes inline",
-                "does not emit readiness claims",
-                "six false client/PPT/final/send/project/control-plane claims",
+                "ADCO owns host",
+                "DIR returns only requested film artifacts, domain QA, status, and open questions",
+                "Nested dispatch is forbidden",
             ],
         ),
         "ADCO integration doc": (
@@ -2223,8 +2285,12 @@ def validate_production_prompt_discipline() -> None:
     ]:
         require("production-prompt-discipline.md" in skill_text, f"{skill_path} missing production prompt discipline knowledge")
         require("pre-delivery harness" in skill_text, f"{skill_path} missing pre-delivery harness rule")
-    require("Only Delivery may use full receipts" in root, "root router missing Delivery audit boundary")
-    require("Full receipts, hashes, authorization" in delivery_route, "Delivery Route Card missing audit boundary")
+    require(
+        "Use strict evidence only when a real side effect" in root,
+        "root router missing proportional Delivery audit boundary",
+    )
+    for term in ["Add evidence only for a real side effect", "Hash and version only actual delivery inputs and outputs"]:
+        require(term in delivery_route, f"Delivery Route Card missing proportional audit rule: {term}")
     require("which material to make next" in image, "image prompt compiler missing material selection gate")
     require("Do not infer the material type from a vague image request" in image, "image prompt compiler missing vague material request guard")
     for term in ["character design locks", "scene layout locks", "prop continuity", "camera movement", "subject movement path", "emotional beat", "compact professional shot-card text", "lens/support/movement", "blocking/path", "sound or edit cue"]:
@@ -4421,7 +4487,7 @@ def validate_readiness_audit() -> None:
         "DIRcreative Readiness Audit",
         "rough idea chat path is user-visible",
         "complete idea chat path is user-visible",
-        "installed skill has a live chat start contract",
+        "source runtime has a result-first start and generation boundary",
         "goal-mode simulation does not wait for manual choices",
         "goal-mode rough idea simulation covers one-sentence intake",
         "director-room adaptive perspectives",
@@ -5756,6 +5822,7 @@ def main() -> int:
         ("activation policy", validate_activation_policy),
         ("routing and context budget", validate_context_budget),
         ("headless input-to-answer acceptance", validate_headless_acceptance),
+        ("content-first answer behavior", validate_content_first_behavior),
         ("v2 interaction contract", validate_v2_interaction_contract),
         ("ADCO native integration contract", validate_adco_native_integration_contract),
         ("project AGENTS generator", validate_project_agents_script),

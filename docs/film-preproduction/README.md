@@ -23,10 +23,14 @@ qa/
 
 For active runtime behavior, read only the selected path:
 
-1. `runtime-contracts.md` — canonical owner index and compatibility matrix.
-2. `skills/dircreative/runtime/routing-policy.yaml` — selected mode and files.
-3. Exactly one Fast, Studio, or Delivery Route Card.
-4. Only the task files returned by the router.
+1. `skills/dircreative/SKILL.md` — explicit invocation boundary and direct route table.
+2. Exactly one Fast, Studio, or Delivery Route Card.
+3. At most one matching compact craft card under `skills/dircreative/references/`.
+4. `skills/dircreative/runtime/routing-policy.yaml` only for true ambiguity,
+   validated ADCO handoff, or deterministic tests.
+
+`runtime-contracts.md` is the canonical maintainer index and compatibility
+matrix, not an unconditional startup read.
 
 `01-system-plan.md`, roadmaps, Goal/gstack plans, and
 `05-skill-integration-architecture.md` preserve architecture history and fixture
@@ -58,6 +62,8 @@ PYTHONDONTWRITEBYTECODE=1 python3 scripts/dircreative_prompt_compiler.py validat
 PYTHONDONTWRITEBYTECODE=1 python3 scripts/dircreative_prompt_compiler.py compile <prompt-ir.json>
 PYTHONDONTWRITEBYTECODE=1 python3 scripts/dircreative_prompt_fixture_audit.py
 PYTHONDONTWRITEBYTECODE=1 python3 scripts/dircreative_headless_acceptance_audit.py
+PYTHONDONTWRITEBYTECODE=1 python3 scripts/dircreative_content_first_audit.py
+PYTHONDONTWRITEBYTECODE=1 python3 scripts/dircreative_live_model_eval.py --self-test
 ~~~
 
 目标超过一个生成单元时，编译器 fail-closed；必须用 `--unit-index 1`、`--unit-index 2` 逐段导出。每段 prompt 重置为本地 0 秒时间轴并携带入段/出段状态；不支持原生音频时，声音 handoff 只出现在 `inspect` 结果中。

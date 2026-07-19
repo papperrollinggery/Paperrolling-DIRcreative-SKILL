@@ -198,6 +198,7 @@ def main() -> int:
             root_skill,
             read("docs/film-preproduction/live-chat-start-protocol.md"),
             read("skills/dircreative/routes/delivery-audit.md"),
+            read("skills/dircreative/references/generation-delivery.md"),
         ]
     )
     rough_chat = read("examples/live-user-sim-noodle/16-chat-interface-demo.md")
@@ -259,7 +260,8 @@ def main() -> int:
                     "Live Chat Start Protocol",
                     "阶段: 想法读取",
                     "阶段: 完整想法读取",
-                    "pre_generation_contract.status: pass",
+                    "the exact provider surface and model/version",
+                    "rights/consent",
                 ],
             ),
             "root router + live start protocol + Delivery Route Card",

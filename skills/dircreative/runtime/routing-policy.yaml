@@ -22,6 +22,9 @@ interaction_contract:
     - direct_artifact_request
   first_response_contract: useful_artifact_first
   known_brief_policy: reuse_without_reasking
+  obvious_route_without_router_tool: true
+  scoped_validation_policy: current_task_and_direct_dependencies_only
+  unrelated_global_debt_blocks_scoped_work: false
   state_persistence:
     fast: memory_only
     studio: pause_cross_session_or_multi_file_only
@@ -46,7 +49,13 @@ performance_budgets:
     full_project_validation: false
     adco_documents: 0
     route_cards: 1
-    task_files_max: 3
+    task_files_max: 1
+    loaded_context_files_max: 3
+    loaded_context_bytes_max: 14000
+    pre_artifact_routing_or_audit_tool_calls_max: 0
+    task_context_reads_max: 2
+    useful_content_ratio_min: 0.75
+    process_narration_ratio_max: 0.10
   studio:
     threads_default: 0
     perspectives_max: 3
@@ -54,10 +63,22 @@ performance_budgets:
     external_gates_only_for_material_decisions: true
     final_delivery_documents: 0
     route_cards: 1
+    task_files_max: 1
+    loaded_context_files_max: 3
+    loaded_context_bytes_max: 20000
+    pre_artifact_routing_or_audit_tool_calls_max: 0
+    task_context_reads_max: 2
+    useful_content_ratio_min: 0.70
+    process_narration_ratio_max: 0.15
+    full_project_validation: false
   delivery:
     full_audit_allowed: true
     duplicate_state_owners_allowed: false
     route_cards: 1
+    task_files_max: 2
+    loaded_context_files_max: 4
+    loaded_context_bytes_max: 30000
+    scoped_validation_required: true
 
 routes:
   source_maintenance:
@@ -72,8 +93,7 @@ routes:
     mode: fast
     route_card: skills/dircreative/routes/fast-task.md
     required_files:
-      - skills/dircreative/script-treatment/SKILL.md
-      - docs/film-preproduction/professional-agent-voice-standard.md
+      - skills/dircreative/references/copy-script.md
     optional_files: []
     external_user_gate: null
     threads_allowed: false
@@ -82,8 +102,7 @@ routes:
     mode: fast
     route_card: skills/dircreative/routes/fast-task.md
     required_files:
-      - skills/dircreative/shot-design/SKILL.md
-      - docs/film-preproduction/professional-agent-voice-standard.md
+      - skills/dircreative/references/shot-storyboard.md
     optional_files: []
     external_user_gate: null
     threads_allowed: false
@@ -92,9 +111,7 @@ routes:
     mode: fast
     route_card: skills/dircreative/routes/fast-task.md
     required_files:
-      - skills/dircreative/shot-design/SKILL.md
-      - skills/dircreative/video-model-adapter/SKILL.md
-      - docs/film-preproduction/professional-agent-voice-standard.md
+      - skills/dircreative/references/shot-storyboard.md
     optional_files: []
     external_user_gate: null
     threads_allowed: false
@@ -103,8 +120,7 @@ routes:
     mode: fast
     route_card: skills/dircreative/routes/fast-task.md
     required_files:
-      - skills/dircreative/video-model-adapter/SKILL.md
-      - docs/film-preproduction/professional-agent-voice-standard.md
+      - skills/dircreative/references/prompt-model.md
     optional_files: []
     external_user_gate: null
     threads_allowed: false
@@ -112,8 +128,7 @@ routes:
   bounded_revision:
     mode: fast
     route_card: skills/dircreative/routes/fast-task.md
-    required_files:
-      - docs/film-preproduction/professional-agent-voice-standard.md
+    required_files: []
     optional_files: []
     external_user_gate: null
     threads_allowed: false
@@ -122,12 +137,8 @@ routes:
     mode: studio
     route_card: skills/dircreative/routes/studio-development.md
     required_files:
-      - skills/dircreative/director-room/SKILL.md
-      - docs/film-preproduction/director-room-routing.md
-      - docs/film-preproduction/schemas/director-role-harness.yaml
-      - docs/film-preproduction/professional-agent-voice-standard.md
-    optional_files:
-      - docs/film-preproduction/council-adversarial-review.md
+      - skills/dircreative/references/film-development.md
+    optional_files: []
     external_user_gate: concept_lock
     gate_condition: incompatible_creative_directions
     threads_allowed: false
@@ -136,9 +147,7 @@ routes:
     mode: delivery
     route_card: skills/dircreative/routes/delivery-audit.md
     required_files:
-      - docs/film-preproduction/capability-aware-generation-policy.md
-      - skills/dircreative/generation-qa/SKILL.md
-      - docs/film-preproduction/professional-agent-voice-standard.md
+      - skills/dircreative/references/generation-delivery.md
     optional_files: []
     external_user_gate: generation_authorization
     threads_allowed: false
@@ -147,9 +156,7 @@ routes:
     mode: delivery
     route_card: skills/dircreative/routes/delivery-audit.md
     required_files:
-      - docs/film-preproduction/client-film-hard-gates.md
-      - skills/dircreative/generation-qa/SKILL.md
-      - docs/film-preproduction/professional-agent-voice-standard.md
+      - skills/dircreative/references/generation-delivery.md
     optional_files: []
     external_user_gate: client_delivery_approval
     threads_allowed: false
@@ -158,7 +165,7 @@ routes:
     mode: delivery
     route_card: skills/dircreative/routes/delivery-audit.md
     required_files:
-      - docs/film-preproduction/adco-integration-contract.md
+      - skills/dircreative/references/specialist-exchange.md
       - docs/film-preproduction/schemas/adco-specialist-descriptor.json
     optional_files: []
     external_user_gate: null

@@ -204,12 +204,13 @@ def main() -> int:
     )
     add_check(
         checks,
-        "humanized copy gate is wired into skill and chat surface",
+        "content-first voice is wired into skill and legacy chat surfaces",
         "skills/dircreative/SKILL.md + chat co-creation interface",
         lambda: require_terms(
             humanized_copy_wiring,
             [
-                "Before user-visible creative output",
+                "Lead with the requested artifact or recommendation",
+                "Do not narrate routes, paths, Git, receipts, hashes, gates",
                 "professional-agent-voice-standard.md",
                 "humanizer check",
                 "humanizer / humanizer-zh diagnostic review",

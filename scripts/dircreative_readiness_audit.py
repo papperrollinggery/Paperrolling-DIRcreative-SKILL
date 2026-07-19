@@ -125,14 +125,15 @@ def main() -> int:
 
     add_check(
         checks,
-        "installed skill has a live chat start contract",
-        "skills/dircreative/SKILL.md + docs/film-preproduction/live-chat-start-protocol.md",
+        "source runtime has a result-first start and generation boundary",
+        "root Skill, start protocol, and compact generation card",
         lambda: require_terms(
             "\n".join(
                 [
                     read("skills/dircreative/SKILL.md"),
                     read("skills/dircreative/chat-facilitator/SKILL.md"),
                     read("skills/dircreative/routes/delivery-audit.md"),
+                    read("skills/dircreative/references/generation-delivery.md"),
                     read("docs/film-preproduction/live-chat-start-protocol.md"),
                 ]
             ),
@@ -146,7 +147,8 @@ def main() -> int:
                 "智能体创作内容",
                 "专业判断",
                 "用户确认点",
-                "pre_generation_contract.status: pass",
+                "the exact provider surface and model/version",
+                "rights/consent",
             ],
             "live chat start contract evidence",
         ),

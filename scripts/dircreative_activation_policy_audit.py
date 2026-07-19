@@ -8,7 +8,8 @@ from typing import Any
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SKILL_PATH = ROOT / "skills/dircreative/SKILL.md"
+SOURCE_SKILL_PATH = ROOT / "skills/dircreative/SKILL.md"
+SKILL_PATH = SOURCE_SKILL_PATH if SOURCE_SKILL_PATH.exists() else ROOT / "SKILL.md"
 POLICY_PATH = ROOT / "skills/dircreative/agents/openai.yaml"
 CASES_PATH = ROOT / "tests/fixtures/activation-policy/cases.json"
 HANDOFF_PATH = ROOT / "tests/fixtures/activation-policy/valid-adco-v2-handoff.json"

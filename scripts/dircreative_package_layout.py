@@ -21,6 +21,10 @@ PACKAGE_RUNTIME_FILES = [
     ".dircreative/runs/.keep",
 ]
 
+# These files sit beside the public root SKILL.md after installation so its
+# relative progressive-disclosure links resolve exactly as they do in source.
+ROOT_SKILL_RUNTIME_DIRS = ("routes", "runtime", "references", "assets")
+
 IGNORE_NAMES = {".git", "__pycache__", ".DS_Store", "build", "dist"}
 IGNORED_EXTENSIONS = {".pyc", ".pyo"}
 THREAD_ID_RE = re.compile(

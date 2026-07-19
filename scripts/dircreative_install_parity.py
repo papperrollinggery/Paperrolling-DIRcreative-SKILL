@@ -11,6 +11,7 @@ from pathlib import Path
 from dircreative_package_layout import (
     PACKAGE_ITEMS,
     PACKAGE_RUNTIME_FILES,
+    ROOT_SKILL_RUNTIME_DIRS,
     runtime_source_bytes,
     sanitize_package_bytes,
     should_ignore,
@@ -113,32 +114,62 @@ def collect_files(
     return files
 
 
-def package_manifest(base: Path, *, installed: bool = False) -> dict[str, str]:
+def package_manifest(
+    base: Path,
+    *,
+    installed: bool = False,
+    thread_ids: dict[str, str] | None = None,
+) -> dict[str, str]:
     manifest: dict[str, str] = {}
-    thread_ids: dict[str, str] = {}
+    mapping = thread_ids if thread_ids is not None else {}
     for item in PACKAGE_ITEMS:
-        manifest.update(collect_files(base, item, installed=installed, thread_ids=thread_ids))
+        manifest.update(collect_files(base, item, installed=installed, thread_ids=mapping))
     for relative in sorted(PACKAGE_RUNTIME_FILES):
         path = base / relative
         if not path.exists():
             continue
-        data = path.read_bytes() if installed else runtime_source_bytes(base, relative, thread_ids)
+        data = path.read_bytes() if installed else runtime_source_bytes(base, relative, mapping)
         manifest[relative] = bytes_hash(data)
     return manifest
 
 
-def root_skill_hash(base: Path) -> str:
+def root_skill_hash(base: Path, thread_ids: dict[str, str] | None = None) -> str:
     source = root_skill_source(base)
     data = source.read_bytes()
     if not installed_layout(base):
-        data = sanitize_package_bytes("SKILL.md", data, {})
+        data = sanitize_package_bytes("SKILL.md", data, thread_ids if thread_ids is not None else {})
     return bytes_hash(data)
+
+
+def root_runtime_manifest(
+    base: Path,
+    *,
+    installed: bool,
+    thread_ids: dict[str, str],
+) -> dict[str, str]:
+    source_root = root_skill_source(base).parent
+    manifest: dict[str, str] = {}
+    for directory in ROOT_SKILL_RUNTIME_DIRS:
+        root = source_root / directory
+        if not root.is_dir():
+            continue
+        for path in sorted(root.rglob("*")):
+            if not path.is_file() or should_ignore(path.relative_to(root)):
+                continue
+            relative = path.relative_to(root)
+            key = f"{directory}/{relative.as_posix()}"
+            data = path.read_bytes()
+            if not installed:
+                data = sanitize_package_bytes(key, data, thread_ids)
+            manifest[key] = bytes_hash(data)
+    return manifest
 
 
 def expected_manifest(base: Path) -> dict[str, str]:
     installed = installed_layout(base)
-    manifest = package_manifest(base, installed=installed)
-    manifest["SKILL.md"] = root_skill_hash(base)
+    thread_ids: dict[str, str] = {}
+    manifest = package_manifest(base, installed=installed, thread_ids=thread_ids)
+    manifest["SKILL.md"] = root_skill_hash(base, thread_ids)
     agent_policy = (
         base / "agents/openai.yaml"
         if installed
@@ -147,8 +178,15 @@ def expected_manifest(base: Path) -> dict[str, str]:
     if agent_policy.is_file():
         data = agent_policy.read_bytes()
         if not installed:
-            data = sanitize_package_bytes("agents/openai.yaml", data, {})
+            data = sanitize_package_bytes("agents/openai.yaml", data, thread_ids)
         manifest["agents/openai.yaml"] = bytes_hash(data)
+    manifest.update(
+        root_runtime_manifest(
+            base,
+            installed=installed,
+            thread_ids=thread_ids,
+        )
+    )
     metadata = base / RELEASE_METADATA_NAME
     if metadata.is_file():
         manifest[RELEASE_METADATA_NAME] = file_hash(metadata)

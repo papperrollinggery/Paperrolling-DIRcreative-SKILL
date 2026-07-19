@@ -1,0 +1,90 @@
+{
+  "cases": [
+    {
+      "id": "fast_copy_live",
+      "request": "$dircreative 只修改下面脚本第三句，让状态变化变成可拍、可听的动作。保持其余三句事实不变，直接给修订结果。\n1. 清晨九点，开放办公室只剩键盘声。\n2. 林澈盯着堆满提醒的屏幕，呼吸越来越浅。\n3. 她迅速进入状态。\n4. 桌上的澄川冷萃被晨光照亮。\n第三句需要包含：林澈拧开冷萃、倒入冰杯；瓶盖和冰块声音；镜头从杯壁移到她重新抬起的视线。",
+      "expected_mode": "fast",
+      "expected_route": "copy_revision",
+      "minimum_answer_bytes": 250,
+      "minimum_useful_content_ratio": 0.75,
+      "maximum_process_narration_ratio": 0.10,
+      "maximum_questions": 0,
+      "maximum_tool_calls": 2,
+      "required_concepts": [
+        ["第三句", "第 3 句", "3."],
+        ["林澈"],
+        ["冰块", "冰杯"],
+        ["镜头", "杯壁"]
+      ],
+      "forbidden_contains": ["她迅速进入状态。", "external_user_gate", "reason_codes"],
+      "baseline_snapshot": "tests/fixtures/headless-runtime/expected/fast-copy-revision.md"
+    },
+    {
+      "id": "studio_film_live",
+      "request": "$dircreative 根据这个完整 brief 直接开发一版 30 秒 9:16 广告片首轮方案，交付推荐概念、可读脚本和带时间码的分镜/声音设计。品牌：澄川冷萃。受众：被上午消息和会议切碎注意力的城市上班族。核心表达：一口冷萃，把注意力收回到眼前。场景：开放办公室提醒音、键盘声和临时会议同时涌来。产品动作：主角拧盖、倒入冰杯、喝下第一口。尾帧：瓶身、冰杯与品牌名同框，字幕“把注意力收回来”。限制：不写未经批准的提神或功效承诺；关键动作中瓶身清楚；不新增价格、渠道或促销。brief 已完整，不要重新 intake。",
+      "expected_mode": "studio",
+      "expected_route": "film_development",
+      "minimum_answer_bytes": 1500,
+      "minimum_useful_content_ratio": 0.70,
+      "maximum_process_narration_ratio": 0.15,
+      "maximum_questions": 0,
+      "maximum_tool_calls": 3,
+      "required_concepts": [
+        ["推荐", "核心概念", "创意方向"],
+        ["00:", "00–", "0–", "0-"],
+        ["镜头", "分镜"],
+        ["声音", "音效", "键盘声"],
+        ["澄川冷萃", "冷萃"]
+      ],
+      "forbidden_contains": ["请选择方案 A", "client_ready", "final_delivery_ready", "启动 Council"],
+      "baseline_snapshot": "tests/fixtures/headless-runtime/expected/studio-complete-film.md"
+    },
+    {
+      "id": "delivery_scoped_live",
+      "request": "$dircreative 客户交付已批准。请根据下面已核验事实给出交付判断，不执行外部发送：当前候选 v7 DOCX 可打开，9 页、7 张当前图片；当前候选及直接依赖的检查为 0 errors / 0 issues；人物、道具、版权和客户批准均已核清。项目全量审计另有 99 errors、110 issues、16 P0，均来自不被本候选引用的历史 FinalDelivery 与旧控制记录。直接给当前候选结论、应附限制和项目级风险；不要把无关历史债务算作当前失败，也不要把当前通过说成整个项目通过。",
+      "expected_mode": "delivery",
+      "expected_route": "client_delivery",
+      "minimum_answer_bytes": 550,
+      "minimum_useful_content_ratio": 0.60,
+      "maximum_process_narration_ratio": 0.25,
+      "maximum_questions": 0,
+      "maximum_tool_calls": 3,
+      "required_concepts": [
+        ["当前候选", "本次候选", "v7"],
+        ["通过", "可交付"],
+        ["历史", "既有"],
+        ["不代表", "不能代表", "不等于"],
+        ["项目级", "整个项目", "全量"]
+      ],
+      "forbidden_contains": ["global PASS"]
+    }
+  ],
+  "process_terms": [
+    ".dircreative",
+    "git commit",
+    "git status",
+    "skill_run_receipt",
+    "Route Card",
+    "路由脚本",
+    "dircreative_route.py",
+    "validate_project.py",
+    "state snapshot",
+    "Director Room",
+    "导演组会议",
+    "启动 Council",
+    "全量验证命令"
+  ],
+  "forbidden_pre_artifact_commands": [
+    "dircreative_route.py",
+    "validate_project.py",
+    "dircreative_state_audit.py",
+    "git status",
+    "git log",
+    "git diff"
+  ],
+  "forbidden_global_skill_paths": [
+    "/.skillshub/dircreative/",
+    "/.codex/skills/dircreative/",
+    "/.codex/dev-skills/dircreative/"
+  ]
+}

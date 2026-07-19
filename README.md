@@ -28,19 +28,21 @@ DIRcreative 不是“输入一句话、吐出一堆提示词”的黑盒。它�
 - **把专业判断放在结果后面**：Fast 直接修改；Studio 最多选择三个真正影响结果的专业视角，不展示固定角色会议。
 - **让复杂方案看得懂**：方向比较、节奏曲线、镜头时间线、参考图依赖和 QA 结果都可以可视化。
 - **不锁定单一模型**：把同一镜头意图适配到 Seedance、Kling、Runway、Veo 等不同生成模型。
-- **证据可追溯**：阶段门、用户选择、来源、版本、安装包与校验结果都有结构化记录。
+- **证据与风险成比例**：Fast / Studio 默认不写路径、Git、receipt 或全项目记录；只有真实生成、交付和跨系统 handoff 才保留必要证据。
 
 ## What it does
 
 | 模式 | 适用任务 | 默认预算与产出 |
 | --- | --- | --- |
-| Fast | 一句/一段文案、单镜头、少量分镜、Prompt 或既有产物局部修改 | 0 Threads、0 Director Room；修改结果优先 |
-| Studio | 完整概念、故事+脚本、脚本+分镜、多产物影视前期 | 0 Threads 默认、最多 3 个动态专业视角、最多 1 个 critic |
-| Delivery | 真实生成授权、正式版本/资产、客户可见交付、有效 ADCO handoff | 可运行完整审计与 receipt；严格绑定真实输入输出 |
+| Fast | 一句/一段文案、单镜头、少量分镜、Prompt 或既有产物局部修改 | <= 14 KB 上下文、0 Threads、0 Director Room；>= 75% 有用内容 |
+| Studio | 完整概念、故事+脚本、脚本+分镜、多产物影视前期 | <= 20 KB 上下文、最多 3 个动态专业视角、最多 1 个 critic；>= 70% 有用内容 |
+| Delivery | 真实生成授权、正式版本/资产、客户可见交付、有效 ADCO handoff | <= 30 KB 上下文；只为当前真实动作运行审计与 receipt |
 
 ```text
-explicit $dircreative → router → Fast | Studio | Delivery
-                     → one Route Card → useful artifact first
+explicit $dircreative → direct judgment → Fast | Studio | Delivery
+                     → one Route Card + at most one craft card
+                     → useful artifact first
+                     → router only for ambiguity or validated handoff
 ```
 
 ## Visual, conversational workflow
@@ -225,6 +227,8 @@ python3 scripts/dircreative_context_budget_audit.py
 python3 scripts/dircreative_director_harness_audit.py
 python3 scripts/dircreative_prompt_fixture_audit.py
 python3 scripts/dircreative_headless_acceptance_audit.py
+python3 scripts/dircreative_content_first_audit.py
+python3 scripts/dircreative_live_model_eval.py --self-test
 python3 scripts/dircreative_readiness_audit.py
 python3 scripts/dircreative_quality_audit.py
 python3 scripts/dircreative_chat_surface_audit.py

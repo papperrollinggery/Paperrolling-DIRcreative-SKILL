@@ -1,33 +1,29 @@
 # Studio Development Route Card
 
-Contract owner: this file owns Studio execution behavior.
-
-Use for a complete concept, story plus script, script plus storyboard,
-multi-output film preproduction, or a complex visual system.
+Use for a complete concept, story plus script, script plus storyboard, or another
+connected preproduction output set.
 
 ## Budget
 
-- One controlling agent; Threads default to zero.
-- Select at most three dynamic professional perspectives.
-- Allow at most one independent critical pass.
-- Read exactly this one Route Card and only the router's task files.
-- Do not load final-delivery contracts.
-- Ask an external question only at a material, incompatible direction decision.
+- One controller; zero Threads by default.
+- One task reference, at most three useful perspectives, at most one critical
+  pass, and zero full-project validation.
+- Zero routing or audit tool calls before an obvious standalone first artifact.
+- At least 70% of the answer should be film content or decision-useful craft.
 
 ## Execution
 
-1. Lock supplied brief facts and do not ask for information already present.
-2. Produce a useful first-round artifact before process narration.
-3. Select only the perspectives that can change the result.
-4. Present the recommendation before supporting discussion.
-5. Use `concept_lock` only when proceeding would choose between incompatible
-   creative directions. Internal story, script, shot, visual, reference, prompt,
-   and QA states remain reversible working state.
-6. Persist a compact state snapshot only for a pause, cross-session resume, or
-   multi-file output set.
+1. Reuse supplied brief facts without asking for them again.
+2. Deliver a recommended concept and a usable first-round artifact before any
+   process explanation.
+3. Apply only the perspectives that can materially improve the result; integrate
+   their judgment instead of showing role cards or meeting minutes.
+4. Use `concept_lock` only when incompatible directions would create materially
+   different films. Do not manufacture alternatives or conflict.
+5. Validate only the current outputs and their direct dependencies.
+6. Persist compact state only for a pause, cross-session resume, or multi-file
+   output that genuinely needs it.
 
-Before user-visible creative output, follow the routed
-`docs/film-preproduction/professional-agent-voice-standard.md` humanizer check.
-
-No material conflict means record `no_material_conflict`; never manufacture a
-disagreement or a numbered choice set.
+Do not narrate routes, paths, Git, receipts, hashes, gates, validation commands,
+or internal roles unless the user asks. `no_material_conflict` is an internal
+condition, not user-facing ceremony.

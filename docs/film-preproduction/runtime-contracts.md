@@ -30,9 +30,9 @@ does not own chat runtime routing, gates, state, or completion.
 
 ```text
 explicit $dircreative or validated ADCO handoff
-  -> source router
-  -> exactly one mode and one Route Card
-  -> smallest route-specific context
+  -> direct route judgment for obvious standalone work
+  -> exactly one mode, one Route Card, and at most one craft card
+  -> deterministic router only for ambiguity or handoff validation
   -> useful artifact first
   -> optional compact state or one real external gate
 ```
@@ -49,16 +49,39 @@ The active modes are:
 New runs may stop only at `concept_lock`, `generation_authorization`, or
 `client_delivery_approval`. Story, script, shot, visual, reference, prompt, and
 QA progress are reversible internal state. A known brief is reused. A bounded
-edit never reopens intake.
+edit never reopens intake. A current request that explicitly authorizes the same
+generation or delivery action satisfies its gate; the runtime does not ask twice.
 
 ## Context Boundary
 
-- Startup has no unconditional protocol read.
-- The router opens one Route Card; a Route Card does not route again.
+- Startup has no unconditional protocol read and no mandatory router command.
+- Obvious Fast and Studio requests go directly to one Route Card and one compact
+  craft card under `skills/dircreative/references/`.
+- The deterministic router is a machine mirror for ambiguous requests, ADCO
+  validation, and tests; it is not a creative preflight.
 - Fast never loads ADCO, Thread, Goal, Delivery, or FinalDelivery contracts.
 - Studio never loads FinalDelivery contracts.
-- The ADCO integration contract is loaded only for a schema-valid handoff.
+- Active v2 routes never load the legacy nested subskills, professional voice
+  standard, ten-role harness, client hard-gate document, or full capability
+  policy. Those remain available for legacy reads and focused engineering tests.
 - Full state audit runs only for resume, handoff, Delivery, or a completion claim.
+
+## Content-First Budgets
+
+Loaded context means root `SKILL.md` plus the selected Route Card and required
+task references. `dircreative_context_budget_audit.py` calculates it from the
+actual routing policy on every validation run.
+
+| Mode | Context | Files | Runtime behavior |
+| --- | ---: | ---: | --- |
+| Fast | <= 14,000 bytes | <= 3 | one task reference, zero routing/audit preflight, >= 75% useful content |
+| Studio | <= 20,000 bytes | <= 3 | one task reference, <= 3 perspectives, >= 70% useful content |
+| Delivery | <= 30,000 bytes | <= 4 | <= 2 task references, evidence only for the real action |
+
+Fast and Studio do not run whole-project validation. Current output and direct
+dependencies define the scoped result. Unrelated historical/control-plane debt
+is reported separately and cannot downgrade an independent scoped pass. A scoped
+pass also never implies that the whole project is client-ready.
 
 ## Director Room v2
 
@@ -121,6 +144,8 @@ PYTHONDONTWRITEBYTECODE=1 python3 scripts/dircreative_director_harness_audit.py
 PYTHONDONTWRITEBYTECODE=1 python3 scripts/dircreative_prompt_fixture_audit.py
 PYTHONDONTWRITEBYTECODE=1 python3 scripts/dircreative_adco_native_exchange.py --self-test
 PYTHONDONTWRITEBYTECODE=1 python3 scripts/dircreative_headless_acceptance_audit.py
+PYTHONDONTWRITEBYTECODE=1 python3 scripts/dircreative_content_first_audit.py
+PYTHONDONTWRITEBYTECODE=1 python3 scripts/dircreative_live_model_eval.py --self-test
 PYTHONDONTWRITEBYTECODE=1 python3 scripts/validate_project.py
 ```
 
@@ -134,3 +159,18 @@ An empty answer or route JSON without an answer fails. Reviewed outputs are:
 These deterministic source fixtures prove routing and answer production. They do
 not prove external model generation, client approval, a published release, or
 live creative acceptance.
+
+For a real model-level forward test, install the source package into an isolated
+repo-local `.agents/skills/dircreative` target and run:
+
+```bash
+python3 scripts/dircreative_live_model_eval.py \
+  --model gpt-5.6-sol \
+  --codex-home <isolated-authenticated-codex-home> \
+  --output-dir <temporary-output-dir>
+```
+
+The live harness uses read-only, ephemeral `codex exec`, disables plugins/apps/
+multi-agent behavior, preserves no session, and rejects process-only answers,
+router/audit/Git preflights, missing craft concepts, excess questions, and tool
+calls over the per-case budget. It never updates a global Skill directory.

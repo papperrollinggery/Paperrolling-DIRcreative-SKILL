@@ -174,7 +174,7 @@ def execute_case(case: dict[str, Any]) -> tuple[str, dict[str, Any]]:
             raise HeadlessAcceptanceError("Studio film case skipped adaptive perspectives")
         if len(perspectives["selected_perspectives"]) > 3:
             raise HeadlessAcceptanceError("Studio headless case exceeded perspective budget")
-        if "Produce a useful first-round artifact" not in next(iter(context.values())):
+        if "Deliver a recommended concept and a usable first-round artifact" not in next(iter(context.values())):
             raise HeadlessAcceptanceError("Studio Route Card lost artifact-first contract")
 
     processors = {

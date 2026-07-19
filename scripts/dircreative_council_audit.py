@@ -95,8 +95,8 @@ def main() -> int:
     route_ok, missing_route = has_all(
         studio_route + "\n" + routing_policy,
         [
-            "council-adversarial-review.md",
-            "at most one independent critical pass",
+            "at most one critical",
+            "Apply only the perspectives that can materially improve the result",
             "external_gates_only_for_material_decisions: true",
         ],
     )
