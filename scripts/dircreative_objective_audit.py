@@ -61,7 +61,14 @@ def main() -> int:
     quality_audit_ok, quality_audit_output = run_ok(["python3", "scripts/dircreative_quality_audit.py"])
     creative_production_audit_ok, creative_production_audit_output = run_ok(["python3", "scripts/dircreative_creative_production_audit.py"])
     goal_autorun_audit_ok, goal_autorun_audit_output = run_ok(["python3", "scripts/dircreative_goal_autorun_audit.py"])
-    director_room = read("docs/film-preproduction/director-room-council-protocol.md") + "\n" + read("examples/live-user-sim-noodle/02-director-room-notes.md")
+    director_room = "\n".join(
+        [
+            read("docs/film-preproduction/director-room-council-protocol.md"),
+            read("docs/film-preproduction/director-room-routing.md"),
+            read("docs/film-preproduction/schemas/director-role-harness.yaml"),
+            read("skills/dircreative/director-room/SKILL.md"),
+        ]
+    )
     rough_script = read("examples/live-user-sim-noodle/06-script.md")
     rough_shots = read("examples/live-user-sim-noodle/07-shot-list.yaml")
     complete_shots = read("examples/complete-idea-segmentation-test/03-shot-list.yaml")
@@ -161,10 +168,21 @@ def main() -> int:
             "Before real acceptance, the user should be able to see the final chat surface without a fake acceptance receipt.",
         ),
         check(
-            "director-room council collaboration",
-            has_terms(director_room, ["producer", "creative_director", "director", "screenwriter", "cinematographer", "production_designer", "editor", "sound_designer", "model_prompt_engineer", "continuity_qa", "disagreement"]),
-            "docs/film-preproduction/director-room-council-protocol.md",
-            "The director group must behave like collaborating sub-roles, not a flat monologue.",
+            "director-room adaptive perspective collaboration",
+            has_terms(
+                director_room,
+                [
+                    "narrative_strategy",
+                    "visual_production",
+                    "model_continuity",
+                    "maximum_perspectives: 3",
+                    "minimum_disagreements: 0",
+                    "no_material_conflict",
+                    "Fast tasks do not enter Director Room",
+                ],
+            ),
+            "adaptive Director Room v2 contracts",
+            "Studio selects no more than three decision-changing perspectives; Fast bypasses Council.",
         ),
         check(
             "adversarial council audit is executable",

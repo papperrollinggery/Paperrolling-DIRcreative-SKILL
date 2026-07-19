@@ -1,12 +1,13 @@
 director_room:
   schema_version: "2.0.0"
-  artifact_type: "canonical_typed_council_result"
-  owner_skill: "dircreative/director-room"
-  purpose: "Canonical typed contract and executable reference result for a director-room council."
+  artifact_type: "dynamic_perspective_result"
+  default_for_new_runs: true
 
-  canonical_result_contract:
-    required_result_fields: ["schema_version", "artifact_type", "automatic_routing_decision", "stage_gate", "execution", "open_questions", "role_cards", "discussion_rounds", "disagreements", "arbitration", "resolution_notes", "user_facing_options", "recommendation", "user_confirmation", "final_direction_locked"]
-    required_role_ids:
+  legacy_v1_compatibility:
+    accepted_schema_version: "1.0.0"
+    mode: "read_only"
+    write_allowed: false
+    fixed_role_ids:
       - "producer"
       - "creative_director"
       - "director"
@@ -17,254 +18,80 @@ director_room:
       - "sound_designer"
       - "model_prompt_engineer"
       - "continuity_qa"
-    role_card:
-      required_fields: ["inputs", "evidence", "judgment", "quality", "handoff", "retry", "execution"]
-      field_types:
-        inputs: "non_empty_string_list"
-        evidence: "non_empty_source_finding_list"
-        judgment: "non_empty_string"
-        quality: "typed_quality_mapping"
-        handoff: "typed_handoff_mapping"
-        retry: "typed_retry_mapping"
-        execution: "typed_execution_mapping"
-      evidence_item_fields: ["source", "finding"]
-      quality_fields: ["status", "reasons"]
-      quality_statuses: ["pass", "needs_user", "blocked"]
-      handoff_fields: ["to", "payload"]
-      retry_fields: ["failure_signals", "smallest_retry", "stop_condition"]
-      execution_fields: ["lane_id", "mode"]
-      conditional_execution_fields:
-        codex_thread_role_lane: ["thread_id"]
-      empty_role_cards_allowed: false
-    result:
-      minimum_discussion_rounds: 3
-      minimum_disagreements: 2
-      minimum_resolution_notes: 2
-      user_facing_option_range: [2, 3]
-      recommendation_must_reference_option: true
-      recommendation_must_reference_resolution: true
-      resolution_must_reference_disagreement_and_arbitration: true
-      final_direction_locked_before_user_choice: false
-    execution:
-      allowed_modes: ["codex_thread_role_lanes", "simulated_role_passes_fallback", "orchestrated_worker_handoff"]
-      real_threads:
-        required_record_fields: ["lane_id", "thread_id", "thread_class", "dispatch_record", "worker_receipt", "adoption_decision", "cleanup_status"]
-        unavailable_with_explicit_request: "TOOL_BLOCKED"
-        simulated_fallback_allowed: false
-      simulated:
-        allowed_context: "standalone_chat"
-        small_chat_only_gate: true
-        durable_artifact_work_allowed: false
-        explicit_true_threads_requested: false
-        fallback_reason_required: true
-      orchestrated_worker:
-        nested_dispatch_allowed: false
-        only_handoff_selected_subskill: true
-        open_questions_required: true
-        adoption_and_cleanup_owner: "adco"
+    note: "Existing v1 fixtures may be inspected or migrated to a new v2 artifact; never rewrite a v1 fixture in place."
+
+  result_contract:
+    required_fields:
+      - "schema_version"
+      - "mode"
+      - "route"
+      - "director_room_used"
+      - "selected_perspectives"
+      - "recommendation"
+      - "perspective_judgments"
+      - "conflict_status"
+      - "disagreements"
+      - "user_options_requested"
+      - "user_facing_options"
+      - "open_questions"
+      - "final_direction_locked"
+    perspective_ids:
+      - "narrative_strategy"
+      - "visual_production"
+      - "model_continuity"
+    maximum_perspectives: 3
+    maximum_independent_critics: 1
+    conflict_statuses:
+      - "no_material_conflict"
+      - "material_conflict"
+    rules:
+      - "Fast results set director_room_used false."
+      - "perspective_judgments keys exactly match selected_perspectives."
+      - "no_material_conflict requires an empty disagreements list."
+      - "material_conflict requires a concrete decision pressure and competing consequences."
+      - "user_facing_options stays empty unless the user requested a choice or a material conflict needs resolution."
+      - "recommendation is presented before process notes and supporting judgments."
+      - "final_direction_locked remains false until a real user choice or authorized delivery decision."
 
   canonical_example:
     schema_version: "2.0.0"
-    artifact_type: "canonical_typed_council_result"
-    fixture_kind: "simulated_fixture"
-    session_id: "director-room-contract-reference"
-    project_title: "雨衣 30 秒广告片"
-    automatic_routing_decision: "director_room"
-    stage_gate:
-      type: "idea"
-      status: "needs_user"
-      decision_owner: "simulated_fixture"
-    execution:
-      context: "standalone_chat"
-      mode: "simulated_role_passes_fallback"
-      explicit_true_threads_requested: false
-      standalone_small_gate: true
-      durable_artifact_work: false
-      nested_dispatch: false
-      fallback_reason: "Canonical contract fixture only; it performs no durable project work."
-      thread_records: []
-    open_questions: []
-
-    role_cards:
-      producer:
-        inputs: ["30-second duration", "raincoat product proof", "short-form delivery"]
-        evidence:
-          - source: "project brief"
-            finding: "The film must show one readable product proof within 30 seconds."
-        judgment: "Keep one weather conflict and one protection payoff; a second story arc would hide the product."
-        quality: {status: "pass", reasons: ["Scope fits the stated duration and exposes a production tradeoff."]}
-        handoff: {to: ["creative_director", "director", "editor"], payload: ["single-proof scope", "30-second timing boundary"]}
-        retry: {failure_signals: ["scope exceeds duration"], smallest_retry: "Reduce the scope recommendation only.", stop_condition: "A budget or delivery priority needs the user."}
-        execution: {lane_id: "production_image_lane", mode: "simulated_role_pass"}
-      creative_director:
-        inputs: ["single-proof scope", "rain as conflict", "raincoat identity lock"]
-        evidence:
-          - source: "project brief"
-            finding: "Rain can function as visible pressure rather than decorative atmosphere."
-        judgment: "Use rain as the opponent and the decision to step outside as the memorable premise."
-        quality: {status: "pass", reasons: ["The hook is visualizable and tied to product use."]}
-        handoff: {to: ["director", "screenwriter", "production_designer"], payload: ["rain-as-opponent premise", "product-use payoff"]}
-        retry: {failure_signals: ["generic mood concept"], smallest_retry: "Replace the weak concept territory only.", stop_condition: "Brand position requires a user choice."}
-        execution: {lane_id: "creative_story_lane", mode: "simulated_role_pass"}
-      director:
-        inputs: ["rain-as-opponent premise", "product-use payoff", "30-second boundary"]
-        evidence:
-          - source: "creative director judgment"
-            finding: "The on-screen choice must precede the protection payoff."
-        judgment: "Hold on hesitation, then motivate the first camera expansion with the character's step into rain."
-        quality: {status: "pass", reasons: ["Blocking and camera movement both serve the emotional turn."]}
-        handoff: {to: ["screenwriter", "cinematographer", "editor"], payload: ["hesitation beat", "step-into-rain blocking", "motivated widen"]}
-        retry: {failure_signals: ["camera move is ornamental"], smallest_retry: "Revise the contested scene-intent beat.", stop_condition: "The correction changes the user-owned premise."}
-        execution: {lane_id: "creative_story_lane", mode: "simulated_role_pass"}
-      screenwriter:
-        inputs: ["rain-as-opponent premise", "hesitation beat", "30-second boundary"]
-        evidence:
-          - source: "director judgment"
-            finding: "Action can carry the turn without explanatory dialogue."
-        judgment: "Build pressure, choice, and consequence through action; keep dialogue optional and reserve copy for the end proof."
-        quality: {status: "pass", reasons: ["Conflict, turn, consequence, and copy policy are explicit."]}
-        handoff: {to: ["director", "editor", "sound_designer"], payload: ["action-first beat chain", "dialogue-optional policy", "end-proof copy boundary"]}
-        retry: {failure_signals: ["weak conflict", "copy explains the action"], smallest_retry: "Rewrite the missing beat only.", stop_condition: "The ending choice needs user approval."}
-        execution: {lane_id: "creative_story_lane", mode: "simulated_role_pass"}
-      cinematographer:
-        inputs: ["hesitation beat", "motivated widen", "raincoat identity lock"]
-        evidence:
-          - source: "director judgment"
-            finding: "The product payoff becomes legible only after the character commits to the action."
-        judgment: "Begin close on the hesitation, keep rain direction readable, and widen when the protection proof lands."
-        quality: {status: "pass", reasons: ["Framing, light, motion, and continuity support a named beat."]}
-        handoff: {to: ["director", "production_designer", "editor"], payload: ["close-to-wide grammar", "rain direction lock", "proof lighting rule"]}
-        retry: {failure_signals: ["product is unreadable in rain"], smallest_retry: "Correct the proof-shot lighting rule.", stop_condition: "A new visual reference is required."}
-        execution: {lane_id: "production_image_lane", mode: "simulated_role_pass"}
-      production_designer:
-        inputs: ["raincoat identity lock", "wet-street setting", "rain direction lock"]
-        evidence:
-          - source: "project brief"
-            finding: "The raincoat silhouette must remain distinct from generic outdoor gear."
-        judgment: "Use a restrained wet-street palette and protect the raincoat silhouette through prop and wardrobe separation."
-        quality: {status: "pass", reasons: ["World, material, palette, and avoid boundaries are functional."]}
-        handoff: {to: ["cinematographer", "model_prompt_engineer", "continuity_qa"], payload: ["wet-street palette", "silhouette separation", "prop avoid list"]}
-        retry: {failure_signals: ["product category drift"], smallest_retry: "Correct the single material or prop causing drift.", stop_condition: "Brand assets or product identity are missing."}
-        execution: {lane_id: "production_image_lane", mode: "simulated_role_pass"}
-      editor:
-        inputs: ["30-second boundary", "hesitation beat", "product-use payoff"]
-        evidence:
-          - source: "producer judgment"
-            finding: "The short-form cut needs an early readable action and one protected ending proof."
-        judgment: "Land the hesitation in two seconds, show the first action before the scroll risk, and reserve five seconds for proof."
-        quality: {status: "pass", reasons: ["Timing and shot-count pressure are tied to the story turn."]}
-        handoff: {to: ["director", "screenwriter", "sound_designer"], payload: ["two-second hook", "proof-time reserve", "transition boundary"]}
-        retry: {failure_signals: ["hook lands late"], smallest_retry: "Adjust only the timing allocation.", stop_condition: "A different narrative structure is required."}
-        execution: {lane_id: "production_image_lane", mode: "simulated_role_pass"}
-      sound_designer:
-        inputs: ["action-first beat chain", "two-second hook", "product-use payoff"]
-        evidence:
-          - source: "screenwriter judgment"
-            finding: "The turn is readable without explanatory dialogue."
-        judgment: "Let rain pressure dominate, drop it briefly at the decision, then return product-action sound before music resolves."
-        quality: {status: "pass", reasons: ["Audio hierarchy and edit interaction have a story function."]}
-        handoff: {to: ["screenwriter", "editor"], payload: ["rain-pressure bed", "decision silence", "product-action sound cue"]}
-        retry: {failure_signals: ["music masks the product cue"], smallest_retry: "Correct the conflicting audio layer only.", stop_condition: "Casting or licensing is required."}
-        execution: {lane_id: "production_image_lane", mode: "simulated_role_pass"}
-      model_prompt_engineer:
-        inputs: ["raincoat identity lock", "wet-street geography", "close-to-wide grammar"]
-        evidence:
-          - source: "role judgments"
-            finding: "Identity, geography, and motion carry different downstream reference roles."
-        judgment: "Separate product identity, rain geography, and storyboard-motion references so one board cannot overwrite another."
-        quality: {status: "pass", reasons: ["Reference roles and one model-misread risk are explicit."]}
-        handoff: {to: ["production_designer", "continuity_qa", "reference-image-planner"], payload: ["three-role reference pack", "motion misread warning"]}
-        retry: {failure_signals: ["reference role collision"], smallest_retry: "Correct the single colliding reference role.", stop_condition: "Model capability evidence is missing."}
-        execution: {lane_id: "model_continuity_lane", mode: "simulated_role_pass"}
-      continuity_qa:
-        inputs: ["all role judgments", "raincoat identity lock", "street geography lock"]
-        evidence:
-          - source: "council role cards"
-            finding: "The main drift risks are silhouette, rain direction, geography, and ending product state."
-        judgment: "Keep direction unlocked until the user chooses; carry four named locks and the unresolved performance choice downstream."
-        quality: {status: "pass", reasons: ["Locks, contradiction status, and the next QA boundary are explicit."]}
-        handoff: {to: ["director-room controller", "story-development"], payload: ["four continuity locks", "unresolved human-performance choice"]}
-        retry: {failure_signals: ["identity or geography drift"], smallest_retry: "Return the smallest conflicting card to its owner.", stop_condition: "The correction requires a real user decision."}
-        execution: {lane_id: "model_continuity_lane", mode: "simulated_role_pass"}
-
-    discussion_rounds:
-      - round_id: "role_brief_read"
-        participants: ["producer", "creative_director", "director", "screenwriter", "cinematographer", "production_designer", "editor", "sound_designer", "model_prompt_engineer", "continuity_qa"]
-        result: "Every seat contributed evidence, a craft judgment, a quality result, a handoff, a retry boundary, and execution provenance."
-      - round_id: "disagreement_and_pressure_test"
-        participants: ["producer", "director", "cinematographer", "editor"]
-        result: "The room tested atmosphere against product clarity and a slow reveal against the short-form hook."
-      - round_id: "resolution"
-        participants: ["producer", "creative_director", "director", "screenwriter", "editor", "continuity_qa"]
-        result: "The controller ruled on both conflicts and converted them into downstream production rules."
-
-    disagreements:
-      - disagreement_id: "d1"
-        topic: "film atmosphere versus product clarity"
-        decision_pressure: "The first proof must arrive before atmosphere consumes the short-form time budget."
-        positions:
-          - {role_id: "director", position: "Delay the reveal long enough to create tension.", evidence_ref: "role_cards.director.judgment"}
-          - {role_id: "producer", position: "Show function before the viewer can miss the product promise.", evidence_ref: "role_cards.producer.judgment"}
-      - disagreement_id: "d2"
-        topic: "slow reveal versus short-form hook"
-        decision_pressure: "A held hesitation creates emotion but can postpone the readable action."
-        positions:
-          - {role_id: "cinematographer", position: "Hold the close framing until the choice registers.", evidence_ref: "role_cards.cinematographer.judgment"}
-          - {role_id: "editor", position: "Land the first readable action within two seconds.", evidence_ref: "role_cards.editor.judgment"}
-
-    arbitration:
-      - arbitration_id: "a1"
-        disagreement_id: "d1"
-        ruling: "Product proof arrives early; atmosphere deepens after proof instead of replacing it."
-        rationale: "The ruling preserves both the commercial promise and the rain-as-opponent premise."
-        downstream_owner: "story-development"
-      - arbitration_id: "a2"
-        disagreement_id: "d2"
-        ruling: "Keep one short hesitation, then make the action readable before the first transition."
-        rationale: "The timing protects an emotional turn without losing the short-form hook."
-        downstream_owner: "script-treatment"
-
-    resolution_notes:
-      - resolution_id: "r1"
-        source_disagreement_ids: ["d1"]
-        arbitration_id: "a1"
-        production_rule: "Open on weather pressure, then show the raincoat in use before atmospheric expansion."
-        rationale: "Product clarity wins the opening beat while atmosphere remains available downstream."
-        downstream_owner: "story-development"
-        handoff_effect: "The story package must place product use before the first visual release."
-      - resolution_id: "r2"
-        source_disagreement_ids: ["d2"]
-        arbitration_id: "a2"
-        production_rule: "Limit hesitation to two seconds and reserve the final five seconds for the proof state."
-        rationale: "The edit can retain tension without sacrificing legibility."
-        downstream_owner: "script-treatment"
-        handoff_effect: "The timed treatment must expose hook, choice, and proof allocations."
-
-    user_facing_options:
-      - option_id: "1"
-        concept_name: "雨线开场"
-        one_line_story: "A commuter chooses to step through a wall of rain and discovers the coat's protection through action."
-        visual_promise: "Weather pressure turns into a clean product proof in one motivated expansion."
-        why_it_works: "Conflict and product use arrive in the opening beat."
-        tradeoff: "There is less time for a slow visual reveal."
-        production_risk: "Rain direction and product silhouette must stay readable."
-        reference_pack_implication: "Needs separate product identity, rain geography, and motion-storyboard references."
-      - option_id: "2"
-        concept_name: "逆雨而行"
-        one_line_story: "A protagonist stops avoiding the storm and turns the walk into a visible choice."
-        visual_promise: "Performance carries the emotional turn before the coat proves itself."
-        why_it_works: "A human choice gives the product proof emotional consequence."
-        tradeoff: "It depends on a clear performance lock."
-        production_risk: "Weak casting or blocking would flatten the turn."
-        reference_pack_implication: "Needs character identity, wardrobe, geography, and blocking references."
-
+    mode: "studio"
+    route: "film_development"
+    director_room_used: true
     recommendation:
-      option_id: "1"
-      reason: "It protects short-form legibility while retaining a directed visual escalation."
-      evidence_refs: ["role_cards.producer.judgment", "role_cards.editor.judgment", "role_cards.continuity_qa.judgment"]
-      resolution_refs: ["r1", "r2"]
-    user_confirmation:
-      status: "needs_user"
-      question: "选 1/2，或说希望混合哪两个具体部分。"
-      allowed_option_ids: ["1", "2"]
+      summary: "Build the film around one visible product test whose consequence becomes the story turn."
+      rationale: "It unifies narrative clarity, producible camera logic, and continuity-safe model inputs."
+      next_output: "story package"
+    selected_perspectives:
+      - "narrative_strategy"
+      - "visual_production"
+      - "model_continuity"
+    perspective_judgments:
+      narrative_strategy:
+        judgment: "Give the product test a pressure, reversal, and visible ending action."
+        evidence: ["complete advertising-film brief", "30-second duration"]
+        downstream_effect: "The story package must reserve the turn before the end card."
+      visual_production:
+        judgment: "Stage one motivated push-in during the test and hold long enough to read the consequence."
+        evidence: ["single-location production constraint", "product legibility target"]
+        downstream_effect: "Shot design owns the camera start, action path, and final product state."
+      model_continuity:
+        judgment: "Separate product identity, scene geography, and motion guidance; do not use a dense board as a literal first frame."
+        evidence: ["identity continuity target", "reference-role boundary"]
+        downstream_effect: "Reference planning must bind one role per direct input."
+    conflict_status: "no_material_conflict"
+    disagreements: []
+    user_options_requested: false
+    user_facing_options: []
+    open_questions: []
     final_direction_locked: false
+    execution:
+      controlling_agents: 1
+      threads_used: 0
+      independent_critics_used: 0
+      nested_dispatch_used: false
+    presentation_order:
+      - "recommendation"
+      - "perspective_judgments"
+      - "conflict_status"
+      - "open_questions"

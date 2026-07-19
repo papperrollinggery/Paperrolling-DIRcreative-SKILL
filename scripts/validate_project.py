@@ -1514,6 +1514,15 @@ def validate_skills() -> None:
     for skill_path in CHAT_SURFACE_SKILLS:
         text = require_path(skill_path).read_text(encoding="utf-8")
         require("## Chat Surface" in text, f"{skill_path} missing Chat Surface")
+        if skill_path == "skills/dircreative/director-room/SKILL.md":
+            for term in [
+                "Fast tasks do not enter Director Room",
+                "recommendation appear before any process note",
+                "no_material_conflict",
+                "Do not expose ten role cards",
+            ]:
+                require(term in text, f"{skill_path} missing adaptive chat term: {term}")
+            continue
         require("docs/film-preproduction/chat-co-creation-interface.md" in text, f"{skill_path} missing chat interface knowledge")
         if skill_path == "skills/dircreative/chat-facilitator/SKILL.md":
             require("docs/film-preproduction/chat-stage-gate-integrity.md" in text, "chat facilitator missing stage gate integrity knowledge")
@@ -3266,7 +3275,7 @@ def validate_release_gate_technical_readiness_receipt() -> None:
 
 
 def validate_director_room_fixture() -> None:
-    roles = [
+    legacy_roles = {
         "producer",
         "creative_director",
         "director",
@@ -3277,7 +3286,7 @@ def validate_director_room_fixture() -> None:
         "sound_designer",
         "model_prompt_engineer",
         "continuity_qa",
-    ]
+    }
     fixture_paths = [
         "examples/product-ad-raincoat/02-director-room-notes.md",
         "examples/zombie-cleaner-test/02-director-room-notes.md",
@@ -3286,71 +3295,38 @@ def validate_director_room_fixture() -> None:
     ]
     for fixture_path in fixture_paths:
         text = require_path(fixture_path).read_text(encoding="utf-8")
-        missing = [role for role in roles if role not in text]
-        require(not missing, f"{fixture_path} missing director room roles: {missing}")
+        require(
+            legacy_roles.issubset({role for role in legacy_roles if role in text}),
+            f"{fixture_path} is no longer readable as a legacy v1 director-room fixture",
+        )
 
-    council_sources = {
-        "docs/film-preproduction/director-room-council-protocol.md": require_path(
-            "docs/film-preproduction/director-room-council-protocol.md"
-        ).read_text(encoding="utf-8"),
-        "skills/dircreative/director-room/SKILL.md": require_path(
-            "skills/dircreative/director-room/SKILL.md"
-        ).read_text(encoding="utf-8"),
-        "docs/film-preproduction/schemas/director-room.yaml": require_path(
-            "docs/film-preproduction/schemas/director-room.yaml"
-        ).read_text(encoding="utf-8"),
-        "examples/live-user-sim-noodle/02-director-room-notes.md": require_path(
-            "examples/live-user-sim-noodle/02-director-room-notes.md"
-        ).read_text(encoding="utf-8"),
-        "examples/live-user-sim-noodle/16-chat-interface-demo.md": require_path(
-            "examples/live-user-sim-noodle/16-chat-interface-demo.md"
-        ).read_text(encoding="utf-8"),
-        "examples/complete-idea-segmentation-test/02-director-room-notes.md": require_path(
-            "examples/complete-idea-segmentation-test/02-director-room-notes.md"
-        ).read_text(encoding="utf-8"),
-        "examples/complete-idea-segmentation-test/02-chat-transcript.md": require_path(
-            "examples/complete-idea-segmentation-test/02-chat-transcript.md"
-        ).read_text(encoding="utf-8"),
-        "examples/independent-agent-scent-brand-test/01-full-flow-transcript.md": require_path(
-            "examples/independent-agent-scent-brand-test/01-full-flow-transcript.md"
-        ).read_text(encoding="utf-8"),
-    }
-    combined = "\n".join(council_sources.values()).lower()
-    required_terms = [
-        "sub-agent",
-        "real_subagents",
-        "codex_thread_role_lanes",
-        "codex_thread_default",
-        "creative_story_lane",
-        "production_image_lane",
-        "model_continuity_lane",
-        "thread_dispatch_record",
-        "simulated_role_passes_fallback",
-        "subagent_default",
-        "fallback_reason",
-        "council_protocol",
-        "role_cards",
-        "discussion_rounds",
-        "disagreement",
-        "resolution_notes",
-        "user_facing_options",
-        "user-facing",
-        "用户确认点",
-        "model_prompt_engineer",
-        "continuity_qa",
-        "reference pack",
-        "video-model",
-        "complete_idea_mode",
-        "complete-idea validation",
-        "导演组会议",
-        "导演组分歧",
-        "客户可见预览",
-        "producer:",
-        "creative_director:",
-        "resolution note",
+    harness = load_yaml(require_path("docs/film-preproduction/schemas/director-role-harness.yaml"))[
+        "director_role_harness"
     ]
-    missing_terms = [term for term in required_terms if term.lower() not in combined]
-    require(not missing_terms, f"director room council protocol missing terms: {missing_terms}")
+    require(harness.get("schema_version") == "2.0.0", "Director Room must default to harness v2")
+    require(
+        set(harness.get("perspectives", {}))
+        == {"narrative_strategy", "visual_production", "model_continuity"},
+        "Director Room v2 perspective set drifted",
+    )
+    require(
+        set(harness.get("legacy_v1_role_contracts", {})) == legacy_roles,
+        "Director Room v1 role contracts are not preserved read-only",
+    )
+    output = harness.get("v2_output_contract", {})
+    require(output.get("minimum_disagreements") == 0, "Director Room still forces disagreements")
+    require(output.get("user_visible_role_cards") is False, "Director Room still exposes fixed role cards")
+    proc = run(["python3", "scripts/dircreative_director_harness_audit.py"])
+    require(proc.returncode == 0, f"adaptive Director Room audit failed:\n{proc.stderr}\n{proc.stdout}")
+    for term in [
+        "fast_director_room_bypasses: 4/4",
+        "maximum_perspectives: 3",
+        "minimum_disagreements: 0",
+        "user_visible_role_cards: false",
+        "legacy_v1_fixtures_read: 12/12",
+        "DIRECTOR_HARNESS_AUDIT: PASS",
+    ]:
+        require(term in proc.stdout, f"adaptive Director Room audit missing: {term}")
 
 
 def validate_ad_reference_pack_fixtures() -> None:
@@ -3505,7 +3481,6 @@ def validate_chat_visualization_contract() -> None:
     visual_skills = [
         "chat-facilitator",
         "co-creation-gate-runtime",
-        "director-room",
         "story-development",
         "script-treatment",
         "shot-design",
@@ -4295,7 +4270,7 @@ def validate_readiness_audit() -> None:
         "installed skill has a live chat start contract",
         "goal-mode simulation does not wait for manual choices",
         "goal-mode rough idea simulation covers one-sentence intake",
-        "director-room council roles",
+        "director-room adaptive perspectives",
         "adversarial council audit is executable",
         "COUNCIL_AUDIT: PASS",
         "film/commercial quality audit is executable",
@@ -4837,7 +4812,7 @@ def validate_objective_audit() -> None:
         "goal-mode simulated normal operation",
         "isolated simulated user testing",
         "live acceptance rehearsal remains chat-first",
-        "director-room council collaboration",
+        "director-room adaptive perspective collaboration",
         "adversarial council audit is executable",
         "film/commercial quality audit is executable",
         "Creative Production adapter audit is executable",

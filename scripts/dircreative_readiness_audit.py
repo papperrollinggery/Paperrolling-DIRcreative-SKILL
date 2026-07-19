@@ -210,36 +210,29 @@ def main() -> int:
 
     add_check(
         checks,
-        "director-room council roles and Codex Thread-backed default are enforced",
-        "docs/film-preproduction/director-room-council-protocol.md + fixtures",
+        "director-room adaptive perspectives are bounded",
+        "adaptive Director Room docs and v2 harness",
         lambda: require_terms(
             "\n".join(
                 [
                     read("docs/film-preproduction/director-room-council-protocol.md"),
-                    read("examples/live-user-sim-noodle/02-director-room-notes.md"),
-                    read("examples/complete-idea-segmentation-test/02-director-room-notes.md"),
+                    read("docs/film-preproduction/director-room-routing.md"),
+                    read("docs/film-preproduction/schemas/director-role-harness.yaml"),
+                    read("skills/dircreative/director-room/SKILL.md"),
                 ]
             ),
             [
-                "Default live mode is Codex Thread-backed role passes",
-                "codex_thread_default: true",
-                "creative_story_lane",
-                "production_image_lane",
-                "model_continuity_lane",
-                "subagent_default: true",
-                "producer",
-                "creative_director",
-                "director",
-                "screenwriter",
-                "cinematographer",
-                "production_designer",
-                "editor",
-                "sound_designer",
-                "model_prompt_engineer",
-                "continuity_qa",
-                "disagreements",
+                "narrative_strategy",
+                "visual_production",
+                "model_continuity",
+                "Fast tasks do not enter Director Room",
+                "threads_default: 0",
+                "maximum_perspectives: 3",
+                "minimum_disagreements: 0",
+                "user_visible_role_cards: false",
+                "legacy_v1_role_contracts",
             ],
-            "director-room evidence",
+            "adaptive director-room evidence",
         ),
     )
 

@@ -1,10 +1,87 @@
 director_role_harness:
-  schema_version: "1.0.0"
-  version: "1.0"
+  schema_version: "2.0.0"
+  version: "2.0"
   owner_skill: "dircreative/director-room"
-  purpose: "Automatically turn a non-trivial film-preproduction request into a bounded director-room council with auditable professional handoffs."
+  purpose: "Select only the professional perspectives that can change the result; keep fixed-seat v1 contracts as read-only knowledge."
 
-  routing:
+  default_result_schema_version: "2.0.0"
+  legacy_read_only:
+    accepted_schema_version: "1.0.0"
+    write_allowed: false
+    migration_required_for_new_runs: true
+    role_contract_source: "legacy_v1_role_contracts"
+    fixture_policy: "Existing v1 fixtures remain readable and are never rewritten in place."
+
+  perspectives:
+    narrative_strategy:
+      maps_from_roles: ["producer", "creative_director", "screenwriter"]
+      handles: ["copy", "story", "conflict", "structure", "dialogue", "voiceover", "commercial objective"]
+      outputs: ["narrative judgment", "recommended change", "downstream story or script effect"]
+    visual_production:
+      maps_from_roles: ["director", "cinematographer", "production_designer", "editor", "sound_designer"]
+      handles: ["shot design", "camera", "art direction", "blocking", "edit rhythm", "sound"]
+      outputs: ["production judgment", "shot or visual recommendation", "production constraint"]
+    model_continuity:
+      maps_from_roles: ["model_prompt_engineer", "continuity_qa"]
+      handles: ["generation model", "reference roles", "action ownership", "identity continuity", "prompt risk"]
+      outputs: ["model judgment", "continuity risk", "prompt or reference constraint"]
+
+  selection_policy:
+    maximum_perspectives: 3
+    director_room_only_for_studio: true
+    fast_uses_direct_judgments_without_council: true
+    cases:
+      - id: "local_copy_revision"
+        signals: ["一句", "一段", "局部文案", "第三句", "one line", "one paragraph"]
+        mode: "fast"
+        director_room: false
+        perspectives: ["narrative_strategy"]
+      - id: "local_storyboard_review"
+        signals: ["少量分镜", "局部分镜", "评审分镜", "few storyboards"]
+        mode: "fast"
+        director_room: false
+        perspectives: ["visual_production", "model_continuity"]
+      - id: "complete_advertising_film"
+        signals: ["完整广告片", "完整品牌片", "full commercial film"]
+        mode: "studio"
+        director_room: true
+        perspectives: ["narrative_strategy", "visual_production", "model_continuity"]
+      - id: "prompt_compilation"
+        signals: ["Prompt 编译", "编译 Prompt", "compile prompt"]
+        mode: "fast"
+        director_room: false
+        perspectives: ["visual_production", "model_continuity"]
+      - id: "existing_script_local_revision"
+        signals: ["已有脚本局部修改", "修改已有脚本", "revise existing script"]
+        mode: "fast"
+        director_room: false
+        perspectives: ["narrative_strategy"]
+        optional_perspectives: ["visual_production"]
+
+  v2_execution:
+    controlling_agents: 1
+    threads_default: 0
+    maximum_perspectives: 3
+    independent_critics_max: 1
+    nested_dispatch_allowed: false
+
+  v2_output_contract:
+    recommendation_first: true
+    perspective_judgments_max: 3
+    user_visible_role_cards: false
+    minimum_disagreements: 0
+    no_material_conflict_allowed: true
+    disagreement_only_for_material_conflict: true
+    numbered_options_only_when_user_requests_choice: true
+    direct_revision_returns_revised_artifact: true
+    presentation_order:
+      - "recommendation"
+      - "revised_artifact_or_perspective_judgments"
+      - "material_conflict_if_any"
+      - "options_only_if_requested"
+      - "open_questions_if_blocked"
+
+  legacy_v1_routing:
     default_route: "lightweight"
     role_naming_required: false
     user_instruction: "Do not ask the user to name Producer, Director, or any other seat before starting the council."
@@ -285,7 +362,9 @@ director_role_harness:
         expected_stage: "轻量响应"
         role_names_supplied_by_user: false
 
-  council_execution:
+  legacy_v1_council_execution:
+    compatibility_status: "read_only"
+    active_for_new_runs: false
     entry_stage: "阶段: 导演组会议"
     default_lanes:
       - lane_id: "creative_story_lane"
@@ -341,12 +420,13 @@ director_role_harness:
       on_unresolvable_conflict: "Expose the tradeoff, keep the concept unlocked, and ask one bounded user question."
       on_unsafe_or_unverified_model_claim: "Mark the claim as unverified, remove it from the recommendation, and request source evidence."
 
-  canonical_council_result:
-    path: "docs/film-preproduction/schemas/director-room.yaml"
-    root_key: "director_room.canonical_example"
-    schema_version: "2.0.0"
+  legacy_v1_canonical_council_result:
+    compatibility_status: "read_only"
+    schema_version: "1.0.0"
+    source_fixture_family: "examples/*/02-director-room-notes.md"
+    write_target: null
 
-  roles:
+  legacy_v1_role_contracts:
     producer:
       responsibilities:
         - "Translate the brief into channel, duration, deliverable, production-scope, and commercial-risk constraints."
