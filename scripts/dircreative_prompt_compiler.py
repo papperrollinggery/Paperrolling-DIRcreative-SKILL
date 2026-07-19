@@ -5,7 +5,6 @@ import argparse
 import hashlib
 import json
 import math
-import re
 import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -13,24 +12,12 @@ from typing import Any
 
 from dircreative_state_audit import _builtin_schema_errors
 from dircreative_model_capability_audit import REGISTRY_PATH, load_yaml
+from dircreative_adapters import AdapterContractError, get_adapter, shared_surface_errors
+from dircreative_adapters.base import INTERNAL_SURFACE_PATTERNS, clean as _clean
 
 
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_PATH = ROOT / "docs/film-preproduction/schemas/prompt-ir.schema.json"
-REFERENCE_TOKEN_RE = re.compile(r"@(Image|Video|Audio)\s*([0-9]+)", re.IGNORECASE)
-CANONICAL_REFERENCE_SLOT_RE = re.compile(r"@(Image|Video|Audio) [1-9][0-9]*", re.IGNORECASE)
-INTERNAL_SURFACE_PATTERNS = {
-    "internal_shot_or_asset_label": re.compile(r"\b(?:R|S|SHOT|SCENE|ASSET)[-_ ]?0*[0-9]+\b", re.IGNORECASE),
-    "internal_asset_id": re.compile(r"\basset_[A-Za-z0-9_-]+\b", re.IGNORECASE),
-    "local_path": re.compile(r"(?:/Users/|/home/|/private/|outputs/|docs/film-preproduction/|examples/)", re.IGNORECASE),
-    "sha256": re.compile(r"\b[0-9a-f]{64}\b", re.IGNORECASE),
-    "internal_field": re.compile(r"\b(?:schema_version|source_hash|failure_id|retry_rules|manifest)\b", re.IGNORECASE),
-    "internal_control_language": re.compile(
-        r"\b(?:QA|quality[ -]?assurance|retry|rerun|failure(?:_id)?|pass signal|pass when|"
-        r"direct video input policy|pre-generation contract|generation receipt|next_action)\b",
-        re.IGNORECASE,
-    ),
-}
 
 
 class PromptContractError(Exception):
@@ -75,27 +62,8 @@ def _time_value(raw: Any) -> float:
     return float(value)
 
 
-def _surface_errors(text: str, allowed_slots: set[str]) -> list[str]:
-    errors: list[str] = []
-    for code, pattern in INTERNAL_SURFACE_PATTERNS.items():
-        match = pattern.search(text)
-        if match:
-            errors.append(f"{code}: {match.group(0)}")
-    used_slots = {
-        f"@{kind.title()} {index}"
-        for kind, index in REFERENCE_TOKEN_RE.findall(text)
-    }
-    phantom = sorted(used_slots - allowed_slots)
-    missing = sorted(allowed_slots - used_slots)
-    if phantom:
-        errors.append(f"phantom_reference_slots: {', '.join(phantom)}")
-    if missing:
-        errors.append(f"attached_reference_slots_missing_from_prompt: {', '.join(missing)}")
-    return errors
-
-
 def terminal_surface_errors(text: str, allowed_slots: set[str] | None = None) -> list[str]:
-    return _surface_errors(text, allowed_slots or set())
+    return shared_surface_errors(text, allowed_slots or set())
 
 
 def semantic_errors(payload: dict[str, Any], *, verify_project_files: bool = True) -> list[str]:
@@ -263,12 +231,10 @@ def semantic_errors(payload: dict[str, Any], *, verify_project_files: bool = Tru
     if adapter != payload["capability"]["model_key"] and adapter != "generic":
         errors.append("generation_plan.selected_adapter does not match capability.model_key")
     attached = [item for item in references if item["attached_to_run"]]
-    if adapter == "seedance":
-        bad_slots = [item["platform_slot"] for item in attached if not CANONICAL_REFERENCE_SLOT_RE.fullmatch(item["platform_slot"])]
-        if bad_slots:
-            errors.append(f"Seedance attached references require explicit @ slots: {', '.join(bad_slots)}")
-    if adapter in {"sora", "runway"} and len(attached) > 1:
-        errors.append(f"{adapter} compiler route accepts one direct visual input; compose or select one anchor before compilation")
+    try:
+        errors.extend(get_adapter(adapter).validate_capability(payload))
+    except AdapterContractError as exc:
+        errors.append(str(exc))
     if payload["audio_plan"]["generation_route"] == "reference_audio":
         attached_audio = [
             item for item in attached
@@ -348,231 +314,34 @@ def structural_score(payload: dict[str, Any]) -> int:
     return sum(10 for passed in checks if passed)
 
 
-def _clean(value: Any) -> str:
-    return re.sub(r"\s+", " ", str(value)).strip().rstrip(".")
-
-
-def _time_label(raw: Any) -> str:
-    return f"{_time_value(raw):05.2f}"
-
-
-def _look_text(layer: dict[str, Any]) -> str:
-    if layer.get("intensity") == "none":
-        return ""
-    ordered = [
-        layer.get("condition"),
-        layer.get("effect"),
-        layer.get("physical_behavior"),
-        layer.get("source_direction_quality"),
-        layer.get("contrast_shadow"),
-        layer.get("medium"),
-        layer.get("density_scale"),
-        layer.get("light_path_visibility"),
-        layer.get("movement"),
-        layer.get("white_balance_anchor"),
-        layer.get("contrast_gamma"),
-        layer.get("black_level"),
-        layer.get("highlight_rolloff"),
-        layer.get("saturation_density"),
-        layer.get("palette_separation"),
-        layer.get("grain_halation"),
-    ]
-    parts = [_clean(item) for item in ordered if item and _clean(item).lower() != "none by design"]
-    return "; ".join(parts)
-
-
 def compile_prompt(payload: dict[str, Any], *, verify_project_files: bool = True) -> CompileResult:
     validate_prompt_ir(payload, verify_project_files=verify_project_files)
-    adapter = payload["generation_plan"]["selected_adapter"]
+    adapter_name = payload["generation_plan"]["selected_adapter"]
     attached = [item for item in payload["references"] if item["attached_to_run"]]
-    handoff_slots = {item["platform_slot"] for item in attached}
-    allowed_slots = {item["platform_slot"] for item in attached} if adapter == "seedance" else set()
-    entity_names = {item["entity_id"]: item["external_name"] for item in payload["entities"]}
-
-    sections: list[str] = []
-    if attached:
-        reference_lines = []
-        for index, item in enumerate(attached, start=1):
-            preserve = "; ".join(_clean(value) for value in item["preserve"])
-            anti = "; ".join(_clean(value) for value in item["anti_misread"])
-            if adapter == "seedance":
-                reference_name = item["platform_slot"]
-            elif adapter == "sora":
-                reference_name = "The attached first-frame image"
-            elif adapter == "runway":
-                reference_name = "The input image"
-            else:
-                reference_name = f"Attached reference image {index}"
-            line = f"{reference_name} is {_clean(item['role'])}. Preserve {preserve}."
-            if anti:
-                line += f" Keep the reference role limited to this job: {anti}."
-            reference_lines.append(line)
-        sections.append("References:\n" + "\n".join(reference_lines))
-
-    output = payload["output"]
-    project = payload["project"]
-    composition = payload["composition"]
-    duration_phrase = f"{_clean(output['target_duration_sec'])}-second"
-    intended_use = _clean(project["intended_use"])
-    if duration_phrase.lower() not in intended_use.lower():
-        intended_use = f"{duration_phrase} {intended_use}"
-    sections.append(
-        f"Create a {intended_use} in {_clean(output['aspect_ratio'])}. "
-        f"Purpose: {_clean(composition['narrative_purpose'])}."
+    units = sorted(
+        payload["generation_plan"]["units"],
+        key=lambda item: _time_value(item["time_start"]),
     )
-
-    entity_lines = []
-    for entity in payload["entities"]:
-        immutable = "; ".join(_clean(value) for value in entity["immutable"])
-        entity_lines.append(
-            f"{_clean(entity['external_name'])}: starts {_clean(entity['starting_state'])}, positioned {_clean(entity['screen_position'])}. "
-            f"Keep {immutable}."
-        )
-    sections.append(("Motion subjects:\n" if adapter == "runway" else "Subjects and assets:\n") + "\n".join(entity_lines))
-
-    lock_values: list[str] = []
-    native_audio = payload["audio_plan"]["generation_route"] in {"native", "reference_audio"}
-    for lock_name, values in payload["global_locks"].items():
-        if lock_name == "audio_spine" and not native_audio:
-            continue
-        lock_values.extend(_clean(value) for value in values if _clean(value))
-    sections.append("Continuity:\n" + "; ".join(lock_values) + ".")
-
-    timeline_lines = []
-    timeline_bodies: dict[str, str] = {}
-    postproduction_audio: list[str] = []
-    for shot in sorted(payload["shot_blocks"], key=lambda item: _time_value(item["time_start"])):
-        parts = [
-            _clean(shot["story_beat"]),
-            _clean(shot["emotional_or_attention_beat"]),
+    try:
+        adapter = get_adapter(adapter_name)
+        prompt = adapter.compile_full(payload)
+        unit_prompts = [adapter.compile_unit(payload, unit) for unit in units]
+        postproduction_audio = adapter.postproduction_audio(payload)
+        unit_postproduction_audio = [
+            adapter.unit_postproduction_audio(payload, unit)
+            for unit in units
         ]
-        for action in shot["entity_actions"]:
-            owner = _clean(entity_names[action["owner_entity_id"]])
-            target = action.get("target_entity_id")
-            target_text = f" toward {_clean(entity_names[target])}" if target else ""
-            action_text = (
-                f"{owner} starts {_clean(action['initial_state'])}. After {_clean(action['trigger'])}, "
-                f"{_clean(action['path'])}{target_text}. End with {_clean(action['final_state'])}"
-            )
-            if action.get("physical_consequence"):
-                action_text += f". Physical result: {_clean(action['physical_consequence'])}"
-            parts.append(action_text)
-        environment = shot["environment_action"]
-        environment_parts = [_clean(value) for value in environment.values() if _clean(value)]
-        if environment_parts:
-            parts.append("Environment: " + "; ".join(environment_parts))
-        camera = shot["camera"]
-        parts.append(
-            "Camera: "
-            f"{_clean(camera['shot_size'])}, {_clean(camera['angle_height_axis'])}, {_clean(camera['support'])}; "
-            f"start on {_clean(camera['start_target'])}, {_clean(camera['path'])}, end on {_clean(camera['end_target'])}; "
-            f"{_clean(camera['speed_easing'])}; focus {_clean(camera['focus'])}. The move is motivated by {_clean(camera['motivation'])}"
-        )
-        parts.append("Composition: " + _clean(shot["composition_state"]))
-        if shot.get("look_delta") and _clean(shot["look_delta"]).lower() != "none by design":
-            parts.append("Look change: " + _clean(shot["look_delta"]))
-        cue_texts = []
-        for cue in shot["audio_cues"]:
-            if isinstance(cue, str):
-                cue_text = _clean(cue)
-            else:
-                speaker = cue.get("speaker_entity_id") or cue.get("source_entity_id")
-                speaker_text = f" from {_clean(entity_names[speaker])}" if speaker else ""
-                cue_text = f"{_clean(cue['time'])} {_clean(cue['kind'])}{speaker_text}: {_clean(cue['cue'])}, {_clean(cue['perspective'])}"
-            if native_audio:
-                cue_texts.append(cue_text)
-            else:
-                postproduction_audio.append(cue_text)
-        if cue_texts:
-            parts.append("Audio: " + "; ".join(cue_texts))
-        timeline_bodies[shot["shot_id"]] = ". ".join(parts) + "."
-        timeline_lines.append(f"{_time_label(shot['time_start'])}-{_time_label(shot['time_end'])}: {timeline_bodies[shot['shot_id']]}")
-    sections.append("Timeline:\n" + "\n".join(timeline_lines))
+    except AdapterContractError as exc:
+        raise PromptContractError(str(exc)) from exc
 
-    look = payload["render_look"]
-    look_lines = []
-    for label in ("lighting", "optics", "atmosphere", "grade"):
-        value = _look_text(look[label])
-        if value:
-            look_lines.append(f"{label.title()}: {value}.")
-    if look_lines and adapter != "runway":
-        look_lines.append("Preserve " + "; ".join(_clean(value) for value in look["preserve"]) + ".")
-        look_lines.append(_clean(look["exit_or_continuity"]) + ".")
-        sections.append("Look:\n" + "\n".join(look_lines))
-
-    transitions = payload.get("transition_plan", [])
-    if transitions:
-        transition_lines = []
-        for item in transitions:
-            line = f"{_clean(item['visual_bridge'])}; preserve {_clean(item['continuity_state'])}."
-            transition_lines.append(line)
-            if item.get("audio_bridge") and not native_audio:
-                postproduction_audio.append(_clean(item["audio_bridge"]))
-        sections.append("Transitions:\n" + "\n".join(transition_lines))
-
-    prompt = "\n\n".join(section for section in sections if section).strip() + "\n"
-    surface_errors = _surface_errors(prompt, allowed_slots)
-    if surface_errors:
-        raise PromptContractError("; ".join(surface_errors))
-    unit_prompts: list[str] = []
-    unit_postproduction_audio: list[list[str]] = []
-    target_duration = float(payload["output"]["target_duration_sec"])
-    prefix_sections = [section for section in sections if not section.startswith("Timeline:") and not section.startswith("Look:") and not section.startswith("Transitions:")]
-    look_sections = [section for section in sections if section.startswith("Look:")]
-    shot_map = {shot["shot_id"]: shot for shot in payload["shot_blocks"]}
-    for unit in sorted(payload["generation_plan"]["units"], key=lambda item: _time_value(item["time_start"])):
-        unit_start = _time_value(unit["time_start"])
-        unit_end = _time_value(unit["time_end"])
-        unit_duration = unit_end - unit_start
-        duration_source = f"{_clean(output['target_duration_sec'])}-second"
-        duration_target = f"{unit_duration:g}-second"
-        local_prefix: list[str] = []
-        for section in prefix_sections:
-            if section.startswith("Subjects and assets:") or section.startswith("Motion subjects:"):
-                unit_entity_lines = []
-                for entity in payload["entities"]:
-                    immutable = "; ".join(_clean(value) for value in entity["immutable"])
-                    unit_entity_lines.append(f"{_clean(entity['external_name'])}: preserve {immutable}.")
-                local_prefix.append("Subjects and assets:\n" + "\n".join(unit_entity_lines))
-            else:
-                local_prefix.append(section.replace(duration_source, duration_target))
-        handoff_lines = [
-            f"Begin with {_clean(unit['incoming_state'])}.",
-            f"End with {_clean(unit['outgoing_state'])}.",
-        ]
-        unit_audio: list[str] = []
-        if native_audio:
-            handoff_lines.append(f"Carry the audio boundary as {_clean(unit['audio_handoff'])}.")
-        else:
-            unit_audio.append(_clean(unit["audio_handoff"]))
-        local_timeline: list[str] = []
-        for shot_id in unit["shot_ids"]:
-            shot = shot_map[shot_id]
-            local_start = _time_value(shot["time_start"]) - unit_start
-            local_end = _time_value(shot["time_end"]) - unit_start
-            local_timeline.append(f"{_time_label(local_start)}-{_time_label(local_end)}: {timeline_bodies[shot_id]}")
-        unit_sections = [
-            *local_prefix,
-            "State continuity:\n" + "\n".join(handoff_lines),
-            "Timeline:\n" + "\n".join(local_timeline),
-            *look_sections,
-        ]
-        unit_prompt = "\n\n".join(unit_sections).strip() + "\n"
-        unit_surface_errors = _surface_errors(unit_prompt, allowed_slots)
-        if unit_surface_errors:
-            raise PromptContractError("; ".join(unit_surface_errors))
-        unit_prompts.append(unit_prompt)
-        unit_postproduction_audio.append(unit_audio)
-
-    score = structural_score(payload)
     return CompileResult(
         prompt=prompt,
         unit_prompts=unit_prompts,
-        adapter=adapter,
-        attached_slots=sorted(handoff_slots),
+        adapter=adapter_name,
+        attached_slots=sorted(item["platform_slot"] for item in attached),
         postproduction_audio=postproduction_audio,
         unit_postproduction_audio=unit_postproduction_audio,
-        structural_score=score,
+        structural_score=structural_score(payload),
     )
 
 

@@ -1,5 +1,17 @@
 [
   {
+    "case_id": "seedance_explicit_slot_surface",
+    "base": "valid/minimal-character-scene-10s.json",
+    "adapter": "seedance",
+    "capability_card_id": "seedance_2_0_official_launch",
+    "duration_sec": 10,
+    "attached_reference_count": 2,
+    "platform_slots": ["@Image 1", "@Image 2"],
+    "audio_route": "native",
+    "expected_text": "@Image 1 is identity",
+    "forbidden_text": ["Attached reference image", "QA AND RETRY"]
+  },
+  {
     "case_id": "sora_first_frame_surface",
     "base": "valid/minimal-character-scene-10s.json",
     "adapter": "sora",
@@ -46,5 +58,18 @@
     "audio_route": "postproduction",
     "expected_text": "Attached reference image 1",
     "forbidden_text": ["@Image", "Audio:", "QA AND RETRY"]
+  },
+  {
+    "case_id": "generic_portable_surface",
+    "base": "valid/minimal-character-scene-10s.json",
+    "adapter": "generic",
+    "capability_model_key": "seedance",
+    "capability_card_id": "seedance_2_0_official_launch",
+    "duration_sec": 10,
+    "attached_reference_count": 2,
+    "platform_slots": ["portable_reference_1", "portable_reference_2"],
+    "audio_route": "postproduction",
+    "expected_text": "Attached reference image 1",
+    "forbidden_text": ["@Image", "QA AND RETRY"]
   }
 ]

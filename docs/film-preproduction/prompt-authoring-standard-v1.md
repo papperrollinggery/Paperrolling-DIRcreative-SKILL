@@ -707,6 +707,25 @@ longform_mode: <single_sequence | hybrid>
 
 Prompt IR、时间状态、对象动作、音频 spine 和 transition schema 不变。
 
+## 6.5 Model Adapter Implementation Contract
+
+`scripts/dircreative_prompt_compiler.py` remains the backward-compatible CLI and
+Prompt IR validator. Model surface compilation is owned by
+`scripts/dircreative_adapters/`:
+
+- `seedance.py`, `kling.py`, `runway.py`, `sora.py`, `veo.py`, and `generic.py`;
+- `base.py` owns the shared `PromptAdapter` interface;
+- every adapter implements `validate_capability`, `compile_full`, `compile_unit`,
+  `surface_errors`, and `prompt_budget`;
+- every adapter declares reference count and syntax, timeline and multi-shot
+  behavior, unit length, camera, audio, look, negative handling, unsupported
+  fields, maximum prompt length, and compression order.
+
+Prompt IR stays provider-neutral. An adapter emits only the selected model's
+surface. If the compiled full or unit prompt exceeds its declared maximum, the
+compiler returns `prompt_budget_exceeded` with the adapter's compression order;
+it never silently truncates or continues.
+
 ## 7. 图像到视频的链路规则
 
 ~~~text

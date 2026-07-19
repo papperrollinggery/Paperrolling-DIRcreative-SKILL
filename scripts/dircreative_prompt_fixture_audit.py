@@ -14,6 +14,7 @@ from dircreative_prompt_compiler import (
     semantic_errors,
     terminal_surface_errors,
 )
+from dircreative_adapters import get_adapter
 from dircreative_model_capability_audit import REGISTRY_PATH, load_yaml
 
 
@@ -22,6 +23,7 @@ FIXTURE_ROOT = ROOT / "tests/fixtures/prompt-system"
 VALID_ROOT = FIXTURE_ROOT / "valid"
 INVALID_CASES = FIXTURE_ROOT / "invalid-cases.json"
 ADAPTER_CASES = FIXTURE_ROOT / "adapter-cases.json"
+ADAPTER_NEGATIVE_CASES = FIXTURE_ROOT / "adapter-negative-cases.json"
 MIRROR_ROOT = ROOT / "examples/seedance-mirror-turn-10s"
 
 
@@ -121,36 +123,98 @@ def audit_invalid_cases() -> list[str]:
     return rejected
 
 
+def prepare_adapter_payload(case: dict[str, Any], cards: dict[str, dict[str, Any]]) -> dict[str, Any]:
+    payload = copy.deepcopy(read_json(FIXTURE_ROOT / case["base"]))
+    minimum_reference_count = int(case.get("minimum_reference_count", 0))
+    while len(payload["references"]) < minimum_reference_count:
+        next_index = len(payload["references"]) + 1
+        asset = copy.deepcopy(payload["intake"]["supplied_assets"][-1])
+        asset["asset_id"] = f"adapter_extra_asset_{next_index}"
+        payload["intake"]["supplied_assets"].append(asset)
+        reference = copy.deepcopy(payload["references"][-1])
+        reference["asset_id"] = asset["asset_id"]
+        reference["platform_slot"] = f"adapter_reference_{next_index}"
+        payload["references"].append(reference)
+
+    payload["capability"]["model_key"] = case.get("capability_model_key", case["adapter"])
+    payload["capability"]["capability_card_id"] = case["capability_card_id"]
+    card = cards[case["capability_card_id"]]
+    payload["capability"]["version"] = str(card["version"])
+    payload["capability"]["provider_surface"] = card["provider_surface"]
+    payload["generation_plan"]["selected_adapter"] = case["adapter"]
+    target_duration = float(case["duration_sec"])
+    payload["output"]["target_duration_sec"] = target_duration
+    payload["output"]["generation_unit_sec"] = target_duration
+    payload["generation_plan"]["units"][-1]["time_end"] = f"{target_duration:.2f}"
+    payload["shot_blocks"][-1]["time_end"] = f"{target_duration:.2f}"
+    platform_slots = case.get("platform_slots", [])
+    for index, reference in enumerate(payload["references"]):
+        reference["attached_to_run"] = index < case["attached_reference_count"]
+        reference["required_for_shot"] = reference["attached_to_run"]
+        if index < len(platform_slots):
+            reference["platform_slot"] = platform_slots[index]
+    payload["audio_plan"]["generation_route"] = case["audio_route"]
+    if case.get("inflate_path"):
+        set_path(payload, case["inflate_path"], "x" * int(case["inflate_chars"]))
+    return payload
+
+
 def audit_adapter_cases() -> list[dict[str, Any]]:
     cases = read_json(ADAPTER_CASES)
     require(isinstance(cases, list) and cases, "adapter case list must be non-empty")
     results: list[dict[str, Any]] = []
     cards = {card["capability_card_id"]: card for card in load_yaml(REGISTRY_PATH).get("models", [])}
     for case in cases:
-        payload = copy.deepcopy(read_json(FIXTURE_ROOT / case["base"]))
-        payload["capability"]["model_key"] = case["adapter"]
-        payload["capability"]["capability_card_id"] = case["capability_card_id"]
-        card = cards[case["capability_card_id"]]
-        payload["capability"]["version"] = str(card["version"])
-        payload["capability"]["provider_surface"] = card["provider_surface"]
-        payload["generation_plan"]["selected_adapter"] = case["adapter"]
-        target_duration = float(case["duration_sec"])
-        payload["output"]["target_duration_sec"] = target_duration
-        payload["output"]["generation_unit_sec"] = target_duration
-        payload["generation_plan"]["units"][-1]["time_end"] = f"{target_duration:.2f}"
-        payload["shot_blocks"][-1]["time_end"] = f"{target_duration:.2f}"
-        for index, reference in enumerate(payload["references"]):
-            reference["attached_to_run"] = index < case["attached_reference_count"]
-            reference["required_for_shot"] = reference["attached_to_run"]
-            if case["adapter"] != "seedance":
-                reference["platform_slot"] = case["platform_slots"][index]
-        payload["audio_plan"]["generation_route"] = case["audio_route"]
+        payload = prepare_adapter_payload(case, cards)
         result = compile_prompt(payload, verify_project_files=False)
         require(case["expected_text"] in result.prompt, f"adapter fixture missing expected surface: {case['case_id']}")
         for forbidden in case["forbidden_text"]:
             require(forbidden not in result.prompt, f"adapter fixture leaked forbidden surface {forbidden}: {case['case_id']}")
         results.append({"case_id": case["case_id"], "adapter": case["adapter"], "attached_references": len(result.attached_slots)})
     return results
+
+
+def audit_adapter_negative_cases() -> list[str]:
+    cases = read_json(ADAPTER_NEGATIVE_CASES)
+    require(isinstance(cases, list) and cases, "adapter negative case list must be non-empty")
+    cards = {card["capability_card_id"]: card for card in load_yaml(REGISTRY_PATH).get("models", [])}
+    rejected: list[str] = []
+    for case in cases:
+        if case["kind"] == "surface":
+            message = "; ".join(
+                get_adapter(case["adapter"]).surface_errors(case["text"], {"references": []})
+            )
+        elif case["kind"] == "compile":
+            payload = prepare_adapter_payload(case, cards)
+            try:
+                compile_prompt(payload, verify_project_files=False)
+            except PromptContractError as exc:
+                message = str(exc)
+            else:
+                message = ""
+        else:
+            raise AuditFailure(f"unknown adapter negative case kind: {case['kind']}")
+        require(case["expected"] in message, f"adapter negative fixture failed for wrong reason: {case['case_id']}: {message}")
+        rejected.append(case["case_id"])
+
+    adapters = {"seedance", "kling", "runway", "sora", "veo", "generic"}
+    positive_coverage = {case["adapter"] for case in read_json(ADAPTER_CASES)}
+    negative_coverage = {case["adapter"] for case in cases}
+    require(positive_coverage == adapters, f"adapter positive coverage drifted: {sorted(positive_coverage)}")
+    require(negative_coverage == adapters, f"adapter negative coverage drifted: {sorted(negative_coverage)}")
+    for name in sorted(adapters):
+        adapter = get_adapter(name)
+        contract = adapter.CONTRACT
+        require(contract.reference_count and contract.reference_syntax, f"{name} missing reference contract")
+        require(contract.timeline_syntax and contract.multi_shot_support, f"{name} missing timeline/multi-shot contract")
+        require(contract.camera_handling and contract.audio_handling, f"{name} missing camera/audio contract")
+        require(contract.look_handling and contract.negative_handling, f"{name} missing look/negative contract")
+        require(contract.unsupported_fields, f"{name} missing unsupported field contract")
+        require(adapter.prompt_budget().max_chars > 0, f"{name} missing prompt budget")
+        require(adapter.prompt_budget().compression_order, f"{name} missing compression order")
+        for method in ("validate_capability", "compile_full", "compile_unit", "surface_errors", "prompt_budget"):
+            require(callable(getattr(adapter, method, None)), f"{name} missing adapter interface method: {method}")
+    return rejected
 
 
 def audit_mirror_fixture() -> dict[str, Any]:
@@ -212,6 +276,7 @@ def audit() -> dict[str, Any]:
     valid = [audit_valid_fixture(path) for path in valid_paths]
     invalid = audit_invalid_cases()
     adapters = audit_adapter_cases()
+    adapter_negative = audit_adapter_negative_cases()
     mirror = audit_mirror_fixture()
     return {
         "status": "PASS",
@@ -219,6 +284,7 @@ def audit() -> dict[str, Any]:
         "valid_fixtures": valid,
         "negative_fixtures_rejected": invalid,
         "adapter_fixtures": adapters,
+        "adapter_negative_fixtures_rejected": adapter_negative,
         "mirror_fixture": mirror,
         "boundaries": {
             "terminal_prompt_internal_ids": "rejected",
