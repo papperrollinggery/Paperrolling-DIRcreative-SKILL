@@ -1,0 +1,78 @@
+{
+  "latency_budget_ms": {
+    "per_case_max": 2000,
+    "suite_max": 6000
+  },
+  "cases": [
+    {
+      "id": "fast_copy_revision",
+      "request": "$dircreative 修改脚本第三句，让动作可拍、声音可听",
+      "expected_mode": "fast",
+      "expected_route": "copy_revision",
+      "minimum_answer_bytes": 650,
+      "input": {
+        "lines": [
+          "清晨九点，开放办公室只剩键盘声。",
+          "林澈盯着堆满提醒的屏幕，呼吸越来越浅。",
+          "她迅速进入状态。",
+          "桌上的澄川冷萃被晨光照亮。"
+        ],
+        "target_line": 3,
+        "character": "林澈",
+        "product": "澄川冷萃",
+        "action": "拧开瓶盖，把冷萃倒进装满冰块的玻璃杯",
+        "camera": "镜头贴着杯壁水珠下移，随后停在她重新抬起的视线",
+        "sound": "瓶盖轻响、冰块撞杯，办公室键盘声退到背景",
+        "intent": "用一个可见、可听的产品动作替代抽象状态变化"
+      },
+      "expected_contains": [
+        "第三句（已修改）",
+        "林澈拧开瓶盖",
+        "冰块撞杯",
+        "修订后四句"
+      ],
+      "forbidden_contains": [
+        "她迅速进入状态。",
+        "external_user_gate",
+        "reason_codes"
+      ],
+      "snapshot": "tests/fixtures/headless-runtime/expected/fast-copy-revision.md"
+    },
+    {
+      "id": "studio_complete_film",
+      "request": "$dircreative 根据完整 brief 开发完整广告片：脚本 + 分镜",
+      "expected_mode": "studio",
+      "expected_route": "film_development",
+      "minimum_answer_bytes": 1600,
+      "input": {
+        "brand": "澄川冷萃",
+        "duration_seconds": 30,
+        "aspect_ratio": "9:16",
+        "audience": "被上午消息和会议切碎注意力的城市上班族",
+        "promise": "一口冷萃，把注意力收回到眼前",
+        "situation": "开放办公室的消息提醒、键盘声和临时会议同时涌来",
+        "product_action": "主角拧盖、倒入冰杯、喝下第一口",
+        "end_frame": "瓶身、冰杯与品牌名同框，字幕：把注意力收回来",
+        "constraints": [
+          "不使用未经批准的功效或提神承诺",
+          "产品瓶身在关键动作中保持清晰可辨",
+          "不新增客户未提供的价格、渠道或促销信息"
+        ]
+      },
+      "expected_contains": [
+        "推荐方向：把噪声切成一口清晰",
+        "澄川冷萃",
+        "00–04s",
+        "24–30s",
+        "产品与合规边界"
+      ],
+      "forbidden_contains": [
+        "请选择方案 A",
+        "client_ready",
+        "final_delivery_ready",
+        "启动 Council"
+      ],
+      "snapshot": "tests/fixtures/headless-runtime/expected/studio-complete-film.md"
+    }
+  ]
+}

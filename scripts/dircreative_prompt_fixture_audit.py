@@ -24,6 +24,7 @@ VALID_ROOT = FIXTURE_ROOT / "valid"
 INVALID_CASES = FIXTURE_ROOT / "invalid-cases.json"
 ADAPTER_CASES = FIXTURE_ROOT / "adapter-cases.json"
 ADAPTER_NEGATIVE_CASES = FIXTURE_ROOT / "adapter-negative-cases.json"
+ADAPTER_CONTRACT_MATRIX = FIXTURE_ROOT / "adapter-contract-matrix.json"
 MIRROR_ROOT = ROOT / "examples/seedance-mirror-turn-10s"
 
 
@@ -217,6 +218,102 @@ def audit_adapter_negative_cases() -> list[str]:
     return rejected
 
 
+def adapter_contract_payload(
+    adapter_name: str,
+    *,
+    attached_references: int,
+    duration_sec: float,
+    audio_route: str = "post_production",
+) -> dict[str, Any]:
+    references = [
+        {
+            "attached_to_run": True,
+            "platform_slot": f"@Image {index}" if adapter_name == "seedance" else f"reference_{index}",
+        }
+        for index in range(1, attached_references + 1)
+    ]
+    return {
+        "references": references,
+        "generation_plan": {
+            "units": [
+                {
+                    "time_start": "0.00",
+                    "time_end": f"{duration_sec:.2f}",
+                }
+            ]
+        },
+        "audio_plan": {"generation_route": audio_route},
+    }
+
+
+def audit_adapter_contract_matrix() -> list[dict[str, Any]]:
+    matrix = read_json(ADAPTER_CONTRACT_MATRIX)
+    require(isinstance(matrix, list) and matrix, "adapter contract matrix must be non-empty")
+    expected_adapters = {"seedance", "kling", "runway", "sora", "veo", "generic"}
+    require({item.get("adapter") for item in matrix} == expected_adapters, "adapter contract matrix coverage drifted")
+    positive_coverage = {case["adapter"] for case in read_json(ADAPTER_CASES)}
+    results: list[dict[str, Any]] = []
+    for row in matrix:
+        name = row["adapter"]
+        adapter = get_adapter(name)
+        maximum = adapter.CONTRACT.maximum_references
+        require(maximum is not None, f"{name} lacks a finite reference-count negative boundary")
+        valid_payload = adapter_contract_payload(
+            name,
+            attached_references=0,
+            duration_sec=float(row["valid_duration_sec"]),
+        )
+        require(not adapter.validate_capability(valid_payload), f"{name} valid capability fixture failed")
+
+        overflow_payload = adapter_contract_payload(
+            name,
+            attached_references=maximum + 1,
+            duration_sec=float(row["valid_duration_sec"]),
+        )
+        overflow_errors = "; ".join(adapter.validate_capability(overflow_payload))
+        require(
+            "reference count is unsupported" in overflow_errors,
+            f"{name} did not reject invalid reference count: {overflow_errors}",
+        )
+
+        budget = adapter.prompt_budget()
+        over_budget = "Timeline:\n00.00-01.00: " + ("x" * (budget.max_chars + 1))
+        budget_errors = "; ".join(adapter.surface_errors(over_budget, {"references": []}))
+        require("prompt_budget_exceeded" in budget_errors, f"{name} did not reject prompt budget overflow")
+        timeline_errors = "; ".join(
+            adapter.surface_errors("A camera follows the subject.", {"references": []})
+        )
+        require("timeline_syntax_invalid" in timeline_errors, f"{name} did not reject missing timeline")
+
+        unsupported = row["unsupported"]
+        unsupported_payload = adapter_contract_payload(
+            name,
+            attached_references=0,
+            duration_sec=(
+                float(unsupported["value"])
+                if unsupported["kind"] == "duration"
+                else float(row["valid_duration_sec"])
+            ),
+            audio_route="native" if unsupported["kind"] == "native_audio" else "post_production",
+        )
+        unsupported_errors = "; ".join(adapter.validate_capability(unsupported_payload))
+        require(
+            unsupported["expected"] in unsupported_errors,
+            f"{name} did not reject unsupported capability: {unsupported_errors}",
+        )
+        results.append(
+            {
+                "adapter": name,
+                "valid_prompt": name in positive_coverage,
+                "invalid_reference_count_rejected": True,
+                "prompt_budget_rejected": True,
+                "timeline_rejected": True,
+                "unsupported_capability_rejected": True,
+            }
+        )
+    return results
+
+
 def audit_mirror_fixture() -> dict[str, Any]:
     ir_path = MIRROR_ROOT / "prompt-ir.json"
     payload = load_prompt_ir(ir_path)
@@ -277,6 +374,7 @@ def audit() -> dict[str, Any]:
     invalid = audit_invalid_cases()
     adapters = audit_adapter_cases()
     adapter_negative = audit_adapter_negative_cases()
+    adapter_contract_matrix = audit_adapter_contract_matrix()
     mirror = audit_mirror_fixture()
     return {
         "status": "PASS",
@@ -285,6 +383,7 @@ def audit() -> dict[str, Any]:
         "negative_fixtures_rejected": invalid,
         "adapter_fixtures": adapters,
         "adapter_negative_fixtures_rejected": adapter_negative,
+        "adapter_contract_matrix": adapter_contract_matrix,
         "mirror_fixture": mirror,
         "boundaries": {
             "terminal_prompt_internal_ids": "rejected",

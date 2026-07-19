@@ -324,6 +324,9 @@ def validate_required_paths() -> None:
         "tests/fixtures/activation-policy/cases.json",
         "tests/fixtures/activation-policy/valid-adco-v2-handoff.json",
         "tests/fixtures/routing/cases.json",
+        "tests/fixtures/headless-runtime/cases.json",
+        "tests/fixtures/headless-runtime/expected/fast-copy-revision.md",
+        "tests/fixtures/headless-runtime/expected/studio-complete-film.md",
         "scripts/dircreative_adapters/__init__.py",
         "scripts/dircreative_adapters/base.py",
         "scripts/dircreative_adapters/seedance.py",
@@ -333,6 +336,8 @@ def validate_required_paths() -> None:
         "scripts/dircreative_adapters/veo.py",
         "scripts/dircreative_adapters/generic.py",
         "tests/fixtures/prompt-system/adapter-negative-cases.json",
+        "tests/fixtures/prompt-system/adapter-contract-matrix.json",
+        "scripts/dircreative_headless_acceptance_audit.py",
         "docs/film-preproduction/prompt-pattern-registry.json",
         "docs/film-preproduction/templates/image-prompt-style-config.template.json",
         "docs/film-preproduction/qa/qa-checklist.md",
@@ -1495,6 +1500,23 @@ def validate_context_budget() -> None:
         "DIRCREATIVE_CONTEXT_BUDGET_AUDIT: PASS" in proc.stdout,
         "context budget audit missing PASS marker",
     )
+
+
+def validate_headless_acceptance() -> None:
+    proc = run(["python3", "scripts/dircreative_headless_acceptance_audit.py"])
+    require(
+        proc.returncode == 0,
+        f"headless input-to-answer acceptance failed:\n{proc.stderr}\n{proc.stdout}",
+    )
+    for marker in [
+        "HEADLESS_ACCEPTANCE_AUDIT: PASS",
+        '"answer_files_generated": 2',
+        '"empty_answer_rejected": true',
+        '"route_only_answer_rejected": true',
+        '"v1_read_compatibility": true',
+        '"v2_compact_receipt_valid": true',
+    ]:
+        require(marker in proc.stdout, f"headless acceptance missing evidence: {marker}")
 
 
 def validate_v2_interaction_contract() -> None:
@@ -5724,6 +5746,9 @@ def validate_prompt_system_fixture() -> None:
         proc.returncode == 0,
         f"prompt-system fixture audit failed:\n{proc.stderr}\n{proc.stdout}",
     )
+    require("PROMPT_FIXTURE_AUDIT: PASS" in proc.stdout, "prompt fixture audit missing PASS marker")
+    for adapter in ["seedance", "kling", "runway", "sora", "veo", "generic"]:
+        require(f'"adapter": "{adapter}"' in proc.stdout, f"prompt fixture audit lacks {adapter} matrix")
 
 
 def main() -> int:
@@ -5752,6 +5777,7 @@ def main() -> int:
         ("skills", validate_skills),
         ("activation policy", validate_activation_policy),
         ("routing and context budget", validate_context_budget),
+        ("headless input-to-answer acceptance", validate_headless_acceptance),
         ("v2 interaction contract", validate_v2_interaction_contract),
         ("ADCO native integration contract", validate_adco_native_integration_contract),
         ("project AGENTS generator", validate_project_agents_script),

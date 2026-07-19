@@ -3,9 +3,10 @@ from __future__ import annotations
 
 import json
 import re
+import time
 from pathlib import Path
 
-from dircreative_route import load_policy, self_test as route_self_test
+from dircreative_route import load_policy, route_request, self_test as route_self_test
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -19,9 +20,10 @@ FORBIDDEN_FAST_TERMS = (
     "finaldelivery",
     "client-film-hard-gates.md",
 )
+WARM_ROUTE_P95_BUDGET_MS = 25.0
 
 
-def audit() -> tuple[list[str], dict[str, int | bool]]:
+def audit() -> tuple[list[str], dict[str, int | float | bool]]:
     failures = route_self_test()
     policy = load_policy()
     main_text = MAIN_SKILL.read_text(encoding="utf-8")
@@ -139,7 +141,25 @@ def audit() -> tuple[list[str], dict[str, int | bool]]:
     if delivery.get("duplicate_state_owners_allowed") is not False:
         failures.append("Delivery allows duplicate state owners")
 
-    metrics: dict[str, int | bool] = {
+    latency_requests = [
+        "$dircreative 修改脚本第三句",
+        "$dircreative 开发完整广告片，brief 已完整",
+        "$dircreative 准备客户交付",
+    ]
+    latency_samples: list[float] = []
+    for index in range(300):
+        started = time.perf_counter_ns()
+        route_request(latency_requests[index % len(latency_requests)])
+        latency_samples.append((time.perf_counter_ns() - started) / 1_000_000)
+    latency_samples.sort()
+    p95_index = max(0, int(len(latency_samples) * 0.95) - 1)
+    route_warm_p95_ms = round(latency_samples[p95_index], 4)
+    if route_warm_p95_ms > WARM_ROUTE_P95_BUDGET_MS:
+        failures.append(
+            f"warm route p95 latency {route_warm_p95_ms}ms exceeds {WARM_ROUTE_P95_BUDGET_MS}ms"
+        )
+
+    metrics: dict[str, int | float | bool] = {
         "main_skill_lines": main_lines,
         "main_skill_bytes": main_bytes,
         "unconditional_startup_reads": len(unconditional),
@@ -151,6 +171,9 @@ def audit() -> tuple[list[str], dict[str, int | bool]]:
         "fast_adco_documents": fast.get("adco_documents", -1),
         "studio_perspectives_max": studio.get("perspectives_max", -1),
         "studio_independent_critics_max": studio.get("independent_critics_max", -1),
+        "warm_route_samples": len(latency_samples),
+        "warm_route_p95_ms": route_warm_p95_ms,
+        "warm_route_p95_budget_ms": WARM_ROUTE_P95_BUDGET_MS,
     }
     return failures, metrics
 

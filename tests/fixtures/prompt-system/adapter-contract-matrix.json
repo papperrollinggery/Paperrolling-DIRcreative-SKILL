@@ -1,0 +1,54 @@
+[
+  {
+    "adapter": "seedance",
+    "valid_duration_sec": 10,
+    "unsupported": {
+      "kind": "duration",
+      "value": 16,
+      "expected": "duration is unsupported"
+    }
+  },
+  {
+    "adapter": "kling",
+    "valid_duration_sec": 10,
+    "unsupported": {
+      "kind": "duration",
+      "value": 16,
+      "expected": "duration is unsupported"
+    }
+  },
+  {
+    "adapter": "runway",
+    "valid_duration_sec": 10,
+    "unsupported": {
+      "kind": "native_audio",
+      "expected": "native audio is not verified"
+    }
+  },
+  {
+    "adapter": "sora",
+    "valid_duration_sec": 8,
+    "unsupported": {
+      "kind": "duration",
+      "value": 10,
+      "expected": "duration is unsupported"
+    }
+  },
+  {
+    "adapter": "veo",
+    "valid_duration_sec": 8,
+    "unsupported": {
+      "kind": "duration",
+      "value": 10,
+      "expected": "duration is unsupported"
+    }
+  },
+  {
+    "adapter": "generic",
+    "valid_duration_sec": 10,
+    "unsupported": {
+      "kind": "native_audio",
+      "expected": "native audio is not verified"
+    }
+  }
+]
