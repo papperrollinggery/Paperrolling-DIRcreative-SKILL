@@ -317,11 +317,11 @@ def main() -> int:
             has_terms(
                 stage_gate_contract + "\n" + chat_surface_output,
                 [
-                    "The only v2 external gates are",
-                    "Story, script, shot, visual, reference, prompt, and QA states are reversible",
-                    "internal state.",
-                    "the first response contains useful artifact content",
-                    "raw JSON/YAML prompt bodies are backstage evidence",
+                    "New runs may block for exactly these gates",
+                    "reversible",
+                    "No other stage is a default external user gate",
+                    "put valid work in the first response",
+                    "Do not dump raw YAML/JSON",
                     "stage_gate_integrity: ok",
                     "CHAT_SURFACE_AUDIT: PASS",
                 ],

@@ -2,6 +2,26 @@ project:
   name: Paperrolling-DIRcreative-SKILL
   active_phase: none
   contract_version: 2
+  contract_scope: repository_fixture_plan_not_chat_runtime
+
+runtime_contract_v2:
+  status: active_for_new_runs
+  routing_owner: skills/dircreative/runtime/routing-policy.yaml
+  compact_state_owner: skills/dircreative/runtime/state-snapshot.schema.json
+  legacy_v1_co_creation_schema: docs/film-preproduction/schemas/co-creation-run.yaml
+  legacy_v1_write_allowed: false
+  external_gate_count: 3
+  behavior:
+    continue_without_real_blocker: true
+    bounded_revision_restarts_idea_intake: false
+    known_brief_is_reasked: false
+    direct_artifact_first_response: true
+    full_state_audit_per_reply: false
+  full_state_audit_triggers:
+    - resume
+    - handoff
+    - delivery
+    - completion_claim
 
 foundation_artifacts:
   chat_visualization_contract:

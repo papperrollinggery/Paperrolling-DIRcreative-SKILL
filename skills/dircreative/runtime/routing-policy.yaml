@@ -2,6 +2,31 @@ policy_version: "2.0"
 default_mode: studio
 default_execution_context: standalone_chat
 
+interaction_contract:
+  external_user_gates:
+    - concept_lock
+    - generation_authorization
+    - client_delivery_approval
+  reversible_internal_states:
+    - story_state
+    - script_state
+    - shot_state
+    - visual_state
+    - reference_state
+    - prompt_state
+    - qa_state
+  continue_without_gate:
+    - explicit_continue_without_real_blocker
+    - bounded_artifact_revision
+    - complete_brief_with_no_material_conflict
+    - direct_artifact_request
+  first_response_contract: useful_artifact_first
+  known_brief_policy: reuse_without_reasking
+  state_persistence:
+    fast: memory_only
+    studio: pause_cross_session_or_multi_file_only
+    delivery: required
+
 route_cards:
   fast: skills/dircreative/routes/fast-task.md
   studio: skills/dircreative/routes/studio-development.md
@@ -104,6 +129,7 @@ routes:
     optional_files:
       - docs/film-preproduction/council-adversarial-review.md
     external_user_gate: concept_lock
+    gate_condition: incompatible_creative_directions
     threads_allowed: false
     full_receipt_required: false
   generation_authorization:

@@ -101,8 +101,8 @@ EMPTY_QUALITY_WORDING = {
     "beautiful",
     "premium",
 }
-CO_CREATION_RUN_TYPES = {"dry_run_fixture", "live_user_run"}
-CO_CREATION_GATE_TYPES = [
+LEGACY_V1_CO_CREATION_RUN_TYPES = {"dry_run_fixture", "live_user_run"}
+LEGACY_V1_CO_CREATION_GATE_TYPES = [
     "concept_options_gate",
     "story_approval_gate",
     "script_approval_gate",
@@ -115,9 +115,19 @@ CO_CREATION_GATE_TYPES = [
     "clean_frame_gate",
     "video_prompt_gate",
 ]
-CO_CREATION_GATE_STATUSES = {"pending", "approved", "needs_revision", "skipped_with_risk"}
-CO_CREATION_DECISION_SOURCES = {"real_user", "simulated_fixture", "pending", "system_default"}
-MEDIA_BLOCKING_GATES = {"clean_frame_gate", "video_prompt_gate"}
+LEGACY_V1_CO_CREATION_GATE_STATUSES = {"pending", "approved", "needs_revision", "skipped_with_risk"}
+LEGACY_V1_CO_CREATION_DECISION_SOURCES = {"real_user", "simulated_fixture", "pending", "system_default"}
+LEGACY_V1_MEDIA_BLOCKING_GATES = {"clean_frame_gate", "video_prompt_gate"}
+V2_EXTERNAL_USER_GATES = ["concept_lock", "generation_authorization", "client_delivery_approval"]
+V2_REVERSIBLE_INTERNAL_STATES = [
+    "story_state",
+    "script_state",
+    "shot_state",
+    "visual_state",
+    "reference_state",
+    "prompt_state",
+    "qa_state",
+]
 CLIENT_FILM_STAGE_GATES = ["story", "script", "shot", "asset_reference", "prompt_generation", "client_language"]
 CLIENT_FILM_FORBIDDEN_VISIBLE_TERMS = [
     "prompt",
@@ -1213,11 +1223,13 @@ def validate_longform_reference_pack(path: str) -> None:
 
 
 def validate_co_creation_run(path: str) -> None:
+    """Read a frozen v1 fixture; never use this validator as a v2 run template."""
     data = load_yaml(require_path(path))
     run = data.get("co_creation_run", {})
     require(run, f"{path} missing co_creation_run")
     run_type = run.get("run_type")
-    require(run_type in CO_CREATION_RUN_TYPES, f"{path} invalid run_type: {run_type}")
+    require(run.get("version") in {None, "1.0.0"}, f"{path} legacy fixture must remain v1")
+    require(run_type in LEGACY_V1_CO_CREATION_RUN_TYPES, f"{path} invalid run_type: {run_type}")
     require(run.get("visual_output_mode") in VISUAL_OUTPUT_MODES, f"{path} missing valid visual_output_mode")
     require(run.get("longform_generation_mode") in LONGFORM_MODES, f"{path} missing valid longform_generation_mode")
 
@@ -1230,13 +1242,13 @@ def validate_co_creation_run(path: str) -> None:
 
     policy = data.get("gate_policy", {})
     required_policy_gates = set(policy.get("required_gates", []))
-    required_gates = set(CO_CREATION_GATE_TYPES)
+    required_gates = set(LEGACY_V1_CO_CREATION_GATE_TYPES)
     require(required_gates.issubset(required_policy_gates), f"{path} gate policy missing gates: {sorted(required_gates - required_policy_gates)}")
 
     gates = data.get("gates", [])
     require(gates, f"{path} missing gates")
     gate_types = [gate.get("gate_type") for gate in gates]
-    missing = [gate_type for gate_type in CO_CREATION_GATE_TYPES if gate_type not in gate_types]
+    missing = [gate_type for gate_type in LEGACY_V1_CO_CREATION_GATE_TYPES if gate_type not in gate_types]
     require(not missing, f"{path} missing required gates: {missing}")
     gate_ids = [gate.get("gate_id") for gate in gates]
     require(len(gate_ids) == len(set(gate_ids)), f"{path} duplicate gate ids")
@@ -1249,9 +1261,9 @@ def validate_co_creation_run(path: str) -> None:
         gate_type = gate.get("gate_type")
         status = gate.get("status")
         source = gate.get("decision_source")
-        require(gate_type in CO_CREATION_GATE_TYPES, f"{path} gate {gate_id} has invalid gate_type {gate_type}")
-        require(status in CO_CREATION_GATE_STATUSES, f"{path} gate {gate_id} has invalid status {status}")
-        require(source in CO_CREATION_DECISION_SOURCES, f"{path} gate {gate_id} has invalid decision_source {source}")
+        require(gate_type in LEGACY_V1_CO_CREATION_GATE_TYPES, f"{path} gate {gate_id} has invalid gate_type {gate_type}")
+        require(status in LEGACY_V1_CO_CREATION_GATE_STATUSES, f"{path} gate {gate_id} has invalid status {status}")
+        require(source in LEGACY_V1_CO_CREATION_DECISION_SOURCES, f"{path} gate {gate_id} has invalid decision_source {source}")
         require(isinstance(gate.get("options_presented"), list) and gate.get("options_presented"), f"{path} gate {gate_id} must present options")
 
         if source == "system_default":
@@ -1264,12 +1276,12 @@ def validate_co_creation_run(path: str) -> None:
         if status == "approved":
             require(source in {"real_user", "simulated_fixture"}, f"{path} approved gate {gate_id} has non-final source {source}")
             require(bool(gate.get("selected_option")), f"{path} approved gate {gate_id} missing selected_option")
-            if gate_type in MEDIA_BLOCKING_GATES:
+            if gate_type in LEGACY_V1_MEDIA_BLOCKING_GATES:
                 resolved_media_count += 1
         if status == "skipped_with_risk":
             require(source in {"real_user", "simulated_fixture"}, f"{path} skipped gate {gate_id} has non-final source {source}")
             require(bool(gate.get("selected_option")), f"{path} skipped gate {gate_id} missing selected_option")
-            if gate_type in MEDIA_BLOCKING_GATES:
+            if gate_type in LEGACY_V1_MEDIA_BLOCKING_GATES:
                 resolved_media_count += 1
         if status == "needs_revision":
             require(source in {"real_user", "simulated_fixture"}, f"{path} needs_revision gate {gate_id} must identify a real or simulated reviewer")
@@ -1281,14 +1293,14 @@ def validate_co_creation_run(path: str) -> None:
             )
         if status == "pending":
             require(source == "pending", f"{path} pending gate {gate_id} must use pending source")
-            if gate_type in MEDIA_BLOCKING_GATES:
+            if gate_type in LEGACY_V1_MEDIA_BLOCKING_GATES:
                 require("media_generation" in gate.get("blocks", []), f"{path} pending media gate {gate_id} must block media_generation")
                 pending_media_count += 1
 
     if run_type == "dry_run_fixture":
         require(simulated_count > 0, f"{path} dry run should include labeled simulated gates")
         require(
-            pending_media_count > 0 or resolved_media_count == len(MEDIA_BLOCKING_GATES),
+            pending_media_count > 0 or resolved_media_count == len(LEGACY_V1_MEDIA_BLOCKING_GATES),
             f"{path} dry run must either block pending media gates or explicitly resolve them",
         )
 
@@ -1474,6 +1486,101 @@ def validate_context_budget() -> None:
     )
 
 
+def validate_v2_interaction_contract() -> None:
+    policy = load_yaml(require_path("skills/dircreative/runtime/routing-policy.yaml"))
+    interaction = policy.get("interaction_contract", {})
+    require(interaction.get("external_user_gates") == V2_EXTERNAL_USER_GATES, "v2 external gate set drifted")
+    require(
+        interaction.get("reversible_internal_states") == V2_REVERSIBLE_INTERNAL_STATES,
+        "v2 reversible internal state set drifted",
+    )
+    require(interaction.get("first_response_contract") == "useful_artifact_first", "v2 is not result-first")
+    require(interaction.get("known_brief_policy") == "reuse_without_reasking", "v2 re-asks known briefs")
+    require(interaction.get("state_persistence") == {
+        "fast": "memory_only",
+        "studio": "pause_cross_session_or_multi_file_only",
+        "delivery": "required",
+    }, "v2 compact-state persistence policy drifted")
+    require(policy.get("external_user_gates") == V2_EXTERNAL_USER_GATES, "routing gate allowlist drifted")
+
+    phase = load_yaml(require_path("docs/film-preproduction/phase-contracts.yaml")).get("runtime_contract_v2", {})
+    require(phase.get("status") == "active_for_new_runs", "phase contract does not activate v2 runtime")
+    require(phase.get("external_gate_count") == 3, "phase contract external gate count drifted")
+    require(phase.get("legacy_v1_write_allowed") is False, "phase contract allows new v1 writes")
+    require(phase.get("full_state_audit_triggers") == [
+        "resume",
+        "handoff",
+        "delivery",
+        "completion_claim",
+    ], "full state audit trigger set drifted")
+    for key, expected in {
+        "continue_without_real_blocker": True,
+        "bounded_revision_restarts_idea_intake": False,
+        "known_brief_is_reasked": False,
+        "direct_artifact_first_response": True,
+        "full_state_audit_per_reply": False,
+    }.items():
+        require(phase.get("behavior", {}).get(key) is expected, f"v2 behavior drifted: {key}")
+
+    snapshot = load_json(require_path("skills/dircreative/runtime/state-snapshot.schema.json"))
+    require(set(snapshot.get("required", [])) == {
+        "project_id",
+        "mode",
+        "current_route",
+        "locked_facts",
+        "working_assumptions",
+        "active_outputs",
+        "stale_outputs",
+        "open_questions",
+        "generation_authorized",
+        "client_delivery_approved",
+    }, "compact state snapshot fields drifted")
+
+    legacy_schema = load_yaml(require_path("docs/film-preproduction/schemas/co-creation-run.yaml"))
+    compatibility = legacy_schema.get("compatibility", {})
+    require(compatibility.get("status") == "legacy_read_only", "v1 co-creation schema is not read-only")
+    require(compatibility.get("new_runs_allowed") is False, "v1 co-creation schema allows new runs")
+
+    active_docs = [
+        "docs/film-preproduction/chat-co-creation-interface.md",
+        "docs/film-preproduction/live-chat-start-protocol.md",
+        "docs/film-preproduction/chat-stage-gate-integrity.md",
+        "skills/dircreative/chat-facilitator/SKILL.md",
+    ]
+    combined = "\n".join(require_path(path).read_text(encoding="utf-8") for path in active_docs)
+    for term in [
+        "useful artifact",
+        "reuse",
+        "concept_lock",
+        "generation_authorization",
+        "client_delivery_approval",
+        "story_state",
+        "qa_state",
+        "继续",
+        "优化这个镜头",
+        "修改第三句",
+        "read-only",
+    ]:
+        require(term.casefold() in combined.casefold(), f"v2 chat contract missing {term}")
+    for path in active_docs[:3]:
+        text = require_path(path).read_text(encoding="utf-8")
+        active_text = text.split("## Legacy", 1)[0]
+        leaked = [gate for gate in LEGACY_V1_CO_CREATION_GATE_TYPES if gate in active_text]
+        require(not leaked, f"{path} activates legacy gates: {leaked}")
+
+    route_test = run(["python3", "scripts/dircreative_route.py", "--self-test"])
+    require(route_test.returncode == 0, f"v2 route behavior self-test failed:\n{route_test.stderr}\n{route_test.stdout}")
+    cases = {case["id"]: case for case in load_json(require_path("tests/fixtures/routing/cases.json"))["cases"]}
+    for case_id in ["continue", "third_line", "single_shot", "complete_ad", "concept_conflict", "real_generation", "client_delivery"]:
+        require(case_id in cases, f"missing v2 interaction case: {case_id}")
+    for case_id in ["continue", "third_line", "single_shot", "complete_ad"]:
+        require(cases[case_id]["action"] == "continue", f"{case_id} must continue without a gate")
+        require(cases[case_id]["first_response_contract"] == "useful_artifact_first", f"{case_id} is not result-first")
+    require(cases["concept_conflict"]["external_user_gate"] == "concept_lock", "concept conflict gate mismatch")
+    require(cases["real_generation"]["external_user_gate"] == "generation_authorization", "generation gate mismatch")
+    require(cases["client_delivery"]["external_user_gate"] == "client_delivery_approval", "delivery gate mismatch")
+
+
 def validate_skills() -> None:
     root_skill = require_path("skills/dircreative/SKILL.md")
     root_text = root_skill.read_text(encoding="utf-8")
@@ -1526,7 +1633,16 @@ def validate_skills() -> None:
         require("docs/film-preproduction/chat-co-creation-interface.md" in text, f"{skill_path} missing chat interface knowledge")
         if skill_path == "skills/dircreative/chat-facilitator/SKILL.md":
             require("docs/film-preproduction/chat-stage-gate-integrity.md" in text, "chat facilitator missing stage gate integrity knowledge")
-            require("阶段: 出图执行建议" in text and "阶段: QA 与重试规则" in text, "chat facilitator missing prompt and QA gate rule")
+            for term in [
+                "useful artifact or revision first",
+                "concept_lock",
+                "generation_authorization",
+                "client_delivery_approval",
+                "reversible internal state",
+                "继续",
+                "修改第三句",
+            ]:
+                require(term in text, f"chat facilitator missing v2 behavior: {term}")
         for term in ["阶段:", "智能体创作内容", "用户确认点"]:
             require(term in text, f"{skill_path} missing chat surface term: {term}")
 
@@ -3077,6 +3193,13 @@ def validate_runtime_state_governance() -> None:
     schema = load_json(require_path("docs/film-preproduction/schemas/runtime-state.schema.json"))
     template = load_json(require_path("docs/film-preproduction/templates/runtime-state.template.json"))
     required_terms = [
+        "V2 Persistence Policy",
+        "Fast keeps the compact snapshot in memory",
+        "Studio persists it only for a pause, cross-session resume, or multi-file output",
+        "Delivery always persists it",
+        "Standalone execution does not read ADCO documents",
+        "Do not run the full state audit before every response",
+        "completion claim",
         ".dircreative/state/current.json",
         "current_projection",
         "current.completion_requirements",
@@ -3393,64 +3516,31 @@ def validate_chat_interface() -> None:
     combined = "\n".join(path.read_text(encoding="utf-8").lower() for path in docs)
     required_terms = [
         "chat-first",
-        "frontstage",
-        "backstage",
-        "live operating loop",
-        "one question",
-        "one user decision",
-        "stage",
-        "options",
-        "recommendation",
+        "artifact-backed",
+        "useful artifact",
+        "first response",
+        "continue",
+        "reuse",
+        "concept_lock",
+        "generation_authorization",
+        "client_delivery_approval",
+        "story_state",
+        "script_state",
+        "shot_state",
+        "visual_state",
+        "reference_state",
+        "prompt_state",
+        "qa_state",
         "用户确认点",
         "模拟用户选择",
         "prompt-only",
-        "未生成真实图片/视频",
+        "当前没有生成真实图片或视频",
         "do not dump raw yaml",
-        "multi-review",
-        "compound professional mode",
-        "codex threads",
-        "thread ids",
-        "dispatch record",
-        "worker cleanup",
-        "多专家评审",
-        "ad reference pack",
-        "product identity board",
-        "lighting/material/style board",
-        "storyboard/motion board",
-        "clean frames",
-        "single clean frame",
-        "镜头运动",
-        "产品身份板",
-        "故事板",
-        "earliest unresolved creative gate",
-        "reference strategy must wait",
-        "live-chat-start-protocol",
-        "first reply",
-        "production-room gate",
-        "阶段: 想法读取",
-        "阶段: 完整想法读取",
-        "story/script/shot/visual bible",
-        "do not jump to image/reference strategy",
-        "可以",
-        "测试一下",
-        "qa 与重试规则",
+        "legacy v1",
+        "read-only",
         "goal mode simulation",
-        "goal_context",
-        "目标模式模拟测试",
-        "do not wait for `1`",
-        "阶段: 出图执行建议",
-        "模拟测试结论",
-        "pre-generation qa",
         "post-generation self-qa",
-        "retry routing",
-        "pre_generation_contract",
-        "product identity reference",
-        "中途改需求处理",
         "stale",
-        "revision-scope question",
-        "isolated simulation",
-        "simulated_user",
-        "independent_reviewer",
     ]
     missing = [term for term in required_terms if term.lower() not in combined]
     require(not missing, f"chat interface docs missing required terms: {missing}")
@@ -5598,6 +5688,7 @@ def main() -> int:
         ("skills", validate_skills),
         ("activation policy", validate_activation_policy),
         ("routing and context budget", validate_context_budget),
+        ("v2 interaction contract", validate_v2_interaction_contract),
         ("ADCO native integration contract", validate_adco_native_integration_contract),
         ("project AGENTS generator", validate_project_agents_script),
         ("director room fixture", validate_director_room_fixture),

@@ -1,4 +1,9 @@
-# Co-Creation Gate Policy
+# Co-Creation Gate Policy (Legacy V1, Read Only)
+
+Status: frozen fixture-reader contract. New v2 runs use only `concept_lock`,
+`generation_authorization`, and `client_delivery_approval` from
+`skills/dircreative/runtime/routing-policy.yaml`. The eleven gate types below
+must not be created or required by a new run.
 
 Verified: 2026-05-16
 

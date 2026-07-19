@@ -70,6 +70,30 @@ def audit() -> tuple[list[str], dict[str, int | bool]]:
         if adco_refs and route_id != "adco_specialist_exchange":
             failures.append(f"{route_id}: ADCO integration contract is outside valid handoff route")
 
+    interaction = policy.get("interaction_contract", {})
+    if interaction.get("external_user_gates") != [
+        "concept_lock",
+        "generation_authorization",
+        "client_delivery_approval",
+    ]:
+        failures.append("v2 external user gate set drifted")
+    if interaction.get("reversible_internal_states") != [
+        "story_state",
+        "script_state",
+        "shot_state",
+        "visual_state",
+        "reference_state",
+        "prompt_state",
+        "qa_state",
+    ]:
+        failures.append("v2 reversible internal state set drifted")
+    if interaction.get("state_persistence") != {
+        "fast": "memory_only",
+        "studio": "pause_cross_session_or_multi_file_only",
+        "delivery": "required",
+    }:
+        failures.append("compact state persistence policy drifted")
+
     card_values = set(route_cards.values())
     for mode, path in card_paths.items():
         if not path.is_file():

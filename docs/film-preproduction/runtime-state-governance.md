@@ -1,8 +1,31 @@
 # DIRcreative Runtime State Governance
 
-This contract governs standalone DIRcreative project state. It does not replace ADCO current truth. Under `orchestrated_worker`, DIR returns only its scoped provider artifacts and receipt; ADCO owns the host projection and adoption.
+The active v2 working-state owner is
+`skills/dircreative/runtime/state-snapshot.schema.json`. It contains only project,
+route, locked facts, assumptions, active/stale outputs, open questions, and the two
+external authorization booleans.
 
-## Canonical location
+## V2 Persistence Policy
+
+- Fast keeps the compact snapshot in memory and does not write state by default.
+- Studio persists it only for a pause, cross-session resume, or multi-file output.
+- Delivery always persists it before authorization or client-visible handoff.
+- Standalone execution does not read ADCO documents.
+- Only a validated ADCO handoff may load the ADCO integration contract; ADCO then
+  owns Current Truth and DIR returns only domain output plus domain QA.
+- Do not run the full state audit before every response. Run it only for resume,
+  handoff, Delivery, or a completion claim.
+
+The remainder of this document defines the full durable audit surface used at
+those four boundaries and the read-only v1 migration contract. It is not a Fast
+or ordinary Studio startup dependency.
+
+This contract governs standalone DIRcreative durable project state. It does not
+replace ADCO current truth. Under `orchestrated_worker`, DIR returns only its
+scoped provider artifacts and receipt; ADCO owns the host projection and
+adoption.
+
+## Full Durable State Location
 
 Store the current standalone state at:
 

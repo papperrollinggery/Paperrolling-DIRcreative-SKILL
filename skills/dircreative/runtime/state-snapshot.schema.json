@@ -2,6 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "dircreative.compact-state-snapshot/2.0",
   "title": "DIRcreative Compact State Snapshot",
+  "description": "V2 working state. Fast stays in memory; Studio persists only for pause, cross-session resume, or multi-file output; Delivery persists. Full state audit is reserved for resume, handoff, delivery, and completion claims.",
   "type": "object",
   "additionalProperties": false,
   "required": [

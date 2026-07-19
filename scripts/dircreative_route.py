@@ -85,6 +85,12 @@ def classify_route(request: str, handoff: dict[str, Any] | None = None) -> tuple
     if has(text, r"真实生成|生成授权|授权生成|generation authorization|authorize (?:real )?generation"):
         return "generation_authorization", ["real_generation_requires_authorization"]
 
+    if has(
+        text,
+        r"方向(?:互不兼容|不可兼容|冲突)|不可兼容(?:的)?(?:创意)?方向|incompatible (?:creative )?directions?|material concept conflict",
+    ):
+        return "film_development", ["incompatible_creative_directions", "concept_lock_required"]
+
     bounded = has(
         text,
         r"第三句|一句|一段|单镜头|这个镜头|一个镜头|少量分镜|局部分镜|局部|"
@@ -120,13 +126,25 @@ def route_request(request: str, handoff: dict[str, Any] | None = None) -> dict[s
         if route == "source_maintenance"
         else "standalone_chat"
     )
+    external_user_gate = config["external_user_gate"]
+    if route == "film_development" and "incompatible_creative_directions" not in reason_codes:
+        external_user_gate = None
+        reason_codes = [*reason_codes, "no_material_blocker"]
+    action = "stop_for_external_gate" if external_user_gate else "continue"
+    persistence = policy["interaction_contract"]["state_persistence"][config["mode"]]
     return {
         "execution_context": execution_context,
         "mode": config["mode"],
         "route": route,
         "required_files": config["required_files"],
         "optional_files": config["optional_files"],
-        "external_user_gate": config["external_user_gate"],
+        "external_user_gate": external_user_gate,
+        "action": action,
+        "first_response_contract": (
+            "gate_question" if action == "stop_for_external_gate" else "useful_artifact_first"
+        ),
+        "reuse_known_brief": True,
+        "state_persistence": persistence,
         "threads_allowed": config["threads_allowed"],
         "full_receipt_required": config["full_receipt_required"],
         "reason_codes": reason_codes,
@@ -138,7 +156,16 @@ def self_test() -> list[str]:
     cases = json.loads(CASES_PATH.read_text(encoding="utf-8"))["cases"]
     for case in cases:
         result = route_request(case["input"])
-        for field in ("mode", "route"):
+        for field in (
+            "mode",
+            "route",
+            "external_user_gate",
+            "action",
+            "first_response_contract",
+            "state_persistence",
+        ):
+            if field not in case:
+                continue
             if result[field] != case[field]:
                 failures.append(f"{case['id']}: {field}={result[field]} expected={case[field]}")
     handoff_path = ROOT / "tests/fixtures/activation-policy/valid-adco-v2-handoff.json"
