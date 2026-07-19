@@ -334,6 +334,7 @@ external_orchestrators:
     profile_id: "dircreative.film-preproduction"
     supported_contract_versions:
       - "1.0"
+      - "2.0"
     descriptor_path: "docs/film-preproduction/schemas/adco-specialist-descriptor.json"
     protocol_path: "docs/film-preproduction/adco-integration-contract.md"
     audit_command: "python3 scripts/dircreative_adco_native_exchange.py --self-test"
@@ -342,6 +343,12 @@ external_orchestrators:
     default_execution_mode: "inline"
     compatibility_mode: "provider_descriptor_and_capability_negotiation"
     failure_policy: "fail_closed"
+    v2_transport:
+      execution_mode: "inline"
+      nested_dispatch: false
+      response_scope: "domain_outputs_and_qa_only"
+      handoff_schema: "docs/film-preproduction/schemas/adco-specialist-handoff-v2.schema.json"
+      receipt_schema: "docs/film-preproduction/schemas/adco-specialist-receipt-v2.schema.json"
     caller_owns:
       - user_and_client_interaction
       - project_current_truth

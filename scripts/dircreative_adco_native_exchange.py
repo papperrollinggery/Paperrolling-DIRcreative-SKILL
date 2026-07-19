@@ -33,7 +33,9 @@ def root_skill_path() -> Path:
 
 ROOT_SKILL = root_skill_path()
 PROTOCOL_ID = "adco.specialist-exchange"
-CONTRACT_VERSION = "1.0"
+V1_CONTRACT_VERSION = "1.0"
+V2_CONTRACT_VERSION = "2.0"
+SUPPORTED_CONTRACT_VERSIONS = (V1_CONTRACT_VERSION, V2_CONTRACT_VERSION)
 PROFILE_ID = "dircreative.film-preproduction"
 PROVIDER_ID = "dircreative"
 UUID_RE = re.compile(
@@ -76,6 +78,45 @@ VERDICTS = {
     "needs_user",
     "needs_revision",
     "blocked",
+}
+V2_STATUSES = {"completed", "needs_user", "needs_revision", "blocked", "failed"}
+V2_HANDOFF_FIELDS = {
+    "protocol_id",
+    "contract_version",
+    "task",
+    "brief_snapshot",
+    "locked_decisions",
+    "requested_outputs",
+    "quality_targets",
+    "execution_mode",
+}
+V2_RECEIPT_FIELDS = {
+    "protocol_id",
+    "contract_version",
+    "status",
+    "outputs",
+    "domain_qa",
+    "open_questions",
+}
+V2_OUTPUT_FIELDS = {"output_id", "kind", "path", "sha256"}
+V2_QA_FIELDS = {"brief_adherence", "continuity", "production_clarity", "limitations"}
+V2_FORBIDDEN_CONTROL_FIELDS = {
+    "current_truth",
+    "goal",
+    "versions",
+    "user_confirmations",
+    "client_readiness",
+    "cleanup_state",
+    "nested_dispatch",
+    "claims",
+    "client_ready",
+    "ppt_ready",
+    "final_delivery_ready",
+    "send_ready",
+    "project_complete",
+    "adoption",
+    "visibility",
+    "completion",
 }
 ARTIFACT_IDS = {
     "film.story_package": "DIR-STORY-PACKAGE-001",
@@ -256,12 +297,15 @@ def validate_descriptor(descriptor: dict[str, Any]) -> list[str]:
         failures.append(failure("invalid_protocol", "descriptor protocol_id mismatch"))
     if descriptor.get("message_type") != "descriptor":
         failures.append(failure("invalid_message_type", "descriptor message_type mismatch"))
-    if descriptor.get("descriptor_version") != CONTRACT_VERSION:
+    if descriptor.get("descriptor_version") != V1_CONTRACT_VERSION:
         failures.append(failure("unsupported_descriptor_version", "descriptor_version must be 1.0"))
-    if not valid_string_list(descriptor.get("supported_contract_versions"), allow_empty=False) or CONTRACT_VERSION not in descriptor.get(
-        "supported_contract_versions", []
-    ):
-        failures.append(failure("unsupported_contract_version", "descriptor must support contract version 1.0"))
+    if descriptor.get("supported_contract_versions") != list(SUPPORTED_CONTRACT_VERSIONS):
+        failures.append(
+            failure(
+                "unsupported_contract_version",
+                "descriptor must support contract versions 1.0 and 2.0 in order",
+            )
+        )
     provider = descriptor.get("provider")
     if not isinstance(provider, dict) or provider.get("id") != PROVIDER_ID or not nonempty(provider.get("display_name")):
         failures.append(failure("invalid_provider", "descriptor provider must identify DIRcreative"))
@@ -309,6 +353,16 @@ def validate_descriptor(descriptor: dict[str, Any]) -> list[str]:
                 "DIR domain-delivery receipt extension must be required at version 1.0",
             )
         )
+    v2_contract = profile.get("v2_contract")
+    expected_v2_contract = {
+        "execution_mode": "inline",
+        "nested_dispatch": False,
+        "receipt_shape": "domain_outputs_and_qa_only",
+        "handoff_schema": "docs/film-preproduction/schemas/adco-specialist-handoff-v2.schema.json",
+        "receipt_schema": "docs/film-preproduction/schemas/adco-specialist-receipt-v2.schema.json",
+    }
+    if v2_contract != expected_v2_contract:
+        failures.append(failure("invalid_v2_contract", "descriptor v2 contract declaration drifted"))
     return failures
 
 
@@ -350,7 +404,7 @@ def validate_thread_proof(project_root: Path, handoff: dict[str, Any]) -> list[s
     return failures
 
 
-def validate_handoff(
+def validate_v1_handoff(
     project_root: Path,
     handoff: dict[str, Any],
     descriptor: dict[str, Any],
@@ -358,7 +412,7 @@ def validate_handoff(
     failures = validate_descriptor(descriptor)
     if handoff.get("protocol_id") != PROTOCOL_ID:
         failures.append(failure("invalid_protocol", "handoff protocol_id mismatch"))
-    if handoff.get("contract_version") != CONTRACT_VERSION:
+    if handoff.get("contract_version") != V1_CONTRACT_VERSION:
         failures.append(failure("unsupported_contract_version", "handoff contract_version must be 1.0"))
     if handoff.get("message_type") != "handoff":
         failures.append(failure("invalid_message_type", "handoff message_type mismatch"))
@@ -522,7 +576,7 @@ def validate_handoff(
                     }
                     if (
                         baseline_payload.get("protocol_id") != PROTOCOL_ID
-                        or baseline_payload.get("contract_version") != CONTRACT_VERSION
+                        or baseline_payload.get("contract_version") != V1_CONTRACT_VERSION
                         or baseline_payload.get("message_type") != "host_scope_baseline"
                         or baseline_payload.get("handoff_id") != handoff.get("handoff_id")
                         or baseline_payload.get("manifest_sha256") != host_baseline.get("manifest_sha256")
@@ -614,7 +668,7 @@ def verdict_contract(verdict: str) -> tuple[str, str, str]:
     return "blocked", "blocked", "defer_blocked"
 
 
-def build_receipt(
+def build_v1_receipt(
     project_root: Path,
     handoff: dict[str, Any],
     handoff_path: Path,
@@ -674,7 +728,7 @@ def build_receipt(
     ]
     receipt: dict[str, Any] = {
         "protocol_id": PROTOCOL_ID,
-        "contract_version": CONTRACT_VERSION,
+        "contract_version": V1_CONTRACT_VERSION,
         "message_type": "receipt",
         "receipt_id": "SPR-" + str(uuid.uuid4()),
         "exchange_id": handoff["exchange_id"],
@@ -711,7 +765,7 @@ def build_receipt(
     return receipt, receipt_path
 
 
-def validate_receipt(
+def validate_v1_receipt(
     project_root: Path,
     handoff: dict[str, Any],
     handoff_path: Path,
@@ -720,7 +774,7 @@ def validate_receipt(
     failures: list[str] = []
     for key, expected in [
         ("protocol_id", PROTOCOL_ID),
-        ("contract_version", CONTRACT_VERSION),
+        ("contract_version", V1_CONTRACT_VERSION),
         ("message_type", "receipt"),
         ("exchange_id", handoff.get("exchange_id")),
         ("handoff_id", handoff.get("handoff_id")),
@@ -890,7 +944,7 @@ def validate_receipt(
     return failures
 
 
-def validate_adoption(
+def validate_v1_adoption(
     project_root: Path,
     handoff: dict[str, Any],
     receipt_path: Path,
@@ -898,7 +952,7 @@ def validate_adoption(
     adoption: dict[str, Any],
 ) -> list[str]:
     failures: list[str] = []
-    if adoption.get("protocol_id") != PROTOCOL_ID or adoption.get("contract_version") != CONTRACT_VERSION:
+    if adoption.get("protocol_id") != PROTOCOL_ID or adoption.get("contract_version") != V1_CONTRACT_VERSION:
         failures.append(failure("invalid_protocol", "adoption protocol/version mismatch"))
     if adoption.get("message_type") != "adoption" or adoption.get("decision_owner") != "adco":
         failures.append(failure("invalid_adoption_owner", "ADCO must own the adoption record"))
@@ -1034,6 +1088,377 @@ def validate_adoption(
     return failures
 
 
+def validate_v2_handoff(
+    project_root: Path,
+    handoff: dict[str, Any],
+    descriptor: dict[str, Any],
+) -> list[str]:
+    del project_root  # v2 carries a compact inline brief, not host project state.
+    failures = validate_descriptor(descriptor)
+    missing = V2_HANDOFF_FIELDS - set(handoff)
+    extra = set(handoff) - V2_HANDOFF_FIELDS
+    if missing or extra:
+        failures.append(
+            failure(
+                "invalid_v2_handoff_shape",
+                f"missing={sorted(missing)} extra={sorted(extra)}",
+            )
+        )
+    if "nested_dispatch" in extra or handoff.get("nested_dispatch") is not None:
+        failures.append(failure("nested_dispatch_forbidden", "v2 forbids nested dispatch fields"))
+    reserved = extra & V2_FORBIDDEN_CONTROL_FIELDS
+    if reserved:
+        failures.append(
+            failure(
+                "reserved_control_field",
+                f"v2 handoff copies ADCO-owned fields: {','.join(sorted(reserved))}",
+            )
+        )
+    if handoff.get("protocol_id") != PROTOCOL_ID:
+        failures.append(failure("invalid_protocol", "handoff protocol_id mismatch"))
+    if handoff.get("contract_version") != V2_CONTRACT_VERSION:
+        failures.append(failure("unsupported_contract_version", "handoff contract_version must be 2.0"))
+    if not nonempty(handoff.get("task")):
+        failures.append(failure("invalid_task", "v2 task must be a non-empty string"))
+    if not nonempty(handoff.get("brief_snapshot")):
+        failures.append(failure("invalid_brief_snapshot", "v2 brief_snapshot must be a non-empty string"))
+    for field, allow_empty in [
+        ("locked_decisions", True),
+        ("requested_outputs", False),
+        ("quality_targets", True),
+    ]:
+        value = handoff.get(field)
+        if not valid_string_list(value, allow_empty=allow_empty):
+            failures.append(failure("invalid_v2_handoff_shape", f"{field} must be a string list"))
+        elif len(value) != len(set(value)):
+            failures.append(failure("invalid_v2_handoff_shape", f"{field} must be unique"))
+    requested = handoff.get("requested_outputs")
+    profile = descriptor_profile(descriptor)
+    supported = set(profile.get("capabilities", [])) if profile else set()
+    if isinstance(requested, list):
+        unsupported = set(requested) - supported
+        if unsupported:
+            failures.append(failure("missing_profile_capability", ",".join(sorted(unsupported))))
+    if handoff.get("execution_mode") != "inline":
+        failures.append(failure("nested_dispatch_forbidden", "v2 execution_mode must be inline"))
+    return failures
+
+
+def v2_status_from_verdict(verdict: str) -> str:
+    mapping = {
+        "domain_accepted": "completed",
+        "draft_accepted_with_limitations": "completed",
+        "needs_user": "needs_user",
+        "needs_revision": "needs_revision",
+        "blocked": "blocked",
+    }
+    try:
+        return mapping[verdict]
+    except KeyError as exc:
+        raise ValueError(f"invalid domain verdict: {verdict}") from exc
+
+
+def build_v2_receipt(
+    project_root: Path,
+    handoff: dict[str, Any],
+    handoff_path: Path,
+    artifact_paths: dict[str, str],
+    *,
+    verdict: str | None = None,
+    v2_status: str | None = None,
+    limitations: list[str] | None = None,
+    open_questions: list[str] | None = None,
+    receipt_output: str | None = None,
+) -> tuple[dict[str, Any], Path]:
+    limitations = limitations or []
+    open_questions = open_questions or []
+    status = v2_status or (v2_status_from_verdict(verdict) if verdict is not None else None)
+    if status not in V2_STATUSES:
+        raise ValueError(f"invalid v2 receipt status: {status}")
+    try:
+        handoff_relative = handoff_path.resolve().relative_to(project_root.resolve()).as_posix()
+    except ValueError as exc:
+        raise ValueError("handoff path escapes project") from exc
+    if project_path(project_root, handoff_relative, "handoff") != handoff_path.resolve():
+        raise ValueError("handoff path escapes project")
+    if not handoff_path.is_file() or load_json(handoff_path) != handoff:
+        raise ValueError("handoff file does not match the validated handoff")
+    outputs: list[dict[str, str]] = []
+    physical_outputs: set[tuple[int, int]] = set()
+    for kind, value in artifact_paths.items():
+        if kind not in handoff.get("requested_outputs", []):
+            raise ValueError(f"unrequested output kind: {kind}")
+        if path_has_symlink_component(project_root, value):
+            raise ValueError(f"output artifact uses a symlink: {value}")
+        if any(scopes_overlap(value, protected) for protected in PROTECTED_PATH_ROOTS):
+            raise ValueError(f"output artifact targets ADCO-owned state: {value}")
+        path = project_path(project_root, value, "output artifact")
+        if path is None or not path.is_file():
+            raise ValueError(f"output artifact missing or out of project: {value}")
+        if path.stat().st_size == 0 or path.stat().st_nlink != 1:
+            raise ValueError(f"output artifact must be non-empty and not hardlinked: {value}")
+        identity = (path.stat().st_dev, path.stat().st_ino)
+        if identity in physical_outputs:
+            raise ValueError(f"physical output file is reused: {value}")
+        physical_outputs.add(identity)
+        output_id = ARTIFACT_IDS.get(
+            kind,
+            "DIR-" + re.sub(r"[^A-Z0-9]+", "-", kind.upper()).strip("-"),
+        )
+        outputs.append(
+            {
+                "output_id": output_id,
+                "kind": kind,
+                "path": normalized_path(value),
+                "sha256": sha256(path),
+            }
+        )
+    qa_value = {
+        "completed": "pass",
+        "needs_user": "pending_user_answer",
+        "needs_revision": "needs_revision",
+        "blocked": "blocked",
+        "failed": "failed",
+    }[status]
+    receipt: dict[str, Any] = {
+        "protocol_id": PROTOCOL_ID,
+        "contract_version": V2_CONTRACT_VERSION,
+        "status": status,
+        "outputs": outputs,
+        "domain_qa": {
+            "brief_adherence": qa_value,
+            "continuity": qa_value,
+            "production_clarity": qa_value,
+            "limitations": limitations,
+        },
+        "open_questions": open_questions,
+    }
+    if receipt_output is None:
+        receipt_path = handoff_path.with_name(f"{handoff_path.stem}.receipt.json")
+    else:
+        receipt_path = project_path(project_root, receipt_output, "receipt")
+        if receipt_path is None:
+            raise ValueError("receipt path escapes project")
+    write_json(receipt_path, receipt)
+    return receipt, receipt_path
+
+
+def validate_v2_receipt(
+    project_root: Path,
+    handoff: dict[str, Any],
+    handoff_path: Path,
+    receipt: dict[str, Any],
+) -> list[str]:
+    failures: list[str] = []
+    missing = V2_RECEIPT_FIELDS - set(receipt)
+    extra = set(receipt) - V2_RECEIPT_FIELDS
+    if missing or extra:
+        failures.append(
+            failure(
+                "invalid_v2_receipt_shape",
+                f"missing={sorted(missing)} extra={sorted(extra)}",
+            )
+        )
+    if "nested_dispatch" in extra:
+        failures.append(failure("nested_dispatch_forbidden", "v2 receipt cannot claim nested dispatch"))
+    reserved = extra & V2_FORBIDDEN_CONTROL_FIELDS
+    if reserved:
+        failures.append(
+            failure(
+                "reserved_readiness_claim",
+                f"v2 receipt contains ADCO-owned fields: {','.join(sorted(reserved))}",
+            )
+        )
+    if receipt.get("protocol_id") != PROTOCOL_ID:
+        failures.append(failure("invalid_protocol", "receipt protocol_id mismatch"))
+    if receipt.get("contract_version") != V2_CONTRACT_VERSION:
+        failures.append(failure("unsupported_contract_version", "receipt contract_version must be 2.0"))
+    status = receipt.get("status")
+    if status not in V2_STATUSES:
+        failures.append(failure("invalid_v2_status", str(status)))
+    try:
+        handoff_relative = handoff_path.resolve().relative_to(project_root.resolve()).as_posix()
+    except ValueError:
+        handoff_relative = ""
+    if (
+        not handoff_relative
+        or project_path(project_root, handoff_relative, "handoff") != handoff_path.resolve()
+        or not handoff_path.is_file()
+        or load_json(handoff_path) != handoff
+    ):
+        failures.append(failure("handoff_identity_mismatch", "handoff file does not match validation input"))
+
+    requested = set(handoff.get("requested_outputs", []))
+    outputs = receipt.get("outputs")
+    if not isinstance(outputs, list):
+        failures.append(failure("invalid_output_artifacts", "outputs must be a list"))
+        outputs = []
+    if status == "completed" and not outputs:
+        failures.append(failure("empty_completed_receipt", "completed receipt requires outputs"))
+    ids: set[str] = set()
+    kinds: set[str] = set()
+    paths: set[str] = set()
+    physical_outputs: set[tuple[int, int]] = set()
+    for item in outputs:
+        if not isinstance(item, dict):
+            failures.append(failure("invalid_output_artifacts", "output entries must be objects"))
+            continue
+        if set(item) != V2_OUTPUT_FIELDS:
+            failures.append(
+                failure(
+                    "invalid_v2_output_shape",
+                    f"output fields must be {sorted(V2_OUTPUT_FIELDS)}",
+                )
+            )
+        output_id = item.get("output_id")
+        kind = item.get("kind")
+        value = item.get("path")
+        digest = item.get("sha256")
+        if not nonempty(output_id) or output_id in ids:
+            failures.append(failure("duplicate_output_artifact", str(output_id)))
+        else:
+            ids.add(output_id)
+        if not nonempty(kind) or kind in kinds or kind not in requested:
+            failures.append(failure("unrequested_output_kind", str(kind)))
+        else:
+            kinds.add(kind)
+        normalized_value = normalized_path(value) if isinstance(value, str) else ""
+        if not nonempty(value) or normalized_value in paths:
+            failures.append(failure("duplicate_output_artifact", str(value)))
+        else:
+            paths.add(normalized_value)
+        if isinstance(value, str) and any(
+            scopes_overlap(value, protected) for protected in PROTECTED_PATH_ROOTS
+        ):
+            failures.append(failure("protected_output_target", value))
+        target = project_path(project_root, value, "output")
+        if target is None or not target.is_file():
+            failures.append(failure("missing_output_artifact", str(value)))
+        elif path_has_symlink_component(project_root, str(value)):
+            failures.append(failure("invalid_output_artifact", f"output must not be a symlink: {value}"))
+        elif target.stat().st_size == 0 or target.stat().st_nlink != 1:
+            failures.append(failure("invalid_output_artifact", f"output must be non-empty and not hardlinked: {value}"))
+        elif (target.stat().st_dev, target.stat().st_ino) in physical_outputs:
+            failures.append(failure("duplicate_output_artifact", f"physical output file is reused: {value}"))
+        elif not isinstance(digest, str) or not SHA_RE.fullmatch(digest) or digest != sha256(target):
+            failures.append(failure("output_hash_mismatch", str(output_id)))
+        else:
+            physical_outputs.add((target.stat().st_dev, target.stat().st_ino))
+    if status == "completed" and kinds != requested:
+        failures.append(failure("missing_requested_output", ",".join(sorted(requested - kinds))))
+
+    domain_qa = receipt.get("domain_qa")
+    if not isinstance(domain_qa, dict) or set(domain_qa) != V2_QA_FIELDS:
+        failures.append(failure("invalid_domain_qa", "domain_qa must use the compact v2 shape"))
+        domain_qa = {}
+    for field in ["brief_adherence", "continuity", "production_clarity"]:
+        value = domain_qa.get(field)
+        if not isinstance(value, str) or (status == "completed" and not value.strip()):
+            failures.append(failure("invalid_domain_qa", f"domain_qa.{field} is invalid"))
+    if not valid_string_list(domain_qa.get("limitations")):
+        failures.append(failure("invalid_domain_qa", "domain_qa.limitations must be a string list"))
+    questions = receipt.get("open_questions")
+    if not valid_string_list(questions):
+        failures.append(failure("invalid_open_questions", "open_questions must be a string list"))
+        questions = []
+    if status == "needs_user" and not questions:
+        failures.append(failure("invalid_open_questions", "needs_user requires at least one question"))
+    return failures
+
+
+def validate_handoff(
+    project_root: Path,
+    handoff: dict[str, Any],
+    descriptor: dict[str, Any],
+) -> list[str]:
+    validators = {
+        V1_CONTRACT_VERSION: validate_v1_handoff,
+        V2_CONTRACT_VERSION: validate_v2_handoff,
+    }
+    validator = validators.get(handoff.get("contract_version"))
+    if validator is None:
+        return [failure("unsupported_contract_version", str(handoff.get("contract_version")))]
+    return validator(project_root, handoff, descriptor)
+
+
+def build_receipt(
+    project_root: Path,
+    handoff: dict[str, Any],
+    handoff_path: Path,
+    artifact_paths: dict[str, str],
+    *,
+    verdict: str | None = None,
+    v2_status: str | None = None,
+    limitations: list[str] | None = None,
+    open_questions: list[Any] | None = None,
+    receipt_output: str | None = None,
+) -> tuple[dict[str, Any], Path]:
+    version = handoff.get("contract_version")
+    if version == V1_CONTRACT_VERSION:
+        if verdict is None or v2_status is not None:
+            raise ValueError("v1 receipt requires --domain-verdict and does not accept --status")
+        if receipt_output is not None:
+            raise ValueError("v1 receipt path is owned by handoff.scope.receipt_path")
+        return build_v1_receipt(
+            project_root,
+            handoff,
+            handoff_path,
+            artifact_paths,
+            verdict=verdict,
+            limitations=limitations,
+            open_questions=open_questions,
+        )
+    if version == V2_CONTRACT_VERSION:
+        if open_questions is not None and not all(isinstance(item, str) for item in open_questions):
+            raise ValueError("v2 open questions must be strings")
+        return build_v2_receipt(
+            project_root,
+            handoff,
+            handoff_path,
+            artifact_paths,
+            verdict=verdict,
+            v2_status=v2_status,
+            limitations=limitations,
+            open_questions=open_questions,
+            receipt_output=receipt_output,
+        )
+    raise ValueError(f"unsupported contract version: {version}")
+
+
+def validate_receipt(
+    project_root: Path,
+    handoff: dict[str, Any],
+    handoff_path: Path,
+    receipt: dict[str, Any],
+) -> list[str]:
+    version = handoff.get("contract_version")
+    if receipt.get("contract_version") != version:
+        return [failure("receipt_identity_mismatch", "contract_version")]
+    validators = {
+        V1_CONTRACT_VERSION: validate_v1_receipt,
+        V2_CONTRACT_VERSION: validate_v2_receipt,
+    }
+    validator = validators.get(version)
+    if validator is None:
+        return [failure("unsupported_contract_version", str(version))]
+    return validator(project_root, handoff, handoff_path, receipt)
+
+
+def validate_adoption(
+    project_root: Path,
+    handoff: dict[str, Any],
+    receipt_path: Path,
+    receipt: dict[str, Any],
+    adoption: dict[str, Any],
+) -> list[str]:
+    version = handoff.get("contract_version")
+    if version == V1_CONTRACT_VERSION:
+        return validate_v1_adoption(project_root, handoff, receipt_path, receipt, adoption)
+    if version == V2_CONTRACT_VERSION:
+        return [failure("v2_adoption_owned_by_adco", "DIRcreative does not write or validate v2 adoption state")]
+    return [failure("unsupported_contract_version", str(version))]
+
+
 def make_fixture_handoff(project: Path, descriptor: dict[str, Any]) -> dict[str, Any]:
     source = project / "AD-creative/proposal_architecture/specialist_input.md"
     source.parent.mkdir(parents=True, exist_ok=True)
@@ -1046,7 +1471,7 @@ def make_fixture_handoff(project: Path, descriptor: dict[str, Any]) -> dict[str,
     baseline_path = project / "AD-creative/orchestrator/specialist_exchange/baselines/SPH-001.json"
     baseline_payload = {
         "protocol_id": PROTOCOL_ID,
-        "contract_version": CONTRACT_VERSION,
+        "contract_version": V1_CONTRACT_VERSION,
         "message_type": "host_scope_baseline",
         "handoff_id": "SPH-001",
         "excluded_roots": [
@@ -1060,7 +1485,7 @@ def make_fixture_handoff(project: Path, descriptor: dict[str, Any]) -> dict[str,
     write_json(baseline_path, baseline_payload)
     return {
         "protocol_id": PROTOCOL_ID,
-        "contract_version": CONTRACT_VERSION,
+        "contract_version": V1_CONTRACT_VERSION,
         "message_type": "handoff",
         "exchange_id": "SPX-001",
         "handoff_id": "SPH-001",
@@ -1145,7 +1570,7 @@ def write_story_package(project: Path, handoff: dict[str, Any]) -> str:
     return str(path.relative_to(project))
 
 
-def run_self_test() -> tuple[bool, dict[str, Any]]:
+def run_v1_self_test() -> tuple[bool, dict[str, Any]]:
     descriptor = load_json(DESCRIPTOR_PATH)
     with tempfile.TemporaryDirectory(prefix="dircreative-adco-native-selftest-") as raw:
         project = Path(raw)
@@ -1168,7 +1593,7 @@ def run_self_test() -> tuple[bool, dict[str, Any]]:
         shutil.copy2(project / story_path, target)
         adoption = {
             "protocol_id": PROTOCOL_ID,
-            "contract_version": CONTRACT_VERSION,
+            "contract_version": V1_CONTRACT_VERSION,
             "message_type": "adoption",
             "adoption_id": "SPA-SPH-001",
             "handoff_id": handoff["handoff_id"],
@@ -1362,6 +1787,171 @@ def run_self_test() -> tuple[bool, dict[str, Any]]:
             "receipt_failures": receipt_failures,
             "adoption_failures": adoption_failures,
         }
+
+
+def make_v2_fixture_handoff() -> dict[str, Any]:
+    return {
+        "protocol_id": PROTOCOL_ID,
+        "contract_version": V2_CONTRACT_VERSION,
+        "task": "Create a film story package for a 60-second vertical cold-brew ad.",
+        "brief_snapshot": (
+            "Northline Cold Brew gives urban professionals a precise morning reset; "
+            "no unapproved logo, packaging, mandatory copy, or music claims."
+        ),
+        "locked_decisions": ["60-second vertical format", "internal specialist draft"],
+        "requested_outputs": ["film.story_package"],
+        "quality_targets": ["clear story progression", "continuous product handling"],
+        "execution_mode": "inline",
+    }
+
+
+def run_v2_self_test() -> tuple[bool, dict[str, Any]]:
+    descriptor = load_json(DESCRIPTOR_PATH)
+    with tempfile.TemporaryDirectory(prefix="dircreative-adco-native-v2-selftest-") as raw:
+        project = Path(raw)
+        handoff = make_v2_fixture_handoff()
+        handoff_path = project / "exchange/v2-handoff.json"
+        write_json(handoff_path, handoff)
+        handoff_failures = validate_handoff(project, handoff, descriptor)
+        output_path = project / "domain-artifacts/story-package.md"
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(
+            "# Northline Cold Brew Story Package\n\n"
+            "Morning pressure resolves through a deliberate cold-brew ritual. "
+            "The product remains visible through setup, pour, first sip, and end beat.\n",
+            encoding="utf-8",
+        )
+        output_relative = output_path.relative_to(project).as_posix()
+        receipt, receipt_path = build_receipt(
+            project,
+            handoff,
+            handoff_path,
+            {"film.story_package": output_relative},
+            verdict="domain_accepted",
+            receipt_output="exchange/v2-receipt.json",
+        )
+        receipt_failures = validate_receipt(project, handoff, handoff_path, receipt)
+
+        negative: dict[str, bool] = {}
+        mutated_handoff = copy.deepcopy(handoff)
+        mutated_handoff["nested_dispatch"] = True
+        negative["nested_dispatch_field_rejected"] = "nested_dispatch_forbidden" in failure_ids(
+            validate_handoff(project, mutated_handoff, descriptor)
+        )
+        mutated_handoff = copy.deepcopy(handoff)
+        mutated_handoff["execution_mode"] = "codex_thread"
+        negative["non_inline_execution_rejected"] = "nested_dispatch_forbidden" in failure_ids(
+            validate_handoff(project, mutated_handoff, descriptor)
+        )
+        mutated_handoff = copy.deepcopy(handoff)
+        mutated_handoff["current_truth"] = {"status": "client_ready"}
+        negative["copied_control_plane_rejected"] = "reserved_control_field" in failure_ids(
+            validate_handoff(project, mutated_handoff, descriptor)
+        )
+        mutated_receipt = copy.deepcopy(receipt)
+        mutated_receipt["client_ready"] = False
+        negative["reserved_readiness_claim_rejected"] = "reserved_readiness_claim" in failure_ids(
+            validate_receipt(project, handoff, handoff_path, mutated_receipt)
+        )
+        mutated_receipt = copy.deepcopy(receipt)
+        mutated_receipt["outputs"][0]["sha256"] = "0" * 64
+        negative["output_hash_mismatch_rejected"] = "output_hash_mismatch" in failure_ids(
+            validate_receipt(project, handoff, handoff_path, mutated_receipt)
+        )
+        mutated_receipt = copy.deepcopy(receipt)
+        mutated_receipt["outputs"] = []
+        negative["empty_completed_receipt_rejected"] = "empty_completed_receipt" in failure_ids(
+            validate_receipt(project, handoff, handoff_path, mutated_receipt)
+        )
+        needs_user, needs_user_path = build_receipt(
+            project,
+            handoff,
+            handoff_path,
+            {},
+            verdict="needs_user",
+            open_questions=["Which approved end-card line should the specialist use?"],
+            receipt_output="exchange/v2-needs-user-receipt.json",
+        )
+        needs_user_failures = validate_receipt(project, handoff, handoff_path, needs_user)
+        failed, failed_path = build_receipt(
+            project,
+            handoff,
+            handoff_path,
+            {},
+            v2_status="failed",
+            limitations=["Specialist processing failed before producing an artifact."],
+            receipt_output="exchange/v2-failed-receipt.json",
+        )
+        failed_receipt_failures = validate_receipt(project, handoff, handoff_path, failed)
+        adoption_failures = validate_adoption(project, handoff, receipt_path, receipt, {})
+        compact_handoff = set(handoff) == V2_HANDOFF_FIELDS
+        compact_receipt = set(receipt) == V2_RECEIPT_FIELDS
+        output_hashes_only = (
+            "handoff_sha256" not in receipt
+            and "descriptor_sha256" not in receipt
+            and set(receipt["outputs"][0]) == V2_OUTPUT_FIELDS
+            and receipt["outputs"][0]["sha256"] == sha256(output_path)
+        )
+        control_fields_absent = not (
+            (set(handoff) | set(receipt)) & V2_FORBIDDEN_CONTROL_FIELDS
+        )
+        ok = all(
+            [
+                not handoff_failures,
+                not receipt_failures,
+                not needs_user_failures,
+                not failed_receipt_failures,
+                receipt_path.is_file(),
+                needs_user_path.is_file(),
+                failed_path.is_file(),
+                compact_handoff,
+                compact_receipt,
+                output_hashes_only,
+                control_fields_absent,
+                "v2_adoption_owned_by_adco" in failure_ids(adoption_failures),
+                *negative.values(),
+            ]
+        )
+        return ok, {
+            "descriptor_supports_v1_v2": descriptor.get("supported_contract_versions")
+            == list(SUPPORTED_CONTRACT_VERSIONS),
+            "handoff_valid": not handoff_failures,
+            "compact_handoff_valid": compact_handoff,
+            "receipt_valid": not receipt_failures,
+            "compact_receipt_valid": compact_receipt,
+            "needs_user_receipt_valid": not needs_user_failures,
+            "explicit_failed_receipt_valid": not failed_receipt_failures,
+            "output_hashes_only": output_hashes_only,
+            "adco_control_fields_absent": control_fields_absent,
+            "adoption_owned_by_adco": "v2_adoption_owned_by_adco" in failure_ids(adoption_failures),
+            **negative,
+            "handoff_failures": handoff_failures,
+            "receipt_failures": receipt_failures,
+            "needs_user_failures": needs_user_failures,
+            "failed_receipt_failures": failed_receipt_failures,
+        }
+
+
+def run_self_test() -> tuple[bool, dict[str, Any]]:
+    v1_ok, v1_report = run_v1_self_test()
+    v2_ok, v2_report = run_v2_self_test()
+    return v1_ok and v2_ok, {
+        "v1_read_compatibility": v1_ok,
+        "v2_roundtrip_valid": v2_ok,
+        **{f"v1_{key}": value for key, value in v1_report.items() if isinstance(value, bool)},
+        **{f"v2_{key}": value for key, value in v2_report.items() if isinstance(value, bool)},
+        "handoff_failures": [
+            *[f"v1: {item}" for item in v1_report.get("handoff_failures", [])],
+            *[f"v2: {item}" for item in v2_report.get("handoff_failures", [])],
+        ],
+        "receipt_failures": [
+            *[f"v1: {item}" for item in v1_report.get("receipt_failures", [])],
+            *[f"v2: {item}" for item in v2_report.get("receipt_failures", [])],
+            *[f"v2 needs_user: {item}" for item in v2_report.get("needs_user_failures", [])],
+            *[f"v2 failed: {item}" for item in v2_report.get("failed_receipt_failures", [])],
+        ],
+        "adoption_failures": v1_report.get("adoption_failures", []),
+    }
 
 
 def import_adco(adco_repo: Path) -> Any:
@@ -1918,7 +2508,7 @@ def parse_artifacts(values: list[str]) -> dict[str, str]:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="DIRcreative provider bridge for ADCO specialist exchange v1.")
+    parser = argparse.ArgumentParser(description="DIRcreative provider bridge for ADCO specialist exchange v1/v2.")
     parser.add_argument("--self-test", action="store_true")
     parser.add_argument("--adco-repo", help="Run a real temp-project roundtrip against this ADCO checkout.")
     subparsers = parser.add_subparsers(dest="command")
@@ -1933,7 +2523,10 @@ def main() -> int:
     receipt_parser.add_argument("--handoff", required=True)
     receipt_parser.add_argument("--descriptor", default=str(DESCRIPTOR_PATH))
     receipt_parser.add_argument("--artifact", action="append", default=[])
-    receipt_parser.add_argument("--domain-verdict", choices=sorted(VERDICTS), required=True)
+    receipt_state = receipt_parser.add_mutually_exclusive_group(required=True)
+    receipt_state.add_argument("--domain-verdict", choices=sorted(VERDICTS))
+    receipt_state.add_argument("--status", choices=sorted(V2_STATUSES), help="v2 compact receipt status")
+    receipt_parser.add_argument("--receipt-output", help="v2 project-relative receipt path")
     receipt_parser.add_argument("--limitation", action="append", default=[])
     receipt_parser.add_argument("--open-question", action="append", default=[])
 
@@ -1982,17 +2575,23 @@ def main() -> int:
         print_report("DIRcreative ADCO Native Exchange", False, {"handoff_failures": handoff_failures}, "ADCO_NATIVE_EXCHANGE")
         return 1
     if args.command == "build-receipt":
-        questions: list[dict[str, str]] = []
-        for number, value in enumerate(args.open_question, start=1):
-            questions.append({"id": f"Q-{number}", "question": value})
+        if handoff.get("contract_version") == V2_CONTRACT_VERSION:
+            questions: list[Any] = list(args.open_question)
+        else:
+            questions = [
+                {"id": f"Q-{number}", "question": value}
+                for number, value in enumerate(args.open_question, start=1)
+            ]
         receipt, path = build_receipt(
             project,
             handoff,
             handoff_path,
             parse_artifacts(args.artifact),
             verdict=args.domain_verdict,
+            v2_status=args.status,
             limitations=args.limitation,
             open_questions=questions,
+            receipt_output=args.receipt_output,
         )
         failures = validate_receipt(project, handoff, handoff_path, receipt)
         print(f"RECEIPT={path}")

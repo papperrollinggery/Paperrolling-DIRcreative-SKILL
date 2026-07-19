@@ -313,6 +313,8 @@ def validate_required_paths() -> None:
         "docs/film-preproduction/phase-contracts.yaml",
         "docs/film-preproduction/schemas/skill-orchestration.yaml",
         "docs/film-preproduction/schemas/adco-specialist-descriptor.json",
+        "docs/film-preproduction/schemas/adco-specialist-handoff-v2.schema.json",
+        "docs/film-preproduction/schemas/adco-specialist-receipt-v2.schema.json",
         "skills/dircreative/agents/openai.yaml",
         "skills/dircreative/runtime/routing-policy.yaml",
         "skills/dircreative/runtime/state-snapshot.schema.json",
@@ -1701,11 +1703,12 @@ def validate_adco_native_integration_contract() -> None:
         "ADCO integration doc": (
             doc_text,
             [
-                "Canonical Transport",
+                "Active Compact Transport (v2)",
                 "adco.specialist-exchange",
-                "dircreative.film-preproduction",
                 "provider descriptor",
-                "ADCO adoption",
+                "v1 Read Compatibility",
+                "domain artifacts and domain QA",
+                "ADCO owns adoption",
                 "claims.client_ready: false",
                 "claims.control_plane_updated: false",
                 "host-baseline",
@@ -1754,7 +1757,10 @@ def validate_adco_native_integration_contract() -> None:
     require(descriptor.get("protocol_id") == "adco.specialist-exchange", "ADCO descriptor protocol mismatch")
     require(descriptor.get("message_type") == "descriptor", "ADCO descriptor message type mismatch")
     require(descriptor.get("descriptor_version") == "1.0", "ADCO descriptor version mismatch")
-    require("1.0" in descriptor.get("supported_contract_versions", []), "ADCO descriptor lacks v1 support")
+    require(
+        descriptor.get("supported_contract_versions") == ["1.0", "2.0"],
+        "ADCO descriptor must declare ordered v1/v2 support",
+    )
     provider = descriptor.get("provider", {})
     require(provider.get("id") == "dircreative", "ADCO descriptor provider mismatch")
     require(provider.get("skill_sha256") == hashlib.sha256(root_path.read_bytes()).hexdigest(), "ADCO descriptor skill hash is stale")
@@ -1781,12 +1787,61 @@ def validate_adco_native_integration_contract() -> None:
         == {"id": "dircreative.domain-delivery", "version": "1.0", "required": True},
         "DIRcreative descriptor receipt extension drifted",
     )
+    require(
+        profile.get("v2_contract")
+        == {
+            "execution_mode": "inline",
+            "nested_dispatch": False,
+            "receipt_shape": "domain_outputs_and_qa_only",
+            "handoff_schema": "docs/film-preproduction/schemas/adco-specialist-handoff-v2.schema.json",
+            "receipt_schema": "docs/film-preproduction/schemas/adco-specialist-receipt-v2.schema.json",
+        },
+        "DIRcreative descriptor v2 contract drifted",
+    )
+
+    handoff_schema = load_json(
+        require_path("docs/film-preproduction/schemas/adco-specialist-handoff-v2.schema.json")
+    )
+    receipt_schema = load_json(
+        require_path("docs/film-preproduction/schemas/adco-specialist-receipt-v2.schema.json")
+    )
+    require(handoff_schema.get("additionalProperties") is False, "v2 handoff schema must stay compact")
+    require(
+        handoff_schema.get("properties", {}).get("contract_version", {}).get("const") == "2.0",
+        "v2 handoff schema version drifted",
+    )
+    require(
+        handoff_schema.get("properties", {}).get("execution_mode", {}).get("const") == "inline",
+        "v2 handoff must remain inline",
+    )
+    require(receipt_schema.get("additionalProperties") is False, "v2 receipt schema must stay compact")
+    require(
+        receipt_schema.get("properties", {}).get("contract_version", {}).get("const") == "2.0",
+        "v2 receipt schema version drifted",
+    )
+    require(
+        set(receipt_schema.get("properties", {}))
+        == {"protocol_id", "contract_version", "status", "outputs", "domain_qa", "open_questions"},
+        "v2 receipt schema contains control-plane fields",
+    )
 
     orchestration = load_yaml(require_path("docs/film-preproduction/schemas/skill-orchestration.yaml"))
     external = orchestration.get("external_orchestrators", {}).get("adco", {})
     require(external.get("protocol_id") == "adco.specialist-exchange", "skill orchestration protocol drift")
     require(external.get("profile_id") == "dircreative.film-preproduction", "skill orchestration profile drift")
     require(external.get("failure_policy") == "fail_closed", "ADCO adapter must fail closed")
+    require(external.get("supported_contract_versions") == ["1.0", "2.0"], "skill orchestration lacks v2")
+    require(
+        external.get("v2_transport")
+        == {
+            "execution_mode": "inline",
+            "nested_dispatch": False,
+            "response_scope": "domain_outputs_and_qa_only",
+            "handoff_schema": "docs/film-preproduction/schemas/adco-specialist-handoff-v2.schema.json",
+            "receipt_schema": "docs/film-preproduction/schemas/adco-specialist-receipt-v2.schema.json",
+        },
+        "skill orchestration v2 transport drifted",
+    )
     declared_subskills = {item.get("skill_id") for item in orchestration.get("subskills", [])}
     actual_subskills = {path.parent.name for path in internal_skill_paths()}
     require(declared_subskills == actual_subskills, f"subskill registry drift: declared={sorted(declared_subskills)} actual={sorted(actual_subskills)}")

@@ -1,30 +1,57 @@
 # ADCO Native Specialist Exchange
 
-Verified against the active ADCO worktree: 2026-07-10.
+Provider-side v1/v2 validation verified in isolated fixtures: 2026-07-19. Bilateral compatibility still requires an explicit ADCO checkout audit.
 
-## Canonical Transport
+## Active Compact Transport (v2)
 
-DIRcreative integrates through ADCO's neutral transport, not a DIR-owned combined envelope:
+New provider writes use `adco.specialist-exchange@2.0`. The handoff contains only the assigned task, a compact brief snapshot, locked decisions, requested domain outputs, quality targets, and inline execution mode:
 
-```yaml
-protocol_id: adco.specialist-exchange
-contract_version: "1.0"
-profile_id: dircreative.film-preproduction
+```json
+{
+  "protocol_id": "adco.specialist-exchange",
+  "contract_version": "2.0",
+  "task": "",
+  "brief_snapshot": "",
+  "locked_decisions": [],
+  "requested_outputs": [],
+  "quality_targets": [],
+  "execution_mode": "inline"
+}
 ```
 
-The exchange has four separate JSON messages:
+`execution_mode` must be `inline`. Any nested-dispatch field or non-inline mode is rejected. The handoff must not copy ADCO Current Truth, Goal, version state, user confirmations, Client Readiness, cleanup state, adoption state, or completion claims.
 
-```text
-provider descriptor -> ADCO handoff -> DIRcreative receipt -> ADCO adoption
+DIRcreative returns only domain artifacts and domain QA:
+
+```json
+{
+  "protocol_id": "adco.specialist-exchange",
+  "contract_version": "2.0",
+  "status": "completed|needs_user|needs_revision|blocked|failed",
+  "outputs": [],
+  "domain_qa": {
+    "brief_adherence": "",
+    "continuity": "",
+    "production_clarity": "",
+    "limitations": []
+  },
+  "open_questions": []
+}
 ```
 
-DIRcreative publishes:
+Each output entry contains only `output_id`, requested `kind`, project-relative `path`, and the SHA-256 of the real non-empty output file. v2 does not bind descriptor, handoff, Goal, readiness, version, visibility, cleanup, or other control-plane hashes. ADCO owns adoption, version mapping, client visibility, readiness, and completion after it validates the returned files.
+
+Published schemas:
 
 ```text
 docs/film-preproduction/schemas/adco-specialist-descriptor.json
+docs/film-preproduction/schemas/adco-specialist-handoff-v2.schema.json
+docs/film-preproduction/schemas/adco-specialist-receipt-v2.schema.json
 ```
 
-Validate the portable provider side:
+The provider descriptor declares `supported_contract_versions: ["1.0", "2.0"]`. Validation dispatches by the handoff's `contract_version`; there is no single-version acceptance constant.
+
+Validate both provider versions in isolated temporary projects:
 
 ```bash
 python3 scripts/dircreative_adco_native_exchange.py --self-test
@@ -33,7 +60,18 @@ python3 scripts/dircreative_adco_native_exchange.py validate-handoff \
   --handoff <handoff.json>
 ```
 
-Run the real cross-repository roundtrip against an ADCO checkout:
+Build a compact v2 receipt with either the existing domain verdict vocabulary or an explicit v2 status:
+
+```bash
+python3 scripts/dircreative_adco_native_exchange.py build-receipt \
+  --project-root <project_dir> \
+  --handoff <handoff-v2.json> \
+  --artifact film.story_package=domain-artifacts/story-package.md \
+  --status completed \
+  --receipt-output exchange/receipt-v2.json
+```
+
+Run the real cross-repository v1 roundtrip against an ADCO checkout when that checkout still exposes the v1 API:
 
 ```bash
 python3 scripts/dircreative_adco_native_exchange.py \
@@ -44,15 +82,21 @@ python3 scripts/dircreative_adco_native_exchange.py \
 
 | Surface | ADCO | DIRcreative provider |
 |---|---|---|
-| Client/business truth | owns and versions | consumes declared source artifacts |
-| User/client questions | asks and records | returns structured `open_questions` |
+| Client/business truth | owns and versions | consumes only the compact brief/locks supplied in v2 |
+| User/client questions | asks and records | returns `open_questions`; never asks the client directly |
 | Film craft | sets bounded objective and requested kinds | story, treatment, script, shots, visual bible, prompt/reference plan, domain QA |
-| Execution | selects inline/thread/external mode | stays inside selected mode and exact scope |
-| Adoption | owns mapping and decision | recommends only |
-| Readiness | owns client, PPT, package, send gates | claims all three readiness flags false |
-| Delivery | owns exports, versions, PPT, FinalDelivery | never writes those surfaces |
+| Execution | supplies v2 inline work | never dispatches another worker |
+| Adoption | owns mapping and decision | returns no adoption record in v2 |
+| Readiness | owns client, PPT, package, send gates | returns no readiness claims in v2 |
+| Delivery | owns exports, versions, visibility, PPT, FinalDelivery | returns domain files and QA only |
 
 ADCO remains the only project integration owner. DIRcreative never updates ADCO current truth, artifact index, gate log, versions, PPT exports, FinalDelivery, client status, outer Goal, or worker cleanup.
+
+## v1 Read Compatibility
+
+Existing `1.0` handoffs and receipts remain readable and keep the original descriptor binding, input/output hashes, scope, execution, receipt extension, and ADCO adoption validation rules. v1 may still negotiate `inline`, verified `codex_thread`, or `external_handoff`; this does not expand v2, whose only execution mode is `inline`.
+
+The remaining detailed sections describe the frozen v1 contract unless they explicitly say v2.
 
 ## Optional Chat Visualization Capability
 

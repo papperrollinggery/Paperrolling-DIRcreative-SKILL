@@ -3,7 +3,8 @@
   "message_type": "descriptor",
   "descriptor_version": "1.0",
   "supported_contract_versions": [
-    "1.0"
+    "1.0",
+    "2.0"
   ],
   "provider": {
     "id": "dircreative",
@@ -46,6 +47,13 @@
         "id": "dircreative.domain-delivery",
         "version": "1.0",
         "required": true
+      },
+      "v2_contract": {
+        "execution_mode": "inline",
+        "nested_dispatch": false,
+        "receipt_shape": "domain_outputs_and_qa_only",
+        "handoff_schema": "docs/film-preproduction/schemas/adco-specialist-handoff-v2.schema.json",
+        "receipt_schema": "docs/film-preproduction/schemas/adco-specialist-receipt-v2.schema.json"
       }
     }
   ]

@@ -1,0 +1,153 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "adco-specialist-receipt-v2.schema.json",
+  "title": "ADCO Specialist Exchange v2 Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol_id",
+    "contract_version",
+    "status",
+    "outputs",
+    "domain_qa",
+    "open_questions"
+  ],
+  "properties": {
+    "protocol_id": {
+      "const": "adco.specialist-exchange"
+    },
+    "contract_version": {
+      "const": "2.0"
+    },
+    "status": {
+      "enum": [
+        "completed",
+        "needs_user",
+        "needs_revision",
+        "blocked",
+        "failed"
+      ]
+    },
+    "outputs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "output_id",
+          "kind",
+          "path",
+          "sha256"
+        ],
+        "properties": {
+          "output_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "kind": {
+            "type": "string",
+            "minLength": 1
+          },
+          "path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-fA-F]{64}$"
+          }
+        }
+      }
+    },
+    "domain_qa": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "brief_adherence",
+        "continuity",
+        "production_clarity",
+        "limitations"
+      ],
+      "properties": {
+        "brief_adherence": {
+          "type": "string"
+        },
+        "continuity": {
+          "type": "string"
+        },
+        "production_clarity": {
+          "type": "string"
+        },
+        "limitations": {
+          "$ref": "#/$defs/stringList"
+        }
+      }
+    },
+    "open_questions": {
+      "$ref": "#/$defs/stringList"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "completed"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "outputs": {
+            "minItems": 1
+          },
+          "domain_qa": {
+            "properties": {
+              "brief_adherence": {
+                "minLength": 1
+              },
+              "continuity": {
+                "minLength": 1
+              },
+              "production_clarity": {
+                "minLength": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "needs_user"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "open_questions": {
+            "minItems": 1
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "stringList": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  }
+}
