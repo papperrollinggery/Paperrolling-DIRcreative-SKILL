@@ -2,8 +2,9 @@
 
 Verified: 2026-07-19
 
-Status: active v2 runtime contract. The v1 eleven-gate workflow is read-only
-fixture vocabulary and must not drive a new run.
+Status: v2 presentation guide. Gate names, routing, and persistence are owned by
+`skills/dircreative/runtime/routing-policy.yaml`; this guide does not redefine
+them. The v1 eleven-gate workflow is read-only fixture vocabulary.
 
 ## Active Contract
 

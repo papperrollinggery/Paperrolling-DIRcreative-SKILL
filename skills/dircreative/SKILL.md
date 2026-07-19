@@ -25,8 +25,9 @@ fact questions, or generic advertising language without `$dircreative`.
 1. Run `python3 scripts/dircreative_route.py "<request>"`. For an exchange, pass
    `--handoff <path>` instead of copying the handoff into prose.
 2. Accept only the stable JSON fields `execution_context`, `mode`, `route`,
-   `required_files`, `optional_files`, `external_user_gate`, `threads_allowed`,
-   `full_receipt_required`, and `reason_codes`.
+   `required_files`, `optional_files`, `external_user_gate`, `action`,
+   `first_response_contract`, `reuse_known_brief`, `state_persistence`,
+   `threads_allowed`, `full_receipt_required`, and `reason_codes`.
 3. If the route is `source_maintenance` or the handoff is invalid, stop Skill
    execution and return the reason code.
 4. Read exactly one selected Route Card:
@@ -49,9 +50,10 @@ fact questions, or generic advertising language without `$dircreative`.
 
 `orchestrated_worker` exists only after a valid exchange handoff. ADCO remains the
 controller and owns Current Truth, versions, adoption, client visibility,
-readiness, completion, and cleanup. DIRcreative executes inline, forbids nested
-dispatch, returns `open_questions`, and keeps
-`claims.client_ready/ppt_ready/final_delivery_ready/send_ready/project_complete/control_plane_updated: false`.
+readiness, completion, and cleanup. Specialist Exchange v2 executes inline,
+forbids nested dispatch, and returns only domain outputs, domain QA, status, and
+`open_questions`; it does not emit readiness claims. Read-only v1 receipts retain
+their six false client/PPT/final/send/project/control-plane claims.
 
 Repository maintenance is outside Skill runtime.
 
@@ -128,3 +130,7 @@ evidence.
 Legacy v1 project, Director Room, gate, state, and exchange records are read-only
 compatible. New runs use v2 routing, dynamic perspectives, three external gates,
 compact state, model adapters, and version-selected exchange validation.
+
+The canonical owner index is
+`docs/film-preproduction/runtime-contracts.md`. Supporting guides never override
+the machine-readable owners listed there.

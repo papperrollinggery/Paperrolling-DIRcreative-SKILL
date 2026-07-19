@@ -2,7 +2,8 @@
 
 Verified: 2026-07-19
 
-Status: active v2 interaction contract with legacy v1 read compatibility.
+Status: v2 integrity guide with legacy v1 read compatibility. The canonical gate
+set is owned by `skills/dircreative/runtime/routing-policy.yaml`.
 
 ## Active External Gates
 

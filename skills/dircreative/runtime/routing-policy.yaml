@@ -166,8 +166,15 @@ routes:
     full_receipt_required: false
 
 contract_owners:
+  activation: skills/dircreative/agents/openai.yaml
   routing: skills/dircreative/runtime/routing-policy.yaml
+  interaction_and_external_gates: skills/dircreative/runtime/routing-policy.yaml
   compact_state: skills/dircreative/runtime/state-snapshot.schema.json
   fast_execution: skills/dircreative/routes/fast-task.md
   studio_execution: skills/dircreative/routes/studio-development.md
   delivery_execution: skills/dircreative/routes/delivery-audit.md
+  director_perspective_selection: docs/film-preproduction/director-room-routing.md
+  prompt_ir: docs/film-preproduction/schemas/prompt-ir.schema.json
+  model_adapter_interface: scripts/dircreative_adapters/base.py
+  specialist_exchange: docs/film-preproduction/schemas/adco-specialist-descriptor.json
+  legacy_thread_evidence: docs/film-preproduction/thread-orchestration-protocol.md

@@ -18,33 +18,29 @@
 
 ![DIRcreative interactive decision surface](docs/assets/dircreative-chat-visualization.png)
 
-DIRcreative 不是“输入一句话、吐出一堆提示词”的黑盒。它把影视前期创作放回对话：展示当前阶段、并列方案、导演建议、选择影响和下一步动作；用户每次只需要做一个清楚的决定，项目文件则保存完整依据。
+DIRcreative 不是“输入一句话、吐出一堆提示词”的黑盒。它先判断任务是局部修改、完整开发还是交付审计，再只加载对应合同。局部任务直接交付修改结果；只有真实方向冲突、生成授权或客户交付才停下来询问。
 
-当前稳定版本为 [`v0.4.0`](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/releases/tag/v0.4.0)。它包含交互式决策界面、故事与镜头曲线、参考图关系图、图片审阅、响应式状态、Director Room 路由、模型能力卡、Prompt IR、QA/重试规则和可复现发布验证。
+当前已发布稳定版本仍为 [`v0.4.0`](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/releases/tag/v0.4.0)。当前源码 checkout 另含 v2 路由、动态专业视角、紧凑状态、拆分模型 Adapter 和 Specialist Exchange v2；本地验证通过不等于这些改动已经发布。
 
 ## Why DIRcreative
 
 - **先创作，后生成**：先解决受众、叙事、产品证明和镜头逻辑，再进入图片或视频生成。
-- **把专业判断变成用户选择**：导演、编剧、摄影、剪辑等角色在后台协作，前台只呈现必要分歧和建议。
+- **把专业判断放在结果后面**：Fast 直接修改；Studio 最多选择三个真正影响结果的专业视角，不展示固定角色会议。
 - **让复杂方案看得懂**：方向比较、节奏曲线、镜头时间线、参考图依赖和 QA 结果都可以可视化。
 - **不锁定单一模型**：把同一镜头意图适配到 Seedance、Kling、Runway、Veo 等不同生成模型。
 - **证据可追溯**：阶段门、用户选择、来源、版本、安装包与校验结果都有结构化记录。
 
 ## What it does
 
-| 阶段 | 用户看到什么 | 产出什么 |
+| 模式 | 适用任务 | 默认预算与产出 |
 | --- | --- | --- |
-| 创意理解 | 目标、受众、渠道与缺口 | idea intake / brief |
-| Director Room | 2–3 个真正不同的方向与推荐理由 | concept options / decision record |
-| 故事与脚本 | 情绪曲线、钩子位置、节奏和产品证明 | treatment / script / timing |
-| 镜头设计 | 镜头卡、时间线、转场、声音与连续性 | shot list / sequence plan |
-| 视觉系统 | 色彩、材质、角色、场景和摄影规则 | visual bible |
-| 参考图与提示词 | 图片用途、依赖关系、继承来源 | reference plan / prompt manifests |
-| 生成与审阅 | 图片对比、问题标注、模型适配与重试建议 | QA report / retry route |
+| Fast | 一句/一段文案、单镜头、少量分镜、Prompt 或既有产物局部修改 | 0 Threads、0 Director Room；修改结果优先 |
+| Studio | 完整概念、故事+脚本、脚本+分镜、多产物影视前期 | 0 Threads 默认、最多 3 个动态专业视角、最多 1 个 critic |
+| Delivery | 真实生成授权、正式版本/资产、客户可见交付、有效 ADCO handoff | 可运行完整审计与 receipt；严格绑定真实输入输出 |
 
 ```text
-idea → director room → story → script → shots → visual system
-     → reference plan → model prompts → review → retry / delivery
+explicit $dircreative → router → Fast | Studio | Delivery
+                     → one Route Card → useful artifact first
 ```
 
 ## Visual, conversational workflow
@@ -83,24 +79,22 @@ python3 scripts/install_local_skill.py
 ### 2. Run the demo and validation
 
 ```bash
-python3 scripts/dircreative_demo.py --example examples/live-user-sim-noodle
-python3 scripts/dircreative_visualization_dogfood.py
-python3 scripts/validate_project.py
+PYTHONDONTWRITEBYTECODE=1 python3 scripts/dircreative_headless_acceptance_audit.py
+PYTHONDONTWRITEBYTECODE=1 python3 scripts/validate_project.py
 ```
 
-安装后请打开一个新的 Codex 任务，并明确说“请用 DIRcreative……”。如果响应没有显示创意理解、Director Room 或单一用户决策阶段，请先确认 `~/.codex/dev-skills/dircreative/SKILL.md` 存在，再重启 Codex 后重试。
+安装后请打开一个新的 Codex 任务，并显式写 `$dircreative`。隐式调用已关闭；普通广告问题或仓库维护不会启动本 Skill。
 
 ### 3. Start in Codex
 
 可以直接用自然语言开始：
 
 ```text
-请用 DIRcreative 把“多年未见的朋友，因为一件旧物重新联系”
-发展成一支 30 秒品牌短片。先给我三个清楚、可比较的导演方向，
-不要直接生成图片或视频。
+$dircreative 把“多年未见的朋友，因为一件旧物重新联系”
+发展成一支 30 秒品牌短片。先给我推荐方向和首轮故事，不生成图片或视频。
 ```
 
-DIRcreative 会判断应该启动完整 Director Room、针对性专业复核，还是轻量处理。用户不需要手动点名制片、导演、编剧、摄影或剪辑角色。
+DIRcreative 会选择 Fast、Studio 或 Delivery。Fast 不进入 Director Room；Studio 只选择能改变结果的 `narrative_strategy`、`visual_production`、`model_continuity` 视角，最多三个。用户不需要点名固定角色。
 
 ## Safety model
 
@@ -116,11 +110,11 @@ DIRcreative 既可以独立在聊天中运行，也可以作为 ADCO 的影视�
 
 ```yaml
 protocol_id: adco.specialist-exchange
-contract_version: "1.0"
-profile_id: dircreative.film-preproduction
+contract_version: "2.0"
+execution_mode: inline
 ```
 
-ADCO 负责客户交互、项目真相、采用决策、版本、PPT、FinalDelivery 和完成门；DIRcreative 只在被授权的范围内交付专业产物和中立 receipt。DIRcreative 的 `domain_accepted` 只是专业建议，不等于客户可发或项目完成。
+ADCO 负责客户交互、Current Truth、采用决策、版本、可见性、PPT、FinalDelivery、完成状态和 cleanup；DIRcreative v2 只返回领域产物、领域 QA、状态和开放问题，不复制这些控制平面字段。v1 handoff/receipt/adoption 仍可读取。
 
 ```bash
 python3 scripts/dircreative_adco_native_exchange.py --self-test
@@ -143,8 +137,9 @@ python3 scripts/dircreative_adco_native_exchange.py \
 ## Documentation
 
 - [`System plan`](docs/film-preproduction/01-system-plan.md) — 系统架构、角色、适配器和 QA 门
-- [`Chat co-creation interface`](docs/film-preproduction/chat-co-creation-interface.md) — 聊天中的阶段、选项和提问协议
-- [`Director Room council`](docs/film-preproduction/director-room-council-protocol.md) — 专业角色、分歧与决策协议
+- [`Runtime contracts`](docs/film-preproduction/runtime-contracts.md) — v2 单一合同所有者、上下文边界和兼容矩阵
+- [`Chat co-creation interface`](docs/film-preproduction/chat-co-creation-interface.md) — 结果优先的聊天呈现指南
+- [`Director Room perspectives`](docs/film-preproduction/director-room-council-protocol.md) — 动态专业视角、真实分歧与 v1 只读边界
 - [`Live chat start protocol`](docs/film-preproduction/live-chat-start-protocol.md) — 粗想法、完整想法、测试和图片请求的入口
 - [`Film commercial quality standard`](docs/film-preproduction/film-commercial-quality-standard.md) — 影视与商业质量门
 - [`Model sources`](docs/film-preproduction/sources/model-sources.yaml) — 有日期和证据等级的模型能力卡
@@ -225,6 +220,11 @@ python3 scripts/dircreative_adco_native_exchange.py --self-test
 
 ```bash
 python3 scripts/validate_project.py
+python3 scripts/dircreative_activation_policy_audit.py
+python3 scripts/dircreative_context_budget_audit.py
+python3 scripts/dircreative_director_harness_audit.py
+python3 scripts/dircreative_prompt_fixture_audit.py
+python3 scripts/dircreative_headless_acceptance_audit.py
 python3 scripts/dircreative_readiness_audit.py
 python3 scripts/dircreative_quality_audit.py
 python3 scripts/dircreative_chat_surface_audit.py

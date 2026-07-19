@@ -1,6 +1,7 @@
-# DIRcreative Runtime State Governance
+# DIRcreative Durable State Audit Guide
 
-The active v2 working-state owner is
+Status: supporting guide for resume, handoff, Delivery, and completion audits.
+It is not a Fast or ordinary Studio startup contract. The active v2 working-state owner is
 `skills/dircreative/runtime/state-snapshot.schema.json`. It contains only project,
 route, locked facts, assumptions, active/stale outputs, open questions, and the two
 external authorization booleans.

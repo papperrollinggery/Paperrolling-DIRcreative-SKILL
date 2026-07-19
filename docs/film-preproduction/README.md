@@ -21,22 +21,21 @@ qa/
 
 ## Document Order
 
-Read in this order:
+For active runtime behavior, read only the selected path:
 
-1. `01-system-plan.md`
-2. `02-execution-roadmap.md`
-3. `03-office-hours-optimization-plan.md`
-4. `04-goal-mode-handoff.md`
-5. `05-skill-integration-architecture.md`
-6. `06-gstack-execution-goal.md`
-7. `phase-contracts.yaml`
-8. `research/*`
-9. `schemas/*`
-10. `templates/*`
-11. `prompt-pattern-registry.json`
-12. `examples/*`
+1. `runtime-contracts.md` — canonical owner index and compatibility matrix.
+2. `skills/dircreative/runtime/routing-policy.yaml` — selected mode and files.
+3. Exactly one Fast, Studio, or Delivery Route Card.
+4. Only the task files returned by the router.
 
-The system plan defines what this system is. The roadmap defines what gets built first. The Goal handoff and phase contracts define how another worker should continue without guessing.
+`01-system-plan.md`, roadmaps, Goal/gstack plans, and
+`05-skill-integration-architecture.md` preserve architecture history and fixture
+planning. They are not startup reads and do not override the active owner index.
+`phase-contracts.yaml` owns repository fixture planning, not chat runtime.
+
+Presentation guides such as `chat-co-creation-interface.md` and
+`live-chat-start-protocol.md` explain how to show the result; machine-readable
+routing, gates, persistence, and schemas remain authoritative.
 
 ## Prompt System Upgrade Bundle
 
@@ -58,6 +57,11 @@ The system plan defines what this system is. The roadmap defines what gets built
 PYTHONDONTWRITEBYTECODE=1 python3 scripts/dircreative_prompt_compiler.py validate <prompt-ir.json>
 PYTHONDONTWRITEBYTECODE=1 python3 scripts/dircreative_prompt_compiler.py compile <prompt-ir.json>
 PYTHONDONTWRITEBYTECODE=1 python3 scripts/dircreative_prompt_fixture_audit.py
+PYTHONDONTWRITEBYTECODE=1 python3 scripts/dircreative_headless_acceptance_audit.py
 ~~~
 
 目标超过一个生成单元时，编译器 fail-closed；必须用 `--unit-index 1`、`--unit-index 2` 逐段导出。每段 prompt 重置为本地 0 秒时间轴并携带入段/出段状态；不支持原生音频时，声音 handoff 只出现在 `inspect` 结果中。
+
+无头验收在隔离 subprocess 中真实写出 Fast 文案修订和 Studio 完整广告片
+脚本/分镜答案，再逐字对比 reviewed snapshots。它不调用已安装 Skill、不创建
+真实项目，也不代表外部模型生成或真人创意验收。

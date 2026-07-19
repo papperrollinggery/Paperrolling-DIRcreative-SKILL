@@ -2,6 +2,11 @@
 
 Verified: 2026-05-14
 
+Status: historical architecture and knowledge-pack background. It is not an
+active runtime contract. For current owners and v1/v2 boundaries, start with
+`docs/film-preproduction/runtime-contracts.md`; that index and its named owners
+override legacy phase, gate, Council, receipt, and Thread language below.
+
 Purpose: define how `Paperrolling-DIRcreative-SKILL` becomes a professional AI video preproduction skill pack, not a loose collection of prompt notes.
 
 This plan is the execution bridge for Goal mode, gstack-style skill execution, and future Codex subagent orchestration.
@@ -252,44 +257,21 @@ Downstream skills may read locked upstream artifacts, but must not silently rewr
 
 ## Director Room Mode
 
-Director room is the front-end decision engine. It should produce creative disagreement, not just agreement.
+The active Director Room v2 contract is owned by
+`docs/film-preproduction/director-room-routing.md`. Fast never enters it. Studio
+selects at most three decision-changing perspectives:
 
-Default core room:
+- `narrative_strategy`;
+- `visual_production`;
+- `model_continuity`.
 
-| Role | Purpose | Required Knowledge |
-|------|---------|--------------------|
-| Producer | channel, scope, production feasibility | channel playbooks, constraints, deliverable map |
-| Creative Director | concept, theme, hook, visual metaphor | channel playbooks, reference analysis |
-| Director | story-to-screen translation | film glossary, shot grammar, performance notes |
-| Screenwriter | logline, conflict, treatment, script | story schema, channel structure |
-| Cinematographer | framing, lens, light, camera motion | film glossary, shot list schema |
-| Production Designer | world, props, wardrobe, material logic | visual bible schema, image prompt style system |
-| Editor | pacing, shot count, transition logic | channel timing, shot duration rules |
-| Sound Designer | dialogue, VO, SFX, music, silence | audio design notes, model adapter notes |
-| Model Prompt Engineer | reference images and model prompts | image prompt system, video model adapter notes |
-| Continuity QA | contradictions, drift, missing assets | all locked artifacts, QA taxonomy |
+There is one controller, zero Threads by default, at most one independent critic,
+no fixed seat count, no minimum disagreement count, and no role-card ceremony
+before the artifact. A real material conflict is preserved; aligned judgments
+record `no_material_conflict`.
 
-Execution modes:
-
-```text
-single-agent mode:
-  one Codex session runs every role sequentially and writes director-room.yaml
-
-parallel-agent mode:
-  if explicitly authorized, spawn separate agents for Producer, Creative Director,
-  Director/Cinematographer, Screenwriter, and Model Prompt Engineer, then merge
-  through Continuity QA
-```
-
-Conflict rule:
-
-The director room must preserve disagreements when they matter. Example:
-
-- Producer says the idea is too broad for 15 seconds.
-- Director wants a slow reveal.
-- Editor says the hook must happen in 2 seconds for short video.
-
-The decision artifact must record the tradeoff and the selected route.
+The ten historical roles remain a detailed read-only knowledge index in the v1
+harness. They are not required activations, workers, or user-visible cards.
 
 ## Canvas Graph Mode
 
@@ -298,15 +280,16 @@ TapNow-style canvas workflows are useful as an interface pattern for DIRcreative
 DIRcreative should be able to express the workflow as a visible graph:
 
 ```text
-idea -> director room -> story -> script -> shot list -> visual bible
-     -> reference boards -> clean frames -> image prompts -> video prompts -> QA
+router -> Fast | Studio | Delivery -> selected artifact work -> QA or real gate
 ```
 
 Graph rules:
 
-- Each node records role, source artifacts, user gate, and output status.
+- A visualization may show artifact lineage, but it does not define runtime order.
+- Each shown node records source artifacts, internal state, and output status.
 - Edges record whether an asset is planning-only, reference-only, or direct video input.
-- The graph never bypasses required gates.
+- Only `concept_lock`, `generation_authorization`, and
+  `client_delivery_approval` are external gates in new runs.
 - Dense storyboard boards stay planning-only unless converted into clean text-free frames.
 - Future UI/workbench layers can render this graph without changing the skill contracts.
 
@@ -523,23 +506,40 @@ standalone_chat
 orchestrated_worker
 ```
 
-In `standalone_chat`, DIRcreative is the product harness and owns the outer user gate, thread plan, adoption, validation, cleanup, and session completion boundary.
+In `standalone_chat`, DIRcreative owns the selected route, visible answer, compact
+state when required, and its three external gates. Fast uses no Thread; Studio
+defaults to zero Threads.
 
-In `orchestrated_worker`, the caller owns the outer control loop. For ADCO, use `docs/film-preproduction/adco-integration-contract.md`, protocol `adco.specialist-exchange` v1, and profile `dircreative.film-preproduction`. ADCO owns current truth, requirements, worker assignment, client interaction, artifact adoption, project gates, versions, exports, FinalDelivery, and cleanup. DIRcreative owns only the assigned film-preproduction work, scoped provider artifacts, domain QA, bounded retry, structured questions, and adoption recommendation.
+In `orchestrated_worker`, the caller owns the outer control loop. For ADCO, use
+`docs/film-preproduction/adco-integration-contract.md`. New writes use compact
+`adco.specialist-exchange@2.0`; v1 stays readable. ADCO owns Current Truth,
+requirements, client interaction, adoption, gates, versions, visibility,
+FinalDelivery, completion, and cleanup. DIRcreative owns only the assigned domain
+artifacts, domain QA, and open questions.
 
 The ADCO adapter uses a provider descriptor and capability negotiation instead of a hard-coded ADCO package version or DIR runtime path. An unsupported protocol/version, unverified descriptor, missing capability, stale input hash, invalid worker identity, unsafe scope, authority escalation, or incomplete provider receipt blocks execution. Never fall back to standalone controller behavior inside a failed ADCO handoff.
 
-The assigned worker identity is evidence-bearing only for `execution.mode: codex_thread`: the receipt `execution_evidence.thread_id` must equal the native handoff thread id. `inline` is the native default and must not invent a thread id. A mismatch is `invalid_worker_thread_id` and the result is rejected evidence.
+V2 is inline-only and contains no Thread identity. In read-only v1, a
+`codex_thread` identity remains evidence-bearing only when the full native
+handoff and ThreadOps proof agree.
 
-ADCO may supply `worktree`, `isolated_workspace`, or `read_only`. This allows non-git advertising material projects to use `AD-creative/workspaces/<work_id>/` without pretending a git worktree exists. Exact caller-owned paths and write scope remain mandatory; `read_only` may grant only the exact receipt path and no output root.
+The v1 workspace/scope envelope remains a read-only compatibility surface. V2
+does not copy workspace, control-plane, or cleanup state into the handoff.
 
-Native provider receipts bind descriptor and handoff hashes, consumed input hashes, project-relative output paths and hashes, QA, outcome, questions, recommendation, execution evidence, the negotiated domain extension, and all six false client/PPT/final/send/project/control-plane claims. ADCO writes the separate adoption record and closes the handoff host-scope baseline. ADCO must not depend on DIR repository paths, package versions, `.dircreative/runs`, or internal validators. After adoption, both sides must verify target hashes and ADCO project validation before any gate advance is treated as durable evidence.
+V2 receipts contain only status, real domain output paths/hashes, domain QA, and
+open questions. They contain no readiness, adoption, version, visibility,
+completion, or cleanup fields. The longer descriptor/handoff hash envelope,
+false readiness claims, adoption record, and host-scope baseline belong to v1
+compatibility only.
 
 ## Harness And Loop Engineering Contract
 
-The root `dircreative` skill is the product harness. Sub-skills provide professional production capability. In `standalone_chat`, the root harness owns routing, typed stage gates, receipts, retry loops, stop conditions, session persistence, council/cold-review, Goal autorun dry-run boundary, and live acceptance boundary. In `orchestrated_worker`, DIRcreative owns the bounded domain loop while the validated caller owns the outer loop, user gate, adoption, cleanup, and completion decision.
+The root `dircreative` skill is a short router. Runtime ownership is centralized
+in `runtime-contracts.md` and the machine-readable owners it names. The detailed
+v1 structures below remain available only to interpret historical fixtures and
+durable audit records.
 
-### Typed Stage Gate
+### Legacy V1 Typed Stage Gate (Read-Only)
 
 Every stage that can change creative truth or generation readiness must declare a typed gate before work continues:
 
@@ -564,7 +564,7 @@ Rules:
 - `fail` must route to the retry loop with one failure id and one corrected layer.
 - `blocked` must name the real blocker: user decision, external account/API access, media authorization, unsafe repo state, or live acceptance boundary.
 
-### Receipt And Session Persistence
+### Legacy V1 Receipt And Session Persistence (Read-Only)
 
 `skill_run_receipt` is the durable session record. It must be updated after every material stage, worker adoption, retry, checkpoint, and stop.
 
@@ -634,7 +634,9 @@ skill_run_receipt:
   next_recommended_skill:
 ```
 
-Session persistence must not depend on chat history. Durable state lives in artifacts, manifests, `.dircreative/runs/`, checkpoint files, dispatch records, adoption records, QA output, and receipts.
+This full receipt is not written for Fast or ordinary Studio v2 work. Active v2
+persistence uses the compact state owner and expands to durable audit evidence
+only at resume, handoff, Delivery, or a completion claim.
 
 In `orchestrated_worker`, `client_ready`, `final_export_allowed`, and `generation_ready` remain false in the v1 specialist receipt. The current profile is prompt-only; real media requires a separately negotiated profile with work/asset/hash-bound authorization and pre-generation evidence. ADCO writes the adoption decision after receiving the DIRcreative recommendation.
 
@@ -654,7 +656,7 @@ failure id
 
 Do not change story, reference identity, camera logic, style, model adapter, and output controls in one retry. If the failure touches multiple layers, stop and route upstream to the earliest owning stage.
 
-### Council And Cold Review
+### Legacy V1 Council And Cold Review
 
 Use `docs/film-preproduction/council-adversarial-review.md` when a stage could pass validation while still failing the user. Use cold review after non-trivial harness, thread, retry, acceptance, or generation-boundary changes.
 

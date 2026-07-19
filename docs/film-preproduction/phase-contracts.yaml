@@ -6,6 +6,7 @@ project:
 
 runtime_contract_v2:
   status: active_for_new_runs
+  canonical_index: docs/film-preproduction/runtime-contracts.md
   routing_owner: skills/dircreative/runtime/routing-policy.yaml
   compact_state_owner: skills/dircreative/runtime/state-snapshot.schema.json
   legacy_v1_co_creation_schema: docs/film-preproduction/schemas/co-creation-run.yaml

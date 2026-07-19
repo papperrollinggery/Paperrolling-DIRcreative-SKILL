@@ -13,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SOURCE_SKILL = ROOT / "skills/dircreative/SKILL.md"
 MAIN_SKILL = SOURCE_SKILL if SOURCE_SKILL.exists() else ROOT / "SKILL.md"
 STATE_SCHEMA = ROOT / "skills/dircreative/runtime/state-snapshot.schema.json"
+RUNTIME_INDEX = ROOT / "docs/film-preproduction/runtime-contracts.md"
 FORBIDDEN_FAST_TERMS = (
     "thread-orchestration-protocol.md",
     "adco-integration-contract.md",
@@ -26,6 +27,46 @@ WARM_ROUTE_P95_BUDGET_MS = 25.0
 def audit() -> tuple[list[str], dict[str, int | float | bool]]:
     failures = route_self_test()
     policy = load_policy()
+    expected_contract_owners = {
+        "activation": "skills/dircreative/agents/openai.yaml",
+        "routing": "skills/dircreative/runtime/routing-policy.yaml",
+        "interaction_and_external_gates": "skills/dircreative/runtime/routing-policy.yaml",
+        "compact_state": "skills/dircreative/runtime/state-snapshot.schema.json",
+        "fast_execution": "skills/dircreative/routes/fast-task.md",
+        "studio_execution": "skills/dircreative/routes/studio-development.md",
+        "delivery_execution": "skills/dircreative/routes/delivery-audit.md",
+        "director_perspective_selection": "docs/film-preproduction/director-room-routing.md",
+        "prompt_ir": "docs/film-preproduction/schemas/prompt-ir.schema.json",
+        "model_adapter_interface": "scripts/dircreative_adapters/base.py",
+        "specialist_exchange": "docs/film-preproduction/schemas/adco-specialist-descriptor.json",
+        "legacy_thread_evidence": "docs/film-preproduction/thread-orchestration-protocol.md",
+    }
+    if policy.get("contract_owners") != expected_contract_owners:
+        failures.append("runtime contract owner registry drifted or contains duplicate definitions")
+    for contract_id, relative in expected_contract_owners.items():
+        if not (ROOT / relative).is_file():
+            failures.append(f"runtime contract owner is missing: {contract_id} -> {relative}")
+    if not RUNTIME_INDEX.is_file():
+        failures.append("canonical runtime contract index is missing")
+        runtime_index_text = ""
+    else:
+        runtime_index_text = RUNTIME_INDEX.read_text(encoding="utf-8")
+    for contract_id, relative in expected_contract_owners.items():
+        if relative not in runtime_index_text:
+            failures.append(f"runtime contract index omits owner: {contract_id}")
+    supporting_guides = {
+        "docs/film-preproduction/chat-co-creation-interface.md": "v2 presentation guide",
+        "docs/film-preproduction/live-chat-start-protocol.md": "v2 first-response presentation guide",
+        "docs/film-preproduction/chat-stage-gate-integrity.md": "v2 integrity guide",
+        "docs/film-preproduction/runtime-state-governance.md": "supporting guide for resume",
+        "docs/film-preproduction/adco-integration-contract.md": "provider integration guide",
+        "docs/film-preproduction/thread-orchestration-protocol.md": "legacy v1 evidence reader",
+        "docs/film-preproduction/05-skill-integration-architecture.md": "historical architecture",
+    }
+    for relative, status_phrase in supporting_guides.items():
+        text = (ROOT / relative).read_text(encoding="utf-8")
+        if status_phrase not in text:
+            failures.append(f"supporting guide lacks non-owner status: {relative}")
     main_text = MAIN_SKILL.read_text(encoding="utf-8")
     main_lines = len(main_text.splitlines())
     main_bytes = len(main_text.encode("utf-8"))
@@ -174,6 +215,7 @@ def audit() -> tuple[list[str], dict[str, int | float | bool]]:
         "warm_route_samples": len(latency_samples),
         "warm_route_p95_ms": route_warm_p95_ms,
         "warm_route_p95_budget_ms": WARM_ROUTE_P95_BUDGET_MS,
+        "runtime_contract_owners": len(expected_contract_owners),
     }
     return failures, metrics
 

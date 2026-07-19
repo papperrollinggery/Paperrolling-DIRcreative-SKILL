@@ -2,7 +2,9 @@
 
 Verified: 2026-07-19
 
-Status: active v2 first-response contract.
+Status: v2 first-response presentation guide. Route selection and stop behavior
+are owned by `skills/dircreative/runtime/routing-policy.yaml`; result-first Fast
+and Studio execution are owned by their Route Cards.
 
 ## Core Rule
 

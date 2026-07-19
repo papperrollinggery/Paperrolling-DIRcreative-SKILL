@@ -2,6 +2,10 @@
 
 Provider-side v1/v2 validation verified in isolated fixtures: 2026-07-19. Bilateral compatibility still requires an explicit ADCO checkout audit.
 
+Status: provider integration guide. Normative versions and message shapes are
+owned by `adco-specialist-descriptor.json` and the versioned handoff/receipt
+schemas listed below.
+
 ## Active Compact Transport (v2)
 
 New provider writes use `adco.specialist-exchange@2.0`. The handoff contains only the assigned task, a compact brief snapshot, locked decisions, requested domain outputs, quality targets, and inline execution mode:
