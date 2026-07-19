@@ -1,0 +1,40 @@
+{
+  "cases": [
+    {
+      "id": "maintain_source_repository",
+      "input": "优化 DIRcreative Skill 本身",
+      "expected_allowed": false,
+      "expected_context": null
+    },
+    {
+      "id": "review_skill_entry",
+      "input": "审查 DIR 的 SKILL.md",
+      "expected_allowed": false,
+      "expected_context": null
+    },
+    {
+      "id": "debug_installer",
+      "input": "调试 DIR 安装器",
+      "expected_allowed": false,
+      "expected_context": null
+    },
+    {
+      "id": "generic_ad_request",
+      "input": "开发 30 秒广告片",
+      "expected_allowed": false,
+      "expected_context": null
+    },
+    {
+      "id": "explicit_ad_creation",
+      "input": "$dircreative 开发 30 秒广告片",
+      "expected_allowed": true,
+      "expected_context": "standalone_chat"
+    },
+    {
+      "id": "explicit_storyboard_review",
+      "input": "$dircreative 评审分镜",
+      "expected_allowed": true,
+      "expected_context": "standalone_chat"
+    }
+  ]
+}

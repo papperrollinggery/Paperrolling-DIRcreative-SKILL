@@ -1,5 +1,21 @@
 # Agent Instructions
 
+## Repository Self-Maintenance Mode
+
+When the current Git root is `Paperrolling-DIRcreative-SKILL`, treat work on this
+repository as Skill source maintenance by default.
+
+- Do not invoke an installed `dircreative` Skill while changing or reviewing this
+  repository's code, documentation, schemas, tests, installer, or package layout.
+- Mentions of advertising films, scripts, storyboards, video prompts, or
+  DIRcreative inside a maintenance request do not start Director Room or any
+  DIRcreative runtime workflow.
+- Run DIRcreative runtime code only when a test command explicitly selects an
+  isolated fixture or temporary project.
+- Use the ordinary Git and Python repository workflow for source maintenance.
+- This section governs only the source repository. It must not be copied into the
+  installed DIRcreative Skill or alter normal explicitly invoked Skill behavior.
+
 ## Agent skills
 
 ### Issue tracker

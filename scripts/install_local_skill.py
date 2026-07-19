@@ -83,6 +83,10 @@ def populate(target: Path) -> None:
     (target / "SKILL.md").write_bytes(
         sanitize_package_bytes("SKILL.md", root_skill.read_bytes(), thread_ids)
     )
+    skill_agent_metadata = root_skill.parent / "agents"
+    if skill_agent_metadata.is_dir():
+        copy_item(skill_agent_metadata, target / "agents")
+        sanitize_copied_item(skill_agent_metadata, target / "agents", "agents", thread_ids)
     release_metadata = ROOT / "RELEASE-METADATA.json"
     if release_metadata.exists():
         copy_item(release_metadata, target / "RELEASE-METADATA.json")
@@ -213,6 +217,16 @@ def self_test() -> int:
         raise AssertionError("package sanitizer modified relative-path regex evidence")
     with tempfile.TemporaryDirectory(prefix="dircreative-installer-self-test-") as raw:
         root = Path(raw)
+        for layout in (
+            Path(".codex/dev-skills/dircreative"),
+            Path(".codex/skills/dircreative"),
+            Path(".skillshub/dircreative"),
+        ):
+            layout_target = root / layout
+            populate(layout_target)
+            policy = layout_target / "agents/openai.yaml"
+            if not policy.is_file() or "allow_implicit_invocation: false" not in policy.read_text(encoding="utf-8"):
+                raise AssertionError(f"activation policy missing from isolated install layout: {layout}")
         target = root / "dircreative"
         target.mkdir()
         sentinel = target / "previous-install.txt"

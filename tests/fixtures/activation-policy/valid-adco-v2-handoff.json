@@ -1,0 +1,10 @@
+{
+  "protocol_id": "adco.specialist-exchange",
+  "contract_version": "2.0",
+  "task": "Review the storyboard continuity.",
+  "brief_snapshot": "A 30-second product film with six approved shots.",
+  "locked_decisions": ["six-shot structure"],
+  "requested_outputs": ["storyboard_review"],
+  "quality_targets": ["continuity", "production_clarity"],
+  "execution_mode": "inline"
+}

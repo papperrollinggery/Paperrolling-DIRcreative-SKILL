@@ -1,6 +1,6 @@
 ---
 name: dircreative
-description: Professional AI video preproduction and advertising-film specialist workflow for turning rough or complete ideas into story, script, shot plans, reference-image plans, model-specific video prompts, and QA/retry artifacts. Use for standalone chat creation or as the dircreative.film-preproduction provider in ADCO's versioned adco.specialist-exchange workflow, including scoped handoff/receipt, needs-user return, domain QA, and client-readiness boundaries.
+description: Use only after the user explicitly invokes $dircreative for film preproduction: story, script, storyboard, shot planning, visual systems, reference-image planning, and model-specific video prompts. ADCO mode accepts only a validated Specialist Exchange handoff. Do not use for maintaining, debugging, refactoring, testing, or evaluating the DIRcreative source repository; maintaining ADCO; ordinary code work; factual questions; or generic advertising requests without an explicit $dircreative invocation.
 ---
 
 # DIRcreative

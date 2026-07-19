@@ -139,6 +139,16 @@ def expected_manifest(base: Path) -> dict[str, str]:
     installed = installed_layout(base)
     manifest = package_manifest(base, installed=installed)
     manifest["SKILL.md"] = root_skill_hash(base)
+    agent_policy = (
+        base / "agents/openai.yaml"
+        if installed
+        else base / "skills/dircreative/agents/openai.yaml"
+    )
+    if agent_policy.is_file():
+        data = agent_policy.read_bytes()
+        if not installed:
+            data = sanitize_package_bytes("agents/openai.yaml", data, {})
+        manifest["agents/openai.yaml"] = bytes_hash(data)
     metadata = base / RELEASE_METADATA_NAME
     if metadata.is_file():
         manifest[RELEASE_METADATA_NAME] = file_hash(metadata)

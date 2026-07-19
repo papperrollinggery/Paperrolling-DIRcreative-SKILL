@@ -1,0 +1,7 @@
+interface:
+  display_name: "DIRcreative"
+  short_description: "Film preproduction and model-specific video prompt workflow"
+  default_prompt: "Use $dircreative for this film-preproduction task."
+
+policy:
+  allow_implicit_invocation: false
