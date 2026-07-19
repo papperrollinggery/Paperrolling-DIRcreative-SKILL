@@ -43,6 +43,8 @@ Use `skills/dircreative/assets/visualizations/stage-surface-registry.json#visual
 ## Rules
 
 - Lock identity, environment, prop states, palette, lighting, and material behavior.
+- Label any base, coaster, tray, dock, magnet, stand, or holder as
+  `support/environment hardware` so it cannot be merged into the product body.
 - Break visual direction into concrete fields before prompt work: subject, action/pose or blocking, details/appearance, environment/background, lighting/atmosphere, composition/framing, style/camera, colors/palette, materials/texture, proportion/scale, and generation intent.
 - State which facts are locked from story/shot/reference evidence and which are still unresolved. Do not invent unseen brands, exact text, locations, camera bodies, lens models, or hidden objects.
 - Define type-specific visual rules when relevant: portrait, product, poster/ad, UI, illustration, 3D, or photography.

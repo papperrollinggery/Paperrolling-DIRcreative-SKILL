@@ -1,0 +1,13 @@
+{
+  "cases": [
+    {"id": "source_maintenance", "input": "维护 DIRcreative 源码仓库", "mode": "fast", "route": "source_maintenance"},
+    {"id": "third_line", "input": "$dircreative 修改脚本第三句", "mode": "fast", "route": "copy_revision"},
+    {"id": "single_shot", "input": "$dircreative 优化这个镜头", "mode": "fast", "route": "shot_optimization"},
+    {"id": "few_storyboards", "input": "$dircreative 评审少量分镜", "mode": "fast", "route": "storyboard_review"},
+    {"id": "prompt_revision", "input": "$dircreative 调整这个 Prompt", "mode": "fast", "route": "prompt_revision"},
+    {"id": "script_storyboard", "input": "$dircreative 开发完整脚本 + 分镜", "mode": "studio", "route": "film_development"},
+    {"id": "complete_ad", "input": "$dircreative 开发完整广告片", "mode": "studio", "route": "film_development"},
+    {"id": "real_generation", "input": "$dircreative 申请真实生成", "mode": "delivery", "route": "generation_authorization"},
+    {"id": "client_delivery", "input": "$dircreative 准备客户交付", "mode": "delivery", "route": "client_delivery"}
+  ]
+}

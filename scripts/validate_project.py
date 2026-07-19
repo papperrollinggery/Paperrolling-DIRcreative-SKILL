@@ -303,6 +303,15 @@ def validate_required_paths() -> None:
         "docs/film-preproduction/phase-contracts.yaml",
         "docs/film-preproduction/schemas/skill-orchestration.yaml",
         "docs/film-preproduction/schemas/adco-specialist-descriptor.json",
+        "skills/dircreative/agents/openai.yaml",
+        "skills/dircreative/runtime/routing-policy.yaml",
+        "skills/dircreative/runtime/state-snapshot.schema.json",
+        "skills/dircreative/routes/fast-task.md",
+        "skills/dircreative/routes/studio-development.md",
+        "skills/dircreative/routes/delivery-audit.md",
+        "tests/fixtures/activation-policy/cases.json",
+        "tests/fixtures/activation-policy/valid-adco-v2-handoff.json",
+        "tests/fixtures/routing/cases.json",
         "docs/film-preproduction/prompt-pattern-registry.json",
         "docs/film-preproduction/templates/image-prompt-style-config.template.json",
         "docs/film-preproduction/qa/qa-checklist.md",
@@ -412,6 +421,9 @@ def validate_required_paths() -> None:
         "tests/fixtures/invalid-video-prompt-direct-input-unlocked.yaml",
         "tests/fixtures/invalid-generation-qa-character-drift-approved.yaml",
         "scripts/dircreative_adco_native_exchange.py",
+        "scripts/dircreative_activation_policy_audit.py",
+        "scripts/dircreative_route.py",
+        "scripts/dircreative_context_budget_audit.py",
         "scripts/dircreative_run.py",
         "scripts/dircreative_demo.py",
         "scripts/dircreative_readiness_audit.py",
@@ -1444,28 +1456,56 @@ def validate_professional_shot_card(path: str, shot: dict[str, Any]) -> None:
     )
 
 
+def validate_activation_policy() -> None:
+    proc = run(["python3", "scripts/dircreative_activation_policy_audit.py"])
+    require(proc.returncode == 0, f"activation policy audit failed:\n{proc.stderr}\n{proc.stdout}")
+    require(
+        "DIRCREATIVE_ACTIVATION_POLICY_AUDIT: PASS" in proc.stdout,
+        "activation policy audit missing PASS marker",
+    )
+
+
+def validate_context_budget() -> None:
+    proc = run(["python3", "scripts/dircreative_context_budget_audit.py"])
+    require(proc.returncode == 0, f"context budget audit failed:\n{proc.stderr}\n{proc.stdout}")
+    require(
+        "DIRCREATIVE_CONTEXT_BUDGET_AUDIT: PASS" in proc.stdout,
+        "context budget audit missing PASS marker",
+    )
+
+
 def validate_skills() -> None:
     root_skill = require_path("skills/dircreative/SKILL.md")
     root_text = root_skill.read_text(encoding="utf-8")
-    require("## Required Knowledge" in root_text, "root skill missing Required Knowledge")
-    require("## Live Chat Start Contract" in root_text, "root skill missing Live Chat Start Contract")
-    require("skill_run_receipt" in root_text, "root skill missing skill_run_receipt")
-    require("learn" in root_text and "update" in root_text and "checkpoint" in root_text, "root skill missing learn/update/checkpoint routing")
-    require("chat-stage-gate-integrity.md" in root_text, "root skill missing chat stage gate integrity knowledge")
-    require("Every creative stage must include `用户确认点`" in root_text, "root skill missing per-stage confirmation guard")
-    require("模拟用户选择" in root_text, "root skill missing simulated decision guard")
-    for term in ["阶段: 想法读取", "阶段: 完整想法读取", "earliest unresolved creative gate", "pre_generation_contract.status: pass"]:
-        require(term in root_text, f"root skill missing live chat start term: {term}")
-    for term in ["generation-unit limit", "story duration", "5-15s generation units"]:
-        require(term in root_text, f"root skill missing duration/unit guard: {term}")
-    for term in ["阶段: 中途改需求处理", "stale", "revision-scope question"]:
-        require(term in root_text, f"root skill missing midstream change guard: {term}")
-    require("live-user-acceptance-gate.md" in root_text, "root skill missing live user acceptance gate knowledge")
-    require("live-chat-acceptance-runbook.md" in root_text, "root skill missing live chat acceptance runbook knowledge")
-    require("production-prompt-discipline.md" in root_text, "root skill missing production prompt discipline knowledge")
-    require("pre-delivery harness" in root_text, "root skill missing production prompt discipline harness rule")
-    require("falsifiable success criteria" in root_text, "root skill missing falsifiable success criteria rule")
-    require("dircreative_goal_audit.py --require-installed" in root_text, "root skill missing goal audit completion guard")
+    require(len(root_text.splitlines()) <= 220, "root skill exceeds 220-line router budget")
+    require(len(root_text.encode("utf-8")) <= 16 * 1024, "root skill exceeds 16 KiB router budget")
+    for heading in [
+        "## Invocation Boundary",
+        "## Router Contract",
+        "## Startup Reads",
+        "## Execution Context",
+        "## Modes",
+        "## External User Gates",
+        "## Compact State",
+        "## Sub-Capability Dispatch",
+        "## Result Contract",
+    ]:
+        require(heading in root_text, f"root router missing {heading}")
+    for term in [
+        "$dircreative",
+        "dircreative_route.py",
+        "Read exactly one selected Route Card",
+        "source_maintenance",
+        "Fast",
+        "Studio",
+        "Delivery",
+        "concept_lock",
+        "generation_authorization",
+        "client_delivery_approval",
+        "zero unconditional protocol reads",
+        "at most three dynamic professional perspectives",
+    ]:
+        require(term in root_text, f"root router missing v2 contract term: {term}")
     for path in internal_skill_paths():
         text = path.read_text(encoding="utf-8")
         for heading in ["## Required Knowledge", "## Inputs", "## Outputs", "## Rules", "## skill_run_receipt"]:
@@ -1520,7 +1560,7 @@ def validate_adco_native_integration_contract() -> None:
                 "orchestrated_worker",
                 "adco.specialist-exchange",
                 "dircreative.film-preproduction",
-                "execution.mode: inline",
+                "executes inline",
                 "claims.client_ready/ppt_ready/final_delivery_ready/send_ready/project_complete/control_plane_updated: false",
             ],
         ),
@@ -1954,17 +1994,17 @@ def validate_production_prompt_discipline() -> None:
     require(not missing, f"{path} missing discipline terms: {missing}")
 
     root = require_path("skills/dircreative/SKILL.md").read_text(encoding="utf-8")
+    delivery_route = require_path("skills/dircreative/routes/delivery-audit.md").read_text(encoding="utf-8")
     image = require_path("skills/dircreative/image-prompt-compiler/SKILL.md").read_text(encoding="utf-8")
     video = require_path("skills/dircreative/video-model-adapter/SKILL.md").read_text(encoding="utf-8")
     for skill_path, skill_text in [
-        ("skills/dircreative/SKILL.md", root),
         ("skills/dircreative/image-prompt-compiler/SKILL.md", image),
         ("skills/dircreative/video-model-adapter/SKILL.md", video),
     ]:
         require("production-prompt-discipline.md" in skill_text, f"{skill_path} missing production prompt discipline knowledge")
         require("pre-delivery harness" in skill_text, f"{skill_path} missing pre-delivery harness rule")
-    require("show a user-facing material choice" in root, "root skill missing material choice gate")
-    require("Do not replace it with a generic 3x3 mood storyboard" in root, "root skill missing storyboard anti-generic guard")
+    require("Only Delivery may use full receipts" in root, "root router missing Delivery audit boundary")
+    require("Full receipts, hashes, authorization" in delivery_route, "Delivery Route Card missing audit boundary")
     require("which material to make next" in image, "image prompt compiler missing material selection gate")
     require("Do not infer the material type from a vague image request" in image, "image prompt compiler missing vague material request guard")
     for term in ["character design locks", "scene layout locks", "prop continuity", "camera movement", "subject movement path", "emotional beat", "compact professional shot-card text", "lens/support/movement", "blocking/path", "sound or edit cue"]:
@@ -2035,7 +2075,6 @@ def validate_ai_video_prompt_community_lessons() -> None:
     missing = [term for term in required_terms if term not in combined]
     require(not missing, f"{path} missing community prompt lesson terms: {missing}")
     for skill_path, skill_text in [
-        ("skills/dircreative/SKILL.md", root),
         ("skills/dircreative/image-prompt-compiler/SKILL.md", image),
         ("skills/dircreative/video-model-adapter/SKILL.md", video),
     ]:
@@ -2152,6 +2191,7 @@ def validate_professional_agent_voice() -> None:
         require_path("skills/dircreative/story-development/SKILL.md"),
         require_path("skills/dircreative/script-treatment/SKILL.md"),
         require_path("skills/dircreative/shot-design/SKILL.md"),
+        require_path("skills/dircreative/visual-bible/SKILL.md"),
         require_path("examples/independent-agent-scent-brand-test/01-full-flow-transcript.md"),
         require_path("examples/independent-agent-scent-brand-test/02-independent-review.md"),
         require_path("examples/live-user-sim-noodle/16-chat-interface-demo.md"),
@@ -2504,7 +2544,7 @@ def validate_client_film_hard_gates_docs() -> None:
         "VO budget",
         "covered_shot_ids",
         "12 customer story sections",
-        "30+ shot/rhythm points",
+        "at least 30 shot/rhythm points",
         "per-shot asset/reference contract",
         "existing Grok",
         "existing ChatGPT",
@@ -2518,7 +2558,7 @@ def validate_client_film_hard_gates_docs() -> None:
         "real Codex Thread dispatch",
         "TOOL_BLOCKED",
         "structural validation",
-        "does not prove client-send readiness",
+        "A validated structure is not the same thing as a client-sendable deck",
     ]
     missing = [term for term in required_terms if term not in combined]
     require(not missing, f"client film hard gates missing terms: {missing}")
@@ -2645,7 +2685,6 @@ def validate_council_adversarial_review() -> None:
         "OBJECTIVE_COMPLETE: NO",
         "live user acceptance",
         "smallest repo change",
-        "user, professional film expert, product manager, skill developer, and code researcher",
     ]
     missing = [term for term in required_terms if term not in combined]
     require(not missing, f"{path} missing council review terms: {missing}")
@@ -2712,9 +2751,9 @@ def validate_thread_orchestration_protocol() -> None:
         "write run receipts, adoption records, merge or rollback actions",
         "worker scope",
         "cleanup",
-        "Goal completion decisions",
+        "final validation, user reporting, archival cleanup, and completion decisions",
         "Second-Level Stateless Subagents",
-        "Temporary stateless subagents",
+        "temporary stateless assistance",
         "second_level_subagents",
         "TOOL_BLOCKED",
     ]
@@ -3414,7 +3453,6 @@ def validate_chat_interface() -> None:
         "production-room gate",
         "阶段: 想法读取",
         "阶段: 完整想法读取",
-        "do not treat those words as permission to jump to image generation",
         "story/script/shot/visual bible",
         "do not jump to image/reference strategy",
         "可以",
@@ -3593,7 +3631,7 @@ def validate_goal_mode_simulation_protocol() -> None:
         "simulated_fixture",
         "real_user_co_creation_verified: true",
         "live-user-acceptance.yaml",
-        "Do not wait for `1`",
+        "do not wait for `1`",
         "不生成真实图片或视频",
         "不计入真实验收",
         "阶段: 想法读取",
@@ -5583,6 +5621,8 @@ def main() -> int:
         ("objective requirement audit receipt", validate_objective_requirement_audit_receipt),
         ("release gate technical readiness receipt", validate_release_gate_technical_readiness_receipt),
         ("skills", validate_skills),
+        ("activation policy", validate_activation_policy),
+        ("routing and context budget", validate_context_budget),
         ("ADCO native integration contract", validate_adco_native_integration_contract),
         ("project AGENTS generator", validate_project_agents_script),
         ("director room fixture", validate_director_room_fixture),

@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "dircreative.compact-state-snapshot/2.0",
+  "title": "DIRcreative Compact State Snapshot",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "project_id",
+    "mode",
+    "current_route",
+    "locked_facts",
+    "working_assumptions",
+    "active_outputs",
+    "stale_outputs",
+    "open_questions",
+    "generation_authorized",
+    "client_delivery_approved"
+  ],
+  "properties": {
+    "project_id": {"type": "string"},
+    "mode": {"enum": ["fast", "studio", "delivery"]},
+    "current_route": {"type": "string", "minLength": 1},
+    "locked_facts": {"type": "array", "items": {"type": "string"}},
+    "working_assumptions": {"type": "array", "items": {"type": "string"}},
+    "active_outputs": {"type": "array", "items": {"type": "string"}},
+    "stale_outputs": {"type": "array", "items": {"type": "string"}},
+    "open_questions": {"type": "array", "items": {"type": "string"}},
+    "generation_authorized": {"type": "boolean"},
+    "client_delivery_approved": {"type": "boolean"}
+  }
+}

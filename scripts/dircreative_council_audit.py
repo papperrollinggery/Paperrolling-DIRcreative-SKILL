@@ -59,7 +59,8 @@ def has_all(text: str, terms: list[str]) -> tuple[bool, list[str]]:
 def main() -> int:
     failures: list[str] = []
     review = read("docs/film-preproduction/council-adversarial-review.md")
-    root = read("skills/dircreative/SKILL.md")
+    studio_route = read("skills/dircreative/routes/studio-development.md")
+    routing_policy = read("skills/dircreative/runtime/routing-policy.yaml")
     runbook = read("docs/film-preproduction/live-chat-acceptance-runbook.md")
     rehearsal = read("examples/live-acceptance-rehearsal/01-chat-transcript.md")
     taxonomy_text = read("docs/film-preproduction/qa/failure-taxonomy.yaml")
@@ -91,17 +92,16 @@ def main() -> int:
     if not review_ok:
         failures.append("council review doc missing terms: " + ", ".join(missing_review))
 
-    root_ok, missing_root = has_all(
-        root,
+    route_ok, missing_route = has_all(
+        studio_route + "\n" + routing_policy,
         [
             "council-adversarial-review.md",
-            "user, professional film expert, product manager, skill developer, and code researcher",
-            "smallest repo change",
-            "OBJECTIVE_COMPLETE: NO",
+            "at most one independent critical pass",
+            "external_gates_only_for_material_decisions: true",
         ],
     )
-    if not root_ok:
-        failures.append("root skill missing council guardrails: " + ", ".join(missing_root))
+    if not route_ok:
+        failures.append("Studio route missing bounded critical-review contract: " + ", ".join(missing_route))
 
     subskill_failures = []
     for path in [
@@ -167,7 +167,7 @@ def main() -> int:
     print(f"viewpoint_count: {len(council.get('viewpoints', []))}")
     print(f"required_viewpoints_present: {str(set(council.get('viewpoints', [])) == REQUIRED_VIEWPOINTS).lower()}")
     print(f"council_trigger_surface_present: {str('反驳型议会审核' in runbook and '反驳型议会审核' in rehearsal).lower()}")
-    print(f"smallest_change_rule_present: {str('smallest repo change' in review and 'smallest repo change' in root).lower()}")
+    print(f"smallest_change_rule_present: {str('smallest repo change' in review).lower()}")
     print(f"external_research_boundary_present: {str('weak community signals' in community and 'Do not add a Higgsfield MCP' in community).lower()}")
     print(f"failure_ids_present: {str(not missing_failure_ids and not missing_retry_ids).lower()}")
     print(f"objective_complete: {standard.get('current_result', '')}")

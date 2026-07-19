@@ -151,7 +151,6 @@ def main() -> int:
             combined_docs,
             [
                 "Second-level subagents are local tools inside a first-level Codex Thread worker",
-                "Temporary stateless subagents are second-level local tools",
                 "second_level_subagents",
                 "prompt_decomposition",
                 "reference_check",

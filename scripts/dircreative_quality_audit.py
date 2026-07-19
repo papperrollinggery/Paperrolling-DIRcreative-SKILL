@@ -38,6 +38,9 @@ def main() -> int:
     humanized_copy_wiring = "\n".join(
         [
             read("skills/dircreative/SKILL.md"),
+            read("skills/dircreative/routes/fast-task.md"),
+            read("skills/dircreative/routes/studio-development.md"),
+            read("skills/dircreative/routes/delivery-audit.md"),
             read("docs/film-preproduction/chat-co-creation-interface.md"),
             read(professional_voice_doc),
         ]
@@ -210,10 +213,10 @@ def main() -> int:
         lambda: require_terms(
             humanized_copy_wiring,
             [
-                "Read `docs/film-preproduction/professional-agent-voice-standard.md` before any user-visible creative direction",
-                "User-visible wording must pass the professional voice and humanizer check",
-                "Before delivering any user-visible creative direction, option set, script note, prompt-only handoff",
-                "Chinese output follows `humanizer-zh`; English output follows `humanizer`",
+                "Before user-visible creative output",
+                "professional-agent-voice-standard.md",
+                "humanizer check",
+                "humanizer / humanizer-zh diagnostic review",
                 "Frontstage Copy Hygiene",
                 "Every visible gate must follow `docs/film-preproduction/professional-agent-voice-standard.md` and run a humanizer pass",
                 "The point is not to sound friendlier",

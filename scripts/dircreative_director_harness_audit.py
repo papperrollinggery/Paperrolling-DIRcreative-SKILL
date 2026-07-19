@@ -1058,16 +1058,20 @@ def validate_docs() -> list[str]:
     failures: list[str] = []
     required_terms = {
         "skills/dircreative/SKILL.md": (
+            "dircreative_route.py",
+            "source_maintenance",
+            "Fast",
+            "Studio",
+            "Delivery",
+            "zero unconditional protocol reads",
+            "open_questions",
+        ),
+        "skills/dircreative/runtime/routing-policy.yaml": (
             "director-room-routing.md",
             "director-role-harness.yaml",
-            "non-trivial advertising-film",
-            "simple rewrite",
-            "runtime-state-governance.md",
-            "dircreative_state_audit.py audit",
-            "current-index",
-            "TOOL_BLOCKED",
-            "handoff-selected sub-skill",
-            "open_questions",
+            "fast-task.md",
+            "studio-development.md",
+            "delivery-audit.md",
         ),
         "skills/dircreative/director-room/SKILL.md": (
             "Automatic Entry And Role Harness",

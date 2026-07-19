@@ -99,6 +99,7 @@ Use `skills/dircreative/assets/visualizations/stage-surface-registry.json#story-
 - Explain why the story direction fits the channel, duration, first-hook timing, emotional turn, and reference-pack needs.
 - If the user asks for visual exploration, story rebuild, formal lockable material, retry, thread/workflow audit, or live acceptance, name that intent before continuing.
 - Do not move to script, shot design, reference planning, or image generation until the story review passes story tension, causal escalation, and professional story engine checks.
+- Do not use visual polish to compensate for weak story or script work. When a story change invalidates downstream decisions, mark downstream visual assets as not locked before returning to story development.
 - Do not write a script until the story review passes.
 - Do not write shot lists or prompts.
 

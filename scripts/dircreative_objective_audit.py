@@ -299,9 +299,10 @@ def main() -> int:
             has_terms(
                 stage_gate_contract + "\n" + chat_surface_output,
                 [
-                    "Every visible creative stage must carry a decision surface",
-                    "Every creative stage must include `用户确认点`",
-                    "`阶段: 出图执行建议`, `阶段: 视频生成建议`, and `阶段: QA 与重试规则` are customer-facing gates",
+                    "The only v2 external gates are",
+                    "Story, script, shot, visual, reference, prompt, and QA states are reversible",
+                    "internal state.",
+                    "the first response contains useful artifact content",
                     "raw JSON/YAML prompt bodies are backstage evidence",
                     "stage_gate_integrity: ok",
                     "CHAT_SURFACE_AUDIT: PASS",
@@ -309,7 +310,7 @@ def main() -> int:
             )
             and chat_surface_ok,
             "docs/film-preproduction/chat-stage-gate-integrity.md + scripts/dircreative_chat_surface_audit.py",
-            "Prompt summaries, QA/retry, and simulated runs must remain visible co-creation gates, not hidden afterthoughts.",
+            "Only material decisions block the user; internal craft states remain visible and reversible.",
         ),
         installed_status,
         check(

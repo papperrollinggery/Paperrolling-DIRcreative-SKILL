@@ -1,0 +1,147 @@
+policy_version: "2.0"
+default_mode: studio
+default_execution_context: standalone_chat
+
+route_cards:
+  fast: skills/dircreative/routes/fast-task.md
+  studio: skills/dircreative/routes/studio-development.md
+  delivery: skills/dircreative/routes/delivery-audit.md
+
+external_user_gates:
+  - concept_lock
+  - generation_authorization
+  - client_delivery_approval
+
+performance_budgets:
+  fast:
+    threads: 0
+    director_room: 0
+    external_user_gates_max: 1
+    full_receipt: false
+    full_project_validation: false
+    adco_documents: 0
+    route_cards: 1
+    task_files_max: 3
+  studio:
+    threads_default: 0
+    perspectives_max: 3
+    independent_critics_max: 1
+    external_gates_only_for_material_decisions: true
+    final_delivery_documents: 0
+    route_cards: 1
+  delivery:
+    full_audit_allowed: true
+    duplicate_state_owners_allowed: false
+    route_cards: 1
+
+routes:
+  source_maintenance:
+    mode: fast
+    route_card: skills/dircreative/routes/fast-task.md
+    required_files: []
+    optional_files: []
+    external_user_gate: null
+    threads_allowed: false
+    full_receipt_required: false
+  copy_revision:
+    mode: fast
+    route_card: skills/dircreative/routes/fast-task.md
+    required_files:
+      - skills/dircreative/script-treatment/SKILL.md
+      - docs/film-preproduction/professional-agent-voice-standard.md
+    optional_files: []
+    external_user_gate: null
+    threads_allowed: false
+    full_receipt_required: false
+  shot_optimization:
+    mode: fast
+    route_card: skills/dircreative/routes/fast-task.md
+    required_files:
+      - skills/dircreative/shot-design/SKILL.md
+      - docs/film-preproduction/professional-agent-voice-standard.md
+    optional_files: []
+    external_user_gate: null
+    threads_allowed: false
+    full_receipt_required: false
+  storyboard_review:
+    mode: fast
+    route_card: skills/dircreative/routes/fast-task.md
+    required_files:
+      - skills/dircreative/shot-design/SKILL.md
+      - skills/dircreative/video-model-adapter/SKILL.md
+      - docs/film-preproduction/professional-agent-voice-standard.md
+    optional_files: []
+    external_user_gate: null
+    threads_allowed: false
+    full_receipt_required: false
+  prompt_revision:
+    mode: fast
+    route_card: skills/dircreative/routes/fast-task.md
+    required_files:
+      - skills/dircreative/video-model-adapter/SKILL.md
+      - docs/film-preproduction/professional-agent-voice-standard.md
+    optional_files: []
+    external_user_gate: null
+    threads_allowed: false
+    full_receipt_required: false
+  bounded_revision:
+    mode: fast
+    route_card: skills/dircreative/routes/fast-task.md
+    required_files:
+      - docs/film-preproduction/professional-agent-voice-standard.md
+    optional_files: []
+    external_user_gate: null
+    threads_allowed: false
+    full_receipt_required: false
+  film_development:
+    mode: studio
+    route_card: skills/dircreative/routes/studio-development.md
+    required_files:
+      - skills/dircreative/director-room/SKILL.md
+      - docs/film-preproduction/director-room-routing.md
+      - docs/film-preproduction/schemas/director-role-harness.yaml
+      - docs/film-preproduction/professional-agent-voice-standard.md
+    optional_files:
+      - docs/film-preproduction/council-adversarial-review.md
+    external_user_gate: concept_lock
+    threads_allowed: false
+    full_receipt_required: false
+  generation_authorization:
+    mode: delivery
+    route_card: skills/dircreative/routes/delivery-audit.md
+    required_files:
+      - docs/film-preproduction/capability-aware-generation-policy.md
+      - skills/dircreative/generation-qa/SKILL.md
+      - docs/film-preproduction/professional-agent-voice-standard.md
+    optional_files: []
+    external_user_gate: generation_authorization
+    threads_allowed: false
+    full_receipt_required: true
+  client_delivery:
+    mode: delivery
+    route_card: skills/dircreative/routes/delivery-audit.md
+    required_files:
+      - docs/film-preproduction/client-film-hard-gates.md
+      - skills/dircreative/generation-qa/SKILL.md
+      - docs/film-preproduction/professional-agent-voice-standard.md
+    optional_files: []
+    external_user_gate: client_delivery_approval
+    threads_allowed: false
+    full_receipt_required: true
+  adco_specialist_exchange:
+    mode: delivery
+    route_card: skills/dircreative/routes/delivery-audit.md
+    required_files:
+      - docs/film-preproduction/adco-integration-contract.md
+      - docs/film-preproduction/schemas/adco-specialist-descriptor.json
+    optional_files: []
+    external_user_gate: null
+    threads_allowed: false
+    full_receipt_required: false
+
+contract_owners:
+  routing: skills/dircreative/runtime/routing-policy.yaml
+  compact_state: skills/dircreative/runtime/state-snapshot.schema.json
+  fast_execution: skills/dircreative/routes/fast-task.md
+  studio_execution: skills/dircreative/routes/studio-development.md
+  delivery_execution: skills/dircreative/routes/delivery-audit.md

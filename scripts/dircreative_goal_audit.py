@@ -193,6 +193,13 @@ def main() -> int:
         acceptance_receipt = ROOT / acceptance_receipt
 
     root_skill = read("skills/dircreative/SKILL.md")
+    live_start_contract = "\n".join(
+        [
+            root_skill,
+            read("docs/film-preproduction/live-chat-start-protocol.md"),
+            read("skills/dircreative/routes/delivery-audit.md"),
+        ]
+    )
     rough_chat = read("examples/live-user-sim-noodle/16-chat-interface-demo.md")
     complete_chat = read("examples/complete-idea-segmentation-test/02-chat-transcript.md")
     goal_simulation = read("examples/goal-mode-simulation-test/01-chat-transcript.md")
@@ -245,8 +252,17 @@ def main() -> int:
         ),
         pass_if(
             "live chat start contract",
-            has_terms(root_skill, ["Live Chat Start Contract", "阶段: 想法读取", "阶段: 完整想法读取", "pre_generation_contract.status: pass"]),
-            "skills/dircreative/SKILL.md",
+            has_terms(
+                live_start_contract,
+                [
+                    "## Router Contract",
+                    "Live Chat Start Protocol",
+                    "阶段: 想法读取",
+                    "阶段: 完整想法读取",
+                    "pre_generation_contract.status: pass",
+                ],
+            ),
+            "root router + live start protocol + Delivery Route Card",
         ),
         pass_if(
             "goal-mode simulated user flow",

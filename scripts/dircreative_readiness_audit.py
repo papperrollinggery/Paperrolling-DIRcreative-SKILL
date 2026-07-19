@@ -132,11 +132,12 @@ def main() -> int:
                 [
                     read("skills/dircreative/SKILL.md"),
                     read("skills/dircreative/chat-facilitator/SKILL.md"),
+                    read("skills/dircreative/routes/delivery-audit.md"),
                     read("docs/film-preproduction/live-chat-start-protocol.md"),
                 ]
             ),
             [
-                "Live Chat Start Contract",
+                "Live Chat Start Protocol",
                 "first reply",
                 "production-room gate",
                 "阶段: 想法读取",
