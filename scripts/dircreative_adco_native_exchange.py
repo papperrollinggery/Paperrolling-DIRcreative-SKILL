@@ -7,8 +7,10 @@ import csv
 import hashlib
 import importlib
 import json
+import os
 import re
 import shutil
+import stat
 import subprocess
 import sys
 import tempfile
@@ -183,6 +185,46 @@ def write_json(path: Path, payload: dict[str, Any]) -> None:
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
+def write_new_json_atomic(path: Path, payload: dict[str, Any]) -> None:
+    """Create one JSON file atomically without following or replacing a target."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if path.exists() or path.is_symlink():
+        raise ValueError(f"receipt path already exists: {path}")
+    casefold_matches = [
+        item
+        for item in path.parent.iterdir()
+        if item.name.casefold() == path.name.casefold()
+    ]
+    if casefold_matches:
+        raise ValueError(f"receipt path case alias already exists: {casefold_matches[0]}")
+
+    temporary = path.parent / f".{path.name}.tmp-{uuid.uuid4().hex}"
+    flags = os.O_CREAT | os.O_EXCL | os.O_WRONLY
+    flags |= getattr(os, "O_NOFOLLOW", 0)
+    fd: int | None = None
+    try:
+        fd = os.open(temporary, flags, 0o600)
+        data = (json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n").encode("utf-8")
+        with os.fdopen(fd, "wb", closefd=True) as handle:
+            fd = None
+            handle.write(data)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.link(temporary, path, follow_symlinks=False)
+        directory_flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0)
+        directory_fd = os.open(path.parent, directory_flags)
+        try:
+            os.fsync(directory_fd)
+        finally:
+            os.close(directory_fd)
+    except FileExistsError as exc:
+        raise ValueError(f"receipt path already exists: {path}") from exc
+    finally:
+        if fd is not None:
+            os.close(fd)
+        temporary.unlink(missing_ok=True)
+
+
 def nonempty(value: Any) -> bool:
     return isinstance(value, str) and bool(value.strip())
 
@@ -213,8 +255,10 @@ def path_has_symlink_component(project_root: Path, value: str) -> bool:
 
 
 def scopes_overlap(left: str, right: str) -> bool:
-    left_normalized = normalized_path(left)
-    right_normalized = normalized_path(right)
+    # Treat case aliases as the same scope. This is conservative on case-sensitive
+    # filesystems and closes a real overlap bypass on default macOS volumes.
+    left_normalized = normalized_path(left).casefold()
+    right_normalized = normalized_path(right).casefold()
     return (
         left_normalized == right_normalized
         or left_normalized.startswith(right_normalized + "/")
@@ -222,17 +266,23 @@ def scopes_overlap(left: str, right: str) -> bool:
     )
 
 
+def protected_scope_overlap(value: str) -> bool:
+    normalized = normalized_path(value).casefold()
+    return any(scopes_overlap(normalized, normalized_path(root).casefold()) for root in PROTECTED_PATH_ROOTS)
+
+
 def path_in_scopes(value: str, scopes: list[str]) -> bool:
-    normalized = normalized_path(value)
+    normalized = normalized_path(value).casefold()
     return any(
-        normalized == normalized_path(scope) or normalized.startswith(normalized_path(scope) + "/")
+        normalized == normalized_path(scope).casefold()
+        or normalized.startswith(normalized_path(scope).casefold() + "/")
         for scope in scopes
     )
 
 
 def relative_path_is_within(relative_path: str, root: str) -> bool:
-    path_parts = Path(relative_path).parts
-    root_parts = Path(root.rstrip("/")).parts
+    path_parts = tuple(part.casefold() for part in Path(relative_path).parts)
+    root_parts = tuple(part.casefold() for part in Path(root.rstrip("/")).parts)
     return len(path_parts) >= len(root_parts) and path_parts[: len(root_parts)] == root_parts
 
 
@@ -267,6 +317,155 @@ def project_path(project_root: Path, value: Any, label: str) -> Path | None:
     except ValueError:
         return None
     return candidate
+
+
+def v2_exchange_registration(
+    project_root: Path,
+    handoff: dict[str, Any],
+    handoff_path: Path | None,
+    descriptor: dict[str, Any],
+) -> tuple[dict[str, str] | None, list[str]]:
+    """Bind a compact v2 handoff to ADCO's host-owned exchange ledger."""
+    failures: list[str] = []
+    root = project_root.resolve()
+    if handoff_path is None:
+        return None, [failure("missing_handoff_registration", "v2 handoff path is required")]
+    try:
+        handoff_relative = handoff_path.resolve().relative_to(root).as_posix()
+    except ValueError:
+        return None, [failure("handoff_identity_mismatch", "handoff path escapes project")]
+    if (
+        path_has_symlink_component(root, handoff_relative)
+        or not handoff_path.is_file()
+        or handoff_path.stat().st_size == 0
+        or handoff_path.stat().st_nlink != 1
+    ):
+        return None, [failure("handoff_identity_mismatch", "handoff must be one regular project file")]
+    try:
+        persisted = load_json(handoff_path)
+    except ValueError as exc:
+        return None, [failure("handoff_identity_mismatch", str(exc))]
+    if persisted != handoff:
+        failures.append(failure("handoff_identity_mismatch", "handoff file differs from validation input"))
+
+    index_relative = "AD-creative/orchestrator/specialist_exchange/exchange_index.csv"
+    index_path = root / index_relative
+    if (
+        path_has_symlink_component(root, index_relative)
+        or not index_path.is_file()
+        or index_path.stat().st_nlink != 1
+    ):
+        return None, [*failures, failure("missing_handoff_registration", "ADCO exchange index is unavailable")]
+    rows = [
+        row
+        for row in read_csv_dicts(index_path)
+        if normalized_path(row.get("handoff_path", "")) == normalized_path(handoff_relative)
+    ]
+    if len(rows) != 1:
+        return None, [
+            *failures,
+            failure("missing_handoff_registration", f"expected one ADCO exchange row, found {len(rows)}"),
+        ]
+    row = rows[0]
+    expected_descriptor_hash = canonical_descriptor_hash(descriptor)
+    expected = {
+        "provider_id": PROVIDER_ID,
+        "profile_id": PROFILE_ID,
+        "contract_version": V2_CONTRACT_VERSION,
+        "compatibility_status": "compatible",
+        "handoff_sha256": sha256(handoff_path),
+        "descriptor_sha256": expected_descriptor_hash,
+    }
+    for field, expected_value in expected.items():
+        if row.get(field) != expected_value:
+            failures.append(failure("handoff_registration_mismatch", field))
+
+    descriptor_relative = (
+        "AD-creative/orchestrator/specialist_exchange/descriptors/"
+        f"descriptor_{expected_descriptor_hash}.json"
+    )
+    descriptor_snapshot = root / descriptor_relative
+    if (
+        path_has_symlink_component(root, descriptor_relative)
+        or not descriptor_snapshot.is_file()
+        or descriptor_snapshot.stat().st_nlink != 1
+    ):
+        failures.append(failure("descriptor_snapshot_mismatch", "registered descriptor snapshot is unavailable"))
+    else:
+        try:
+            if load_json(descriptor_snapshot) != descriptor:
+                failures.append(failure("descriptor_snapshot_mismatch", "snapshot content differs"))
+        except ValueError as exc:
+            failures.append(failure("descriptor_snapshot_mismatch", str(exc)))
+
+    receipt_value = row.get("receipt_path", "")
+    receipt_path = project_path(root, receipt_value, "receipt")
+    requested = handoff.get("requested_outputs")
+    requested_items = requested if isinstance(requested, list) else []
+    output_parents = {
+        normalized_path(str(Path(str(item.get("path_root", ""))).parent))
+        for item in requested_items
+        if isinstance(item, dict) and nonempty(item.get("path_root"))
+    }
+    receipt_parent = normalized_path(str(Path(receipt_value).parent)) if nonempty(receipt_value) else ""
+    if (
+        receipt_path is None
+        or path_has_symlink_component(root, receipt_value)
+        or protected_scope_overlap(receipt_value)
+        or len(output_parents) != 1
+        or receipt_parent not in output_parents
+    ):
+        failures.append(failure("invalid_registered_receipt_path", receipt_value or "missing"))
+    return row, failures
+
+
+def register_v2_fixture_handoff(
+    project_root: Path,
+    handoff: dict[str, Any],
+    handoff_path: Path,
+    descriptor: dict[str, Any],
+    *,
+    receipt_path: str,
+) -> None:
+    """Create only the host identity records needed by isolated v2 tests."""
+    root = project_root.resolve()
+    relative = handoff_path.resolve().relative_to(root).as_posix()
+    descriptor_hash = canonical_descriptor_hash(descriptor)
+    snapshot = (
+        root
+        / "AD-creative/orchestrator/specialist_exchange/descriptors"
+        / f"descriptor_{descriptor_hash}.json"
+    )
+    write_json(snapshot, descriptor)
+    index = root / "AD-creative/orchestrator/specialist_exchange/exchange_index.csv"
+    index.parent.mkdir(parents=True, exist_ok=True)
+    fields = [
+        "provider_id",
+        "profile_id",
+        "contract_version",
+        "descriptor_sha256",
+        "handoff_sha256",
+        "compatibility_status",
+        "handoff_path",
+        "receipt_path",
+    ]
+    write_header = not index.exists() or index.stat().st_size == 0
+    with index.open("a", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=fields)
+        if write_header:
+            writer.writeheader()
+        writer.writerow(
+            {
+                "provider_id": PROVIDER_ID,
+                "profile_id": PROFILE_ID,
+                "contract_version": V2_CONTRACT_VERSION,
+                "descriptor_sha256": descriptor_hash,
+                "handoff_sha256": sha256(handoff_path),
+                "compatibility_status": "compatible",
+                "handoff_path": relative,
+                "receipt_path": receipt_path,
+            }
+        )
 
 
 def canonical_descriptor_hash(descriptor: dict[str, Any]) -> str:
@@ -610,9 +809,8 @@ def validate_v1_handoff(
     if workspace_mode != "read_only" and not output_roots:
         failures.append(failure("missing_output_scope", "writable handoff requires an output root"))
     for writable in write_scope:
-        for protected in PROTECTED_PATH_ROOTS:
-            if scopes_overlap(writable, protected):
-                failures.append(failure("protected_scope_write", f"write overlaps protected path: {writable}"))
+        if protected_scope_overlap(writable):
+            failures.append(failure("protected_scope_write", f"write overlaps protected path: {writable}"))
 
     acceptance = handoff.get("acceptance")
     if not isinstance(acceptance, dict):
@@ -997,7 +1195,7 @@ def validate_v1_adoption(
             failures.append(failure("invalid_adoption_outputs", str(provider_id)))
             continue
         adopted_ids.add(provider_id)
-        if not nonempty(target_value) or any(scopes_overlap(target_value, path_root) for path_root in PROTECTED_PATH_ROOTS):
+        if not nonempty(target_value) or protected_scope_overlap(str(target_value)):
             failures.append(failure("protected_adoption_target", str(target_value)))
             continue
         if path_has_symlink_component(project_root, target_value):
@@ -1098,7 +1296,6 @@ def validate_v2_handoff(
     handoff: dict[str, Any],
     descriptor: dict[str, Any],
 ) -> list[str]:
-    del project_root  # v2 carries a compact inline brief, not host project state.
     failures = validate_descriptor(descriptor)
     failures.extend(
         failure("invalid_v2_handoff_shape", item)
@@ -1129,6 +1326,41 @@ def validate_v2_handoff(
         failures.append(failure("invalid_protocol", "handoff protocol_id mismatch"))
     if handoff.get("contract_version") != V2_CONTRACT_VERSION:
         failures.append(failure("unsupported_contract_version", "handoff contract_version must be 2.0"))
+
+    locked = handoff.get("locked_decisions")
+    locked_paths: set[str] = set()
+    if isinstance(locked, list):
+        for item in locked:
+            if not isinstance(item, dict):
+                continue
+            artifact_id = str(item.get("artifact_id", ""))
+            value = item.get("path")
+            if not isinstance(value, str):
+                continue
+            normalized = normalized_path(value)
+            normalized_identity = normalized.casefold()
+            if normalized_identity in locked_paths:
+                failures.append(failure("duplicate_locked_decision", normalized))
+                continue
+            locked_paths.add(normalized_identity)
+            target = project_path(project_root, value, "locked decision")
+            if target is None or path_has_symlink_component(project_root, value):
+                failures.append(failure("invalid_locked_decision", artifact_id or value))
+            elif not target.is_file():
+                failures.append(failure("missing_locked_decision", artifact_id or value))
+            elif target.stat().st_size == 0 or target.stat().st_nlink != 1:
+                failures.append(failure("invalid_locked_decision", artifact_id or value))
+            elif item.get("sha256") != sha256(target):
+                failures.append(failure("stale_locked_decision", artifact_id or value))
+    brief_snapshot = handoff.get("brief_snapshot")
+    if (
+        isinstance(brief_snapshot, str)
+        and normalized_path(brief_snapshot).casefold() not in locked_paths
+    ):
+        failures.append(
+            failure("unbound_brief_snapshot", "brief_snapshot must name one hash-bound locked decision")
+        )
+
     requested = handoff.get("requested_outputs")
     profile = descriptor_profile(descriptor)
     supported = set(profile.get("capabilities", [])) if profile else set()
@@ -1137,12 +1369,36 @@ def validate_v2_handoff(
         output_ids = [str(item.get("output_id", "")) for item in valid_requests]
         if len(output_ids) != len(set(output_ids)):
             failures.append(failure("invalid_v2_handoff_shape", "requested output_id values must be unique"))
+        output_types = [str(item.get("type", "")) for item in valid_requests]
+        if len(output_types) != len(set(output_types)):
+            failures.append(
+                failure(
+                    "duplicate_requested_output_type",
+                    "requested output type values must be unique for TYPE=PATH receipt binding",
+                )
+            )
         unsupported = {
             str(item.get("type", "")) for item in valid_requests
         } - supported
         unsupported.discard("")
         if unsupported:
             failures.append(failure("missing_profile_capability", ",".join(sorted(unsupported))))
+        for item in valid_requests:
+            output_id = str(item.get("output_id", ""))
+            path_root = item.get("path_root")
+            if not isinstance(path_root, str):
+                continue
+            normalized_root = normalized_path(path_root)
+            if (
+                normalized_root in {"", "."}
+                or project_path(project_root, path_root, "output root") is None
+                or path_has_symlink_component(project_root, path_root)
+            ):
+                failures.append(failure("invalid_output_scope", output_id or path_root))
+            elif protected_scope_overlap(path_root):
+                failures.append(failure("protected_output_scope", output_id or path_root))
+            elif any(scopes_overlap(path_root, locked_path) for locked_path in locked_paths):
+                failures.append(failure("locked_input_output_overlap", output_id or path_root))
     if handoff.get("execution_mode") != "inline":
         failures.append(failure("nested_dispatch_forbidden", "v2 execution_mode must be inline"))
     return failures
@@ -1179,6 +1435,23 @@ def build_v2_receipt(
     status = v2_status or (v2_status_from_verdict(verdict) if verdict is not None else None)
     if status not in V2_STATUSES:
         raise ValueError(f"invalid v2 receipt status: {status}")
+    descriptor = load_json(DESCRIPTOR_PATH)
+    handoff_failures = validate_handoff(
+        project_root,
+        handoff,
+        descriptor,
+        handoff_path=handoff_path,
+    )
+    if handoff_failures:
+        raise ValueError("v2 handoff is not currently valid: " + "; ".join(handoff_failures))
+    registration, registration_failures = v2_exchange_registration(
+        project_root,
+        handoff,
+        handoff_path,
+        descriptor,
+    )
+    if registration is None or registration_failures:
+        raise ValueError("v2 handoff is not registered: " + "; ".join(registration_failures))
     try:
         handoff_relative = handoff_path.resolve().relative_to(project_root.resolve()).as_posix()
     except ValueError as exc:
@@ -1195,6 +1468,22 @@ def build_v2_receipt(
         for item in requested_outputs
         if isinstance(item, dict) and nonempty(item.get("type"))
     }
+    requested_types = set(request_by_type)
+    supplied_types = set(artifact_paths)
+    if status == "completed":
+        if supplied_types != requested_types:
+            raise ValueError("completed v2 receipt must contain every requested output type")
+        if open_questions:
+            raise ValueError("completed v2 receipt cannot contain open questions")
+    else:
+        if artifact_paths:
+            raise ValueError(f"{status} v2 receipt cannot contain outputs")
+        if status == "needs_user" and not open_questions:
+            raise ValueError("needs_user v2 receipt requires at least one open question")
+        if status != "needs_user" and open_questions:
+            raise ValueError(f"{status} v2 receipt cannot contain open questions")
+        if status in {"blocked", "failed"} and not limitations:
+            raise ValueError(f"{status} v2 receipt requires at least one limitation")
     outputs: list[dict[str, str]] = []
     physical_outputs: set[tuple[int, int]] = set()
     for kind, value in artifact_paths.items():
@@ -1203,7 +1492,7 @@ def build_v2_receipt(
             raise ValueError(f"unrequested output kind: {kind}")
         if path_has_symlink_component(project_root, value):
             raise ValueError(f"output artifact uses a symlink: {value}")
-        if any(scopes_overlap(value, protected) for protected in PROTECTED_PATH_ROOTS):
+        if protected_scope_overlap(value):
             raise ValueError(f"output artifact targets ADCO-owned state: {value}")
         path = project_path(project_root, value, "output artifact")
         if path is None or not path.is_file():
@@ -1248,12 +1537,50 @@ def build_v2_receipt(
         "open_questions": structured_questions,
     }
     if receipt_output is None:
-        receipt_path = handoff_path.with_name(f"{handoff_path.stem}.receipt.json")
-    else:
-        receipt_path = project_path(project_root, receipt_output, "receipt")
-        if receipt_path is None:
-            raise ValueError("receipt path escapes project")
-    write_json(receipt_path, receipt)
+        raise ValueError("v2 receipt requires the explicit ADCO-registered receipt path")
+    registered_receipt = registration.get("receipt_path", "")
+    if normalized_path(receipt_output) != normalized_path(registered_receipt):
+        raise ValueError("receipt path does not match the ADCO exchange registration")
+    receipt_path = project_path(project_root, receipt_output, "receipt")
+    if receipt_path is None:
+        raise ValueError("receipt path escapes project")
+    collision_paths = [
+        handoff_relative,
+        *[
+            str(item.get("path", ""))
+            for item in handoff.get("locked_decisions", [])
+            if isinstance(item, dict)
+        ],
+        *artifact_paths.values(),
+        *[
+            str(item.get("path_root", ""))
+            for item in requested_outputs
+            if isinstance(item, dict)
+        ],
+    ]
+    if (
+        protected_scope_overlap(receipt_output)
+        or any(nonempty(value) and scopes_overlap(receipt_output, value) for value in collision_paths)
+        or path_has_symlink_component(project_root, receipt_output)
+    ):
+        raise ValueError("receipt path overlaps protected handoff, input, or output state")
+    prewrite_failures = [
+        item
+        for item in validate_v2_receipt(
+            project_root,
+            handoff,
+            handoff_path,
+            receipt,
+            receipt_path=None,
+        )
+        if not item.startswith("missing_receipt_file:")
+    ]
+    if prewrite_failures:
+        raise ValueError("invalid v2 receipt before write: " + "; ".join(prewrite_failures))
+    receipt_path.parent.mkdir(parents=True, exist_ok=True)
+    if path_has_symlink_component(project_root, receipt_output):
+        raise ValueError("receipt path uses a symlink component")
+    write_new_json_atomic(receipt_path, receipt)
     return receipt, receipt_path
 
 
@@ -1262,6 +1589,7 @@ def validate_v2_receipt(
     handoff: dict[str, Any],
     handoff_path: Path,
     receipt: dict[str, Any],
+    receipt_path: Path | None = None,
 ) -> list[str]:
     failures = [
         failure("invalid_v2_receipt_shape", item)
@@ -1291,8 +1619,54 @@ def validate_v2_receipt(
     if receipt.get("contract_version") != V2_CONTRACT_VERSION:
         failures.append(failure("unsupported_contract_version", "receipt contract_version must be 2.0"))
     status = receipt.get("status")
-    if status not in V2_STATUSES:
+    if not isinstance(status, str) or status not in V2_STATUSES:
         failures.append(failure("invalid_v2_status", str(status)))
+        status = ""
+    try:
+        descriptor = load_json(DESCRIPTOR_PATH)
+        failures.extend(
+            validate_handoff(
+                project_root,
+                handoff,
+                descriptor,
+                handoff_path=handoff_path,
+            )
+        )
+    except ValueError as exc:
+        failures.append(failure("invalid_handoff_at_receipt", str(exc)))
+        descriptor = {}
+    registration, registration_failures = v2_exchange_registration(
+        project_root,
+        handoff,
+        handoff_path,
+        descriptor,
+    )
+    failures.extend(registration_failures)
+    if receipt_path is None:
+        failures.append(failure("missing_receipt_file", "v2 receipt path is required"))
+    else:
+        try:
+            receipt_relative = receipt_path.resolve().relative_to(project_root.resolve()).as_posix()
+        except ValueError:
+            receipt_relative = ""
+        registered_receipt = registration.get("receipt_path", "") if registration else ""
+        if (
+            not receipt_relative
+            or normalized_path(receipt_relative) != normalized_path(registered_receipt)
+            or path_has_symlink_component(project_root, receipt_relative)
+            or not receipt_path.is_file()
+            or receipt_path.stat().st_size == 0
+            or receipt_path.stat().st_nlink != 1
+        ):
+            failures.append(failure("receipt_file_identity_mismatch", receipt_relative or str(receipt_path)))
+        else:
+            try:
+                if load_json(receipt_path) != receipt:
+                    failures.append(failure("receipt_file_identity_mismatch", "file content differs"))
+            except ValueError as exc:
+                failures.append(failure("receipt_file_identity_mismatch", str(exc)))
+            if stat.S_IMODE(receipt_path.stat().st_mode) != 0o600:
+                failures.append(failure("receipt_file_permissions", "v2 receipt must use mode 0600"))
     try:
         handoff_relative = handoff_path.resolve().relative_to(project_root.resolve()).as_posix()
     except ValueError:
@@ -1319,6 +1693,8 @@ def validate_v2_receipt(
         outputs = []
     if status == "completed" and not outputs:
         failures.append(failure("empty_completed_receipt", "completed receipt requires outputs"))
+    if status in {"needs_user", "blocked", "failed"} and outputs:
+        failures.append(failure("invalid_status_outputs", f"{status} receipt cannot contain outputs"))
     ids: set[str] = set()
     paths: set[str] = set()
     physical_outputs: set[tuple[int, int]] = set()
@@ -1358,9 +1734,7 @@ def validate_v2_receipt(
             failures.append(failure("duplicate_output_artifact", str(value)))
         else:
             paths.add(normalized_value)
-        if isinstance(value, str) and any(
-            scopes_overlap(value, protected) for protected in PROTECTED_PATH_ROOTS
-        ):
+        if isinstance(value, str) and protected_scope_overlap(value):
             failures.append(failure("protected_output_target", value))
         target = project_path(project_root, value, "output")
         if target is None or not target.is_file():
@@ -1379,16 +1753,27 @@ def validate_v2_receipt(
         failures.append(failure("missing_requested_output", ",".join(sorted(set(requested) - ids))))
 
     domain_qa = receipt.get("domain_qa")
-    if not isinstance(domain_qa, dict) or not V2_QA_FIELDS.issubset(domain_qa):
+    if not isinstance(domain_qa, dict) or set(domain_qa) != V2_QA_FIELDS:
         failures.append(failure("invalid_domain_qa", "domain_qa must use the compact v2 shape"))
         domain_qa = {}
     qa_status = domain_qa.get("status")
-    if qa_status not in {"pass", "fail", "blocked", "needs_user"} or (
-        status == "completed" and qa_status != "pass"
-    ):
+    expected_qa = {
+        "completed": "pass",
+        "needs_user": "needs_user",
+        "blocked": "blocked",
+        "failed": "fail",
+    }.get(status)
+    if qa_status not in {"pass", "fail", "blocked", "needs_user"} or qa_status != expected_qa:
         failures.append(failure("invalid_domain_qa", "domain_qa.status conflicts with receipt status"))
-    if not isinstance(domain_qa.get("checks"), list) or not isinstance(domain_qa.get("limitations"), list):
-        failures.append(failure("invalid_domain_qa", "domain_qa checks and limitations must be lists"))
+    if not valid_string_list(domain_qa.get("checks"), allow_empty=False) or not valid_string_list(
+        domain_qa.get("limitations")
+    ):
+        failures.append(
+            failure(
+                "invalid_domain_qa",
+                "domain_qa checks must be non-empty strings and limitations must be strings",
+            )
+        )
     questions = receipt.get("open_questions")
     if not isinstance(questions, list):
         failures.append(failure("invalid_open_questions", "open_questions must be a list"))
@@ -1402,6 +1787,11 @@ def validate_v2_receipt(
         failures.append(failure("invalid_open_questions", "open question ids must be present and unique"))
     if status == "needs_user" and not questions:
         failures.append(failure("invalid_open_questions", "needs_user requires at least one question"))
+    if status in {"completed", "blocked", "failed"} and questions:
+        failures.append(failure("invalid_open_questions", f"{status} receipt cannot contain open questions"))
+    limitations = domain_qa.get("limitations") if isinstance(domain_qa, dict) else None
+    if status in {"blocked", "failed"} and (not isinstance(limitations, list) or not limitations):
+        failures.append(failure("missing_status_limitation", f"{status} requires at least one limitation"))
     return failures
 
 
@@ -1409,6 +1799,8 @@ def validate_handoff(
     project_root: Path,
     handoff: dict[str, Any],
     descriptor: dict[str, Any],
+    *,
+    handoff_path: Path | None = None,
 ) -> list[str]:
     validators = {
         V1_CONTRACT_VERSION: validate_v1_handoff,
@@ -1417,7 +1809,16 @@ def validate_handoff(
     validator = validators.get(handoff.get("contract_version"))
     if validator is None:
         return [failure("unsupported_contract_version", str(handoff.get("contract_version")))]
-    return validator(project_root, handoff, descriptor)
+    failures = validator(project_root, handoff, descriptor)
+    if handoff.get("contract_version") == V2_CONTRACT_VERSION:
+        _, registration_failures = v2_exchange_registration(
+            project_root,
+            handoff,
+            handoff_path,
+            descriptor,
+        )
+        failures.extend(registration_failures)
+    return failures
 
 
 def build_receipt(
@@ -1469,6 +1870,8 @@ def validate_receipt(
     handoff: dict[str, Any],
     handoff_path: Path,
     receipt: dict[str, Any],
+    *,
+    receipt_path: Path | None = None,
 ) -> list[str]:
     version = handoff.get("contract_version")
     if receipt.get("contract_version") != version:
@@ -1480,6 +1883,14 @@ def validate_receipt(
     validator = validators.get(version)
     if validator is None:
         return [failure("unsupported_contract_version", str(version))]
+    if version == V2_CONTRACT_VERSION:
+        return validate_v2_receipt(
+            project_root,
+            handoff,
+            handoff_path,
+            receipt,
+            receipt_path,
+        )
     return validator(project_root, handoff, handoff_path, receipt)
 
 
@@ -1627,7 +2038,12 @@ def run_v1_self_test() -> tuple[bool, dict[str, Any]]:
         handoff = make_fixture_handoff(project, descriptor)
         handoff_path = project / "AD-creative/orchestrator/specialist_exchange/handoffs/SPH-001.json"
         write_json(handoff_path, handoff)
-        handoff_failures = validate_handoff(project, handoff, descriptor)
+        handoff_failures = validate_handoff(
+            project,
+            handoff,
+            descriptor,
+            handoff_path=handoff_path,
+        )
         story_path = write_story_package(project, handoff)
         receipt, receipt_path = build_receipt(
             project,
@@ -1637,7 +2053,9 @@ def run_v1_self_test() -> tuple[bool, dict[str, Any]]:
             verdict="draft_accepted_with_limitations",
             limitations=["Logo and mandatory end-card copy remain unlocked."],
         )
-        receipt_failures = validate_receipt(project, handoff, handoff_path, receipt)
+        receipt_failures = validate_receipt(
+            project, handoff, handoff_path, receipt, receipt_path=receipt_path
+        )
         target = project / "AD-creative/film/story_package_v001.md"
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(project / story_path, target)
@@ -1857,7 +2275,7 @@ def make_v2_fixture_handoff() -> dict[str, Any]:
             {
                 "output_id": "OUT-01",
                 "type": "film.story_package",
-                "path_root": "domain-artifacts",
+                "path_root": "exchange/outputs",
             }
         ],
         "quality_targets": ["clear story progression", "continuous product handling"],
@@ -1876,8 +2294,20 @@ def run_v2_self_test() -> tuple[bool, dict[str, Any]]:
         handoff["locked_decisions"][0]["sha256"] = sha256(brief_path)
         handoff_path = project / "exchange/v2-handoff.json"
         write_json(handoff_path, handoff)
-        handoff_failures = validate_handoff(project, handoff, descriptor)
-        output_path = project / "domain-artifacts/story-package.md"
+        register_v2_fixture_handoff(
+            project,
+            handoff,
+            handoff_path,
+            descriptor,
+            receipt_path="exchange/v2-receipt.json",
+        )
+        handoff_failures = validate_handoff(
+            project,
+            handoff,
+            descriptor,
+            handoff_path=handoff_path,
+        )
+        output_path = project / "exchange/outputs/story-package.md"
         output_path.parent.mkdir(parents=True, exist_ok=True)
         output_path.write_text(
             "# Northline Cold Brew Story Package\n\n"
@@ -1894,59 +2324,248 @@ def run_v2_self_test() -> tuple[bool, dict[str, Any]]:
             verdict="domain_accepted",
             receipt_output="exchange/v2-receipt.json",
         )
-        receipt_failures = validate_receipt(project, handoff, handoff_path, receipt)
+        receipt_failures = validate_receipt(
+            project, handoff, handoff_path, receipt, receipt_path=receipt_path
+        )
 
         negative: dict[str, bool] = {}
         mutated_handoff = copy.deepcopy(handoff)
         mutated_handoff["nested_dispatch"] = True
         negative["nested_dispatch_field_rejected"] = "nested_dispatch_forbidden" in failure_ids(
-            validate_handoff(project, mutated_handoff, descriptor)
+            validate_handoff(project, mutated_handoff, descriptor, handoff_path=handoff_path)
         )
         mutated_handoff = copy.deepcopy(handoff)
         mutated_handoff["execution_mode"] = "codex_thread"
         negative["non_inline_execution_rejected"] = "nested_dispatch_forbidden" in failure_ids(
-            validate_handoff(project, mutated_handoff, descriptor)
+            validate_handoff(project, mutated_handoff, descriptor, handoff_path=handoff_path)
         )
         mutated_handoff = copy.deepcopy(handoff)
         mutated_handoff["current_truth"] = {"status": "client_ready"}
         negative["copied_control_plane_rejected"] = "reserved_control_field" in failure_ids(
-            validate_handoff(project, mutated_handoff, descriptor)
+            validate_handoff(project, mutated_handoff, descriptor, handoff_path=handoff_path)
+        )
+        mutated_handoff = copy.deepcopy(handoff)
+        mutated_handoff["locked_decisions"][0]["sha256"] = "0" * 64
+        negative["stale_locked_decision_rejected"] = "stale_locked_decision" in failure_ids(
+            validate_handoff(project, mutated_handoff, descriptor, handoff_path=handoff_path)
+        )
+        mutated_handoff = copy.deepcopy(handoff)
+        mutated_handoff["brief_snapshot"] = "brief/unbound.md"
+        negative["unbound_brief_snapshot_rejected"] = "unbound_brief_snapshot" in failure_ids(
+            validate_handoff(project, mutated_handoff, descriptor, handoff_path=handoff_path)
+        )
+        mutated_handoff = copy.deepcopy(handoff)
+        mutated_handoff["requested_outputs"][0]["path_root"] = "05_最终交付_FinalDelivery"
+        negative["protected_output_scope_rejected"] = "protected_output_scope" in failure_ids(
+            validate_handoff(project, mutated_handoff, descriptor, handoff_path=handoff_path)
+        )
+        mutated_handoff = copy.deepcopy(handoff)
+        mutated_handoff["requested_outputs"][0]["path_root"] = "brief"
+        negative["locked_input_output_overlap_rejected"] = "locked_input_output_overlap" in failure_ids(
+            validate_handoff(project, mutated_handoff, descriptor, handoff_path=handoff_path)
+        )
+        mutated_handoff = copy.deepcopy(handoff)
+        mutated_handoff["requested_outputs"][0]["path_root"] = "BRIEF"
+        negative["case_alias_locked_overlap_rejected"] = "locked_input_output_overlap" in failure_ids(
+            validate_handoff(project, mutated_handoff, descriptor, handoff_path=handoff_path)
+        )
+        mutated_handoff = copy.deepcopy(handoff)
+        duplicate_request = copy.deepcopy(mutated_handoff["requested_outputs"][0])
+        duplicate_request["output_id"] = "OUT-02"
+        duplicate_request["path_root"] = "exchange/outputs-two"
+        mutated_handoff["requested_outputs"].append(duplicate_request)
+        negative["duplicate_requested_output_type_rejected"] = (
+            "duplicate_requested_output_type"
+            in failure_ids(
+                validate_handoff(project, mutated_handoff, descriptor, handoff_path=handoff_path)
+            )
+        )
+        unregistered_path = project / "exchange/unregistered-handoff.json"
+        write_json(unregistered_path, handoff)
+        negative["unregistered_handoff_rejected"] = "missing_handoff_registration" in failure_ids(
+            validate_handoff(project, handoff, descriptor, handoff_path=unregistered_path)
         )
         mutated_receipt = copy.deepcopy(receipt)
         mutated_receipt["client_ready"] = False
         negative["reserved_readiness_claim_rejected"] = "reserved_readiness_claim" in failure_ids(
-            validate_receipt(project, handoff, handoff_path, mutated_receipt)
+            validate_receipt(
+                project, handoff, handoff_path, mutated_receipt, receipt_path=receipt_path
+            )
+        )
+        mutated_receipt = copy.deepcopy(receipt)
+        mutated_receipt["domain_qa"]["client_ready"] = False
+        negative["nested_domain_control_claim_rejected"] = "invalid_domain_qa" in failure_ids(
+            validate_receipt(
+                project, handoff, handoff_path, mutated_receipt, receipt_path=receipt_path
+            )
+        )
+        mutated_receipt = copy.deepcopy(receipt)
+        mutated_receipt["domain_qa"]["checks"] = [{"claim": "pass"}]
+        negative["non_string_domain_check_rejected"] = "invalid_domain_qa" in failure_ids(
+            validate_receipt(
+                project, handoff, handoff_path, mutated_receipt, receipt_path=receipt_path
+            )
         )
         mutated_receipt = copy.deepcopy(receipt)
         mutated_receipt["outputs"][0]["sha256"] = "0" * 64
         negative["output_hash_mismatch_rejected"] = "output_hash_mismatch" in failure_ids(
-            validate_receipt(project, handoff, handoff_path, mutated_receipt)
+            validate_receipt(
+                project, handoff, handoff_path, mutated_receipt, receipt_path=receipt_path
+            )
         )
         mutated_receipt = copy.deepcopy(receipt)
         mutated_receipt["outputs"] = []
         negative["empty_completed_receipt_rejected"] = "empty_completed_receipt" in failure_ids(
-            validate_receipt(project, handoff, handoff_path, mutated_receipt)
+            validate_receipt(
+                project, handoff, handoff_path, mutated_receipt, receipt_path=receipt_path
+            )
+        )
+        needs_user_handoff = copy.deepcopy(handoff)
+        needs_user_handoff["requested_outputs"][0]["path_root"] = "needs-user/outputs"
+        needs_user_handoff_path = project / "exchange/v2-needs-user-handoff.json"
+        write_json(needs_user_handoff_path, needs_user_handoff)
+        register_v2_fixture_handoff(
+            project,
+            needs_user_handoff,
+            needs_user_handoff_path,
+            descriptor,
+            receipt_path="needs-user/receipt.json",
         )
         needs_user, needs_user_path = build_receipt(
             project,
-            handoff,
-            handoff_path,
+            needs_user_handoff,
+            needs_user_handoff_path,
             {},
             verdict="needs_user",
             open_questions=["Which approved end-card line should the specialist use?"],
-            receipt_output="exchange/v2-needs-user-receipt.json",
+            receipt_output="needs-user/receipt.json",
         )
-        needs_user_failures = validate_receipt(project, handoff, handoff_path, needs_user)
+        needs_user_failures = validate_receipt(
+            project,
+            needs_user_handoff,
+            needs_user_handoff_path,
+            needs_user,
+            receipt_path=needs_user_path,
+        )
+        failed_handoff = copy.deepcopy(handoff)
+        failed_handoff["requested_outputs"][0]["path_root"] = "failed/outputs"
+        failed_handoff_path = project / "exchange/v2-failed-handoff.json"
+        write_json(failed_handoff_path, failed_handoff)
+        register_v2_fixture_handoff(
+            project,
+            failed_handoff,
+            failed_handoff_path,
+            descriptor,
+            receipt_path="failed/receipt.json",
+        )
         failed, failed_path = build_receipt(
             project,
-            handoff,
-            handoff_path,
+            failed_handoff,
+            failed_handoff_path,
             {},
             v2_status="failed",
             limitations=["Specialist processing failed before producing an artifact."],
-            receipt_output="exchange/v2-failed-receipt.json",
+            receipt_output="failed/receipt.json",
         )
-        failed_receipt_failures = validate_receipt(project, handoff, handoff_path, failed)
+        failed_receipt_failures = validate_receipt(
+            project,
+            failed_handoff,
+            failed_handoff_path,
+            failed,
+            receipt_path=failed_path,
+        )
+        try:
+            build_receipt(
+                project,
+                handoff,
+                handoff_path,
+                {"film.story_package": output_relative},
+                verdict="domain_accepted",
+            )
+        except ValueError as exc:
+            negative["implicit_v2_receipt_path_rejected"] = "explicit ADCO-registered" in str(exc)
+        else:
+            negative["implicit_v2_receipt_path_rejected"] = False
+        try:
+            build_receipt(
+                project,
+                handoff,
+                handoff_path,
+                {"film.story_package": output_relative},
+                verdict="domain_accepted",
+                receipt_output="exchange/v2-receipt.json",
+            )
+        except ValueError as exc:
+            negative["existing_v2_receipt_rejected"] = "already exists" in str(exc)
+        else:
+            negative["existing_v2_receipt_rejected"] = False
+        try:
+            build_receipt(
+                project,
+                handoff,
+                handoff_path,
+                {"film.story_package": output_relative},
+                verdict="domain_accepted",
+                receipt_output="Exchange/v2-receipt.json",
+            )
+        except ValueError as exc:
+            negative["receipt_case_alias_rejected"] = "does not match" in str(exc)
+        else:
+            negative["receipt_case_alias_rejected"] = False
+        invalid_handoff = copy.deepcopy(handoff)
+        invalid_handoff["requested_outputs"][0]["path_root"] = "invalid/outputs"
+        invalid_handoff_path = project / "exchange/v2-invalid-handoff.json"
+        write_json(invalid_handoff_path, invalid_handoff)
+        register_v2_fixture_handoff(
+            project,
+            invalid_handoff,
+            invalid_handoff_path,
+            descriptor,
+            receipt_path="invalid/receipt.json",
+        )
+        invalid_receipt_path = project / "invalid/receipt.json"
+        try:
+            build_receipt(
+                project,
+                invalid_handoff,
+                invalid_handoff_path,
+                {},
+                verdict="needs_user",
+                open_questions=[""],
+                receipt_output="invalid/receipt.json",
+            )
+        except ValueError as exc:
+            negative["invalid_receipt_not_persisted"] = (
+                "before write" in str(exc) and not invalid_receipt_path.exists()
+            )
+        else:
+            negative["invalid_receipt_not_persisted"] = False
+        original_brief = brief_path.read_text(encoding="utf-8")
+        brief_path.write_text("tampered locked brief", encoding="utf-8")
+        negative["locked_input_tamper_rejected_at_receipt"] = "stale_locked_decision" in failure_ids(
+            validate_receipt(
+                project, handoff, handoff_path, receipt, receipt_path=receipt_path
+            )
+        )
+        brief_path.write_text(original_brief, encoding="utf-8")
+        mutated_receipt = copy.deepcopy(receipt)
+        mutated_receipt["open_questions"] = [{"id": "Q-001", "question": "Unexpected question"}]
+        negative["completed_questions_rejected"] = "invalid_open_questions" in failure_ids(
+            validate_receipt(
+                project, handoff, handoff_path, mutated_receipt, receipt_path=receipt_path
+            )
+        )
+        mutated_receipt = copy.deepcopy(failed)
+        mutated_receipt["outputs"] = copy.deepcopy(receipt["outputs"])
+        negative["failed_outputs_rejected"] = "invalid_status_outputs" in failure_ids(
+            validate_receipt(
+                project,
+                failed_handoff,
+                failed_handoff_path,
+                mutated_receipt,
+                receipt_path=failed_path,
+            )
+        )
         adoption_failures = validate_adoption(project, handoff, receipt_path, receipt, {})
         compact_handoff = set(handoff) == V2_HANDOFF_FIELDS
         compact_receipt = set(receipt) == V2_RECEIPT_FIELDS
@@ -2035,7 +2654,8 @@ def ensure_adco_exchange_project(adco: Any, project: Path) -> None:
     adco.ensure_project(project)
 
 
-def adco_exchange_receipt_output(adco: Any, project: Path, handoff_path: Path) -> str:
+def adco_exchange_receipt_output(adco: Any, project: Path, handoff_path: Path) -> str | None:
+    handoff = load_json(handoff_path)
     handoff_relative = handoff_path.relative_to(project).as_posix()
     _, rows = adco.read_csv_rows(
         project / "AD-creative/orchestrator/specialist_exchange/exchange_index.csv"
@@ -2043,7 +2663,13 @@ def adco_exchange_receipt_output(adco: Any, project: Path, handoff_path: Path) -
     matches = [row for row in rows if row.get("handoff_path") == handoff_relative]
     if len(matches) != 1 or not matches[0].get("receipt_path"):
         raise ValueError("ADCO exchange index does not identify one receipt path")
-    return str(matches[0]["receipt_path"])
+    receipt_output = str(matches[0]["receipt_path"])
+    if handoff.get("contract_version") == V1_CONTRACT_VERSION:
+        owned_receipt = handoff.get("scope", {}).get("receipt_path")
+        if not nonempty(owned_receipt) or normalized_path(receipt_output) != normalized_path(owned_receipt):
+            raise ValueError("ADCO v1 exchange index receipt path disagrees with handoff scope")
+        return None
+    return receipt_output
 
 
 def receipt_output_entries(receipt: dict[str, Any]) -> list[dict[str, Any]]:
@@ -2130,6 +2756,7 @@ def run_adco_bilateral(adco_repo: Path) -> tuple[bool, dict[str, Any]]:
     adco = import_adco(adco_repo.resolve())
     descriptor = load_json(DESCRIPTOR_PATH)
     report: dict[str, Any] = {}
+    positive_contract_version = ""
     with tempfile.TemporaryDirectory(prefix="dircreative-adco-native-bilateral-") as raw:
         project = Path(raw)
         ensure_adco_exchange_project(adco, project)
@@ -2146,7 +2773,13 @@ def run_adco_bilateral(adco_repo: Path) -> tuple[bool, dict[str, Any]]:
             execution_mode="inline",
             workspace_mode="isolated_workspace",
         )
-        handoff_failures = validate_handoff(project, handoff, descriptor)
+        positive_contract_version = str(handoff.get("contract_version", ""))
+        handoff_failures = validate_handoff(
+            project,
+            handoff,
+            descriptor,
+            handoff_path=handoff_path,
+        )
         story_path = write_story_package(project, handoff)
         receipt, receipt_path = build_receipt(
             project,
@@ -2157,7 +2790,9 @@ def run_adco_bilateral(adco_repo: Path) -> tuple[bool, dict[str, Any]]:
             limitations=["Logo and mandatory end-card copy remain unlocked."],
             receipt_output=adco_exchange_receipt_output(adco, project, handoff_path),
         )
-        receipt_failures = validate_receipt(project, handoff, handoff_path, receipt)
+        receipt_failures = validate_receipt(
+            project, handoff, handoff_path, receipt, receipt_path=receipt_path
+        )
         output = receipt_output_entries(receipt)[0]
         adoption, adoption_path = adco.adopt_specialist_receipt(
             project,
@@ -2282,6 +2917,37 @@ def run_adco_bilateral(adco_repo: Path) -> tuple[bool, dict[str, Any]]:
                 return True
             return False
 
+    def provider_rejects_mismatched_v1_receipt_index() -> bool:
+        with tempfile.TemporaryDirectory(prefix="dircreative-adco-native-v1-index-") as raw:
+            project = Path(raw)
+            ensure_adco_exchange_project(adco, project)
+            input_id = add_adco_work_and_input(adco, project)
+            handoff, handoff_path = adco.create_specialist_handoff(
+                project,
+                work_id="WORK-SPX-DIR-001",
+                profile_id=PROFILE_ID,
+                objective="Verify v1 receipt ownership.",
+                input_artifact_ids=[input_id],
+                expected_output_kinds=["film.story_package"],
+                required_capabilities=["film.story_package"],
+                descriptor_path=DESCRIPTOR_PATH,
+                execution_mode="inline",
+                workspace_mode="isolated_workspace",
+            )
+            if handoff.get("contract_version") != V1_CONTRACT_VERSION:
+                raise ValueError("v1 receipt-index check is not applicable to a v2 handoff")
+            index_path = project / "AD-creative/orchestrator/specialist_exchange/exchange_index.csv"
+            fields, rows = adco.read_csv_rows(index_path)
+            handoff_relative = handoff_path.relative_to(project).as_posix()
+            row = next(item for item in rows if item.get("handoff_path") == handoff_relative)
+            row["receipt_path"] = "AD-creative/workspaces/WORK-SPX-DIR-001/specialists/tampered.json"
+            adco.write_csv_rows(index_path, fields, rows)
+            try:
+                adco_exchange_receipt_output(adco, project, handoff_path)
+            except ValueError as exc:
+                return "receipt path disagrees with handoff scope" in str(exc)
+            return False
+
     upstream_safety: dict[str, bool] = {
         "adco_rejects_control_plane_adoption": adco_rejects_adoption_target(
             "AD-creative/film/../orchestrator/injected.md"
@@ -2292,6 +2958,12 @@ def run_adco_bilateral(adco_repo: Path) -> tuple[bool, dict[str, Any]]:
         "adco_rejects_symlink_output": adco_rejects_single_output_alias("symlink"),
         "adco_rejects_hardlink_output": adco_rejects_single_output_alias("hardlink"),
     }
+    if positive_contract_version == V1_CONTRACT_VERSION:
+        upstream_safety["provider_rejects_mismatched_v1_receipt_index"] = (
+            provider_rejects_mismatched_v1_receipt_index()
+        )
+    else:
+        report["v1_receipt_index_check"] = "not_applicable_v2_run"
     with tempfile.TemporaryDirectory(prefix="dircreative-adco-native-negative-") as raw:
         project = Path(raw)
         ensure_adco_exchange_project(adco, project)
@@ -2353,27 +3025,33 @@ def run_adco_bilateral(adco_repo: Path) -> tuple[bool, dict[str, Any]]:
             execution_mode="inline",
             workspace_mode="isolated_workspace",
         )
-        receipt, receipt_path = build_receipt(
-            project,
-            handoff,
-            handoff_path,
-            {},
-            verdict="domain_accepted",
-            receipt_output=adco_exchange_receipt_output(adco, project, handoff_path),
-        )
         try:
-            adco.adopt_specialist_receipt(
+            receipt, receipt_path = build_receipt(
                 project,
-                handoff_path=handoff_path,
-                receipt_path=receipt_path,
-                decision="adopt",
-                reason="negative protocol test",
-                output_mappings={},
+                handoff,
+                handoff_path,
+                {},
+                verdict="domain_accepted",
+                receipt_output=adco_exchange_receipt_output(adco, project, handoff_path),
             )
-        except (ValueError, OSError, StopIteration):
-            upstream_safety["adco_rejects_outputless_completion"] = True
+        except ValueError:
+            upstream_safety["provider_rejects_outputless_completion"] = (
+                handoff.get("contract_version") == V2_CONTRACT_VERSION
+            )
         else:
-            upstream_safety["adco_rejects_outputless_completion"] = False
+            try:
+                adco.adopt_specialist_receipt(
+                    project,
+                    handoff_path=handoff_path,
+                    receipt_path=receipt_path,
+                    decision="adopt",
+                    reason="negative protocol test",
+                    output_mappings={},
+                )
+            except (ValueError, OSError, StopIteration):
+                upstream_safety["adco_rejects_outputless_completion"] = True
+            else:
+                upstream_safety["adco_rejects_outputless_completion"] = False
 
     with tempfile.TemporaryDirectory(prefix="dircreative-adco-native-questions-") as raw:
         project = Path(raw)
@@ -2392,16 +3070,24 @@ def run_adco_bilateral(adco_repo: Path) -> tuple[bool, dict[str, Any]]:
             workspace_mode="isolated_workspace",
         )
         story_path = write_story_package(project, handoff)
+        duplicate_questions: list[Any] = [
+            "Confirm duration.",
+            "Confirm product format.",
+        ]
+        if handoff.get("contract_version") == V1_CONTRACT_VERSION:
+            duplicate_questions = [
+                {"id": "Q-DUPLICATE", "question": "Confirm duration."},
+                {"id": "Q-DUPLICATE", "question": "Confirm product format."},
+            ]
         receipt, receipt_path = build_receipt(
             project,
             handoff,
             handoff_path,
-            {"film.story_package": story_path},
+            {}
+            if handoff.get("contract_version") == V2_CONTRACT_VERSION
+            else {"film.story_package": story_path},
             verdict="needs_user",
-            open_questions=[
-                "Confirm duration.",
-                "Confirm product format.",
-            ],
+            open_questions=duplicate_questions,
             receipt_output=adco_exchange_receipt_output(adco, project, handoff_path),
         )
         if handoff.get("contract_version") == V2_CONTRACT_VERSION:
@@ -2409,7 +3095,11 @@ def run_adco_bilateral(adco_repo: Path) -> tuple[bool, dict[str, Any]]:
             write_json(receipt_path, receipt)
         upstream_safety["provider_rejects_duplicate_question_ids"] = (
             "invalid_open_questions"
-            in failure_ids(validate_receipt(project, handoff, handoff_path, receipt))
+            in failure_ids(
+                validate_receipt(
+                    project, handoff, handoff_path, receipt, receipt_path=receipt_path
+                )
+            )
         )
 
     with tempfile.TemporaryDirectory(prefix="dircreative-adco-native-physical-output-") as raw:
@@ -2429,12 +3119,15 @@ def run_adco_bilateral(adco_repo: Path) -> tuple[bool, dict[str, Any]]:
             workspace_mode="isolated_workspace",
         )
         story_path = write_story_package(project, handoff)
-        treatment_request = next(
-            item
-            for item in handoff["requested_outputs"]
-            if isinstance(item, dict) and item.get("type") == "film.treatment"
-        )
-        treatment_path = project / str(treatment_request["path_root"]) / "treatment.md"
+        if handoff.get("contract_version") == V2_CONTRACT_VERSION:
+            treatment_request = next(
+                item
+                for item in handoff["requested_outputs"]
+                if isinstance(item, dict) and item.get("type") == "film.treatment"
+            )
+            treatment_path = project / str(treatment_request["path_root"]) / "treatment.md"
+        else:
+            treatment_path = (project / story_path).with_name("treatment.md")
         treatment_path.parent.mkdir(parents=True, exist_ok=True)
         treatment_path.write_text("Distinct treatment before alias mutation.\n", encoding="utf-8")
         treatment_relative = treatment_path.relative_to(project).as_posix()
@@ -2509,7 +3202,12 @@ def run_adco_bilateral(adco_repo: Path) -> tuple[bool, dict[str, Any]]:
             execution_mode="inline",
             workspace_mode="read_only",
         )
-        read_only_failures = validate_handoff(project, handoff, descriptor)
+        read_only_failures = validate_handoff(
+            project,
+            handoff,
+            descriptor,
+            handoff_path=handoff_path,
+        )
         upstream_safety["adco_v2_omits_workspace_control"] = (
             handoff.get("contract_version") != V2_CONTRACT_VERSION
             or (
@@ -2520,18 +3218,28 @@ def run_adco_bilateral(adco_repo: Path) -> tuple[bool, dict[str, Any]]:
         if read_only_failures:
             upstream_safety["adco_read_only_return_roundtrip_valid"] = False
         else:
+            read_only_questions: list[Any] = [
+                "Which client lock should ADCO resolve before a writable story pass?"
+            ]
+            if handoff.get("contract_version") == V1_CONTRACT_VERSION:
+                read_only_questions = [
+                    {
+                        "id": "Q-READ-ONLY-1",
+                        "question": "Which client lock should ADCO resolve before a writable story pass?",
+                    }
+                ]
             receipt, receipt_path = build_receipt(
                 project,
                 handoff,
                 handoff_path,
                 {},
                 verdict="needs_user",
-                open_questions=[
-                    "Which client lock should ADCO resolve before a writable story pass?"
-                ],
+                open_questions=read_only_questions,
                 receipt_output=adco_exchange_receipt_output(adco, project, handoff_path),
             )
-            receipt_failures = validate_receipt(project, handoff, handoff_path, receipt)
+            receipt_failures = validate_receipt(
+                project, handoff, handoff_path, receipt, receipt_path=receipt_path
+            )
             try:
                 adoption, _ = adco.adopt_specialist_receipt(
                     project,
@@ -2698,7 +3406,12 @@ def main() -> int:
     handoff_path = Path(args.handoff).expanduser().resolve()
     handoff = load_json(handoff_path)
     descriptor = load_json(args.descriptor)
-    handoff_failures = validate_handoff(project, handoff, descriptor)
+    handoff_failures = validate_handoff(
+        project,
+        handoff,
+        descriptor,
+        handoff_path=handoff_path,
+    )
     if args.command == "validate-handoff":
         ok = not handoff_failures
         print_report("DIRcreative ADCO Native Handoff Audit", ok, {"handoff_valid": ok, "handoff_failures": handoff_failures}, "ADCO_NATIVE_HANDOFF")
@@ -2725,13 +3438,17 @@ def main() -> int:
             open_questions=questions,
             receipt_output=args.receipt_output,
         )
-        failures = validate_receipt(project, handoff, handoff_path, receipt)
+        failures = validate_receipt(
+            project, handoff, handoff_path, receipt, receipt_path=path
+        )
         print(f"RECEIPT={path}")
         print_report("DIRcreative ADCO Native Receipt Build", not failures, {"receipt_valid": not failures, "receipt_failures": failures}, "ADCO_NATIVE_RECEIPT")
         return 0 if not failures else 1
     receipt_path = Path(args.receipt).expanduser().resolve()
     receipt = load_json(receipt_path)
-    receipt_failures = validate_receipt(project, handoff, handoff_path, receipt)
+    receipt_failures = validate_receipt(
+        project, handoff, handoff_path, receipt, receipt_path=receipt_path
+    )
     if args.command == "validate-receipt":
         ok = not receipt_failures
         print_report("DIRcreative ADCO Native Receipt Audit", ok, {"receipt_valid": ok, "receipt_failures": receipt_failures}, "ADCO_NATIVE_RECEIPT")

@@ -2,19 +2,20 @@
 from __future__ import annotations
 
 import argparse
+import copy
+import hashlib
 import json
 import re
 import subprocess
+import tempfile
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
-from dircreative_specialist_exchange_contract import valid_v2_handoff
-
-
 ROOT = Path(__file__).resolve().parents[1]
 POLICY_PATH = ROOT / "skills/dircreative/runtime/routing-policy.yaml"
 CASES_PATH = ROOT / "tests/fixtures/routing/cases.json"
+DESCRIPTOR_PATH = ROOT / "docs/film-preproduction/schemas/adco-specialist-descriptor.json"
 
 
 @lru_cache(maxsize=1)
@@ -44,11 +45,36 @@ def has(text: str, pattern: str) -> bool:
     return re.search(pattern, text, flags=re.IGNORECASE) is not None
 
 
-def classify_route(request: str, handoff: dict[str, Any] | None = None) -> tuple[str, list[str]]:
+def classify_route(
+    request: str,
+    handoff: dict[str, Any] | None = None,
+    *,
+    project_root: Path | None = None,
+    descriptor: dict[str, Any] | None = None,
+    handoff_path: Path | None = None,
+) -> tuple[str, list[str]]:
     if handoff is not None:
-        if valid_v2_handoff(handoff):
-            return "adco_specialist_exchange", ["valid_adco_v2_handoff", "inline_execution"]
-        return "invalid_specialist_exchange", ["invalid_adco_handoff", "schema_validation_failed"]
+        from dircreative_adco_native_exchange import validate_handoff
+        from dircreative_specialist_exchange_contract import valid_v2_handoff
+
+        if not valid_v2_handoff(handoff):
+            return "invalid_specialist_exchange", ["invalid_adco_handoff", "schema_validation_failed"]
+        if project_root is None or descriptor is None:
+            return "invalid_specialist_exchange", ["unverified_adco_handoff", "project_validation_required"]
+        validation_failures = validate_handoff(
+            project_root,
+            handoff,
+            descriptor,
+            handoff_path=handoff_path,
+        )
+        if validation_failures:
+            failure_codes = sorted({item.split(":", 1)[0] for item in validation_failures})
+            return "invalid_specialist_exchange", [
+                "invalid_adco_handoff",
+                "project_validation_failed",
+                *failure_codes,
+            ]
+        return "adco_specialist_exchange", ["validated_adco_v2_handoff", "inline_execution"]
 
     text = " ".join(request.split())
     maintenance_target = has(
@@ -98,9 +124,22 @@ def classify_route(request: str, handoff: dict[str, Any] | None = None) -> tuple
     return "bounded_revision", ["single_output_default"]
 
 
-def route_request(request: str, handoff: dict[str, Any] | None = None) -> dict[str, Any]:
+def route_request(
+    request: str,
+    handoff: dict[str, Any] | None = None,
+    *,
+    project_root: Path | None = None,
+    descriptor: dict[str, Any] | None = None,
+    handoff_path: Path | None = None,
+) -> dict[str, Any]:
     policy = load_policy()
-    route, reason_codes = classify_route(request, handoff)
+    route, reason_codes = classify_route(
+        request,
+        handoff,
+        project_root=project_root,
+        descriptor=descriptor,
+        handoff_path=handoff_path,
+    )
     if route == "invalid_specialist_exchange":
         return {
             "execution_context": None,
@@ -193,32 +232,73 @@ def self_test() -> list[str]:
                 failures.append(f"{case['id']}: {field}={result[field]} expected={case[field]}")
     handoff_path = ROOT / "tests/fixtures/activation-policy/valid-adco-v2-handoff.json"
     handoff = json.loads(handoff_path.read_text(encoding="utf-8"))
-    result = route_request("", handoff)
-    if result["execution_context"] != "orchestrated_worker" or result["route"] != "adco_specialist_exchange":
-        failures.append(f"valid ADCO handoff route mismatch: {result}")
-    invalid = dict(handoff, execution_mode="codex_thread")
-    invalid_shapes = [
-        invalid,
-        dict(handoff, requested_outputs=[]),
-        dict(handoff, locked_decisions=[1]),
-        dict(handoff, quality_targets=[""]),
-        dict(handoff, requested_outputs=[handoff["requested_outputs"][0]] * 2),
-        dict(
-            handoff,
-            requested_outputs=[
-                handoff["requested_outputs"][0],
-                {**handoff["requested_outputs"][0], "output_id": "OUT-02"},
-            ],
-        ),
-    ]
-    for index, invalid_shape in enumerate(invalid_shapes, start=1):
-        invalid_result = route_request("", invalid_shape)
-        if (
-            invalid_result["execution_context"] is not None
-            or invalid_result["route"] != "invalid_specialist_exchange"
-            or invalid_result["action"] != "stop_skill_runtime"
-        ):
-            failures.append(f"schema-invalid ADCO handoff {index} did not fail closed: {invalid_result}")
+    descriptor = json.loads(DESCRIPTOR_PATH.read_text(encoding="utf-8"))
+    unverified = route_request("", handoff)
+    if unverified["route"] != "invalid_specialist_exchange" or "project_validation_required" not in unverified["reason_codes"]:
+        failures.append(f"schema-only ADCO handoff did not fail closed: {unverified}")
+    with tempfile.TemporaryDirectory(prefix="dircreative-route-adco-") as raw:
+        from dircreative_adco_native_exchange import register_v2_fixture_handoff
+
+        project = Path(raw)
+        validated_handoff = copy.deepcopy(handoff)
+        brief_path = project / str(validated_handoff["brief_snapshot"])
+        brief_path.parent.mkdir(parents=True, exist_ok=True)
+        brief_path.write_text("Evidence-bound routing fixture.\n", encoding="utf-8")
+        validated_handoff["locked_decisions"][0]["sha256"] = hashlib.sha256(
+            brief_path.read_bytes()
+        ).hexdigest()
+        validated_handoff_path = project / "exchange/v2-handoff.json"
+        validated_handoff_path.parent.mkdir(parents=True, exist_ok=True)
+        validated_handoff_path.write_text(
+            json.dumps(validated_handoff, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        output_parent = Path(str(validated_handoff["requested_outputs"][0]["path_root"])).parent
+        register_v2_fixture_handoff(
+            project,
+            validated_handoff,
+            validated_handoff_path,
+            descriptor,
+            receipt_path=(output_parent / "receipt.json").as_posix(),
+        )
+        result = route_request(
+            "",
+            validated_handoff,
+            project_root=project,
+            descriptor=descriptor,
+            handoff_path=validated_handoff_path,
+        )
+        if result["execution_context"] != "orchestrated_worker" or result["route"] != "adco_specialist_exchange":
+            failures.append(f"valid ADCO handoff route mismatch: {result}")
+        invalid = dict(validated_handoff, execution_mode="codex_thread")
+        invalid_shapes = [
+            invalid,
+            dict(validated_handoff, requested_outputs=[]),
+            dict(validated_handoff, locked_decisions=[1]),
+            dict(validated_handoff, quality_targets=[""]),
+            dict(validated_handoff, requested_outputs=[validated_handoff["requested_outputs"][0]] * 2),
+            dict(
+                validated_handoff,
+                requested_outputs=[
+                    validated_handoff["requested_outputs"][0],
+                    {**validated_handoff["requested_outputs"][0], "output_id": "OUT-02"},
+                ],
+            ),
+        ]
+        for index, invalid_shape in enumerate(invalid_shapes, start=1):
+            invalid_result = route_request(
+                "",
+                invalid_shape,
+                project_root=project,
+                descriptor=descriptor,
+                handoff_path=validated_handoff_path,
+            )
+            if (
+                invalid_result["execution_context"] is not None
+                or invalid_result["route"] != "invalid_specialist_exchange"
+                or invalid_result["action"] != "stop_skill_runtime"
+            ):
+                failures.append(f"invalid ADCO handoff {index} did not fail closed: {invalid_result}")
     return failures
 
 
@@ -226,6 +306,8 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Resolve one DIRcreative v2 route as stable JSON.")
     parser.add_argument("request", nargs="?", default="", help="User request text.")
     parser.add_argument("--handoff", type=Path, help="Specialist Exchange handoff JSON.")
+    parser.add_argument("--project-root", type=Path, help="Project root required for a real handoff.")
+    parser.add_argument("--descriptor", type=Path, default=DESCRIPTOR_PATH)
     parser.add_argument("--self-test", action="store_true")
     args = parser.parse_args()
     if args.self_test:
@@ -238,7 +320,21 @@ def main() -> int:
         print("DIRCREATIVE_ROUTE_SELF_TEST: PASS")
         return 0
     handoff = json.loads(args.handoff.read_text(encoding="utf-8")) if args.handoff else None
-    print(json.dumps(route_request(args.request, handoff), ensure_ascii=False, indent=2))
+    descriptor = json.loads(args.descriptor.read_text(encoding="utf-8")) if handoff and args.project_root else None
+    project_root = args.project_root.expanduser().resolve() if args.project_root else None
+    print(
+        json.dumps(
+            route_request(
+                args.request,
+                handoff,
+                project_root=project_root,
+                descriptor=descriptor,
+                handoff_path=args.handoff.expanduser().resolve() if args.handoff else None,
+            ),
+            ensure_ascii=False,
+            indent=2,
+        )
+    )
     return 0
 
 

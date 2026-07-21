@@ -2,7 +2,10 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
+import json
 import os
+import re
 import shutil
 import sys
 import tempfile
@@ -32,14 +35,70 @@ FORMAL_INSTALL_TARGETS = (
 INTERNAL_SKILL_FILE = "INTERNAL_SKILL.md"
 
 
-def root_skill_source() -> Path:
-    source_layout = ROOT / "skills" / "dircreative" / "SKILL.md"
+def root_skill_source(base: Path = ROOT) -> Path:
+    source_layout = base / "skills" / "dircreative" / "SKILL.md"
     if source_layout.exists():
         return source_layout
-    installed_layout = ROOT / "SKILL.md"
+    installed_layout = base / "SKILL.md"
     if installed_layout.exists():
         return installed_layout
     raise SystemExit("missing root DIRcreative SKILL.md")
+
+
+def sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def validate_release_metadata(base: Path = ROOT) -> dict[str, str]:
+    metadata_path = base / "RELEASE-METADATA.json"
+    version_path = base / "VERSION"
+    skill_path = root_skill_source(base)
+    for label, path in (
+        ("release metadata", metadata_path),
+        ("VERSION", version_path),
+        ("root SKILL.md", skill_path),
+    ):
+        if path.is_symlink() or not path.is_file() or path.stat().st_nlink != 1:
+            raise ValueError(f"formal install requires a regular, single-link {label}")
+    try:
+        payload = json.loads(metadata_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ValueError(f"invalid release metadata: {exc}") from exc
+    if not isinstance(payload, dict):
+        raise ValueError("invalid release metadata: expected an object")
+    required_fields = {
+        "schema_version",
+        "product",
+        "version",
+        "tag",
+        "commit_sha",
+        "commit_timestamp",
+        "root_skill_sha256",
+        "source",
+    }
+    if set(payload) != required_fields:
+        raise ValueError("invalid release metadata: field set mismatch")
+    version = version_path.read_text(encoding="utf-8").strip()
+    if re.fullmatch(r"\d+\.\d+\.\d+", version) is None:
+        raise ValueError("invalid release metadata: VERSION must be semantic x.y.z")
+    expected = {
+        "schema_version": "1.0.0",
+        "product": "DIRcreative",
+        "version": version,
+        "tag": f"v{version}",
+        "root_skill_sha256": sha256(skill_path),
+        "source": "git archive of exact commit",
+    }
+    for field, value in expected.items():
+        if payload.get(field) != value:
+            raise ValueError(f"invalid release metadata: {field} mismatch")
+    commit_sha = payload.get("commit_sha")
+    if not isinstance(commit_sha, str) or re.fullmatch(r"[0-9a-f]{40}", commit_sha) is None:
+        raise ValueError("invalid release metadata: commit_sha must be one exact Git commit")
+    timestamp = payload.get("commit_timestamp")
+    if not isinstance(timestamp, str) or not timestamp.endswith("Z"):
+        raise ValueError("invalid release metadata: commit_timestamp must be UTC")
+    return {key: str(value) for key, value in payload.items()}
 
 
 def copy_item(source: Path, target: Path) -> None:
@@ -176,6 +235,8 @@ def validate_install_target(target: Path, *, allow_formal: bool) -> None:
 
 def install(target: Path, *, allow_formal: bool = False) -> None:
     validate_install_target(target, allow_formal=allow_formal)
+    if allow_formal:
+        validate_release_metadata(ROOT)
     validate_package_sources(ROOT)
     target.parent.mkdir(parents=True, exist_ok=True)
     staging = Path(tempfile.mkdtemp(prefix=f".{target.name}.staging-", dir=target.parent))
@@ -223,6 +284,32 @@ def self_test() -> int:
     regex_escape_sample = b'"pattern": "^(?!/)(?!.*(?:^|/)\\\\.\\\\.(?:/|$)).+$"\n'
     if sanitize_package_bytes("schemas/relative-path.json", regex_escape_sample, {}) != regex_escape_sample:
         raise AssertionError("package sanitizer modified relative-path regex evidence")
+    with tempfile.TemporaryDirectory(prefix="dircreative-installer-metadata-") as raw:
+        release_root = Path(raw)
+        (release_root / "VERSION").write_text("9.8.7\n", encoding="utf-8")
+        (release_root / "SKILL.md").write_text("# Isolated release fixture\n", encoding="utf-8")
+        metadata = {
+            "schema_version": "1.0.0",
+            "product": "DIRcreative",
+            "version": "9.8.7",
+            "tag": "v9.8.7",
+            "commit_sha": "a" * 40,
+            "commit_timestamp": "2026-07-21T00:00:00Z",
+            "root_skill_sha256": sha256(release_root / "SKILL.md"),
+            "source": "git archive of exact commit",
+        }
+        metadata_path = release_root / "RELEASE-METADATA.json"
+        metadata_path.write_text(json.dumps(metadata, sort_keys=True) + "\n", encoding="utf-8")
+        validate_release_metadata(release_root)
+        metadata["commit_sha"] = "not-a-commit"
+        metadata_path.write_text(json.dumps(metadata, sort_keys=True) + "\n", encoding="utf-8")
+        try:
+            validate_release_metadata(release_root)
+        except ValueError as exc:
+            if "commit_sha" not in str(exc):
+                raise
+        else:
+            raise AssertionError("formal installer accepted unbound release metadata")
     with tempfile.TemporaryDirectory(prefix="dircreative-installer-self-test-") as raw:
         root = Path(raw)
         source_fixture = root / "source-safety"

@@ -98,7 +98,9 @@ jobs:
             "$RUNNER_TEMP/dist-umask-077/dircreative-$VERSION.tar.gz"
           umask 022
           python3 scripts/dircreative_verify_release.py "${VERIFY_ARGS[@]}"
-          python3 "$EXTRACTED/scripts/install_local_skill.py" --target "$ARCHIVE_TARGET"
+          python3 "$EXTRACTED/scripts/install_local_skill.py" \
+            --target "$ARCHIVE_TARGET" \
+            --formal-install
           (
             cd "$EXTRACTED"
             python3 scripts/dircreative_install_parity.py --target "$ARCHIVE_TARGET"
@@ -122,6 +124,25 @@ jobs:
           (
             cd "$RUNNER_TEMP/dircreative-archive-installed"
             python3 scripts/dircreative_adco_native_exchange.py --adco-repo "$RUNNER_TEMP/adco"
+          )
+
+      - name: Source and installed archive ADCO v2 bilateral
+        env:
+          PYTHONDONTWRITEBYTECODE: "1"
+          ADCO_V2_SHA: 101132984166d9580589b2ba2c6590d7f88d7509
+        run: |
+          git clone https://github.com/papperrollinggery/ad-creative-orchestrator.git \
+            "$RUNNER_TEMP/adco-v2"
+          git -C "$RUNNER_TEMP/adco-v2" checkout --detach "$ADCO_V2_SHA"
+          ADCO_TESTED_SHA="$(git -C "$RUNNER_TEMP/adco-v2" rev-parse HEAD)"
+          test "$ADCO_TESTED_SHA" = "$ADCO_V2_SHA"
+          echo "ADCO_V2_TESTED_SHA=$ADCO_TESTED_SHA"
+          python3 scripts/dircreative_adco_native_exchange.py \
+            --adco-repo "$RUNNER_TEMP/adco-v2"
+          (
+            cd "$RUNNER_TEMP/dircreative-archive-installed"
+            python3 scripts/dircreative_adco_native_exchange.py \
+              --adco-repo "$RUNNER_TEMP/adco-v2"
           )
 
       - name: Upload tagged release candidate

@@ -7,6 +7,7 @@ import hashlib
 import io
 import json
 import os
+import re
 import shutil
 import subprocess
 import tarfile
@@ -79,6 +80,18 @@ def candidate_still_valid(
     return True, diagnostics
 
 
+def sealed_candidate(expected_commit: str | None, current_head: str) -> str:
+    expected = (expected_commit or "").strip()
+    if expected and not re.fullmatch(r"[0-9a-f]{40}", expected):
+        raise ValueError("--expected-commit must be one full lowercase 40-character commit SHA")
+    if not re.fullmatch(r"[0-9a-f]{40}", current_head):
+        raise ValueError("HEAD is not one full lowercase commit SHA")
+    candidate = expected or current_head
+    if current_head != candidate:
+        raise ValueError("HEAD changed before build or does not equal --expected-commit")
+    return candidate
+
+
 def self_test() -> int:
     candidate = "a" * 40
     swapped = "b" * 40
@@ -101,6 +114,20 @@ def self_test() -> int:
     )
     if valid:
         print("RELEASE_BUILD_SELF_TEST: FAIL_POSTFLIGHT_ACCEPTED")
+        return 1
+    try:
+        sealed_candidate(candidate, swapped)
+    except ValueError:
+        pass
+    else:
+        print("RELEASE_BUILD_SELF_TEST: FAIL_EXPECTED_COMMIT_SWAP_ACCEPTED")
+        return 1
+    try:
+        sealed_candidate("A" * 40, candidate)
+    except ValueError:
+        pass
+    else:
+        print("RELEASE_BUILD_SELF_TEST: FAIL_NONCANONICAL_COMMIT_ACCEPTED")
         return 1
     with tempfile.TemporaryDirectory(prefix="dircreative-build-self-test-") as raw:
         artifact = Path(raw) / "artifact.tar.gz"
@@ -166,18 +193,20 @@ def main() -> int:
     parser.add_argument("--output-dir", default="dist", help="Output directory, relative to repository root by default.")
     parser.add_argument("--require-tag", action="store_true", help="Require v<VERSION> to point to the sealed commit.")
     parser.add_argument("--allow-unpublished", action="store_true", help="CI only: skip main/origin equality, but still require a clean tree.")
+    parser.add_argument(
+        "--expected-commit",
+        help="Full lowercase commit SHA sealed by the caller; HEAD must match before and after build.",
+    )
     parser.add_argument("--self-test", action="store_true", help=argparse.SUPPRESS)
     args = parser.parse_args()
     if args.self_test:
         return self_test()
 
     try:
-        candidate = git_bytes("rev-parse", "HEAD").decode().strip()
+        current_head = git_bytes("rev-parse", "HEAD").decode().strip()
+        candidate = sealed_candidate(args.expected_commit, current_head)
     except (ValueError, UnicodeDecodeError) as exc:
         print(f"RELEASE_BUILD: FAIL_CANDIDATE ({exc})")
-        return 1
-    if len(candidate) != 40:
-        print("RELEASE_BUILD: FAIL_CANDIDATE")
         return 1
 
     preflight_cmd = [

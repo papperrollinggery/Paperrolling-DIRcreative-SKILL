@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import json
 import re
+import subprocess
+import sys
 import time
 from pathlib import Path
 from typing import Any
@@ -35,6 +37,7 @@ LEGACY_ACTIVE_CONTEXT = {
     "skills/dircreative/generation-qa/SKILL.md",
 }
 WARM_ROUTE_P95_BUDGET_MS = 25.0
+COLD_ROUTE_P95_BUDGET_MS = 300.0
 
 
 def audit() -> tuple[list[str], dict[str, Any]]:
@@ -286,6 +289,29 @@ def audit() -> tuple[list[str], dict[str, Any]]:
             f"warm route p95 latency {route_warm_p95_ms}ms exceeds {WARM_ROUTE_P95_BUDGET_MS}ms"
         )
 
+    cold_samples: list[float] = []
+    for request in (latency_requests * 4):
+        started = time.perf_counter_ns()
+        proc = subprocess.run(
+            [sys.executable, str(ROOT / "scripts/dircreative_route.py"), request],
+            cwd=ROOT,
+            text=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        cold_samples.append((time.perf_counter_ns() - started) / 1_000_000)
+        if proc.returncode != 0:
+            failures.append(f"cold route process failed: {proc.stderr.strip()}")
+            break
+    cold_samples.sort()
+    cold_p95_index = max(0, int(len(cold_samples) * 0.95) - 1)
+    route_cold_p95_ms = round(cold_samples[cold_p95_index], 4) if cold_samples else -1.0
+    if route_cold_p95_ms > COLD_ROUTE_P95_BUDGET_MS:
+        failures.append(
+            f"cold route p95 latency {route_cold_p95_ms}ms exceeds {COLD_ROUTE_P95_BUDGET_MS}ms"
+        )
+
     metrics: dict[str, Any] = {
         "main_skill_lines": main_lines,
         "main_skill_bytes": main_bytes,
@@ -301,6 +327,9 @@ def audit() -> tuple[list[str], dict[str, Any]]:
         "warm_route_samples": len(latency_samples),
         "warm_route_p95_ms": route_warm_p95_ms,
         "warm_route_p95_budget_ms": WARM_ROUTE_P95_BUDGET_MS,
+        "cold_route_samples": len(cold_samples),
+        "cold_route_p95_ms": route_cold_p95_ms,
+        "cold_route_p95_budget_ms": COLD_ROUTE_P95_BUDGET_MS,
         "runtime_contract_owners": len(expected_contract_owners),
         "route_contexts": route_context_metrics,
     }

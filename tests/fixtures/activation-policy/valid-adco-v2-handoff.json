@@ -14,7 +14,7 @@
   "requested_outputs": [
     {
       "output_id": "OUT-01",
-      "type": "storyboard_review",
+      "type": "film.story_package",
       "path_root": "AD-creative/workspaces/WORK-001/specialists/SPH-001/outputs"
     }
   ],

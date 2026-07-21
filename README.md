@@ -20,7 +20,7 @@
 
 DIRcreative 不是“输入一句话、吐出一堆提示词”的黑盒。它先判断任务是局部修改、完整开发还是交付审计，再只加载对应合同。局部任务直接交付修改结果；只有真实方向冲突、生成授权或客户交付才停下来询问。
 
-当前已发布稳定版本仍为 [`v0.4.0`](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/releases/tag/v0.4.0)。当前源码 checkout 另含 v2 路由、动态专业视角、紧凑状态、拆分模型 Adapter 和 Specialist Exchange v2；本地验证通过不等于这些改动已经发布。
+当前已发布稳定版本仍为 [`v0.4.0`](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/releases/tag/v0.4.0)。当前源码是未发布的 `v0.5.0` 候选，另含 v2 路由、动态专业视角、紧凑状态、拆分模型 Adapter 和 Specialist Exchange v2；本地或全局候选安装通过不等于已经发布。
 
 ## Why DIRcreative
 
@@ -239,16 +239,24 @@ python3 scripts/dircreative_adco_native_exchange.py --self-test
 `dircreative_live_model_eval.py` 只验证真实模型的文字响应行为，不证明图片或
 视频已经生成。当正式安装验收包含真实媒体能力时，需针对仓库内候选执行一次
 隔离的交互式媒体前向测试，检查实际落盘文件；测试媒体保留在仓库包之外。
+媒体收据不能只自报 `real_tool_execution=true`：测试 commit 必须等于候选
+commit，拒绝稿、通过稿和至少三张连续镜头必须是互不复用的完整 PNG，且生成
+时间晚于候选 commit。门禁还会用仓库固定哈希的 `c2patool` 校验 OpenAI Media
+Service 的 C2PA 签名、签发 CA、`gpt-image` 创建声明和媒体数据哈希。图片通过
+不代表视频已经验证。
 
 完整发布门：
 
 ```bash
 python3 scripts/dircreative_release_gate.py \
   --require-tag \
-  --adco-repo /path/to/ad-creative-orchestrator
+  --adco-repo /path/to/ad-creative-orchestrator \
+  --media-forward-receipt /absolute/path/to/media-forward-receipt.json \
+  --media-c2patool /absolute/path/to/pinned/c2patool \
+  --require-media-forward
 ```
 
-`--allow-unpublished` 仅用于开发或 CI 预发布检查，不是正式 release 证据。发布门会绑定干净的精确 commit，验证源码、行为、临时安装、独立校验归档和可选的 ADCO 双边兼容。
+`--allow-unpublished` 仅用于开发或 CI 预发布检查，不是正式 release 证据。发布门在开始时封存一个精确 commit，把同一 SHA 传给媒体、preflight、build 与 archive verifier，并在结束时再次读取 HEAD；任何中途切换都会失败。它还验证源码、行为、临时安装、独立校验归档和可选的 ADCO 双边兼容。
 
 复现完整浏览器响应式审计：
 

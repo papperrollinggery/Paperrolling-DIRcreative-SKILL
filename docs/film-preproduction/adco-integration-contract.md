@@ -1,6 +1,6 @@
 # ADCO Native Specialist Exchange
 
-Provider-side v1/v2 validation verified in isolated fixtures: 2026-07-19. Bilateral compatibility still requires an explicit ADCO checkout audit.
+Provider-side v1/v2 validation verified in isolated fixtures: 2026-07-21. Bilateral compatibility still requires an explicit ADCO checkout audit.
 
 Status: provider integration guide. Normative versions and message shapes are
 owned by `adco-specialist-descriptor.json` and the versioned handoff/receipt
@@ -14,11 +14,24 @@ New provider writes use `adco.specialist-exchange@2.0`. The handoff contains onl
 {
   "protocol_id": "adco.specialist-exchange",
   "contract_version": "2.0",
-  "task": "",
-  "brief_snapshot": "",
-  "locked_decisions": [],
-  "requested_outputs": [],
-  "quality_targets": [],
+  "task": "Create a bounded internal story package.",
+  "brief_snapshot": "AD-creative/proposal_architecture/brief.md",
+  "locked_decisions": [
+    {
+      "artifact_id": "ART-BRIEF-001",
+      "type": "creative_brief",
+      "path": "AD-creative/proposal_architecture/brief.md",
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    }
+  ],
+  "requested_outputs": [
+    {
+      "output_id": "OUT-01",
+      "type": "film.story_package",
+      "path_root": "AD-creative/workspaces/WORK-001/specialists/SPH-001/outputs"
+    }
+  ],
+  "quality_targets": ["film.story_package"],
   "execution_mode": "inline"
 }
 ```
@@ -31,19 +44,27 @@ DIRcreative returns only domain artifacts and domain QA:
 {
   "protocol_id": "adco.specialist-exchange",
   "contract_version": "2.0",
-  "status": "completed|needs_user|needs_revision|blocked|failed",
-  "outputs": [],
+  "status": "completed|needs_user|blocked|failed",
+  "outputs": [
+    {
+      "output_id": "OUT-01",
+      "type": "film.story_package",
+      "path": "AD-creative/workspaces/WORK-001/specialists/SPH-001/outputs/story-package.md",
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    }
+  ],
   "domain_qa": {
-    "brief_adherence": "",
-    "continuity": "",
-    "production_clarity": "",
+    "status": "pass|needs_user|blocked|fail",
+    "checks": ["brief_adherence", "continuity", "production_clarity"],
     "limitations": []
   },
-  "open_questions": []
+  "open_questions": [
+    {"id": "Q-001", "question": "Confirm the mandatory end-card copy."}
+  ]
 }
 ```
 
-Each output entry contains only `output_id`, requested `kind`, project-relative `path`, and the SHA-256 of the real non-empty output file. v2 does not bind descriptor, handoff, Goal, readiness, version, visibility, cleanup, or other control-plane hashes. ADCO owns adoption, version mapping, client visibility, readiness, and completion after it validates the returned files.
+Each output entry contains only `output_id`, requested `type`, project-relative `path`, and the SHA-256 of the real non-empty output file. The status matrix is exact: `completed` returns every requested output with `domain_qa.status: pass` and no questions; `needs_user` returns no outputs, at least one uniquely identified question, and `needs_user` QA; `blocked` and `failed` return neither outputs nor questions, carry a non-empty limitation, and use `blocked` or `fail` QA respectively. They do not invent a fifth `needs_revision` transport status. The provider-facing v2 message stays compact, while activation independently binds its file and descriptor to ADCO's host-owned exchange index and descriptor snapshot. ADCO owns adoption, version mapping, client visibility, readiness, and completion after it validates the returned files.
 
 Published schemas:
 
@@ -62,7 +83,16 @@ python3 scripts/dircreative_adco_native_exchange.py --self-test
 python3 scripts/dircreative_adco_native_exchange.py validate-handoff \
   --project-root <project_dir> \
   --handoff <handoff.json>
+python3 scripts/dircreative_route.py \
+  --project-root <project_dir> \
+  --handoff <handoff.json>
 ```
+
+The first command reports detailed provider failures. The router uses the same
+full validation before selecting `adco_specialist_exchange`; a schema-valid JSON
+without its exact registered handoff path, one matching exchange-index row,
+handoff/descriptor hashes, descriptor snapshot, project root, and hash-matching
+locked files fails closed.
 
 Build a compact v2 receipt with either the existing domain verdict vocabulary or an explicit v2 status:
 
@@ -70,10 +100,17 @@ Build a compact v2 receipt with either the existing domain verdict vocabulary or
 python3 scripts/dircreative_adco_native_exchange.py build-receipt \
   --project-root <project_dir> \
   --handoff <handoff-v2.json> \
-  --artifact film.story_package=domain-artifacts/story-package.md \
+  --artifact film.story_package=AD-creative/workspaces/WORK-001/specialists/SPH-001/outputs/story-package.md \
   --status completed \
-  --receipt-output exchange/receipt-v2.json
+  --receipt-output AD-creative/workspaces/WORK-001/specialists/SPH-001/receipt.json
 ```
+
+`--receipt-output` is required and must equal the receipt path already registered
+by ADCO for that handoff. DIRcreative creates it atomically as a new mode-0600
+file; an existing target, case alias, symlink component, control-plane path, or
+overlap with the handoff, locked inputs, or requested outputs is rejected. Output
+roots may not overlap any locked decision, and receipt build/validation rechecks
+all locked hashes after output production.
 
 Run the real cross-repository v1 roundtrip against an ADCO checkout when that checkout still exposes the v1 API:
 

@@ -487,6 +487,7 @@ def validate_required_paths() -> None:
         "scripts/dircreative_visualization_adco_audit.py",
         "scripts/dircreative_install_parity.py",
         "scripts/dircreative_state_audit.py",
+        "scripts/dircreative_media_forward_audit.py",
         "scripts/dircreative_release_gate.py",
         "scripts/dircreative_release_preflight.py",
         "scripts/dircreative_build_release.py",
@@ -4776,6 +4777,14 @@ def validate_goal_mode_rough_idea_visual_dogfood_receipt() -> None:
     require(receipt.get("qa_gate", {}).get("status") == "pass", f"{path} skill_run_receipt.qa_gate.status must be pass")
 
 
+def validate_media_forward_audit_script() -> None:
+    proc = run(["python3", "scripts/dircreative_media_forward_audit.py", "--self-test"])
+    require(
+        proc.returncode == 0 and "DIRCREATIVE_MEDIA_FORWARD_SELF_TEST: PASS" in proc.stdout,
+        f"media-forward audit self-test failed:\n{proc.stderr}\n{proc.stdout}",
+    )
+
+
 def validate_release_gate_script() -> None:
     import contextlib
     import io
@@ -4814,6 +4823,14 @@ def validate_release_gate_script() -> None:
         "scripts/dircreative_release_preflight.py",
         "scripts/dircreative_build_release.py",
         "scripts/dircreative_verify_release.py",
+        "scripts/dircreative_media_forward_audit.py",
+        "--media-forward-receipt",
+        "--require-media-forward",
+        "--media-c2patool",
+        "--expected-commit",
+        "sealed commit final readback",
+        "BILATERAL_MEDIA_RELEASE_GATE",
+        "DIR_RELEASE_GATE",
         "--require-reproducible-match",
         "--require-remote-tag",
         "scripts/install_local_skill.py",
@@ -4899,9 +4916,18 @@ def validate_release_gate_script() -> None:
                 require_tag=False,
                 allow_unpublished=True,
                 adco_repo=None,
+                media_forward_receipt=None,
+                require_media_forward=False,
+                media_c2patool=None,
             )
             with contextlib.redirect_stdout(io.StringIO()):
-                result = release_gate.run_gate(args, Path(raw) / "source-stage", Path(raw) / "scratch")
+                result = release_gate.run_gate(
+                    args,
+                    Path(raw) / "source-stage",
+                    Path(raw) / "scratch",
+                    sealed_commit="a" * 40,
+                    head_reader=lambda: "a" * 40,
+                )
         return result, executed
 
     try:
@@ -4934,12 +4960,17 @@ def validate_release_gate_script() -> None:
                 require_tag=False,
                 allow_unpublished=False,
                 adco_repo=None,
+                media_forward_receipt=None,
+                require_media_forward=False,
+                media_c2patool=None,
             )
             with contextlib.redirect_stdout(io.StringIO()):
                 formal_result = release_gate.run_gate(
                     formal_args,
                     Path(raw) / "source-stage",
                     Path(raw) / "scratch",
+                    sealed_commit="a" * 40,
+                    head_reader=lambda: "a" * 40,
                 )
     finally:
         release_gate.run_step = original_run_step
@@ -4951,6 +4982,10 @@ def validate_release_gate_script() -> None:
     require(
         "--require-remote-tag" in captured_commands.get("release artifact verification", []),
         "formal release gate must bind artifact verification to the canonical remote tag",
+    )
+    require(
+        release_gate.sealed_head_unchanged("a" * 40, reader=lambda: "b" * 40) is False,
+        "release gate must reject a final HEAD that differs from the sealed commit",
     )
 
 
@@ -5578,6 +5613,9 @@ def validate_release_distribution_contract() -> None:
             "previous install is retained at",
             "DIRCREATIVE_INSTALLER_SELF_TEST: PASS",
             "formal DIRcreative installation requires explicit --formal-install authorization",
+            "validate_release_metadata",
+            "git archive of exact commit",
+            "root_skill_sha256",
             "install target must not be a symlink",
             ".codex\" / \"dev-skills",
         ],
@@ -5598,7 +5636,10 @@ def validate_release_distribution_contract() -> None:
             "--extract-to",
             "dircreative-archive-installed",
             "c19e3f92bdf4d311ab4ed79831b344979f1df01f",
+            "101132984166d9580589b2ba2c6590d7f88d7509",
             "ADCO_TESTED_SHA",
+            "ADCO_V2_TESTED_SHA",
+            "--formal-install",
             "--require-reproducible-match",
             "--require-remote-tag",
             'python-version: ["3.10", "3.12", "3.14"]',
@@ -5924,6 +5965,7 @@ def main() -> int:
         ("visual dogfood gstack receipt", validate_visual_dogfood_gstack_receipt),
         ("goal-mode visual dogfood receipt", validate_goal_mode_visual_dogfood_receipt),
         ("goal-mode rough idea visual dogfood receipt", validate_goal_mode_rough_idea_visual_dogfood_receipt),
+        ("media-forward audit script", validate_media_forward_audit_script),
         ("release gate script", validate_release_gate_script),
         ("no media assets", validate_no_media_assets),
     ]

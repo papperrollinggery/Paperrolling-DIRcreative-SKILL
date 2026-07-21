@@ -31,11 +31,14 @@ creative work:
 | other bounded revision | Fast / `bounded_revision` | `routes/fast-task.md` | none |
 | complete or multi-output film work | Studio / `film_development` | `routes/studio-development.md` | `references/film-development.md` |
 | real generation or client delivery | Delivery / `generation_authorization` or `client_delivery` | `routes/delivery-audit.md` | `references/generation-delivery.md` |
-| validated ADCO handoff | Delivery / `adco_specialist_exchange` | `routes/delivery-audit.md` | `references/specialist-exchange.md` plus the descriptor schema |
+| fully validated ADCO handoff | Delivery / `adco_specialist_exchange` | `routes/delivery-audit.md` | `references/specialist-exchange.md` plus the descriptor schema |
 
-Run `python3 scripts/dircreative_route.py` only to validate an ADCO handoff or
-when the request is genuinely ambiguous between modes. The script is a
-deterministic mirror for tests, not a mandatory creative preflight.
+Run `python3 scripts/dircreative_route.py --handoff <file> --project-root <dir>`
+only to validate an ADCO handoff, or run the router on text when
+the request is genuinely ambiguous between modes. A schema-only handoff fails
+closed; the ADCO route verifies the descriptor, locked input hashes, brief
+binding, capabilities, exact exchange-index registration, descriptor snapshot,
+and isolated output/receipt scope. It is not a mandatory creative preflight.
 
 Read exactly one selected Route Card, then only the task reference in the table.
 Do not follow references from that card into another protocol chain. Optional

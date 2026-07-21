@@ -154,6 +154,19 @@ def _builtin_schema_errors(
     if isinstance(ref, str):
         return _builtin_schema_errors(value, _resolve_schema_ref(root, ref), root, path)
 
+    all_of = schema.get("allOf")
+    if isinstance(all_of, list):
+        for item in all_of:
+            if isinstance(item, dict):
+                errors.extend(_builtin_schema_errors(value, item, root, path))
+
+    condition = schema.get("if")
+    if isinstance(condition, dict):
+        condition_matches = not _builtin_schema_errors(value, condition, root, path)
+        selected = schema.get("then") if condition_matches else schema.get("else")
+        if isinstance(selected, dict):
+            errors.extend(_builtin_schema_errors(value, selected, root, path))
+
     one_of = schema.get("oneOf")
     if isinstance(one_of, list):
         alternatives = [

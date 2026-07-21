@@ -1,7 +1,11 @@
 # Specialist Exchange Runtime
 
-Use only after the versioned descriptor and handoff schema validate an
-`adco.specialist-exchange` message for `dircreative.film-preproduction`.
+Use only after the native validator confirms the versioned descriptor, exact
+registered handoff file and hash, unique ADCO exchange-index row, descriptor
+snapshot, locked input files and hashes, brief binding, requested capabilities,
+and isolated output/receipt scopes for an `adco.specialist-exchange` message
+selecting `dircreative.film-preproduction`. Schema validity alone does not
+activate this runtime.
 
 ## Ownership
 
@@ -19,7 +23,9 @@ Use only after the versioned descriptor and handoff schema validate an
 2. Produce the requested artifact using the relevant DIR craft guidance without
    copying host state into a parallel structure.
 3. Validate only the output and its direct dependencies.
-4. Return status, output references with real hashes when files exist, domain QA,
+4. Never write into a locked-input directory. Write the receipt only to ADCO's
+   registered path as a new file; never overwrite an existing path.
+5. Return status, output references with real hashes when files exist, domain QA,
    limitations, and open questions. Do not return client/send/project/control-
    plane readiness claims.
 

@@ -24,10 +24,19 @@
       "required": ["status", "checks", "limitations"],
       "properties": {
         "status": {"enum": ["pass", "fail", "blocked", "needs_user"]},
-        "checks": {"type": "array"},
-        "limitations": {"type": "array"}
+        "checks": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "limitations": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        }
       },
-      "additionalProperties": true
+      "additionalProperties": false
     },
     "open_questions": {
       "type": "array",
@@ -42,7 +51,13 @@
         "required": ["status"]
       },
       "then": {
-        "properties": {"outputs": {"minItems": 1}}
+        "properties": {
+          "outputs": {"minItems": 1},
+          "open_questions": {"maxItems": 0},
+          "domain_qa": {
+            "properties": {"status": {"const": "pass"}}
+          }
+        }
       }
     },
     {
@@ -51,7 +66,49 @@
         "required": ["status"]
       },
       "then": {
-        "properties": {"open_questions": {"minItems": 1}}
+        "properties": {
+          "outputs": {"maxItems": 0},
+          "open_questions": {"minItems": 1},
+          "domain_qa": {
+            "properties": {"status": {"const": "needs_user"}}
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"status": {"const": "blocked"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "outputs": {"maxItems": 0},
+          "open_questions": {"maxItems": 0},
+          "domain_qa": {
+            "properties": {
+              "status": {"const": "blocked"},
+              "limitations": {"minItems": 1}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"status": {"const": "failed"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "outputs": {"maxItems": 0},
+          "open_questions": {"maxItems": 0},
+          "domain_qa": {
+            "properties": {
+              "status": {"const": "fail"},
+              "limitations": {"minItems": 1}
+            }
+          }
+        }
       }
     }
   ],

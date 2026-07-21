@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.0 - Unreleased
+
+- Makes Fast and Studio content-first by default with zero unconditional protocol reads, one Route Card, bounded context, and measured warm/cold routing budgets.
+- Requires candidate-exact, C2PA-verified OpenAI image outputs plus distinct file/QA evidence for global-install media claims; video remains explicitly unverified.
+- Adds Specialist Exchange v2 while retaining tested v1 read compatibility, and binds v2 activation to ADCO's exact exchange registration, descriptor snapshot, locked inputs, isolated outputs, and no-overwrite receipt path.
+- Hardens formal installation so only an exact release artifact with matching version, commit, root Skill hash, and release metadata may replace the canonical global installation.
+- Seals one commit across media, preflight, build, verification, and final HEAD readback so a long release gate cannot mix evidence from two revisions.
+
 ## 0.4.0 - 2026-07-14
 
 - Adds interactive, customer-facing chat visualizations for creative choices, story curves, script timing, shot rhythm, visual directions, reference graphs, prompt handoff, and generation QA.
