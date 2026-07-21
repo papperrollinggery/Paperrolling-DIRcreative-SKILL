@@ -23,7 +23,7 @@ Fast, Studio, or Delivery; Director Room never overrides that mode.
 | One shot optimization | `visual_production`; add `model_continuity` when generation or identity can drift | no |
 | Small storyboard review | `visual_production`, `model_continuity` | no |
 | Prompt compilation | `visual_production`, `model_continuity` | no |
-| Complete advertising film or multi-output Studio development | `narrative_strategy`, `visual_production`, `model_continuity` | yes |
+| Complete advertising film, broadcast TVC, or multi-output Studio development | `narrative_strategy`, `visual_production`, `model_continuity` | yes |
 
 Do not route by a broad word such as “script” or “storyboard” alone. Scope,
 requested outputs, existing artifacts, and whether the user asks for revision or

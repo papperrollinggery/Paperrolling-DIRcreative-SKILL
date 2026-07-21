@@ -48,6 +48,7 @@ def audit() -> tuple[list[str], dict[str, Any]]:
         "routing": "skills/dircreative/runtime/routing-policy.yaml",
         "interaction_and_external_gates": "skills/dircreative/runtime/routing-policy.yaml",
         "compact_state": "skills/dircreative/runtime/state-snapshot.schema.json",
+        "whole_film_visual_asset_plan": "skills/dircreative/runtime/visual-asset-plan.schema.json",
         "fast_execution": "skills/dircreative/routes/fast-task.md",
         "studio_execution": "skills/dircreative/routes/studio-development.md",
         "delivery_execution": "skills/dircreative/routes/delivery-audit.md",
@@ -115,9 +116,42 @@ def audit() -> tuple[list[str], dict[str, Any]]:
         for term in FORBIDDEN_FAST_TERMS:
             if term.casefold() in fast_text:
                 failures.append(f"Fast Route Card loads forbidden contract: {term}")
-        studio_text = card_paths["studio"].read_text(encoding="utf-8").casefold()
+        studio_text = " ".join(card_paths["studio"].read_text(encoding="utf-8").casefold().split())
         if "finaldelivery" in studio_text or "client-film-hard-gates.md" in studio_text:
             failures.append("Studio Route Card loads final-delivery contracts")
+        for term in (
+            "every scene image",
+            "one individual storyboard frame per shot",
+            "complete director storyboard coverage",
+            "clean model-input frames",
+            "representative sample as incomplete for whole-film coverage",
+        ):
+            if term.casefold() not in studio_text:
+                failures.append(f"Studio Route Card lost whole-film visual coverage rule: {term}")
+
+    film_reference = ROOT / "skills/dircreative/references/film-development.md"
+    delivery_reference = ROOT / "skills/dircreative/references/generation-delivery.md"
+    if film_reference.is_file():
+        film_text = " ".join(film_reference.read_text(encoding="utf-8").casefold().split())
+        for term in (
+            "one individual `storyboard_frame` for every approved shot",
+            "scene references, individual shot images, and director storyboard pages",
+            "tvc evidence",
+            "`representative_sample` always remains incomplete for whole-film coverage",
+        ):
+            if term.casefold() not in film_text:
+                failures.append(f"film-development craft card lost required coverage rule: {term}")
+    if delivery_reference.is_file():
+        delivery_text = " ".join(delivery_reference.read_text(encoding="utf-8").casefold().split())
+        for term in (
+            "`whole_film`",
+            "`sequence`",
+            "`representative_sample`",
+            "landscape broadcast profile",
+            "whole-film generation is complete only when every required matrix row",
+        ):
+            if term.casefold() not in delivery_text:
+                failures.append(f"generation-delivery craft card lost required coverage rule: {term}")
 
     routes = policy.get("routes", {})
     route_context_metrics: dict[str, dict[str, Any]] = {}

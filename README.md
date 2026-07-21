@@ -101,7 +101,9 @@ DIRcreative 会选择 Fast、Studio 或 Delivery。Fast 不进入 Director Room�
 ## Safety model
 
 - 未获得用户明确授权，不直接生成图片或视频。
-- 先展示生成合同：每张参考图的用途、继承来源、标题层级和是否会成为视频输入。
+- 完整成片先展示动态视觉资产矩阵：角色/产品/关键道具、每个场景、每个镜头的独立分镜图、覆盖全部镜头的导演故事板，以及模型实际需要的 clean frames。
+- TVC 验收使用 16:9 广播主档案，不以 9:16 社媒变体代替；具体帧率、声音、字幕/法务安全区与母版参数以目标客户或播出方规格为准。
+- 再展示生成合同：每张图的用途、继承来源、标题层级和是否会成为视频输入；代表性样片不得冒充全片完成。
 - fixture、终端演示、HTML 页面和自动化测试不能冒充真人验收。
 - 生成候选、临时截图和 review widget 不能自动成为项目 source of truth。
 - 不在未授权情况下修改目标项目的 `AGENTS.md`。
@@ -226,6 +228,7 @@ python3 scripts/dircreative_prompt_fixture_audit.py
 python3 scripts/dircreative_headless_acceptance_audit.py
 python3 scripts/dircreative_content_first_audit.py
 python3 scripts/dircreative_live_model_eval.py --self-test
+python3 scripts/dircreative_visual_asset_plan.py --self-test
 python3 scripts/dircreative_readiness_audit.py
 python3 scripts/dircreative_quality_audit.py
 python3 scripts/dircreative_chat_surface_audit.py

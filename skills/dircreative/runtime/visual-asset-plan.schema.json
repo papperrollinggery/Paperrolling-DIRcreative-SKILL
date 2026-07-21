@@ -1,0 +1,148 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "dircreative.visual-asset-plan/1.0",
+  "title": "DIRcreative Visual Asset Plan",
+  "description": "Dynamic image coverage for a whole film, one sequence, or an explicitly bounded representative sample. Coverage is derived from current film truth; a sample can never prove whole-film completion.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "project_id",
+    "scope",
+    "duration_seconds",
+    "delivery_profile",
+    "scene_ids",
+    "character_ids",
+    "product_ids",
+    "prop_ids",
+    "shot_ids",
+    "rhythm_point_ids",
+    "style_reference_required",
+    "generation_units",
+    "assets",
+    "completion_claim"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "project_id": {"type": "string", "minLength": 1},
+    "scope": {"enum": ["whole_film", "sequence", "representative_sample"]},
+    "duration_seconds": {"type": "number", "exclusiveMinimum": 0},
+    "delivery_profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "medium",
+        "aspect_ratio",
+        "raster_width",
+        "raster_height",
+        "frame_rate_fps",
+        "audio_sample_rate_hz",
+        "action_safe_percent",
+        "title_safe_percent",
+        "brand_endframe_min_seconds",
+        "target_master_spec_status"
+      ],
+      "properties": {
+        "medium": {"enum": ["broadcast_tvc", "cinema", "web", "social", "other"]},
+        "aspect_ratio": {"type": "string", "pattern": "^[0-9]+(?:\\.[0-9]+)?:[0-9]+(?:\\.[0-9]+)?$"},
+        "raster_width": {"type": "integer", "minimum": 1},
+        "raster_height": {"type": "integer", "minimum": 1},
+        "frame_rate_fps": {"type": "number", "exclusiveMinimum": 0},
+        "audio_sample_rate_hz": {"type": "integer", "minimum": 1},
+        "action_safe_percent": {"type": "number", "exclusiveMinimum": 0, "maximum": 100},
+        "title_safe_percent": {"type": "number", "exclusiveMinimum": 0, "maximum": 100},
+        "brand_endframe_min_seconds": {"type": "number", "minimum": 0},
+        "target_master_spec_status": {"enum": ["fixture_baseline", "requires_target_spec", "locked_target"]}
+      }
+    },
+    "scene_ids": {"$ref": "#/$defs/idList"},
+    "character_ids": {"$ref": "#/$defs/idList"},
+    "product_ids": {"$ref": "#/$defs/idList"},
+    "prop_ids": {"$ref": "#/$defs/idList"},
+    "shot_ids": {"$ref": "#/$defs/nonEmptyIdList"},
+    "rhythm_point_ids": {"$ref": "#/$defs/nonEmptyIdList"},
+    "style_reference_required": {"type": "boolean"},
+    "generation_units": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["unit_id", "shot_ids", "direct_input_required", "direct_input_not_required_reason"],
+        "properties": {
+          "unit_id": {"$ref": "#/$defs/id"},
+          "shot_ids": {"$ref": "#/$defs/nonEmptyIdList"},
+          "direct_input_required": {"type": "boolean"},
+          "direct_input_not_required_reason": {"type": "string"}
+        }
+      }
+    },
+    "assets": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "asset_id",
+          "role",
+          "required",
+          "action",
+          "purpose",
+          "coverage",
+          "inherits_from",
+          "planning_only",
+          "direct_video_input",
+          "status",
+          "qa_status",
+          "generated_file"
+        ],
+        "properties": {
+          "asset_id": {"$ref": "#/$defs/id"},
+          "role": {
+            "enum": [
+              "character_identity_reference",
+              "product_identity_board",
+              "prop_continuity_board",
+              "scene_geography_camera_fov_reference",
+              "lighting_material_style_board",
+              "storyboard_frame",
+              "professional_storyboard_motion_map",
+              "clean_first_frame",
+              "clean_key_frame",
+              "clean_end_frame"
+            ]
+          },
+          "required": {"type": "boolean"},
+          "action": {"enum": ["reuse", "derive", "generate", "assemble"]},
+          "purpose": {"type": "string", "minLength": 1},
+          "coverage": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["scene_ids", "character_ids", "product_ids", "prop_ids", "shot_ids", "generation_unit_ids"],
+            "properties": {
+              "scene_ids": {"$ref": "#/$defs/idList"},
+              "character_ids": {"$ref": "#/$defs/idList"},
+              "product_ids": {"$ref": "#/$defs/idList"},
+              "prop_ids": {"$ref": "#/$defs/idList"},
+              "shot_ids": {"$ref": "#/$defs/idList"},
+              "generation_unit_ids": {"$ref": "#/$defs/idList"}
+            }
+          },
+          "inherits_from": {"$ref": "#/$defs/idList"},
+          "planning_only": {"type": "boolean"},
+          "direct_video_input": {"type": "boolean"},
+          "status": {"enum": ["planned", "prompt_ready", "generated_candidate", "user_locked", "reused_locked", "rejected"]},
+          "qa_status": {"enum": ["not_run", "pass", "fail"]},
+          "generated_file": {"type": "string"}
+        }
+      }
+    },
+    "completion_claim": {"enum": ["none", "plan_complete", "sample_complete", "generation_complete", "accepted"]}
+  },
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"},
+    "idList": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/id"}},
+    "nonEmptyIdList": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/id"}}
+  }
+}

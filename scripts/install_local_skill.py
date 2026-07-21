@@ -1052,6 +1052,7 @@ def self_test() -> int:
                 "references/film-development.md",
                 "references/generation-delivery.md",
                 "runtime/routing-policy.yaml",
+                "runtime/visual-asset-plan.schema.json",
             ):
                 if not (layout_target / relative).is_file():
                     raise AssertionError(f"root runtime file missing from isolated install layout: {layout}/{relative}")

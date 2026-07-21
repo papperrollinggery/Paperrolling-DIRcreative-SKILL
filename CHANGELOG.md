@@ -2,6 +2,7 @@
 
 ## 0.5.0 - Unreleased
 
+- Adds a dynamic whole-film visual asset contract covering every scene, approved shot, director-storyboard page, and scene-coherent video-generation unit; replaces the former small vertical smoke case with a 60-second 16:9 TVC acceptance fixture, 24 frame-aligned formal shots, 48 required assets, real-raster evidence checks, and timing/missing/reused/cross-scene negative controls.
 - Makes Fast and Studio content-first by default with zero unconditional protocol reads, one Route Card, bounded context, and measured warm/cold routing budgets.
 - Requires candidate-exact Codex event-log prefixes, a sealed explicit user invocation, real imagegen/view event IDs, hash-bound prompts/references/outputs, OpenAI C2PA, and a sealed-input separate-task visual review for global-install media claims; unsigned host trace and reviewer judgment remain explicit, and video remains unverified.
 - Adds Specialist Exchange v2 while retaining tested v1 read compatibility, and binds v2 activation to ADCO's exact exchange registration, descriptor snapshot, locked inputs, isolated outputs, and no-overwrite receipt path.

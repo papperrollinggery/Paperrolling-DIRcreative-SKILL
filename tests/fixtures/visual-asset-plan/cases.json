@@ -1,0 +1,11 @@
+{
+  "source": "tests/fixtures/visual-asset-plan/valid-coverage-unit.json",
+  "cases": [
+    {"id": "valid_coverage_unit", "mutation": "none", "expect": "pass"},
+    {"id": "missing_scene", "mutation": "remove:scene-office-geography", "expect_error": "scene_coverage_missing:office-desk"},
+    {"id": "missing_director_storyboard", "mutation": "remove:director-storyboard-page-01", "expect_error": "director_storyboard_coverage_missing:S01,S02,S03,S04,S05,S06"},
+    {"id": "missing_individual_shot", "mutation": "remove:storyboard-frame-S04", "expect_error": "storyboard_frame_coverage_invalid:S04:0"},
+    {"id": "sample_claims_whole_film", "mutation": "scope:representative_sample", "expect_error": "sample_cannot_claim_whole_film_plan_complete"},
+    {"id": "false_generation_complete", "mutation": "claim:generation_complete", "expect_error": "required_asset_not_generated:identity-character-protagonist"}
+  ]
+}

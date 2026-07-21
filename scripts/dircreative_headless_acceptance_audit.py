@@ -2,9 +2,11 @@
 from __future__ import annotations
 
 import argparse
+import copy
 import hashlib
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -16,6 +18,7 @@ from dircreative_activation_policy_audit import activation_decision
 from dircreative_adco_native_exchange import run_self_test as exchange_self_test
 from dircreative_director_harness_audit import HARNESS_PATH, load_yaml, select_perspectives
 from dircreative_route import load_policy, route_request
+from dircreative_visual_asset_plan import derive_plan, validate_plan
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -26,6 +29,9 @@ FORBIDDEN_FAST_CONTEXT = {
     "docs/film-preproduction/goal-autorun-completion-protocol.md",
     "docs/film-preproduction/client-film-hard-gates.md",
 }
+TIMECODE_RE = re.compile(
+    r"^(\d{2}):([0-5]\d(?:\.\d+)?)-(\d{2}):([0-5]\d(?:\.\d+)?)$"
+)
 
 
 class HeadlessAcceptanceError(Exception):
@@ -99,36 +105,222 @@ def copy_revision_answer(case: dict[str, Any]) -> str:
     )
 
 
+def load_json_object(relative: str) -> dict[str, Any]:
+    path = ROOT / relative
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise HeadlessAcceptanceError(f"cannot load TVC acceptance input {relative}: {exc}") from exc
+    if not isinstance(payload, dict):
+        raise HeadlessAcceptanceError(f"TVC acceptance input must be an object: {relative}")
+    return payload
+
+
+def tvc_case_data(
+    case: dict[str, Any],
+) -> tuple[dict[str, Any], list[dict[str, Any]], dict[str, Any], dict[str, Any]]:
+    data = case["input"]
+    inventory_path = str(data["inventory"])
+    inventory = load_json_object(inventory_path)
+    shot_payload = load_json_object(str(data["shot_cards"]))
+    if shot_payload.get("inventory") != inventory_path:
+        raise HeadlessAcceptanceError("TVC shot cards are not bound to the selected inventory")
+    cards = shot_payload.get("cards")
+    if not isinstance(cards, list):
+        raise HeadlessAcceptanceError("TVC shot card fixture must contain a cards list")
+    expected_fields = {
+        "shot_id",
+        "timecode",
+        "duration_seconds",
+        "shot_design",
+        "action",
+        "sound_edit",
+        "continuity_model",
+    }
+    inventory_shots = inventory.get("shots", [])
+    expected_ids = [shot.get("shot_id") for shot in inventory_shots if isinstance(shot, dict)]
+    actual_ids: list[str] = []
+    duration = 0.0
+    cursor = 0.0
+    frame_rate = inventory.get("delivery_profile", {}).get("frame_rate_fps")
+    if not isinstance(frame_rate, (int, float)) or isinstance(frame_rate, bool) or frame_rate <= 0:
+        raise HeadlessAcceptanceError("TVC fixture has no valid frame rate")
+    for index, card in enumerate(cards):
+        if not isinstance(card, dict) or set(card) != expected_fields:
+            raise HeadlessAcceptanceError(f"invalid TVC director shot card at index {index}")
+        for field in expected_fields - {"duration_seconds"}:
+            if not isinstance(card[field], str) or not card[field].strip():
+                raise HeadlessAcceptanceError(f"empty TVC director shot-card field: {index}:{field}")
+        seconds = card["duration_seconds"]
+        if not isinstance(seconds, (int, float)) or isinstance(seconds, bool) or seconds <= 0:
+            raise HeadlessAcceptanceError(f"invalid TVC shot duration at index {index}")
+        timecode_match = TIMECODE_RE.fullmatch(card["timecode"])
+        if timecode_match is None:
+            raise HeadlessAcceptanceError(f"invalid TVC timecode at index {index}")
+        start = int(timecode_match.group(1)) * 60 + float(timecode_match.group(2))
+        end = int(timecode_match.group(3)) * 60 + float(timecode_match.group(4))
+        if abs(start - cursor) > 0.0001:
+            raise HeadlessAcceptanceError(
+                f"TVC timecode gap or overlap before {card['shot_id']}: {cursor} -> {start}"
+            )
+        if abs((end - start) - float(seconds)) > 0.0001:
+            raise HeadlessAcceptanceError(
+                f"TVC timecode duration mismatch on {card['shot_id']}"
+            )
+        frames = float(seconds) * float(frame_rate)
+        if abs(frames - round(frames)) > 0.0001:
+            raise HeadlessAcceptanceError(
+                f"TVC shot duration is not frame-aligned at {frame_rate:g}fps: {card['shot_id']}"
+            )
+        actual_ids.append(card["shot_id"])
+        duration += float(seconds)
+        cursor = end
+    if actual_ids != expected_ids or len(cards) != 24:
+        raise HeadlessAcceptanceError("TVC director shot cards must cover S01-S24 exactly once and in order")
+    if abs(duration - float(inventory.get("duration_seconds", 0))) > 0.001:
+        raise HeadlessAcceptanceError(f"TVC director shot cards total {duration} seconds instead of 60")
+    if abs(cursor - float(inventory.get("duration_seconds", 0))) > 0.001:
+        raise HeadlessAcceptanceError(f"TVC final timecode ends at {cursor} seconds instead of 60")
+    if sum(float(card["duration_seconds"]) for card in cards[-2:]) < 4.0:
+        raise HeadlessAcceptanceError("TVC brand end frame is shorter than four seconds")
+    shot_scenes = {
+        shot["shot_id"]: shot["scene_id"]
+        for shot in inventory_shots
+        if isinstance(shot, dict) and isinstance(shot.get("shot_id"), str)
+    }
+    for unit in inventory.get("generation_units", []):
+        if not isinstance(unit, dict):
+            raise HeadlessAcceptanceError("invalid TVC generation unit")
+        unit_scenes = {shot_scenes.get(shot_id) for shot_id in unit.get("shot_ids", [])}
+        if None in unit_scenes or len(unit_scenes) != 1:
+            raise HeadlessAcceptanceError(
+                f"TVC generation unit crosses scene anchors: {unit.get('unit_id', 'unknown')}"
+            )
+
+    plan = derive_plan(inventory)
+    plan_errors, metrics = validate_plan(plan, base_dir=ROOT / Path(inventory_path).parent)
+    if plan_errors:
+        raise HeadlessAcceptanceError("TVC visual asset plan is invalid: " + "; ".join(plan_errors))
+    expected_metrics = {
+        "duration_seconds": 60,
+        "scenes": 4,
+        "characters": 2,
+        "shots": 24,
+        "rhythm_points": 32,
+        "assets": 48,
+        "storyboard_frames": 24,
+        "director_storyboard_pages": 4,
+        "clean_video_inputs": 10,
+    }
+    drift = {
+        key: (metrics.get(key), expected)
+        for key, expected in expected_metrics.items()
+        if metrics.get(key) != expected
+    }
+    if drift:
+        raise HeadlessAcceptanceError(f"TVC acceptance scale drifted: {drift}")
+    metrics["frame_aligned_shots"] = len(cards)
+    return inventory, cards, plan, metrics
+
+
 def studio_film_answer(case: dict[str, Any]) -> str:
     data = case["input"]
+    inventory, cards, plan, metrics = tvc_case_data(case)
     constraints = "\n".join(f"- {item}" for item in data["constraints"])
+    shot_rows = [
+        "| 镜号 / 时间 | 摄影与构图 | 人物 / 产品动作 | 声音与剪辑 | 连续性 / 模型风险 |",
+        "|---|---|---|---|---|",
+    ]
+    for card in cards:
+        shot_rows.append(
+            f"| {card['shot_id']} · {card['timecode']} · {card['duration_seconds']:g}s "
+            f"| {card['shot_design']} | {card['action']} | {card['sound_edit']} "
+            f"| {card['continuity_model']} |"
+        )
+
+    scene_names = {
+        "radio-studio-night": "深夜电台",
+        "station-concourse-rain": "雨夜车站",
+        "night-bus-interior": "夜班巴士",
+        "riverside-dawn": "黎明河岸",
+    }
+    scene_rows = []
+    for scene in inventory["scenes"]:
+        covered = [
+            shot["shot_id"]
+            for shot in inventory["shots"]
+            if shot["scene_id"] == scene["id"]
+        ]
+        scene_rows.append(
+            f"| {scene_names.get(scene['id'], scene['id'])} | {', '.join(covered)} | {scene['purpose']} |"
+        )
+
+    director_pages = []
+    for asset in plan["assets"]:
+        if asset["role"] == "professional_storyboard_motion_map":
+            director_pages.append(
+                f"- {asset['asset_id']}：{', '.join(asset['coverage']['shot_ids'])}；"
+                "每格含时间码、景别/焦段、机位运动、调度、声画剪辑、连续性和模型风险。"
+            )
+    clean_inputs = []
+    for asset in plan["assets"]:
+        if asset["role"].startswith("clean_"):
+            clean_inputs.append(
+                f"- {asset['coverage']['generation_unit_ids'][0]}：{asset['role']}，"
+                f"取自 {asset['coverage']['shot_ids'][0]}，无标题、字幕、镜号或 UI。"
+            )
+    generation_unit_ids = [unit["unit_id"] for unit in inventory["generation_units"]]
+    generation_unit_range = f"{generation_unit_ids[0]}-{generation_unit_ids[-1]}"
+
     return (
-        f"# {data['brand']}｜{data['duration_seconds']} 秒竖屏广告片首轮方案\n\n"
-        "## 推荐方向：把噪声切成一口清晰\n\n"
-        f"面向{data['audience']}，把“注意力被切碎”拍成可听见、可看见的噪声层。"
-        f"产品动作不是中断剧情的展示，而是让节奏重新归一的转折：{data['product_action']}。"
-        f"核心表达是“{data['promise']}”。\n\n"
-        "## 30 秒脚本与分镜\n\n"
-        "| 时间 | 画面与镜头 | 声音 / 文案 |\n"
-        "|---|---|---|\n"
-        f"| 00–04s | {data['situation']}。9:16 近景快速切换：弹窗、抖动的手机、被划掉又重写的待办。 | 提示音、键盘声、椅轮声叠成拥挤节奏；无旁白。 |\n"
-        f"| 04–09s | 中近景固定在主角脸侧，背景同事仍在移动；她伸手压住手机，第一次主动停顿。 | 环境声突然抽掉高频，只留呼吸和桌面轻震。 |\n"
-        f"| 09–15s | 产品动作连续完成：{data['product_action']}。微距跟随瓶盖、液体和冰块，不切断手部方向。 | 瓶盖轻响、液体落杯、冰块碰撞依次成为节拍。 |\n"
-        f"| 15–20s | 镜头从杯壁水珠上移到眼神；她喝下第一口，屏幕弹窗仍在，但焦点不再跟随弹窗。 | 旁白：{data['promise']}。 |\n"
-        f"| 20–24s | 一个平稳横移连接她整理文件、明确回复一条消息、合上多余窗口；动作不加速。 | 噪声回归，但被压进稳定的低节拍。 |\n"
-        f"| 24–30s | {data['end_frame']}。瓶标朝镜头，杯中冰块仍有轻微运动。 | 音乐在品牌名出现时收束，保留一声清晰冰响。 |\n\n"
-        "## 连续性与执行重点\n\n"
-        f"- 画幅与时长：{data['aspect_ratio']}，总长 {data['duration_seconds']} 秒；产品动作占 6 秒，不能被碎切。\n"
-        "- 手部连续性：拧盖手、倒杯方向、瓶标朝向和杯中液位必须跨镜头一致。\n"
-        "- 声音叙事：前段噪声密、产品段声音清、后段节奏稳；不要用夸张“能量爆发”音效。\n"
-        "- 摄影逻辑：前段以短焦近距离制造压迫，中段微距锁定真实物理动作，后段改为稳定横移。\n\n"
-        "## 产品与合规边界\n\n"
+        f"# {data['brand']}｜60 秒 16:9 广播 TVC 首轮完整方案\n\n"
+        "## 推荐方向：赶上日出，也赶上彼此\n\n"
+        f"面向{data['audience']}，把一次看似普通的收工变成一场有真实阻力的赴约。"
+        f"核心表达是“{data['promise']}”。{data['story']}"
+        "冷萃不是让人物突然获得能量的开关，而是父女两条时间线之间可见、可追踪的邀请物。\n\n"
+        "## 交付基线\n\n"
+        "- 介质：broadcast TVC；时长 60 秒；画幅 16:9；基线 1920x1080 / 25fps / 48kHz。\n"
+        "- 安全区：action safe 90%，title safe 80%；S23-S24 连续构成 4.6 秒品牌尾帧。\n"
+        "- 剪辑时间：24 镜时间码首尾连续，全部时长落在 25fps 整帧边界。\n"
+        f"- 结构规模：4 个场景、2 名持续角色、24 个正式镜头、32 个节奏点 R01-R32、{metrics['generation_units']} 个场景内视频生成单元。\n"
+        "- 当前状态：创意、逐镜和视觉资产计划为 `plan_complete`；目标电视台/平台母版参数仍需锁定。\n\n"
+        "## 60 秒故事与节奏\n\n"
+        "- 00:00-00:15.4 / R01-R08：深夜电台。直播倒计时、父亲留言、纸条与冷萃迫使林澈作出离开的选择。\n"
+        "- 00:15.4-00:29.0 / R09-R16：雨夜车站。红伞建立视觉动机，错过列车形成真实挫折，末班巴士给出第二条行动路径。\n"
+        "- 00:29.0-00:42.0 / R17-R24：夜班巴士。节奏降下来，第一口冷萃与父亲声音同步，但不产生功效式转变；夜色连续过渡至蓝调时刻。\n"
+        "- 00:42.0-01:00.0 / R25-R32：黎明河岸。相见、两瓶并置、纸条回收，最后用 4.6 秒广播可读尾帧完成品牌收束。\n\n"
+        "## 24 镜导演级脚本 / 分镜规格\n\n"
+        + "\n".join(shot_rows)
+        + "\n\n## 四个场景图必须锁定的空间\n\n"
+        "| 场景图 | 覆盖镜头 | 必须锁定 |\n|---|---|---|\n"
+        + "\n".join(scene_rows)
+        + f"\n\n## 全片必须生成的 {metrics['assets']} 项视觉资产\n\n"
+        f"- 2 张角色身份参考图：林澈、父亲；跨夜景与黎明保持脸、体型、发型、服装和持物手一致。\n"
+        f"- 1 张产品身份板：瓶型、黑盖、深色液体、白色标签、已开/未开状态。\n"
+        f"- 2 张道具连续性板：纸条的折叠/展开/收入口袋状态；红伞的折叠/打开/湿润与右手归属。\n"
+        f"- 4 张场景地理 / Camera-FOV 图：每个场景一张，不能用逐镜分镜图替代。\n"
+        f"- 1 张全片灯光 / 材质 / 色彩风格板：夜红、雨面反射、巴士蓝调、黎明暖色连续过渡。\n"
+        f"- 24 张逐镜分镜图：S01-S24 每镜恰好一张，不能用六格拼图代替独立文件。\n"
+        f"- 4 页导演故事板 / motion map：每页 6 镜，覆盖 S01-S24，不得漏镜或重复。\n"
+        f"- {metrics['clean_video_inputs']} 张干净视频输入帧：{generation_unit_range} 每个场景内生成单元一张已锁定首帧、关键帧或尾帧。\n"
+        f"- 合计 {metrics['assets']} 项；场景图、逐镜分镜图、导演故事板与视频模型输入帧是四类不同交付物。\n\n"
+        "## 导演故事板分页\n\n"
+        + "\n".join(director_pages)
+        + "\n\n## 视频生成单元与干净输入\n\n"
+        + "\n".join(clean_inputs)
+        + "\n\n## 声音结构\n\n"
+        "- 电台段：台标、控制台底噪、父亲留言和纸张/开盖声形成信息层级；父亲只说必要的一句。\n"
+        "- 车站段：雨、广播、关门警报与脚步建立阻力；列车门闭合时音乐缩成单一低脉冲。\n"
+        "- 巴士段：引擎、雨刷、轮胎声构成慢节拍；第一口只承接情绪释放，不制造提神式音效。\n"
+        "- 河岸段：河风、鸟声、脚步停止和两瓶落在栏杆上的声音接管叙事；尾帧品牌 mnemonic 在 48kHz 路径收束。\n\n"
+        "## 产品、文字与合规边界\n\n"
         f"{constraints}\n\n"
-        "## 首轮领域 QA\n\n"
-        "- Brief adherence：通过。受众、30 秒竖屏、产品动作和尾帧均已进入可拍脚本。\n"
-        "- Continuity：通过，但拍摄时需锁定瓶标朝向、杯中液位和主角持杯手。\n"
-        "- Production clarity：通过。六个时间段均有画面、镜头、声音和明确转折。\n"
-        "- Limitations：未经批准的包装细节、旁白最终字句和音乐版权仍需沿用客户已批准版本。\n"
+        "## 首轮领域 QA 与完成边界\n\n"
+        "- Brief adherence：通过。60 秒、16:9、四场景、两角色、24 镜、32 节奏点、广播尾帧与声音结构均已落入可执行方案。\n"
+        f"- Coverage：通过。资产矩阵逐项覆盖场景、身份、S01-S24、四页导演故事板和 {generation_unit_range} 干净输入；生成单元不跨场景锚点。\n"
+        "- Continuity：计划级通过。人物、产品、纸条、红伞、左右手、屏幕方向与夜到黎明状态均有明确锁点。\n"
+        f"- Completion：当前只能声明 `plan_complete`。只有 {metrics['assets']} 项真实文件全部存在、逐项 QA 通过并与清单绑定后，才能声明全片生成完成；代表性样片不能声明全片生成完成。\n"
+        "- Acceptance：电视台/平台的最终母版、响度、字幕、法律行和品牌批准尚未提供，因此不能声明 `accepted`。\n"
     )
 
 
@@ -200,6 +392,22 @@ def execute_case(case: dict[str, Any]) -> tuple[str, dict[str, Any]]:
         "director_room_used": perspectives["director_room_used"],
         "selected_perspectives": perspectives["selected_perspectives"],
     }
+    if route["route"] == "film_development":
+        inventory, cards, _plan, metrics = tvc_case_data(case)
+        metadata.update(
+            {
+                "duration_seconds": inventory["duration_seconds"],
+                "formal_shots": len(cards),
+                "frame_aligned_shots": metrics["frame_aligned_shots"],
+                "rhythm_points": metrics["rhythm_points"],
+                "visual_assets_planned": metrics["assets"],
+                "scene_references": metrics["scene_references"],
+                "storyboard_frames": metrics["storyboard_frames"],
+                "director_storyboard_pages": metrics["director_storyboard_pages"],
+                "clean_video_inputs": metrics["clean_video_inputs"],
+                "tvc_landscape_profile": inventory["delivery_profile"]["aspect_ratio"] == "16:9",
+            }
+        )
     return answer, metadata
 
 
@@ -283,6 +491,42 @@ def audit(output_dir: Path | None = None) -> tuple[bool, dict[str, Any], list[st
         if not all(negative.values()):
             failures.append("answer-presence negative controls did not fail closed")
 
+        tvc_case = next(case for case in payload["cases"] if case["id"] == "studio_complete_tvc")
+        source_cards = load_json_object(str(tvc_case["input"]["shot_cards"]))
+        timing_negative_controls: dict[str, bool] = {}
+        with tempfile.TemporaryDirectory(prefix="dircreative-tvc-timing-") as timing_raw:
+            timing_root = Path(timing_raw)
+            timing_mutations = {
+                "fractional_frame_rejected": (
+                    0,
+                    {"timecode": "00:00.0-00:02.5", "duration_seconds": 2.5},
+                    "not frame-aligned",
+                ),
+                "timecode_gap_rejected": (
+                    1,
+                    {"timecode": "00:02.6-00:05.2"},
+                    "gap or overlap",
+                ),
+            }
+            for control_id, (card_index, mutation, expected_error) in timing_mutations.items():
+                mutated_cards = copy.deepcopy(source_cards)
+                mutated_cards["cards"][card_index].update(mutation)
+                mutated_path = timing_root / f"{control_id}.json"
+                mutated_path.write_text(
+                    json.dumps(mutated_cards, ensure_ascii=False, indent=2) + "\n",
+                    encoding="utf-8",
+                )
+                mutated_case = copy.deepcopy(tvc_case)
+                mutated_case["input"]["shot_cards"] = str(mutated_path)
+                try:
+                    tvc_case_data(mutated_case)
+                except HeadlessAcceptanceError as exc:
+                    timing_negative_controls[control_id] = expected_error in str(exc)
+                else:
+                    timing_negative_controls[control_id] = False
+        if not all(timing_negative_controls.values()):
+            failures.append("TVC timing negative controls did not fail closed")
+
         exchange_ok, exchange_report = exchange_self_test()
         compatibility = {
             "v1_read_compatibility": bool(exchange_report.get("v1_read_compatibility")),
@@ -302,6 +546,7 @@ def audit(output_dir: Path | None = None) -> tuple[bool, dict[str, Any], list[st
             "latency_budget_ms": budgets,
             "suite_latency_ms": suite_ms,
             "negative_controls": negative,
+            "tvc_timing_negative_controls": timing_negative_controls,
             "exchange_compatibility": compatibility,
             "runtime_boundary": "isolated deterministic headless processor; no installed skill or live ADCO project",
         }

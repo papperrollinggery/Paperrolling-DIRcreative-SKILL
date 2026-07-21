@@ -27,6 +27,44 @@ Develop one strong direction by default:
 6. **Production/model reality** — separate live-action truth, planning boards,
    clean direct-input frames, model-safe units, and postproduction work.
 
+## Whole-film visual asset coverage
+
+For a complete film, derive the image set from the film instead of naming a
+generic moodboard pack. Inventory recurring characters, hero products,
+state-changing props, distinct scene/geography states, every approved shot, and
+the planned video-generation units. Lock the delivery profile first: medium,
+duration, aspect ratio, raster, frame rate, action/title safe zones, brand
+end-frame duration, audio master requirements, and the target broadcaster or
+platform specification. Do not treat a social vertical format as TVC evidence.
+Then show a human-readable asset matrix.
+
+The minimum whole-film coverage is:
+
+- one `character_identity_reference` per recurring character and wardrobe-state
+  family, unless a supplied locked image already fulfills it;
+- one `product_identity_board` per hero product, plus a
+  `prop_continuity_board` only for important state-changing props not already
+  covered by the product or character lock;
+- one `scene_geography_camera_fov_reference` per distinct location/geography
+  state, covering all shots that use that scene;
+- one individual `storyboard_frame` for every approved shot;
+- one or more `professional_storyboard_motion_map` pages whose cells cover every
+  approved shot exactly once. Each cell carries narrative purpose, timecode,
+  lens/support/movement, blocking/path, continuity, sound/edit, and model risk;
+- the `clean_first_frame`, `clean_key_frame`, or `clean_end_frame` assets required
+  by every planned generation unit and the selected model strategy;
+- a `lighting_material_style_board` only when look/material truth is not already
+  locked by supplied references or scene anchors. Do not add a redundant board.
+
+Scene references, individual shot images, and director storyboard pages are
+different deliverables. A director storyboard assembles the approved shot
+frames and production instructions; it does not replace scene truth or clean
+video inputs. Reuse, derive, generate, and assemble are explicit actions.
+
+Use `runtime/visual-asset-plan.schema.json` when this matrix is persisted. Studio
+may claim `plan_complete` after coverage is valid, but not image generation.
+`representative_sample` always remains incomplete for whole-film coverage.
+
 ## Dynamic perspectives
 
 Apply only perspectives that can change the answer:
@@ -47,8 +85,10 @@ Adapt to the request, usually in this order:
 1. recommended concept in one precise paragraph;
 2. story or treatment with a clear turn and ending action;
 3. timed script/shot plan with image, performance, camera, and sound;
-4. visual/continuity locks and model-production notes;
-5. concise domain QA and genuine unknowns.
+4. whole-film visual asset matrix with counts, coverage, reuse/generate action,
+   and dependency order;
+5. visual/continuity locks and model-production notes;
+6. concise domain QA and genuine unknowns.
 
 Offer alternatives only when they solve materially different strategic choices.
 Use `concept_lock` only when those choices are incompatible and guessing would

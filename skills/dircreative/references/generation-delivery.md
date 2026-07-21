@@ -15,6 +15,31 @@ Before execution, resolve only the facts that can change safety or success:
   format, duration/aspect ratio, and falsifiable success criteria;
 - desired audio versus native, reference, preserved, or postproduction route.
 
+Resolve scope before the first media call:
+
+- `whole_film`: load or derive the visual asset matrix and generate its required
+  assets in dependency order: identity/product/prop locks, scene anchors,
+  optional non-redundant look board, per-shot storyboard frames, director
+  storyboard pages, then clean generation-unit inputs;
+- `sequence`: require the same coverage for the selected sequence only and name
+  the excluded shots/scenes;
+- `representative_sample`: generate only the explicitly bounded test assets and
+  label the result `sample_complete`, never whole-film complete.
+
+Bind every generated image to the current delivery profile. A TVC test uses a
+landscape broadcast profile and its safe-area/packshot constraints; a 9:16
+social image set is a channel variant and cannot validate TVC readiness. Exact
+master, loudness, legal-line, and caption requirements come from the named
+broadcaster/client delivery specification; do not invent a universal target.
+
+For whole-film scope, each recurring character, hero product/critical prop,
+distinct scene, approved shot, director-storyboard cell, and generation unit
+must map to at least one required asset. Every approved shot needs an individual
+`storyboard_frame`; the `professional_storyboard_motion_map` must cover every
+shot exactly once. In visual asset plan v1, split a generation unit at every
+scene-anchor change so one clean input never pretends to govern two unrelated
+locations. Planning boards remain separate from clean direct inputs.
+
 An explicit “generate now” instruction can satisfy generation authorization. A
 planning request, ambiguous “prepare,” or missing rights cannot. If blocked, ask
 one question that names the exact missing authorization or input.
@@ -24,10 +49,11 @@ Once authorized:
 - Call an available compatible media tool now. A prompt, plan, preview, or
   “ready” state is not a generated result. If no compatible tool is available,
   return `TOOL_BLOCKED` or a clearly labeled external handoff.
-- For a new image sequence without locked identity, generate the smallest useful
-  identity reference first, then generate one shot at a time while inheriting
-  the locked character, product, and location. Inspect the saved file, not only
-  the chat preview, and retry one failed variable at a time.
+- For a new image sequence without locked identity, generate the identity reference first.
+  Select the first required identity asset from the matrix, lock or reject it,
+  then continue one dependency layer and one shot at a time while inheriting
+  character, product, prop, scene, and look truth. Inspect the saved file, not
+  only the chat preview, and retry one failed variable at a time.
 - In an explicitly delegated test or smoke evaluation, choose the smallest
   representative assets and approve, reject, or retry them yourself. Continue
   without asking for test-only confirmation; test evidence is never client or
@@ -41,6 +67,12 @@ Once authorized:
   output plus the review claim. Label this evidence `unsigned_host_trace` and label
   visual conclusions as reviewer judgment. Do not add this receipt work to normal
   creative generation.
+
+Whole-film generation is complete only when every required matrix row has a
+non-placeholder saved file, scoped QA passes, scene and shot coverage is exact,
+the director storyboard is assembled from current shot frames, and each
+generation unit has its required clean input or a model-backed reason that none
+is needed. Prompt-ready, previewed, or sample-only assets are not completion.
 
 ## Client-visible delivery
 

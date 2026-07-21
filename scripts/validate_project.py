@@ -321,6 +321,7 @@ def validate_required_paths() -> None:
         "skills/dircreative/agents/openai.yaml",
         "skills/dircreative/runtime/routing-policy.yaml",
         "skills/dircreative/runtime/state-snapshot.schema.json",
+        "skills/dircreative/runtime/visual-asset-plan.schema.json",
         "skills/dircreative/routes/fast-task.md",
         "skills/dircreative/routes/studio-development.md",
         "skills/dircreative/routes/delivery-audit.md",
@@ -336,6 +337,10 @@ def validate_required_paths() -> None:
         "tests/fixtures/headless-runtime/cases.json",
         "tests/fixtures/headless-runtime/expected/fast-copy-revision.md",
         "tests/fixtures/headless-runtime/expected/studio-complete-film.md",
+        "tests/fixtures/headless-runtime/tvc-60s-shot-cards.json",
+        "tests/fixtures/visual-asset-plan/valid-coverage-unit.json",
+        "tests/fixtures/visual-asset-plan/tvc-60s-inventory.json",
+        "tests/fixtures/visual-asset-plan/cases.json",
         "tests/fixtures/content-first/cases.json",
         "scripts/dircreative_adapters/__init__.py",
         "scripts/dircreative_adapters/base.py",
@@ -348,6 +353,7 @@ def validate_required_paths() -> None:
         "tests/fixtures/prompt-system/adapter-negative-cases.json",
         "tests/fixtures/prompt-system/adapter-contract-matrix.json",
         "scripts/dircreative_headless_acceptance_audit.py",
+        "scripts/dircreative_visual_asset_plan.py",
         "scripts/dircreative_content_first_audit.py",
         "scripts/dircreative_live_model_eval.py",
         "docs/film-preproduction/prompt-pattern-registry.json",
@@ -1516,6 +1522,36 @@ def validate_context_budget() -> None:
     )
 
 
+def validate_visual_asset_plan() -> None:
+    proc = run(["python3", "scripts/dircreative_visual_asset_plan.py", "--self-test"])
+    require(
+        proc.returncode == 0,
+        f"whole-film visual asset plan audit failed:\n{proc.stderr}\n{proc.stdout}",
+    )
+    for marker in [
+        "DIRCREATIVE_VISUAL_ASSET_PLAN_AUDIT: PASS",
+        '"duration_at_least_60": true',
+        '"landscape_broadcast_profile": true',
+        '"formal_shots_at_least_24": true',
+        '"rhythm_points_at_least_30": true',
+        '"generation_units_scene_coherent": true',
+        '"assets": 48',
+        '"storyboard_frames": 24',
+        '"director_storyboard_pages": 4',
+        '"generated_evidence_control": true',
+        '"fake_raster_negative_control": true',
+        '"reused_file_negative_control": true',
+        '"clean_input_membership_negative_control": true',
+        '"scene_shot_coverage_negative_control": true',
+        '"duplicate_unit_membership_negative_control": true',
+        '"cross_scene_plan_negative_control": true',
+        '"duplicate_direct_input_negative_control": true',
+        '"storyboard_scene_negative_control": true',
+        '"duplicate_identity_negative_control": true',
+    ]:
+        require(marker in proc.stdout, f"visual asset plan audit missing evidence: {marker}")
+
+
 def validate_headless_acceptance() -> None:
     proc = run(["python3", "scripts/dircreative_headless_acceptance_audit.py"])
     require(
@@ -1529,6 +1565,12 @@ def validate_headless_acceptance() -> None:
         '"route_only_answer_rejected": true',
         '"v1_read_compatibility": true',
         '"v2_compact_receipt_valid": true',
+        '"formal_shots": 24',
+        '"frame_aligned_shots": 24',
+        '"visual_assets_planned": 48',
+        '"tvc_landscape_profile": true',
+        '"fractional_frame_rejected": true',
+        '"timecode_gap_rejected": true',
     ]:
         require(marker in proc.stdout, f"headless acceptance missing evidence: {marker}")
 
@@ -5929,6 +5971,7 @@ def main() -> int:
         ("skills", validate_skills),
         ("activation policy", validate_activation_policy),
         ("routing and context budget", validate_context_budget),
+        ("whole-film visual asset plan", validate_visual_asset_plan),
         ("headless input-to-answer acceptance", validate_headless_acceptance),
         ("content-first answer behavior", validate_content_first_behavior),
         ("v2 interaction contract", validate_v2_interaction_contract),

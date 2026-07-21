@@ -171,6 +171,18 @@ def validate_harness(harness: dict[str, Any]) -> list[str]:
             failures.append(f"director selection case mismatch: {case_id}")
         if len(case.get("perspectives", [])) > 3:
             failures.append(f"director selection case exceeds three perspectives: {case_id}")
+    for request in (
+        "开发一支完整 TVC，交付脚本、分镜和视觉资产计划",
+        "开发一支 60 秒 16:9 广播 TVC，覆盖全部镜头",
+    ):
+        selected = select_perspectives(request, harness)
+        if (
+            selected.get("mode") != "studio"
+            or selected.get("director_room_used") is not True
+            or selected.get("selected_perspectives")
+            != ["narrative_strategy", "visual_production", "model_continuity"]
+        ):
+            failures.append(f"complete TVC request skipped adaptive Studio perspectives: {request}")
 
     execution = harness.get("v2_execution")
     if not isinstance(execution, dict):

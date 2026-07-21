@@ -177,6 +177,7 @@ contract_owners:
   routing: skills/dircreative/runtime/routing-policy.yaml
   interaction_and_external_gates: skills/dircreative/runtime/routing-policy.yaml
   compact_state: skills/dircreative/runtime/state-snapshot.schema.json
+  whole_film_visual_asset_plan: skills/dircreative/runtime/visual-asset-plan.schema.json
   fast_execution: skills/dircreative/routes/fast-task.md
   studio_execution: skills/dircreative/routes/studio-development.md
   delivery_execution: skills/dircreative/routes/delivery-audit.md

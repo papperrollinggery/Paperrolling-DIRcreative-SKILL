@@ -39,34 +39,45 @@
       "snapshot": "tests/fixtures/headless-runtime/expected/fast-copy-revision.md"
     },
     {
-      "id": "studio_complete_film",
-      "request": "$dircreative 根据完整 brief 开发完整广告片：脚本 + 分镜",
+      "id": "studio_complete_tvc",
+      "request": "$dircreative 根据完整 brief 直接开发一支 60 秒 16:9 广播 TVC：完整故事、24 个正式镜头、声音结构、逐镜分镜图计划、场景图计划、覆盖全部镜头的导演故事板，以及每个视频生成单元的干净输入帧。不要用短片、竖屏或代表性样片替代全片。",
       "expected_mode": "studio",
       "expected_route": "film_development",
-      "minimum_answer_bytes": 1600,
+      "minimum_answer_bytes": 9000,
       "input": {
         "brand": "澄川冷萃",
-        "duration_seconds": 30,
-        "aspect_ratio": "9:16",
-        "audience": "被上午消息和会议切碎注意力的城市上班族",
-        "promise": "一口冷萃，把注意力收回到眼前",
-        "situation": "开放办公室的消息提醒、键盘声和临时会议同时涌来",
-        "product_action": "主角拧盖、倒入冰杯、喝下第一口",
-        "end_frame": "瓶身、冰杯与品牌名同框，字幕：把注意力收回来",
+        "duration_seconds": 60,
+        "aspect_ratio": "16:9",
+        "audience": "在工作节奏与亲密关系之间反复错过的城市成年人",
+        "promise": "真正想见的人，值得你赶上这一刻",
+        "story": "深夜电台制作人林澈在收工前听见父亲邀她看日出的留言。她带着父亲留下的冷萃和纸条冲进雨夜，错过末班车后改乘夜班巴士，最终在河边黎明与父亲会合。产品承担邀请与时间连接，不作提神或功效承诺。",
+        "inventory": "tests/fixtures/visual-asset-plan/tvc-60s-inventory.json",
+        "shot_cards": "tests/fixtures/headless-runtime/tvc-60s-shot-cards.json",
         "constraints": [
-          "不使用未经批准的功效或提神承诺",
-          "产品瓶身在关键动作中保持清晰可辨",
-          "不新增客户未提供的价格、渠道或促销信息"
+          "不使用未经批准的提神、能量或健康功效承诺",
+          "人物、瓶身、纸条、红伞和夜到黎明的状态必须跨镜连续",
+          "广播母版目标参数未锁定前，只能标记 plan_complete，不能标记 accepted",
+          "所有标题、手机 UI 和法律文字后期叠加，不让图像模型伪造"
         ]
       },
       "expected_contains": [
-        "推荐方向：把噪声切成一口清晰",
+        "推荐方向：赶上日出，也赶上彼此",
         "澄川冷萃",
-        "00–04s",
-        "24–30s",
-        "产品与合规边界"
+        "60 秒 16:9 广播 TVC",
+        "S01",
+        "S24",
+        "24 张逐镜分镜图",
+        "4 张场景地理 / Camera-FOV 图",
+        "4 页导演故事板",
+        "10 张干净视频输入帧",
+        "48 项",
+        "32 个节奏点",
+        "plan_complete",
+        "不能声明全片生成完成"
       ],
       "forbidden_contains": [
+        "30 秒竖屏",
+        "9:16",
         "请选择方案 A",
         "client_ready",
         "final_delivery_ready",

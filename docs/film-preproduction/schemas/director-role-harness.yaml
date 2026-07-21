@@ -42,7 +42,7 @@ director_role_harness:
         director_room: false
         perspectives: ["visual_production", "model_continuity"]
       - id: "complete_advertising_film"
-        signals: ["完整广告片", "完整品牌片", "full commercial film"]
+        signals: ["完整广告片", "完整品牌片", "完整 TVC", "广播 TVC", "完整影视项目", "full commercial film", "broadcast TVC"]
         mode: "studio"
         director_room: true
         perspectives: ["narrative_strategy", "visual_production", "model_continuity"]

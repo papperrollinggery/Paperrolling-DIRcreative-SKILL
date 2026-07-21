@@ -29,7 +29,7 @@ creative work:
 | one shot or a few storyboard frames | Fast / `shot_optimization` or `storyboard_review` | `routes/fast-task.md` | `references/shot-storyboard.md` |
 | bounded model prompt change | Fast / `prompt_revision` | `routes/fast-task.md` | `references/prompt-model.md` |
 | other bounded revision | Fast / `bounded_revision` | `routes/fast-task.md` | none |
-| complete or multi-output film work | Studio / `film_development` | `routes/studio-development.md` | `references/film-development.md` |
+| complete or multi-output film work, including its visual asset plan | Studio / `film_development` | `routes/studio-development.md` | `references/film-development.md` |
 | real generation or client delivery | Delivery / `generation_authorization` or `client_delivery` | `routes/delivery-audit.md` | `references/generation-delivery.md` |
 | fully validated ADCO handoff | Delivery / `adco_specialist_exchange` | `routes/delivery-audit.md` | `references/specialist-exchange.md` plus the descriptor schema |
 
@@ -73,7 +73,9 @@ and return the revised artifact immediately.
 Develop a complete concept or multiple connected preproduction artifacts with
 one controller. Use at most three dynamic professional perspectives and at most
 one critical pass, integrated into the work rather than shown as meeting
-ceremony. Threads default to zero.
+ceremony. Threads default to zero. For whole-film scope, derive the scene,
+identity, per-shot storyboard, director-board, and model-input asset coverage
+before generation; do not treat a few representative images as the full film.
 
 ### Delivery
 
@@ -124,6 +126,11 @@ first response.
 Validate the current task and its direct dependencies. Unrelated historical or
 project-wide debt may be reported separately, but it cannot block or downgrade a
 scoped result that does not depend on it.
+
+A whole-film plan is not complete until every distinct scene and approved shot
+is represented in an explicit visual asset matrix. A generated sample is not a
+whole-film completion claim. When persisted, validate the matrix against
+`runtime/visual-asset-plan.schema.json` before generating or claiming completion.
 
 Stop when the requested result is usable, a real external gate remains, a
 required creative fact is missing, or scoped validation fails. Never claim

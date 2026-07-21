@@ -18,6 +18,7 @@ compatibility but do not redefine behavior.
 | Adaptive perspective selection | `docs/film-preproduction/director-room-routing.md` | machine mirror in `schemas/director-role-harness.yaml` |
 | External gates and persistence policy | `skills/dircreative/runtime/routing-policy.yaml` | chat/start/integrity presentation guides |
 | Compact working state | `skills/dircreative/runtime/state-snapshot.schema.json` | `runtime-state-governance.md` only at durable audit boundaries |
+| Whole-film visual asset coverage | `skills/dircreative/runtime/visual-asset-plan.schema.json` | compact craft rules in `references/film-development.md` and `references/generation-delivery.md` |
 | Prompt IR | `docs/film-preproduction/schemas/prompt-ir.schema.json` | prompt authoring and QA guides |
 | Model adapter interface | `scripts/dircreative_adapters/base.py` | one module per provider adapter |
 | Specialist Exchange | `docs/film-preproduction/schemas/adco-specialist-descriptor.json` and versioned handoff/receipt schemas | `adco-integration-contract.md` |
@@ -42,7 +43,9 @@ The active modes are:
 - Fast: bounded copy, shot, storyboard, prompt, or existing-artifact revision;
   zero Threads, zero Director Room, no full receipt or full-project validation.
 - Studio: complete or multi-output film development; one controller, zero
-  Threads by default, at most three adaptive perspectives and one critic.
+  Threads by default, at most three adaptive perspectives and one critic. A
+  whole-film scope also emits a visual asset matrix covering every scene and
+  shot before generation.
 - Delivery: generation authorization, formal handoff, client delivery, or a
   validated Specialist Exchange; full audit is allowed here only.
 
@@ -146,6 +149,7 @@ PYTHONDONTWRITEBYTECODE=1 python3 scripts/dircreative_adco_native_exchange.py --
 PYTHONDONTWRITEBYTECODE=1 python3 scripts/dircreative_headless_acceptance_audit.py
 PYTHONDONTWRITEBYTECODE=1 python3 scripts/dircreative_content_first_audit.py
 PYTHONDONTWRITEBYTECODE=1 python3 scripts/dircreative_live_model_eval.py --self-test
+PYTHONDONTWRITEBYTECODE=1 python3 scripts/dircreative_visual_asset_plan.py --self-test
 PYTHONDONTWRITEBYTECODE=1 python3 scripts/validate_project.py
 ```
 
