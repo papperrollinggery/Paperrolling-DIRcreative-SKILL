@@ -19,6 +19,20 @@ An explicit “generate now” instruction can satisfy generation authorization.
 planning request, ambiguous “prepare,” or missing rights cannot. If blocked, ask
 one question that names the exact missing authorization or input.
 
+Once authorized:
+
+- Call an available compatible media tool now. A prompt, plan, preview, or
+  “ready” state is not a generated result. If no compatible tool is available,
+  return `TOOL_BLOCKED` or a clearly labeled external handoff.
+- For a new image sequence without locked identity, generate the smallest useful
+  identity reference first, then generate one shot at a time while inheriting
+  the locked character, product, and location. Inspect the saved file, not only
+  the chat preview, and retry one failed variable at a time.
+- In an explicitly delegated test or smoke evaluation, choose the smallest
+  representative assets and approve, reject, or retry them yourself. Continue
+  without asking for test-only confirmation; test evidence is never client or
+  production approval.
+
 ## Client-visible delivery
 
 Check the actual deliverable, not the whole archive:
@@ -41,5 +55,5 @@ project debt may be listed as a separate project-level warning, but they cannot
 turn an independent scoped pass into a failure. Never upgrade a scoped pass into
 a claim that the whole project is send-ready.
 
-Lead with the generated result, delivery decision, or one blocker. Put compact
-evidence after it.
+Lead with the generated media, saved path and scoped QA status; otherwise lead
+with the delivery decision or one blocker. Put compact evidence after it.

@@ -126,7 +126,9 @@ def self_test() -> int:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Run real isolated Codex forward evals against source DIRcreative.")
+    parser = argparse.ArgumentParser(
+        description="Run real isolated Codex text-response forward evals against source DIRcreative."
+    )
     parser.add_argument("--case", action="append", default=[], help="Case id; repeat or omit for all cases.")
     parser.add_argument("--model", default="gpt-5.6-sol")
     parser.add_argument("--codex-bin", default=shutil.which("codex") or "codex")
@@ -263,6 +265,8 @@ def main() -> int:
     report = {
         "status": "PASS" if not failures else "FAIL",
         "model": args.model,
+        "evaluation_scope": "real model text-response behavior only; image/video generation is not executed or claimed",
+        "media_generation_evaluated": False,
         "runtime_boundary": "isolated repo-local source package; read-only ephemeral Codex exec; no global Skill update",
         "output_dir": str(output_dir),
         "cases": reports,

@@ -236,6 +236,10 @@ python3 scripts/dircreative_visualization_dogfood.py
 python3 scripts/dircreative_adco_native_exchange.py --self-test
 ```
 
+`dircreative_live_model_eval.py` 只验证真实模型的文字响应行为，不证明图片或
+视频已经生成。当正式安装验收包含真实媒体能力时，需针对仓库内候选执行一次
+隔离的交互式媒体前向测试，检查实际落盘文件；测试媒体保留在仓库包之外。
+
 完整发布门：
 
 ```bash
