@@ -3,9 +3,11 @@
 ## 0.5.0 - Unreleased
 
 - Makes Fast and Studio content-first by default with zero unconditional protocol reads, one Route Card, bounded context, and measured warm/cold routing budgets.
-- Requires candidate-exact, C2PA-verified OpenAI image outputs plus distinct file/QA evidence for global-install media claims; video remains explicitly unverified.
+- Requires candidate-exact Codex event-log prefixes, a sealed explicit user invocation, real imagegen/view event IDs, hash-bound prompts/references/outputs, OpenAI C2PA, and a sealed-input separate-task visual review for global-install media claims; unsigned host trace and reviewer judgment remain explicit, and video remains unverified.
 - Adds Specialist Exchange v2 while retaining tested v1 read compatibility, and binds v2 activation to ADCO's exact exchange registration, descriptor snapshot, locked inputs, isolated outputs, and no-overwrite receipt path.
-- Hardens formal installation so only an exact release artifact with matching version, commit, root Skill hash, and release metadata may replace the canonical global installation.
+- Hardens v1/v2 receipt creation against ancestor-directory races with project-root directory FDs, no-follow traversal, atomic no-replace rename, inode readback, and open-FD tombstoning without name-based cleanup.
+- Makes formal installation a same-process exact-source verification and install: artifact/checksum/commit/tag binding, reproducible rebuild, complete archive manifest, same-filesystem staging, post-swap readback, and rollback on mismatch; extracted installers and metadata-only claims cannot authorize a formal install.
+- Seals the pinned C2PA verifier into a private exact-byte snapshot for the whole audit, preventing validation-time pathname replacement from changing the trust root.
 - Seals one commit across media, preflight, build, verification, and final HEAD readback so a long release gate cannot mix evidence from two revisions.
 
 ## 0.4.0 - 2026-07-14

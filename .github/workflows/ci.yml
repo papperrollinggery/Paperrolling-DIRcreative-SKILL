@@ -71,40 +71,42 @@ jobs:
         run: |
           VERSION="$(cat VERSION)"
           DIST="$RUNNER_TEMP/dist"
-          EXTRACT_ROOT="$RUNNER_TEMP/release-extract"
-          EXTRACTED="$EXTRACT_ROOT/dircreative-$VERSION"
           ARCHIVE_TARGET="$RUNNER_TEMP/dircreative-archive-installed"
-          ARGS=(--allow-unpublished)
-          VERIFY_ARGS=(
+          EXPECTED_COMMIT="$(git rev-parse HEAD)"
+          BUILD_ARGS=(--allow-unpublished --expected-commit "$EXPECTED_COMMIT")
+          FORMAL_ARGS=(
+            --formal-install
+            --target "$ARCHIVE_TARGET"
             --artifact "$DIST/dircreative-$VERSION.tar.gz"
             --checksums "$DIST/SHA256SUMS"
-            --expected-version "$VERSION"
-            --expected-commit "$(git rev-parse HEAD)"
+            --expected-commit "$EXPECTED_COMMIT"
+            --expected-tag "v$VERSION"
             --reproducible-source "$GITHUB_WORKSPACE"
-            --require-reproducible-match
-            --extract-to "$EXTRACT_ROOT"
+            --allow-unpublished
           )
           if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
             test "$GITHUB_REF_NAME" = "v$VERSION"
-            ARGS+=(--require-tag)
-            VERIFY_ARGS+=(--expected-tag "$GITHUB_REF_NAME" --require-remote-tag)
+            BUILD_ARGS=(--require-tag --expected-commit "$EXPECTED_COMMIT")
+            FORMAL_ARGS=(
+              --formal-install
+              --target "$ARCHIVE_TARGET"
+              --artifact "$DIST/dircreative-$VERSION.tar.gz"
+              --checksums "$DIST/SHA256SUMS"
+              --expected-commit "$EXPECTED_COMMIT"
+              --expected-tag "$GITHUB_REF_NAME"
+              --reproducible-source "$GITHUB_WORKSPACE"
+            )
           fi
           umask 022
-          python3 scripts/dircreative_build_release.py "${ARGS[@]}" --output-dir "$DIST"
+          python3 scripts/dircreative_build_release.py "${BUILD_ARGS[@]}" --output-dir "$DIST"
           umask 077
-          python3 scripts/dircreative_build_release.py "${ARGS[@]}" --output-dir "$RUNNER_TEMP/dist-umask-077"
+          python3 scripts/dircreative_build_release.py "${BUILD_ARGS[@]}" --output-dir "$RUNNER_TEMP/dist-umask-077"
           cmp \
             "$DIST/dircreative-$VERSION.tar.gz" \
             "$RUNNER_TEMP/dist-umask-077/dircreative-$VERSION.tar.gz"
           umask 022
-          python3 scripts/dircreative_verify_release.py "${VERIFY_ARGS[@]}"
-          python3 "$EXTRACTED/scripts/install_local_skill.py" \
-            --target "$ARCHIVE_TARGET" \
-            --formal-install
-          (
-            cd "$EXTRACTED"
-            python3 scripts/dircreative_install_parity.py --target "$ARCHIVE_TARGET"
-          )
+          python3 scripts/install_local_skill.py "${FORMAL_ARGS[@]}"
+          python3 scripts/dircreative_install_parity.py --target "$ARCHIVE_TARGET"
           (
             cd "$ARCHIVE_TARGET"
             python3 scripts/validate_project.py
@@ -178,13 +180,18 @@ jobs:
           PYTHONDONTWRITEBYTECODE: "1"
         run: |
           VERSION="$(cat VERSION)"
+          EXPECTED_COMMIT="$(git rev-parse HEAD)"
+          python3 scripts/dircreative_adco_native_exchange.py --self-test
+          python3 scripts/dircreative_media_forward_audit.py --self-test
           umask 022
           python3 scripts/dircreative_build_release.py \
             --allow-unpublished \
+            --expected-commit "$EXPECTED_COMMIT" \
             --output-dir "$RUNNER_TEMP/dist"
           umask 077
           python3 scripts/dircreative_build_release.py \
             --allow-unpublished \
+            --expected-commit "$EXPECTED_COMMIT" \
             --output-dir "$RUNNER_TEMP/dist-umask-077"
           cmp \
             "$RUNNER_TEMP/dist/dircreative-$VERSION.tar.gz" \

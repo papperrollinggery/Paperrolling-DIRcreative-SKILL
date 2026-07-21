@@ -151,22 +151,25 @@ python3 scripts/dircreative_adco_native_exchange.py \
 
 ## Verified release install
 
-正式安装源是同一 GitHub Release 中经过校验的归档和 `SHA256SUMS`，不是可变的分支 checkout。
+正式安装源是同一 GitHub Release 中的归档和 `SHA256SUMS`，再由该 tag 的精确、
+干净源码执行同进程验证与安装；不能运行归档内的 installer，也不能用 metadata
+自证。下面的新信任链从 `v0.5.0` 起适用；当前已发布的 `v0.4.0` 不满足这条新门，
+在 `v0.5.0` 发布前只能安装明确标记的本地候选，不能称为 released。
 
 ```bash
-gh release download v0.4.0 \
+gh release download v0.5.0 \
   --repo papperrollinggery/Paperrolling-DIRcreative-SKILL \
-  --pattern 'dircreative-0.4.0.tar.gz' \
+  --pattern 'dircreative-0.5.0.tar.gz' \
   --pattern 'SHA256SUMS'
 ```
 
 <details>
-<summary><strong>验证远程 tag、精确 commit、SHA-256 和可复现归档</strong></summary>
+<summary><strong>从精确 tag 一次完成验证、可复现重建、安装和回读</strong></summary>
 
 ```bash
 set -euo pipefail
 REPO_URL="https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL.git"
-TAG="v0.4.0"
+TAG="v0.5.0"
 EXPECTED_COMMIT="$(
   git ls-remote --exit-code --tags "$REPO_URL" \
     "refs/tags/$TAG" "refs/tags/$TAG^{}" |
@@ -178,7 +181,7 @@ EXPECTED_COMMIT="$(
     }
   '
 )"
-ARTIFACT="$(pwd)/dircreative-0.4.0.tar.gz"
+ARTIFACT="$(pwd)/dircreative-0.5.0.tar.gz"
 CHECKSUMS="$(pwd)/SHA256SUMS"
 VERIFY_ROOT="$(mktemp -d)"
 trap 'rm -rf "$VERIFY_ROOT"' EXIT
@@ -186,29 +189,23 @@ git clone --filter=blob:none --no-checkout "$REPO_URL" "$VERIFY_ROOT/source"
 git -C "$VERIFY_ROOT/source" fetch --depth 1 origin \
   "refs/tags/$TAG:refs/tags/$TAG"
 git -C "$VERIFY_ROOT/source" checkout --detach "$EXPECTED_COMMIT"
-python3 "$VERIFY_ROOT/source/scripts/dircreative_verify_release.py" \
+python3 "$VERIFY_ROOT/source/scripts/install_local_skill.py" \
+  --target ~/.skillshub/dircreative \
+  --formal-install \
   --artifact "$ARTIFACT" \
   --checksums "$CHECKSUMS" \
-  --expected-version 0.4.0 \
   --expected-commit "$EXPECTED_COMMIT" \
   --expected-tag "$TAG" \
-  --reproducible-source "$VERIFY_ROOT/source" \
-  --require-reproducible-match \
-  --require-remote-tag \
-  --extract-to /tmp/dircreative-v0.4.0
+  --reproducible-source "$VERIFY_ROOT/source"
 ```
 
 </details>
 
-安装到规范 SkillHub 路径：
+维护者安装未发布的精确候选时仍需完整 artifact/checksum/source 绑定，并额外显式
+加入 `--allow-unpublished`。它只放宽 canonical remote tag 条件；exact commit、干净
+canonical source、逐字节可复现、完整 manifest、staging 与 target 回读都不会放宽。
 
-```bash
-python3 /tmp/dircreative-v0.4.0/dircreative-0.4.0/scripts/install_local_skill.py \
-  --target ~/.skillshub/dircreative \
-  --formal-install
-```
-
-安装后验证：
+安装后验证实际目标：
 
 ```bash
 cd ~/.skillshub/dircreative
@@ -239,11 +236,16 @@ python3 scripts/dircreative_adco_native_exchange.py --self-test
 `dircreative_live_model_eval.py` 只验证真实模型的文字响应行为，不证明图片或
 视频已经生成。当正式安装验收包含真实媒体能力时，需针对仓库内候选执行一次
 隔离的交互式媒体前向测试，检查实际落盘文件；测试媒体保留在仓库包之外。
-媒体收据不能只自报 `real_tool_execution=true`：测试 commit 必须等于候选
-commit，拒绝稿、通过稿和至少三张连续镜头必须是互不复用的完整 PNG，且生成
-时间晚于候选 commit。门禁还会用仓库固定哈希的 `c2patool` 校验 OpenAI Media
-Service 的 C2PA 签名、签发 CA、`gpt-image` 创建声明和媒体数据哈希。图片通过
-不代表视频已经验证。
+媒体收据不能只自报 `real_tool_execution=true`。v2 前向测试用两份相互绑定的
+收据：执行收据必须绑定 Codex 原始 JSONL 日志的不可变前缀（字节数与 SHA-256），
+从真实日志反推出独立任务中的密封 `$dircreative` 用户调用、候选 Skill 观察、
+imagegen 事件 ID、提示词、按序参考图、输出字节与时间；另一独立任务的日志必须绑定
+只含原始参考图、输出和 rubric 的密封审查请求，证明每个输出恰好打开一次，并绑定其
+审查结论。门禁会
+把固定哈希的 `c2patool` 复制到私有快照后，再校验 OpenAI
+Media Service 的 C2PA 签名、签发 CA、`gpt-image 2.0` 创建声明、签名时间和输出
+数据哈希。C2PA 不绑定提示词或输入参考；本机日志仍是 unsigned host trace，
+视觉结论仅是 reviewer judgment，图片通过也不代表视频已经验证。
 
 完整发布门：
 
@@ -251,7 +253,10 @@ Service 的 C2PA 签名、签发 CA、`gpt-image` 创建声明和媒体数据哈
 python3 scripts/dircreative_release_gate.py \
   --require-tag \
   --adco-repo /path/to/ad-creative-orchestrator \
-  --media-forward-receipt /absolute/path/to/media-forward-receipt.json \
+  --media-forward-receipt /absolute/path/to/media-forward-execution-v2.json \
+  --media-review-receipt /absolute/path/to/media-visual-review-v1.json \
+  --media-host-event-log /absolute/path/to/execution-rollout.jsonl \
+  --media-review-host-event-log /absolute/path/to/review-rollout.jsonl \
   --media-c2patool /absolute/path/to/pinned/c2patool \
   --require-media-forward
 ```

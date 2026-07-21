@@ -3,7 +3,9 @@ from __future__ import annotations
 
 import argparse
 import copy
+import ctypes
 import csv
+import errno
 import hashlib
 import importlib
 import json
@@ -16,7 +18,7 @@ import sys
 import tempfile
 import uuid
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from dircreative_specialist_exchange_contract import (
     v2_handoff_schema_errors,
@@ -185,44 +187,305 @@ def write_json(path: Path, payload: dict[str, Any]) -> None:
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
-def write_new_json_atomic(path: Path, payload: dict[str, Any]) -> None:
-    """Create one JSON file atomically without following or replacing a target."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    if path.exists() or path.is_symlink():
-        raise ValueError(f"receipt path already exists: {path}")
-    casefold_matches = [
-        item
-        for item in path.parent.iterdir()
-        if item.name.casefold() == path.name.casefold()
-    ]
-    if casefold_matches:
-        raise ValueError(f"receipt path case alias already exists: {casefold_matches[0]}")
+def _receipt_relative_parts(value: str) -> tuple[str, ...]:
+    normalized = value.replace("\\", "/")
+    candidate = Path(normalized)
+    parts = tuple(part for part in candidate.parts if part not in {"", "."})
+    if (
+        not value.strip()
+        or candidate.is_absolute()
+        or not parts
+        or any(part in {".", ".."} for part in candidate.parts)
+        or parts[-1] in {"", ".", ".."}
+    ):
+        raise ValueError(f"invalid receipt path: {value}")
+    return parts
 
-    temporary = path.parent / f".{path.name}.tmp-{uuid.uuid4().hex}"
-    flags = os.O_CREAT | os.O_EXCL | os.O_WRONLY
-    flags |= getattr(os, "O_NOFOLLOW", 0)
-    fd: int | None = None
+
+def _same_file_identity(left: os.stat_result, right: os.stat_result) -> bool:
+    return (left.st_dev, left.st_ino) == (right.st_dev, right.st_ino)
+
+
+def _directory_flags() -> int:
+    nofollow = getattr(os, "O_NOFOLLOW", 0)
+    directory = getattr(os, "O_DIRECTORY", 0)
+    if not nofollow or not directory:
+        raise ValueError("secure receipt creation requires O_NOFOLLOW and O_DIRECTORY")
+    return os.O_RDONLY | nofollow | directory | getattr(os, "O_CLOEXEC", 0)
+
+
+def _entry_stat(directory_fd: int, name: str) -> os.stat_result | None:
     try:
-        fd = os.open(temporary, flags, 0o600)
-        data = (json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n").encode("utf-8")
-        with os.fdopen(fd, "wb", closefd=True) as handle:
-            fd = None
-            handle.write(data)
-            handle.flush()
-            os.fsync(handle.fileno())
-        os.link(temporary, path, follow_symlinks=False)
-        directory_flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0)
-        directory_fd = os.open(path.parent, directory_flags)
+        return os.stat(name, dir_fd=directory_fd, follow_symlinks=False)
+    except FileNotFoundError:
+        return None
+
+
+def _casefold_matches(directory_fd: int, name: str) -> list[str]:
+    return sorted(entry for entry in os.listdir(directory_fd) if entry.casefold() == name.casefold())
+
+
+def _open_receipt_parent(
+    root_fd: int,
+    parent_parts: tuple[str, ...],
+    *,
+    create: bool,
+) -> int:
+    current_fd = os.dup(root_fd)
+    try:
+        for part in parent_parts:
+            matches = _casefold_matches(current_fd, part)
+            if matches not in ([], [part]):
+                raise ValueError(f"receipt path component has a case alias: {','.join(matches)}")
+            if not matches:
+                if not create:
+                    raise ValueError(f"receipt parent disappeared: {part}")
+                try:
+                    os.mkdir(part, mode=0o700, dir_fd=current_fd)
+                    os.fsync(current_fd)
+                except FileExistsError:
+                    matches = _casefold_matches(current_fd, part)
+                    if matches != [part]:
+                        raise ValueError(
+                            f"receipt path component has a case alias: {','.join(matches)}"
+                        )
+            child_fd = os.open(part, _directory_flags(), dir_fd=current_fd)
+            try:
+                entry = os.stat(part, dir_fd=current_fd, follow_symlinks=False)
+                opened = os.fstat(child_fd)
+                if not stat.S_ISDIR(entry.st_mode) or not _same_file_identity(entry, opened):
+                    raise ValueError(f"receipt parent changed while opening: {part}")
+            except Exception:
+                os.close(child_fd)
+                raise
+            os.close(current_fd)
+            current_fd = child_fd
+        return current_fd
+    except Exception:
+        os.close(current_fd)
+        raise
+
+
+RECEIPT_ABORT_MARKER = b'{"dircreative_receipt_aborted":true}\n'
+
+
+def _rename_noreplace(
+    source_directory_fd: int,
+    source_name: str,
+    target_directory_fd: int,
+    target_name: str,
+) -> None:
+    """Atomically rename without replacing an existing target.
+
+    Python does not expose renameat2/renameatx_np.  Calling the platform primitive
+    directly keeps publication atomic and removes the source name in the same
+    operation, so there is no identity-check-to-unlink race.
+    """
+    libc = ctypes.CDLL(None, use_errno=True)
+    source = os.fsencode(source_name)
+    target = os.fsencode(target_name)
+    if sys.platform == "darwin":
+        primitive = getattr(libc, "renameatx_np", None)
+        flag = 0x00000004  # RENAME_EXCL from <stdio.h>.
+    elif sys.platform.startswith("linux"):
+        primitive = getattr(libc, "renameat2", None)
+        flag = 1  # RENAME_NOREPLACE from <linux/fs.h>.
+    else:
+        primitive = None
+        flag = 0
+    if primitive is None:
+        raise RuntimeError("secure receipt publication requires renameat2 or renameatx_np")
+    primitive.argtypes = [ctypes.c_int, ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p, ctypes.c_uint]
+    primitive.restype = ctypes.c_int
+    ctypes.set_errno(0)
+    if primitive(source_directory_fd, source, target_directory_fd, target, flag) == 0:
+        return
+    error_number = ctypes.get_errno()
+    if error_number == errno.EEXIST:
+        raise FileExistsError(error_number, os.strerror(error_number), target_name)
+    raise OSError(error_number, os.strerror(error_number), target_name)
+
+
+def _invalidate_open_receipt(receipt_fd: int) -> str | None:
+    """Tombstone only the inode held by this process; never unlink a mutable name."""
+    try:
+        os.ftruncate(receipt_fd, 0)
+        os.lseek(receipt_fd, 0, os.SEEK_SET)
+        view = memoryview(RECEIPT_ABORT_MARKER)
+        while view:
+            written = os.write(receipt_fd, view)
+            if written <= 0:
+                raise OSError("receipt tombstone write made no progress")
+            view = view[written:]
+        os.fsync(receipt_fd)
+        identity = os.fstat(receipt_fd)
+        if identity.st_size != len(RECEIPT_ABORT_MARKER):
+            raise OSError("receipt tombstone size mismatch")
+    except OSError as exc:
+        return str(exc)
+    return None
+
+
+def write_new_json_atomic(
+    project_root: Path,
+    relative_path: str,
+    payload: dict[str, Any],
+    *,
+    _before_publish_hook: Callable[[], None] | None = None,
+    _after_publish_hook: Callable[[], None] | None = None,
+) -> None:
+    """Create a receipt through directory fds without following or replacing paths."""
+    parts = _receipt_relative_parts(relative_path)
+    filename = parts[-1]
+    root_path = project_root.resolve(strict=True)
+    root_fd: int | None = None
+    parent_fd: int | None = None
+    temporary_fd: int | None = None
+    temporary_name = f".dircreative-receipt-{uuid.uuid4().hex}.tmp"
+    temporary_identity: os.stat_result | None = None
+    owned_target_identity: os.stat_result | None = None
+    data = (json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n").encode("utf-8")
+    try:
+        root_fd = os.open(root_path, _directory_flags())
+        root_identity = os.fstat(root_fd)
+        parent_fd = _open_receipt_parent(root_fd, parts[:-1], create=True)
+        parent_identity = os.fstat(parent_fd)
+        matches = _casefold_matches(parent_fd, filename)
+        if matches:
+            if matches == [filename]:
+                raise ValueError(f"receipt path already exists: {relative_path}")
+            raise ValueError(f"receipt path case alias already exists: {','.join(matches)}")
+
+        write_flags = os.O_CREAT | os.O_EXCL | os.O_WRONLY | getattr(os, "O_CLOEXEC", 0)
+        write_flags |= getattr(os, "O_NOFOLLOW", 0)
+        temporary_fd = os.open(temporary_name, write_flags, 0o600, dir_fd=parent_fd)
+        os.fchmod(temporary_fd, 0o600)
+        view = memoryview(data)
+        while view:
+            written = os.write(temporary_fd, view)
+            if written <= 0:
+                raise OSError("receipt temporary write made no progress")
+            view = view[written:]
+        os.fsync(temporary_fd)
+        temporary_identity = os.fstat(temporary_fd)
+        if (
+            not stat.S_ISREG(temporary_identity.st_mode)
+            or temporary_identity.st_size != len(data)
+            or stat.S_IMODE(temporary_identity.st_mode) != 0o600
+            or temporary_identity.st_nlink != 1
+        ):
+            raise ValueError("receipt temporary file identity is invalid")
+
+        if not _same_file_identity(parent_identity, os.fstat(parent_fd)):
+            raise ValueError("receipt parent identity changed before publication")
+        matches = _casefold_matches(parent_fd, filename)
+        if matches:
+            if matches == [filename]:
+                raise ValueError(f"receipt path already exists: {relative_path}")
+            raise ValueError(f"receipt path case alias already exists: {','.join(matches)}")
+        if _before_publish_hook is not None:
+            _before_publish_hook()
+        if not _same_file_identity(parent_identity, os.fstat(parent_fd)):
+            raise ValueError("receipt parent identity changed at publication")
+
+        _rename_noreplace(
+            parent_fd,
+            temporary_name,
+            parent_fd,
+            filename,
+        )
+        target_identity = _entry_stat(parent_fd, filename)
+        current_temporary_identity = os.fstat(temporary_fd)
+        if (
+            target_identity is None
+            or not _same_file_identity(temporary_identity, current_temporary_identity)
+            or not _same_file_identity(temporary_identity, target_identity)
+        ):
+            raise ValueError("receipt target identity mismatch after publication")
+        owned_target_identity = target_identity
+
+        if _after_publish_hook is not None:
+            _after_publish_hook()
+        target_identity = _entry_stat(parent_fd, filename)
+        if target_identity is None or not _same_file_identity(owned_target_identity, target_identity):
+            raise ValueError("receipt target changed after publication")
+        if _entry_stat(parent_fd, temporary_name) is not None:
+            raise ValueError("receipt temporary entry unexpectedly survived publication")
+        if not _same_file_identity(temporary_identity, os.fstat(temporary_fd)):
+            raise ValueError("receipt open identity changed after publication")
+        os.fsync(parent_fd)
+
+        pinned_parent_identity = os.fstat(parent_fd)
+        pinned_target_identity = _entry_stat(parent_fd, filename)
+        if (
+            not _same_file_identity(parent_identity, pinned_parent_identity)
+            or _casefold_matches(parent_fd, filename) != [filename]
+            or pinned_target_identity is None
+            or not _same_file_identity(owned_target_identity, pinned_target_identity)
+            or not stat.S_ISREG(pinned_target_identity.st_mode)
+            or pinned_target_identity.st_size != len(data)
+            or pinned_target_identity.st_nlink != 1
+            or stat.S_IMODE(pinned_target_identity.st_mode) != 0o600
+        ):
+            raise ValueError("receipt publication readback failed")
+
+        reopened_root_fd = os.open(root_path, _directory_flags())
         try:
-            os.fsync(directory_fd)
+            if not _same_file_identity(root_identity, os.fstat(reopened_root_fd)):
+                raise ValueError("project root identity changed during receipt publication")
+            reopened_parent_fd = _open_receipt_parent(reopened_root_fd, parts[:-1], create=False)
         finally:
-            os.close(directory_fd)
+            os.close(reopened_root_fd)
+        try:
+            if not _same_file_identity(parent_identity, os.fstat(reopened_parent_fd)):
+                raise ValueError("receipt parent namespace changed during publication")
+            read_flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_CLOEXEC", 0)
+            read_fd = os.open(filename, read_flags, dir_fd=reopened_parent_fd)
+            try:
+                read_identity = os.fstat(read_fd)
+                chunks: list[bytes] = []
+                while True:
+                    chunk = os.read(read_fd, 65536)
+                    if not chunk:
+                        break
+                    chunks.append(chunk)
+            finally:
+                os.close(read_fd)
+            namespace_identity = _entry_stat(reopened_parent_fd, filename)
+            if (
+                namespace_identity is None
+                or _casefold_matches(reopened_parent_fd, filename) != [filename]
+                or not _same_file_identity(owned_target_identity, read_identity)
+                or not _same_file_identity(read_identity, namespace_identity)
+                or b"".join(chunks) != data
+            ):
+                raise ValueError("receipt target namespace readback failed")
+        finally:
+            os.close(reopened_parent_fd)
     except FileExistsError as exc:
-        raise ValueError(f"receipt path already exists: {path}") from exc
+        tombstone_error = (
+            _invalidate_open_receipt(temporary_fd) if temporary_fd is not None else None
+        )
+        detail = f"; tombstone failed: {tombstone_error}" if tombstone_error else ""
+        raise ValueError(f"receipt path already exists: {relative_path}{detail}") from exc
+    except Exception as exc:
+        tombstone_error = (
+            _invalidate_open_receipt(temporary_fd) if temporary_fd is not None else None
+        )
+        if tombstone_error:
+            raise ValueError(
+                f"receipt publication failed: {exc}; tombstone failed: {tombstone_error}"
+            ) from exc
+        if isinstance(exc, (ValueError, RuntimeError)):
+            raise
+        raise ValueError(f"unsafe receipt publication for {relative_path}: {exc}") from exc
     finally:
-        if fd is not None:
-            os.close(fd)
-        temporary.unlink(missing_ok=True)
+        if temporary_fd is not None:
+            os.close(temporary_fd)
+        if parent_fd is not None:
+            os.close(parent_fd)
+        if root_fd is not None:
+            os.close(root_fd)
 
 
 def nonempty(value: Any) -> bool:
@@ -961,10 +1224,13 @@ def build_v1_receipt(
         "extensions": extensions,
         "domain_delivery": domain_delivery,
     }
-    receipt_path = project_path(project_root, handoff["scope"]["receipt_path"], "receipt")
+    receipt_output = handoff["scope"]["receipt_path"]
+    receipt_path = project_path(project_root, receipt_output, "receipt")
     if receipt_path is None:
         raise ValueError("receipt path escapes project")
-    write_json(receipt_path, receipt)
+    if path_has_symlink_component(project_root, receipt_output):
+        raise ValueError("receipt path uses a symlink component")
+    write_new_json_atomic(project_root, receipt_output, receipt)
     return receipt, receipt_path
 
 
@@ -1577,10 +1843,7 @@ def build_v2_receipt(
     ]
     if prewrite_failures:
         raise ValueError("invalid v2 receipt before write: " + "; ".join(prewrite_failures))
-    receipt_path.parent.mkdir(parents=True, exist_ok=True)
-    if path_has_symlink_component(project_root, receipt_output):
-        raise ValueError("receipt path uses a symlink component")
-    write_new_json_atomic(receipt_path, receipt)
+    write_new_json_atomic(project_root, receipt_output, receipt)
     return receipt, receipt_path
 
 
@@ -2615,14 +2878,210 @@ def run_v2_self_test() -> tuple[bool, dict[str, Any]]:
         }
 
 
+def run_atomic_receipt_write_self_test() -> tuple[bool, dict[str, bool]]:
+    payload = {"contract_version": V2_CONTRACT_VERSION, "status": "completed"}
+
+    def only_invalid_tombstones(directory: Path) -> bool:
+        entries = list(directory.glob(".dircreative-receipt-*.tmp"))
+        return bool(entries) and all(entry.read_bytes() == RECEIPT_ABORT_MARKER for entry in entries)
+
+    with tempfile.TemporaryDirectory(prefix="dircreative-receipt-write-selftest-") as raw:
+        base = Path(raw)
+
+        positive_root = base / "positive"
+        positive_root.mkdir()
+        positive_relative = "nested/specialist/receipt.json"
+        write_new_json_atomic(positive_root, positive_relative, payload)
+        positive_path = positive_root / positive_relative
+        positive_stat = positive_path.stat()
+        positive_write_valid = (
+            load_json(positive_path) == payload
+            and stat.S_IMODE(positive_stat.st_mode) == 0o600
+            and positive_stat.st_nlink == 1
+        )
+
+        static_root = base / "static-symlink"
+        static_root.mkdir()
+        static_control = static_root / "control-plane"
+        static_control.mkdir()
+        (static_root / "alias").symlink_to(static_control, target_is_directory=True)
+        try:
+            write_new_json_atomic(static_root, "alias/receipt.json", payload)
+        except ValueError:
+            static_ancestor_rejected = not (static_control / "receipt.json").exists()
+        else:
+            static_ancestor_rejected = False
+        static_parent = static_root / "target-parent"
+        static_parent.mkdir()
+        static_target = static_root / "outside.json"
+        static_target.write_text("do not replace\n", encoding="utf-8")
+        static_link = static_parent / "receipt.json"
+        static_link.symlink_to(static_target)
+        try:
+            write_new_json_atomic(static_root, "target-parent/receipt.json", payload)
+        except ValueError:
+            static_target_rejected = (
+                static_link.is_symlink()
+                and static_target.read_text(encoding="utf-8") == "do not replace\n"
+            )
+        else:
+            static_target_rejected = False
+
+        swap_root = base / "ancestor-swap"
+        swap_root.mkdir()
+        swap_parent = swap_root / "safe/leaf"
+        swap_parent.mkdir(parents=True)
+        detached_parent = swap_root / "safe/leaf-detached"
+        control_parent = swap_root / "AD-creative/orchestrator"
+        control_parent.mkdir(parents=True)
+
+        def swap_ancestor() -> None:
+            swap_parent.rename(detached_parent)
+            swap_parent.symlink_to(control_parent, target_is_directory=True)
+
+        try:
+            write_new_json_atomic(
+                swap_root,
+                "safe/leaf/receipt.json",
+                payload,
+                _before_publish_hook=swap_ancestor,
+            )
+        except ValueError:
+            detached_receipt = detached_parent / "receipt.json"
+            ancestor_swap_rejected = (
+                not (control_parent / "receipt.json").exists()
+                and detached_receipt.is_file()
+                and detached_receipt.read_bytes() == RECEIPT_ABORT_MARKER
+                and not list(detached_parent.glob(".dircreative-receipt-*.tmp"))
+            )
+        else:
+            ancestor_swap_rejected = False
+
+        target_race_root = base / "target-race"
+        target_race_parent = target_race_root / "receipts"
+        target_race_parent.mkdir(parents=True)
+        target_race_path = target_race_parent / "receipt.json"
+
+        def create_racing_target() -> None:
+            target_race_path.write_text("attacker-owned\n", encoding="utf-8")
+
+        try:
+            write_new_json_atomic(
+                target_race_root,
+                "receipts/receipt.json",
+                payload,
+                _before_publish_hook=create_racing_target,
+            )
+        except ValueError:
+            target_race_rejected = (
+                target_race_path.read_text(encoding="utf-8") == "attacker-owned\n"
+                and only_invalid_tombstones(target_race_parent)
+            )
+        else:
+            target_race_rejected = False
+
+        substitution_root = base / "target-substitution"
+        substitution_parent = substitution_root / "receipts"
+        substitution_parent.mkdir(parents=True)
+        substitution_path = substitution_parent / "receipt.json"
+
+        def substitute_published_target() -> None:
+            substitution_path.unlink()
+            substitution_path.write_text("attacker-substitute\n", encoding="utf-8")
+
+        try:
+            write_new_json_atomic(
+                substitution_root,
+                "receipts/receipt.json",
+                payload,
+                _after_publish_hook=substitute_published_target,
+            )
+        except ValueError:
+            target_substitution_rejected = (
+                substitution_path.read_text(encoding="utf-8") == "attacker-substitute\n"
+                and not list(substitution_parent.glob(".dircreative-receipt-*.tmp"))
+            )
+        else:
+            target_substitution_rejected = False
+
+        temporary_substitution_root = base / "temporary-substitution"
+        temporary_substitution_parent = temporary_substitution_root / "receipts"
+        temporary_substitution_parent.mkdir(parents=True)
+
+        def substitute_temporary_entry() -> None:
+            temporary_entries = list(
+                temporary_substitution_parent.glob(".dircreative-receipt-*.tmp")
+            )
+            if len(temporary_entries) != 1:
+                raise AssertionError("expected one writer-owned temporary entry")
+            temporary_entries[0].unlink()
+            temporary_entries[0].write_text("attacker-temporary\n", encoding="utf-8")
+
+        try:
+            write_new_json_atomic(
+                temporary_substitution_root,
+                "receipts/receipt.json",
+                payload,
+                _before_publish_hook=substitute_temporary_entry,
+            )
+        except ValueError:
+            substituted_receipt = temporary_substitution_parent / "receipt.json"
+            temporary_substitution_rejected = (
+                substituted_receipt.is_file()
+                and substituted_receipt.read_text(encoding="utf-8") == "attacker-temporary\n"
+                and not list(temporary_substitution_parent.glob(".dircreative-receipt-*.tmp"))
+            )
+        else:
+            temporary_substitution_rejected = False
+
+        cleanup_root = base / "failure-cleanup"
+        cleanup_parent = cleanup_root / "receipts"
+        cleanup_parent.mkdir(parents=True)
+
+        def fail_after_publication() -> None:
+            raise RuntimeError("injected post-publication failure")
+
+        try:
+            write_new_json_atomic(
+                cleanup_root,
+                "receipts/receipt.json",
+                payload,
+                _after_publish_hook=fail_after_publication,
+            )
+        except RuntimeError:
+            aborted_receipt = cleanup_parent / "receipt.json"
+            owned_failure_cleanup = (
+                aborted_receipt.is_file()
+                and aborted_receipt.read_bytes() == RECEIPT_ABORT_MARKER
+                and not list(cleanup_parent.glob(".dircreative-receipt-*.tmp"))
+            )
+        else:
+            owned_failure_cleanup = False
+
+        report = {
+            "positive_nested_write_valid": positive_write_valid,
+            "static_symlink_ancestor_rejected": static_ancestor_rejected,
+            "static_symlink_target_rejected": static_target_rejected,
+            "ancestor_swap_rejected_and_tombstoned": ancestor_swap_rejected,
+            "target_creation_race_rejected_without_clobber": target_race_rejected,
+            "target_inode_substitution_rejected": target_substitution_rejected,
+            "temporary_inode_substitution_rejected_without_clobber": temporary_substitution_rejected,
+            "owned_failure_tombstoned": owned_failure_cleanup,
+        }
+        return all(report.values()), report
+
+
 def run_self_test() -> tuple[bool, dict[str, Any]]:
     v1_ok, v1_report = run_v1_self_test()
     v2_ok, v2_report = run_v2_self_test()
-    return v1_ok and v2_ok, {
+    atomic_ok, atomic_report = run_atomic_receipt_write_self_test()
+    return v1_ok and v2_ok and atomic_ok, {
         "v1_read_compatibility": v1_ok,
         "v2_roundtrip_valid": v2_ok,
+        "atomic_receipt_write_valid": atomic_ok,
         **{f"v1_{key}": value for key, value in v1_report.items() if isinstance(value, bool)},
         **{f"v2_{key}": value for key, value in v2_report.items() if isinstance(value, bool)},
+        **{f"atomic_{key}": value for key, value in atomic_report.items()},
         "handoff_failures": [
             *[f"v1: {item}" for item in v1_report.get("handoff_failures", [])],
             *[f"v2: {item}" for item in v2_report.get("handoff_failures", [])],

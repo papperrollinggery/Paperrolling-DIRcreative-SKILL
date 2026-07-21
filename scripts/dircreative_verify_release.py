@@ -15,6 +15,8 @@ import sys
 import tarfile
 import tempfile
 import unicodedata
+from collections.abc import Callable
+from contextlib import nullcontext
 from dataclasses import dataclass, replace
 from pathlib import Path, PurePosixPath
 
@@ -55,6 +57,43 @@ WINDOWS_RESERVED_NAMES = {
 }
 
 
+@dataclass(frozen=True, order=True)
+class ArchiveManifestEntry:
+    path: str
+    kind: str
+    mode: int
+    size: int
+    sha256: str | None
+
+
+@dataclass(frozen=True)
+class VerifiedRelease:
+    version: str
+    commit_sha: str
+    artifact_sha256: str
+    reproducible_match: str
+    remote_tag_match: str
+    provenance_scope: str
+    extracted_root: Path | None
+    archive_manifest: tuple[ArchiveManifestEntry, ...]
+    archive_manifest_sha256: str
+
+    def summary(self) -> dict[str, str]:
+        return {
+            "version": self.version,
+            "commit_sha": self.commit_sha,
+            "artifact_sha256": self.artifact_sha256,
+            "reproducible_match": self.reproducible_match,
+            "remote_tag_match": self.remote_tag_match,
+            "provenance_scope": self.provenance_scope,
+            "extracted_root": (
+                str(self.extracted_root) if self.extracted_root is not None else "not_requested"
+            ),
+            "archive_manifest_sha256": self.archive_manifest_sha256,
+            "archive_manifest_entries": str(len(self.archive_manifest)),
+        }
+
+
 def sha256_bytes(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
@@ -65,6 +104,360 @@ def sha256_file(path: Path) -> str:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def archive_manifest_digest(entries: tuple[ArchiveManifestEntry, ...]) -> str:
+    payload = [
+        {
+            "path": entry.path,
+            "kind": entry.kind,
+            "mode": entry.mode,
+            "size": entry.size,
+            "sha256": entry.sha256,
+        }
+        for entry in entries
+    ]
+    return sha256_bytes(
+        json.dumps(payload, ensure_ascii=False, separators=(",", ":"), sort_keys=True).encode(
+            "utf-8"
+        )
+    )
+
+
+def inode_identity(value: os.stat_result) -> tuple[int, int]:
+    return value.st_dev, value.st_ino
+
+
+def stable_entry_identity(value: os.stat_result) -> tuple[int, int, int, int, int, int, int]:
+    return (
+        value.st_dev,
+        value.st_ino,
+        value.st_mode,
+        value.st_nlink,
+        value.st_size,
+        value.st_mtime_ns,
+        value.st_ctime_ns,
+    )
+
+
+def directory_open_flags() -> int:
+    if not hasattr(os, "O_DIRECTORY") or not hasattr(os, "O_NOFOLLOW"):
+        raise ValueError("secure directory traversal requires O_DIRECTORY and O_NOFOLLOW")
+    flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
+    if hasattr(os, "O_CLOEXEC"):
+        flags |= os.O_CLOEXEC
+    return flags
+
+
+def regular_file_open_flags(*, write: bool = False, create: bool = False) -> int:
+    if not hasattr(os, "O_NOFOLLOW"):
+        raise ValueError("secure file traversal requires O_NOFOLLOW")
+    flags = (os.O_WRONLY if write else os.O_RDONLY) | os.O_NOFOLLOW
+    if create:
+        flags |= os.O_CREAT | os.O_EXCL
+    if hasattr(os, "O_CLOEXEC"):
+        flags |= os.O_CLOEXEC
+    return flags
+
+
+@dataclass
+class PinnedDirectory:
+    path: Path
+    fds: list[int]
+    names: list[str]
+    identities: list[tuple[int, int]]
+    closed: bool = False
+
+    @property
+    def fd(self) -> int:
+        if self.closed:
+            raise ValueError(f"pinned directory is already closed: {self.path}")
+        return self.fds[-1]
+
+    @property
+    def identity(self) -> tuple[int, int]:
+        return self.identities[-1]
+
+    def revalidate(self, *, label: str) -> None:
+        if self.closed:
+            raise ValueError(f"{label} pinned directory is already closed")
+        for index, descriptor in enumerate(self.fds):
+            current = os.fstat(descriptor)
+            if not stat.S_ISDIR(current.st_mode) or inode_identity(current) != self.identities[index]:
+                raise ValueError(f"{label} pinned directory identity changed: {self.path}")
+            if index == 0:
+                continue
+            try:
+                linked = os.stat(
+                    self.names[index - 1],
+                    dir_fd=self.fds[index - 1],
+                    follow_symlinks=False,
+                )
+            except OSError as exc:
+                raise ValueError(
+                    f"{label} directory chain is no longer reachable: {self.path}: {exc}"
+                ) from exc
+            if not stat.S_ISDIR(linked.st_mode) or inode_identity(linked) != self.identities[index]:
+                raise ValueError(f"{label} directory chain identity changed: {self.path}")
+
+    def close(self) -> None:
+        if self.closed:
+            return
+        self.closed = True
+        for descriptor in reversed(self.fds):
+            try:
+                os.close(descriptor)
+            except OSError:
+                pass
+
+    def __enter__(self) -> PinnedDirectory:
+        return self
+
+    def __exit__(self, *_args: object) -> None:
+        self.close()
+
+
+def open_pinned_directory(
+    path: Path,
+    *,
+    create: bool = False,
+    create_mode: int = 0o777,
+) -> PinnedDirectory:
+    absolute = Path(os.path.abspath(path.expanduser()))
+    if not absolute.is_absolute():
+        raise ValueError(f"secure directory traversal requires an absolute path: {path}")
+    flags = directory_open_flags()
+    root_fd = os.open(os.sep, flags)
+    fds = [root_fd]
+    names: list[str] = []
+    identities = [inode_identity(os.fstat(root_fd))]
+    try:
+        for component in absolute.parts[1:]:
+            if component in {"", ".", ".."} or os.sep in component:
+                raise ValueError(f"unsafe directory path component: {component!r}")
+            parent_fd = fds[-1]
+            try:
+                before = os.stat(component, dir_fd=parent_fd, follow_symlinks=False)
+            except FileNotFoundError:
+                if not create:
+                    raise
+                os.mkdir(component, create_mode, dir_fd=parent_fd)
+                before = os.stat(component, dir_fd=parent_fd, follow_symlinks=False)
+            if not stat.S_ISDIR(before.st_mode):
+                raise ValueError(f"directory path component is not a real directory: {absolute}")
+            descriptor = os.open(component, flags, dir_fd=parent_fd)
+            opened = os.fstat(descriptor)
+            try:
+                after = os.stat(component, dir_fd=parent_fd, follow_symlinks=False)
+            except BaseException:
+                os.close(descriptor)
+                raise
+            if (
+                not stat.S_ISDIR(opened.st_mode)
+                or inode_identity(before) != inode_identity(opened)
+                or inode_identity(after) != inode_identity(opened)
+            ):
+                os.close(descriptor)
+                raise ValueError(f"directory path component changed while opening: {absolute}")
+            fds.append(descriptor)
+            names.append(component)
+            identities.append(inode_identity(opened))
+        pinned = PinnedDirectory(absolute, fds, names, identities)
+        pinned.revalidate(label="opened")
+        return pinned
+    except BaseException:
+        for descriptor in reversed(fds):
+            try:
+                os.close(descriptor)
+            except OSError:
+                pass
+        raise
+
+
+def _read_manifest_file_descriptor(descriptor: int, relative: str) -> tuple[int, str, os.stat_result]:
+    digest = hashlib.sha256()
+    total = 0
+    with os.fdopen(descriptor, "rb", closefd=True) as handle:
+        before = os.fstat(handle.fileno())
+        if not stat.S_ISREG(before.st_mode):
+            raise ValueError(f"installed manifest entry is not a regular file: {relative}")
+        if before.st_nlink != 1:
+            raise ValueError(f"installed manifest file must be single-link: {relative}")
+        for chunk in iter(lambda: handle.read(COPY_CHUNK_BYTES), b""):
+            total += len(chunk)
+            digest.update(chunk)
+        after = os.fstat(handle.fileno())
+    identity_before = (
+        before.st_dev,
+        before.st_ino,
+        before.st_size,
+        before.st_mtime_ns,
+        before.st_ctime_ns,
+    )
+    identity_after = (
+        after.st_dev,
+        after.st_ino,
+        after.st_size,
+        after.st_mtime_ns,
+        after.st_ctime_ns,
+    )
+    if identity_before != identity_after or total != before.st_size:
+        raise ValueError(f"installed manifest file changed while being read: {relative}")
+    return total, digest.hexdigest(), after
+
+
+def strict_tree_manifest_from_fd(
+    root_fd: int,
+    *,
+    race_hook: Callable[[str, str], None] | None = None,
+) -> tuple[ArchiveManifestEntry, ...]:
+    root_before = os.fstat(root_fd)
+    if not stat.S_ISDIR(root_before.st_mode):
+        raise ValueError("installed manifest root descriptor must reference a directory")
+    entries: list[ArchiveManifestEntry] = [
+        ArchiveManifestEntry(".", "directory", stat.S_IMODE(root_before.st_mode), 0, None)
+    ]
+
+    def visit(directory_fd: int, relative_directory: PurePosixPath) -> None:
+        directory_before = os.fstat(directory_fd)
+        try:
+            child_names = sorted(os.listdir(directory_fd))
+        except OSError as exc:
+            relative = relative_directory.as_posix()
+            raise ValueError(f"cannot scan installed manifest directory {relative}: {exc}") from exc
+        folded_names: dict[str, str] = {}
+        for child_name in child_names:
+            folded = unicodedata.normalize("NFC", child_name).casefold().rstrip(". ")
+            if folded in folded_names:
+                raise ValueError(
+                    "case-insensitive installed manifest collision: "
+                    f"{folded_names[folded]} and {child_name}"
+                )
+            folded_names[folded] = child_name
+            relative_path = relative_directory / child_name
+            relative = relative_path.as_posix()
+            try:
+                child_before = os.stat(
+                    child_name,
+                    dir_fd=directory_fd,
+                    follow_symlinks=False,
+                )
+            except OSError as exc:
+                raise ValueError(f"cannot stat installed manifest entry {relative}: {exc}") from exc
+            if race_hook is not None:
+                race_hook("child_lstat", relative)
+            mode = stat.S_IMODE(child_before.st_mode)
+            if stat.S_ISDIR(child_before.st_mode):
+                try:
+                    child_fd = os.open(child_name, directory_open_flags(), dir_fd=directory_fd)
+                except OSError as exc:
+                    raise ValueError(
+                        f"cannot open installed manifest directory {relative}: {exc}"
+                    ) from exc
+                try:
+                    child_opened = os.fstat(child_fd)
+                    if stable_entry_identity(child_before) != stable_entry_identity(child_opened):
+                        raise ValueError(
+                            f"installed manifest directory changed while opening: {relative}"
+                        )
+                    entries.append(ArchiveManifestEntry(relative, "directory", mode, 0, None))
+                    visit(child_fd, relative_path)
+                    child_after = os.fstat(child_fd)
+                    linked_after = os.stat(
+                        child_name,
+                        dir_fd=directory_fd,
+                        follow_symlinks=False,
+                    )
+                    if (
+                        stable_entry_identity(child_opened) != stable_entry_identity(child_after)
+                        or stable_entry_identity(child_after) != stable_entry_identity(linked_after)
+                    ):
+                        raise ValueError(
+                            f"installed manifest directory changed while being read: {relative}"
+                        )
+                finally:
+                    os.close(child_fd)
+            elif stat.S_ISREG(child_before.st_mode):
+                try:
+                    child_fd = os.open(
+                        child_name,
+                        regular_file_open_flags(),
+                        dir_fd=directory_fd,
+                    )
+                except OSError as exc:
+                    raise ValueError(f"cannot open installed manifest file {relative}: {exc}") from exc
+                child_opened = os.fstat(child_fd)
+                if stable_entry_identity(child_before) != stable_entry_identity(child_opened):
+                    os.close(child_fd)
+                    raise ValueError(f"installed manifest file changed while opening: {relative}")
+                size, digest, child_after = _read_manifest_file_descriptor(child_fd, relative)
+                linked_after = os.stat(
+                    child_name,
+                    dir_fd=directory_fd,
+                    follow_symlinks=False,
+                )
+                if stable_entry_identity(child_after) != stable_entry_identity(linked_after):
+                    raise ValueError(f"installed manifest file changed after being read: {relative}")
+                entries.append(ArchiveManifestEntry(relative, "file", mode, size, digest))
+            else:
+                raise ValueError(
+                    f"installed manifest entry must be a regular file or directory: {relative}"
+                )
+        if sorted(os.listdir(directory_fd)) != child_names:
+            relative = relative_directory.as_posix()
+            raise ValueError(f"installed manifest directory changed while being scanned: {relative}")
+        directory_after = os.fstat(directory_fd)
+        if stable_entry_identity(directory_before) != stable_entry_identity(directory_after):
+            relative = relative_directory.as_posix()
+            raise ValueError(f"installed manifest directory changed while being scanned: {relative}")
+
+    visit(root_fd, PurePosixPath())
+    root_after = os.fstat(root_fd)
+    if stable_entry_identity(root_before) != stable_entry_identity(root_after):
+        raise ValueError("installed manifest root changed while being scanned")
+    return tuple(sorted(entries))
+
+
+def strict_tree_manifest(
+    root: Path,
+    *,
+    race_hook: Callable[[str, str], None] | None = None,
+) -> tuple[ArchiveManifestEntry, ...]:
+    try:
+        with open_pinned_directory(root) as pinned:
+            pinned.revalidate(label="installed manifest before scan")
+            entries = strict_tree_manifest_from_fd(pinned.fd, race_hook=race_hook)
+            pinned.revalidate(label="installed manifest after scan")
+            return entries
+    except OSError as exc:
+        raise ValueError(f"cannot securely open installed manifest root {root}: {exc}") from exc
+
+
+def assert_tree_matches_manifest(
+    root: Path,
+    expected: tuple[ArchiveManifestEntry, ...],
+    *,
+    label: str,
+) -> None:
+    actual = strict_tree_manifest(root)
+    if actual != expected:
+        expected_by_path = {entry.path: entry for entry in expected}
+        actual_by_path = {entry.path: entry for entry in actual}
+        missing = sorted(set(expected_by_path) - set(actual_by_path))
+        extra = sorted(set(actual_by_path) - set(expected_by_path))
+        changed = sorted(
+            path
+            for path in set(expected_by_path).intersection(actual_by_path)
+            if expected_by_path[path] != actual_by_path[path]
+        )
+        details = []
+        if missing:
+            details.append("missing=" + ",".join(missing[:5]))
+        if extra:
+            details.append("extra=" + ",".join(extra[:5]))
+        if changed:
+            details.append("changed=" + ",".join(changed[:5]))
+        raise ValueError(f"{label} tree does not match verified archive manifest: {'; '.join(details)}")
 
 
 def current_head() -> str | None:
@@ -190,6 +583,8 @@ def verify_reproducible_build(
                 sys.executable,
                 str(builder),
                 "--allow-unpublished",
+                "--expected-commit",
+                expected_commit,
                 "--output-dir",
                 str(output_dir),
             ],
@@ -282,7 +677,7 @@ def validated_members(
     tar: tarfile.TarFile,
     expected_version: str | None,
     limits: ArchiveLimits,
-) -> tuple[str, str, dict[str, tarfile.TarInfo]]:
+) -> tuple[str, str, tarfile.TarInfo, dict[str, tarfile.TarInfo]]:
     members: dict[str, tarfile.TarInfo] = {}
     seen_paths: set[str] = set()
     seen_casefold_paths: dict[str, str] = {}
@@ -327,6 +722,8 @@ def validated_members(
         roots.add(posix.parts[0])
         if not (member.isfile() or member.isdir()):
             raise ValueError(f"release member type is not allowed: {member.name}")
+        if member.mode & ~0o777:
+            raise ValueError(f"release member uses forbidden permission bits: {member.name}")
         if member.size < 0:
             raise ValueError(f"release member declares a negative size: {member.name}")
         if member.isfile():
@@ -347,21 +744,31 @@ def validated_members(
     if expected_version is not None and version != expected_version:
         raise ValueError(f"release root version {version} does not equal expected {expected_version}")
 
+    root_member: tarfile.TarInfo | None = None
     for member in tar.getmembers():
         posix = PurePosixPath(member.name)
         if posix.parts[0] != root_name:
             raise ValueError(f"release member is outside canonical root {root_name}: {member.name}")
-        relative = PurePosixPath(*posix.parts[1:]).as_posix()
-        if relative:
+        relative_parts = posix.parts[1:]
+        if relative_parts:
+            relative = PurePosixPath(*relative_parts).as_posix()
             members[relative] = member
         elif not member.isdir():
             raise ValueError(f"release canonical root entry must be a directory: {member.name}")
+        else:
+            root_member = member
+    if root_member is None:
+        raise ValueError("release artifact must contain an explicit canonical root directory")
     for relative, member in members.items():
         for parent in PurePosixPath(relative).parents:
             parent_name = parent.as_posix()
             if parent_name == ".":
                 break
-            if parent_name in members and members[parent_name].isfile():
+            if parent_name not in members:
+                raise ValueError(
+                    f"release member is missing an explicit directory parent: {parent_name} -> {relative}"
+                )
+            if members[parent_name].isfile():
                 raise ValueError(
                     f"release member path conflicts with a file parent: {parent_name} -> {relative}"
                 )
@@ -369,7 +776,7 @@ def validated_members(
     if missing:
         raise ValueError("release artifact missing required members: " + ", ".join(missing))
     validate_ustar_layout(tar)
-    return root_name, version, members
+    return root_name, version, root_member, members
 
 
 def validate_ustar_layout(tar: tarfile.TarFile) -> None:
@@ -413,34 +820,145 @@ def read_member(tar: tarfile.TarFile, member: tarfile.TarInfo) -> bytes:
 def extract_validated(
     tar: tarfile.TarFile,
     root_name: str,
+    root_member: tarfile.TarInfo,
     members: dict[str, tarfile.TarInfo],
     destination: Path,
+    *,
+    destination_root_fd: int | None = None,
 ) -> Path:
-    if destination.exists() and any(destination.iterdir()):
-        raise ValueError(f"extract destination is not empty: {destination}")
-    destination.mkdir(parents=True, exist_ok=True)
-    root = destination / root_name
-    for relative, member in sorted(members.items()):
-        target = root / relative
-        if member.isdir():
-            target.mkdir(parents=True, exist_ok=True)
-            continue
-        target.parent.mkdir(parents=True, exist_ok=True)
-        source = tar.extractfile(member)
-        if source is None:
-            raise ValueError(f"cannot extract release member: {member.name}")
-        with target.open("xb") as output:
-            remaining = member.size
-            while remaining:
-                chunk = source.read(min(COPY_CHUNK_BYTES, remaining))
-                if not chunk:
-                    raise ValueError(f"release member ended before declared size: {member.name}")
-                output.write(chunk)
-                remaining -= len(chunk)
-            if source.read(1):
-                raise ValueError(f"release member exceeds declared size: {member.name}")
-        os.chmod(target, member.mode & 0o777)
-    return root
+    directory_members = sorted(
+        ((relative, member) for relative, member in members.items() if member.isdir()),
+        key=lambda item: (len(PurePosixPath(item[0]).parts), item[0]),
+    )
+    file_members = sorted(
+        ((relative, member) for relative, member in members.items() if member.isfile()),
+        key=lambda item: item[0],
+    )
+    destination_context = (
+        open_pinned_directory(destination, create=True)
+        if destination_root_fd is None
+        else nullcontext(None)
+    )
+    with destination_context as opened_destination_root:
+        effective_destination_fd = (
+            opened_destination_root.fd
+            if opened_destination_root is not None
+            else destination_root_fd
+        )
+        if (
+            effective_destination_fd is None
+            or not stat.S_ISDIR(os.fstat(effective_destination_fd).st_mode)
+        ):
+            raise ValueError("release extraction destination descriptor must reference a directory")
+        if opened_destination_root is not None:
+            opened_destination_root.revalidate(
+                label="release extraction destination before create"
+            )
+        if os.listdir(effective_destination_fd):
+            raise ValueError(f"extract destination is not empty: {destination}")
+        os.mkdir(root_name, 0o700, dir_fd=effective_destination_fd)
+        root_before = os.stat(
+            root_name,
+            dir_fd=effective_destination_fd,
+            follow_symlinks=False,
+        )
+        root_fd = os.open(root_name, directory_open_flags(), dir_fd=effective_destination_fd)
+        root_opened = os.fstat(root_fd)
+        if inode_identity(root_before) != inode_identity(root_opened):
+            os.close(root_fd)
+            raise ValueError("release extraction root changed while opening")
+        directory_fds: dict[str, int] = {".": root_fd}
+        directory_bindings: list[tuple[int, str, tuple[int, int], int]] = [
+            (effective_destination_fd, root_name, inode_identity(root_opened), root_fd)
+        ]
+        try:
+            for relative, _member in directory_members:
+                posix = PurePosixPath(relative)
+                parent = posix.parent.as_posix()
+                parent_fd = directory_fds[parent]
+                os.mkdir(posix.name, 0o700, dir_fd=parent_fd)
+                before = os.stat(posix.name, dir_fd=parent_fd, follow_symlinks=False)
+                descriptor = os.open(posix.name, directory_open_flags(), dir_fd=parent_fd)
+                opened = os.fstat(descriptor)
+                after = os.stat(posix.name, dir_fd=parent_fd, follow_symlinks=False)
+                if (
+                    inode_identity(before) != inode_identity(opened)
+                    or inode_identity(after) != inode_identity(opened)
+                ):
+                    os.close(descriptor)
+                    raise ValueError(
+                        f"release extraction directory changed while opening: {relative}"
+                    )
+                directory_fds[relative] = descriptor
+                directory_bindings.append(
+                    (parent_fd, posix.name, inode_identity(opened), descriptor)
+                )
+
+            for relative, member in file_members:
+                posix = PurePosixPath(relative)
+                parent_fd = directory_fds[posix.parent.as_posix()]
+                source = tar.extractfile(member)
+                if source is None:
+                    raise ValueError(f"cannot extract release member: {member.name}")
+                descriptor = os.open(
+                    posix.name,
+                    regular_file_open_flags(write=True, create=True),
+                    0o600,
+                    dir_fd=parent_fd,
+                )
+                with os.fdopen(descriptor, "wb", closefd=True) as output:
+                    opened = os.fstat(output.fileno())
+                    if not stat.S_ISREG(opened.st_mode) or opened.st_nlink != 1:
+                        raise ValueError(
+                            f"release extraction destination is not a single-link file: {relative}"
+                        )
+                    remaining = member.size
+                    while remaining:
+                        chunk = source.read(min(COPY_CHUNK_BYTES, remaining))
+                        if not chunk:
+                            raise ValueError(
+                                f"release member ended before declared size: {member.name}"
+                            )
+                        output.write(chunk)
+                        remaining -= len(chunk)
+                    if source.read(1):
+                        raise ValueError(f"release member exceeds declared size: {member.name}")
+                    output.flush()
+                    os.fsync(output.fileno())
+                    os.fchmod(output.fileno(), member.mode & 0o777)
+                    written = os.fstat(output.fileno())
+                    if written.st_size != member.size:
+                        raise ValueError(
+                            f"release extraction destination size mismatch: {relative}"
+                        )
+                linked = os.stat(posix.name, dir_fd=parent_fd, follow_symlinks=False)
+                if inode_identity(linked) != inode_identity(written):
+                    raise ValueError(
+                        f"release extraction destination changed after write: {relative}"
+                    )
+
+            for relative, member in reversed(directory_members):
+                os.fchmod(directory_fds[relative], member.mode & 0o777)
+            os.fchmod(root_fd, root_member.mode & 0o777)
+            for parent_fd, name, expected_identity, descriptor in directory_bindings:
+                linked = os.stat(name, dir_fd=parent_fd, follow_symlinks=False)
+                current = os.fstat(descriptor)
+                if (
+                    inode_identity(linked) != expected_identity
+                    or inode_identity(current) != expected_identity
+                ):
+                    raise ValueError("release extraction directory binding changed")
+            if opened_destination_root is not None:
+                opened_destination_root.revalidate(
+                    label="release extraction destination after write"
+                )
+        finally:
+            for descriptor in reversed(list(directory_fds.values())):
+                try:
+                    os.close(descriptor)
+                except OSError:
+                    pass
+    return destination / root_name
 
 
 def decompress_archive_bounded(
@@ -463,7 +981,7 @@ def decompress_archive_bounded(
     destination.seek(0)
 
 
-def verify_release(
+def verify_release_detailed(
     artifact: Path,
     checksums: Path,
     *,
@@ -474,7 +992,12 @@ def verify_release(
     reproducible_source: Path | None = None,
     expected_tag: str | None = None,
     require_remote_tag: bool = False,
-) -> dict[str, str]:
+    extract_root_fd: int | None = None,
+) -> VerifiedRelease:
+    if expected_commit is not None and re.fullmatch(r"[0-9a-f]{40}", expected_commit) is None:
+        raise ValueError("expected commit must be one full lowercase 40-character SHA")
+    if require_remote_tag and reproducible_source is None:
+        raise ValueError("canonical remote tag verification requires a reproducible source")
     checksum_bytes = read_regular_file_once(
         checksums,
         max_bytes=limits.max_checksum_bytes,
@@ -494,11 +1017,68 @@ def verify_release(
         with tempfile.TemporaryFile(mode="w+b") as uncompressed:
             decompress_archive_bounded(sealed_artifact, uncompressed, limits.max_tar_stream_bytes)
             with tarfile.open(fileobj=uncompressed, mode="r:") as tar:
-                root_name, version, members = validated_members(tar, expected_version, limits)
+                root_name, version, root_member, members = validated_members(
+                    tar, expected_version, limits
+                )
 
-                metadata = json.loads(read_member(tar, members["RELEASE-METADATA.json"]))
+                expected_release_tag = f"v{version}"
+                if expected_tag is not None and expected_tag != expected_release_tag:
+                    raise ValueError(
+                        f"expected tag {expected_tag} does not equal packaged tag {expected_release_tag}"
+                    )
+
+                required_data: dict[str, bytes] = {}
+                manifest_entries: list[ArchiveManifestEntry] = [
+                    ArchiveManifestEntry(
+                        ".", "directory", root_member.mode & 0o777, 0, None
+                    )
+                ]
+                for relative, member in sorted(members.items()):
+                    if member.isdir():
+                        manifest_entries.append(
+                            ArchiveManifestEntry(
+                                relative, "directory", member.mode & 0o777, 0, None
+                            )
+                        )
+                        continue
+                    data = read_member(tar, member)
+                    manifest_entries.append(
+                        ArchiveManifestEntry(
+                            relative,
+                            "file",
+                            member.mode & 0o777,
+                            member.size,
+                            sha256_bytes(data),
+                        )
+                    )
+                    if relative in REQUIRED_MEMBERS:
+                        required_data[relative] = data
+                    try:
+                        text = data.decode("utf-8")
+                    except UnicodeDecodeError:
+                        continue
+                    if HOST_USER_PATH_RE.search(text):
+                        raise ValueError(f"release member contains a host user path: {relative}")
+                    if THREAD_ID_RE.search(text):
+                        raise ValueError(f"release member contains a live Codex thread id: {relative}")
+                archive_manifest = tuple(sorted(manifest_entries))
+                manifest_digest = archive_manifest_digest(archive_manifest)
+
+                metadata = json.loads(required_data["RELEASE-METADATA.json"])
                 if not isinstance(metadata, dict):
                     raise ValueError("RELEASE-METADATA.json must contain an object")
+                required_metadata_fields = {
+                    "schema_version",
+                    "product",
+                    "version",
+                    "tag",
+                    "commit_sha",
+                    "commit_timestamp",
+                    "root_skill_sha256",
+                    "source",
+                }
+                if set(metadata) != required_metadata_fields:
+                    raise ValueError("release metadata field set mismatch")
                 if metadata.get("schema_version") != "1.0.0":
                     raise ValueError("release metadata schema_version must be 1.0.0")
                 if metadata.get("product") != "DIRcreative":
@@ -510,24 +1090,16 @@ def verify_release(
                     raise ValueError("release metadata commit_sha is invalid")
                 if expected_commit is not None and commit != expected_commit:
                     raise ValueError("release metadata commit_sha does not equal expected commit")
-                root_skill = read_member(tar, members["SKILL.md"])
+                if metadata.get("source") != "git archive of exact commit":
+                    raise ValueError("release metadata source mismatch")
+                timestamp = metadata.get("commit_timestamp")
+                if not isinstance(timestamp, str) or not timestamp.endswith("Z"):
+                    raise ValueError("release metadata commit_timestamp must be UTC")
+                root_skill = required_data["SKILL.md"]
                 if metadata.get("root_skill_sha256") != sha256_bytes(root_skill):
                     raise ValueError("release metadata root skill hash mismatch")
-                if read_member(tar, members["VERSION"]).decode("utf-8").strip() != version:
+                if required_data["VERSION"].decode("utf-8").strip() != version:
                     raise ValueError("packaged VERSION does not match release version")
-
-                for relative, member in members.items():
-                    if not member.isfile():
-                        continue
-                    data = read_member(tar, member)
-                    try:
-                        text = data.decode("utf-8")
-                    except UnicodeDecodeError:
-                        continue
-                    if HOST_USER_PATH_RE.search(text):
-                        raise ValueError(f"release member contains a host user path: {relative}")
-                    if THREAD_ID_RE.search(text):
-                        raise ValueError(f"release member contains a live Codex thread id: {relative}")
 
                 reproducible_match = "not_requested"
                 remote_tag_match = "not_requested"
@@ -552,19 +1124,58 @@ def verify_release(
                         else "local_exact_commit_rebuild_only"
                     )
 
-                extracted = "not_requested"
+                extracted: Path | None = None
                 if extract_to is not None:
-                    extracted = str(extract_validated(tar, root_name, members, extract_to))
+                    extracted = extract_validated(
+                        tar,
+                        root_name,
+                        root_member,
+                        members,
+                        extract_to,
+                        destination_root_fd=extract_root_fd,
+                    )
+                    assert_tree_matches_manifest(
+                        extracted,
+                        archive_manifest,
+                        label="verified extraction",
+                    )
 
-        return {
-            "version": version,
-            "commit_sha": commit,
-            "artifact_sha256": actual_hash,
-            "reproducible_match": reproducible_match,
-            "remote_tag_match": remote_tag_match,
-            "provenance_scope": provenance_scope,
-            "extracted_root": extracted,
-        }
+        return VerifiedRelease(
+            version=version,
+            commit_sha=commit,
+            artifact_sha256=actual_hash,
+            reproducible_match=reproducible_match,
+            remote_tag_match=remote_tag_match,
+            provenance_scope=provenance_scope,
+            extracted_root=extracted,
+            archive_manifest=archive_manifest,
+            archive_manifest_sha256=manifest_digest,
+        )
+
+
+def verify_release(
+    artifact: Path,
+    checksums: Path,
+    *,
+    expected_version: str | None = None,
+    expected_commit: str | None = None,
+    extract_to: Path | None = None,
+    limits: ArchiveLimits = DEFAULT_LIMITS,
+    reproducible_source: Path | None = None,
+    expected_tag: str | None = None,
+    require_remote_tag: bool = False,
+) -> dict[str, str]:
+    return verify_release_detailed(
+        artifact,
+        checksums,
+        expected_version=expected_version,
+        expected_commit=expected_commit,
+        extract_to=extract_to,
+        limits=limits,
+        reproducible_source=reproducible_source,
+        expected_tag=expected_tag,
+        require_remote_tag=require_remote_tag,
+    ).summary()
 
 
 TestMember = tuple[str, bytes, bytes, str]
@@ -581,7 +1192,7 @@ def add_test_member(
     info = tarfile.TarInfo(name)
     info.type = member_type
     info.linkname = linkname
-    info.mode = 0o644
+    info.mode = 0o755 if member_type == tarfile.DIRTYPE else 0o644
     info.pax_headers = pax_headers or {}
     info.size = len(data) if member_type == tarfile.REGTYPE else 0
     tar.addfile(info, io.BytesIO(data) if info.size else None)
@@ -618,7 +1229,9 @@ def build_test_archive(
         "version": version,
         "tag": f"v{version}",
         "commit_sha": "a" * 40,
+        "commit_timestamp": "2026-07-21T00:00:00Z",
         "root_skill_sha256": sha256_bytes(files["SKILL.md"]),
+        "source": "git archive of exact commit",
     }
     metadata.update(metadata_overrides or {})
     files["RELEASE-METADATA.json"] = (json.dumps(metadata, sort_keys=True) + "\n").encode("utf-8")
@@ -626,6 +1239,18 @@ def build_test_archive(
     artifact = case_root / f"dircreative-{version}.tar.gz"
     archive_format = tar_format or (tarfile.PAX_FORMAT if pax_comment_size else tarfile.USTAR_FORMAT)
     with tarfile.open(artifact, mode="w:gz", format=archive_format) as tar:
+        add_test_member(tar, root_name, b"", tarfile.DIRTYPE)
+        parent_directories = sorted(
+            {
+                parent.as_posix()
+                for relative in files
+                for parent in PurePosixPath(relative).parents
+                if parent.as_posix() != "."
+            },
+            key=lambda path: (len(PurePosixPath(path).parts), path),
+        )
+        for relative in parent_directories:
+            add_test_member(tar, f"{root_name}/{relative}", b"", tarfile.DIRTYPE)
         for index, (relative, data) in enumerate(sorted(files.items())):
             pax_headers = {"comment": "x" * pax_comment_size} if pax_comment_size and index == 0 else None
             add_test_member(tar, f"{root_name}/{relative}", data, pax_headers=pax_headers)
@@ -655,17 +1280,54 @@ def expect_test_failure(
 def self_test() -> int:
     try:
         with tempfile.TemporaryDirectory(prefix="dircreative-release-verify-") as raw:
-            root = Path(raw)
+            root = Path(raw).resolve()
             valid_artifact, valid_checksums = build_test_archive(root, "valid")
-            result = verify_release(
+            verified_control = verify_release_detailed(
                 valid_artifact,
                 valid_checksums,
                 expected_version="9.9.9",
                 expected_commit="a" * 40,
                 extract_to=root / "extract",
             )
+            result = verified_control.summary()
             if result["version"] != "9.9.9" or not Path(result["extracted_root"]).is_dir():
                 raise AssertionError("valid control did not extract")
+            if int(result["archive_manifest_entries"]) < 7:
+                raise AssertionError("valid control did not freeze the complete archive tree")
+            pinned_extract = root / "pinned-extract"
+            pinned_extract.mkdir()
+            with open_pinned_directory(pinned_extract) as pinned_extract_root:
+                pinned_control = verify_release_detailed(
+                    valid_artifact,
+                    valid_checksums,
+                    expected_version="9.9.9",
+                    expected_commit="a" * 40,
+                    extract_to=pinned_extract,
+                    extract_root_fd=pinned_extract_root.fd,
+                )
+                pinned_extract_root.revalidate(label="self-test pinned extraction")
+            if pinned_control.extracted_root != pinned_extract / "dircreative-9.9.9":
+                raise AssertionError("pinned extraction did not return the canonical root")
+            assert_tree_matches_manifest(
+                pinned_control.extracted_root,
+                pinned_control.archive_manifest,
+                label="pinned extraction control",
+            )
+            extracted_control = Path(result["extracted_root"])
+            (extracted_control / "unexpected-after-verification.txt").write_text(
+                "tamper\n", encoding="utf-8"
+            )
+            try:
+                assert_tree_matches_manifest(
+                    extracted_control,
+                    verified_control.archive_manifest,
+                    label="tampered verified extraction control",
+                )
+            except ValueError as exc:
+                if "unexpected-after-verification.txt" not in str(exc):
+                    raise
+            else:
+                raise AssertionError("verified extraction tamper escaped manifest readback")
 
             wrong_checksum = root / "wrong-checksum"
             wrong_checksum.mkdir()
@@ -682,6 +1344,13 @@ def self_test() -> int:
             )
 
             negative_archives = [
+                (
+                    "metadata-extra-field",
+                    {},
+                    {"untrusted_claim": True},
+                    [],
+                    "metadata field set mismatch",
+                ),
                 (
                     "traversal",
                     {},
@@ -735,7 +1404,14 @@ def self_test() -> int:
                     "file-parent-conflict",
                     {},
                     {},
-                    [("dircreative-9.9.9/scripts", b"not a directory", tarfile.REGTYPE, "")],
+                    [
+                        (
+                            "dircreative-9.9.9/scripts/validate_project.py/child",
+                            b"not reachable",
+                            tarfile.REGTYPE,
+                            "",
+                        )
+                    ],
                     "path conflicts with a file parent",
                 ),
                 (
@@ -848,10 +1524,19 @@ def self_test() -> int:
                 expected_commit="b" * 40,
             )
             expect_test_failure(
+                "wrong expected tag",
+                valid_artifact,
+                valid_checksums,
+                "does not equal packaged tag",
+                expected_version="9.9.9",
+                expected_commit="a" * 40,
+                expected_tag="v9.9.8",
+            )
+            expect_test_failure(
                 "empty expected commit",
                 valid_artifact,
                 valid_checksums,
-                "does not equal expected commit",
+                "expected commit must be one full lowercase 40-character SHA",
                 expected_version="9.9.9",
                 expected_commit="",
             )
@@ -873,6 +1558,111 @@ def self_test() -> int:
                     expected_version="9.9.9",
                     limits=limits,
                 )
+
+            reproducible_source = root / "reproducible-source"
+            reproducible_source.mkdir()
+            git_at(reproducible_source, "init", "--quiet")
+            git_at(reproducible_source, "config", "user.name", "DIRcreative Test")
+            git_at(reproducible_source, "config", "user.email", "dircreative@example.invalid")
+            scripts_directory = reproducible_source / "scripts"
+            scripts_directory.mkdir()
+            (reproducible_source / "fixture-release.tar.gz").write_bytes(
+                b"exact reproducible fixture artifact\n"
+            )
+            (scripts_directory / "dircreative_build_release.py").write_text(
+                """#!/usr/bin/env python3
+import argparse
+import shutil
+from pathlib import Path
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--allow-unpublished", action="store_true")
+parser.add_argument("--expected-commit", required=True)
+parser.add_argument("--output-dir", required=True)
+args = parser.parse_args()
+output = Path(args.output_dir)
+output.mkdir(parents=True, exist_ok=True)
+shutil.copyfile(
+    Path(__file__).resolve().parents[1] / "fixture-release.tar.gz",
+    output / "dircreative-9.9.9.tar.gz",
+)
+""",
+                encoding="utf-8",
+            )
+            git_at(reproducible_source, "add", ".")
+            git_at(reproducible_source, "commit", "--quiet", "-m", "fixture")
+            reproducible_commit = git_at(reproducible_source, "rev-parse", "HEAD")
+            canonical_url = (
+                "https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL.git"
+            )
+            git_at(reproducible_source, "remote", "add", "origin", canonical_url)
+            reproducible_artifact_dir = root / "reproducible-artifact"
+            reproducible_artifact_dir.mkdir()
+            reproducible_artifact = reproducible_artifact_dir / "dircreative-9.9.9.tar.gz"
+            shutil.copyfile(
+                reproducible_source / "fixture-release.tar.gz", reproducible_artifact
+            )
+            verify_reproducible_build(
+                reproducible_source,
+                reproducible_artifact,
+                version="9.9.9",
+                expected_commit=reproducible_commit,
+                expected_hash=sha256_file(reproducible_artifact),
+                expected_tag="v9.9.9",
+                require_remote_tag=False,
+            )
+            forged_artifact_dir = root / "forged-artifact"
+            forged_artifact_dir.mkdir()
+            forged_artifact = forged_artifact_dir / "dircreative-9.9.9.tar.gz"
+            forged_artifact.write_bytes(b"forged artifact with a matching attacker checksum\n")
+            try:
+                verify_reproducible_build(
+                    reproducible_source,
+                    forged_artifact,
+                    version="9.9.9",
+                    expected_commit=reproducible_commit,
+                    expected_hash=sha256_file(forged_artifact),
+                    expected_tag="v9.9.9",
+                    require_remote_tag=False,
+                )
+            except ValueError as exc:
+                if "does not match the reproducible exact-commit build" not in str(exc):
+                    raise
+            else:
+                raise AssertionError("forged artifact survived exact-commit rebuild matching")
+            (reproducible_source / "untracked.txt").write_text("dirty\n", encoding="utf-8")
+            try:
+                verify_reproducible_build(
+                    reproducible_source,
+                    reproducible_artifact,
+                    version="9.9.9",
+                    expected_commit=reproducible_commit,
+                    expected_hash=sha256_file(reproducible_artifact),
+                    expected_tag="v9.9.9",
+                    require_remote_tag=False,
+                )
+            except ValueError as exc:
+                if "worktree is not clean" not in str(exc):
+                    raise
+            else:
+                raise AssertionError("reproducible verification accepted a dirty source")
+            (reproducible_source / "untracked.txt").unlink()
+            git_at(reproducible_source, "remote", "set-url", "origin", "https://example.com/other.git")
+            try:
+                verify_reproducible_build(
+                    reproducible_source,
+                    reproducible_artifact,
+                    version="9.9.9",
+                    expected_commit=reproducible_commit,
+                    expected_hash=sha256_file(reproducible_artifact),
+                    expected_tag="v9.9.9",
+                    require_remote_tag=False,
+                )
+            except ValueError as exc:
+                if "origin is not the canonical" not in str(exc):
+                    raise
+            else:
+                raise AssertionError("reproducible verification accepted a noncanonical source")
             symlink_artifact = root / "symlink-artifact.tar.gz"
             symlink_artifact.symlink_to(valid_artifact)
             expect_test_failure(
@@ -951,8 +1741,8 @@ def main() -> int:
         return 1
     try:
         result = verify_release(
-            Path(args.artifact).expanduser().resolve(),
-            Path(args.checksums).expanduser().resolve(),
+            Path(os.path.abspath(Path(args.artifact).expanduser())),
+            Path(os.path.abspath(Path(args.checksums).expanduser())),
             expected_version=expected_version,
             expected_commit=expected_commit,
             extract_to=Path(args.extract_to).expanduser().resolve() if args.extract_to else None,

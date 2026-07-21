@@ -316,6 +316,8 @@ def validate_required_paths() -> None:
         "docs/film-preproduction/schemas/adco-specialist-descriptor.json",
         "docs/film-preproduction/schemas/adco-specialist-handoff-v2.schema.json",
         "docs/film-preproduction/schemas/adco-specialist-receipt-v2.schema.json",
+        "docs/film-preproduction/schemas/media-forward-execution-v2.schema.json",
+        "docs/film-preproduction/schemas/media-visual-review-v1.schema.json",
         "skills/dircreative/agents/openai.yaml",
         "skills/dircreative/runtime/routing-policy.yaml",
         "skills/dircreative/runtime/state-snapshot.schema.json",
@@ -4778,6 +4780,35 @@ def validate_goal_mode_rough_idea_visual_dogfood_receipt() -> None:
 
 
 def validate_media_forward_audit_script() -> None:
+    execution_schema = load_json(
+        require_path("docs/film-preproduction/schemas/media-forward-execution-v2.schema.json")
+    )
+    review_schema = load_json(
+        require_path("docs/film-preproduction/schemas/media-visual-review-v1.schema.json")
+    )
+    require(
+        execution_schema.get("properties", {}).get("schema_version", {}).get("const") == "2.0.0",
+        "media execution schema must identify v2",
+    )
+    require(
+        review_schema.get("properties", {}).get("reviewer", {}).get("properties", {}).get(
+            "review_method", {}
+        ).get("const")
+        == "independent_visual_review",
+        "media review schema must require an independent visual reviewer",
+    )
+    require(
+        execution_schema.get("properties", {}).get("host_trace", {}).get("properties", {}).get(
+            "evidence_level", {}
+        ).get("const")
+        == "unsigned_host_trace",
+        "media execution schema must bind an honestly labeled host trace",
+    )
+    require(
+        "view_event_ids"
+        in review_schema.get("properties", {}).get("host_trace", {}).get("required", []),
+        "media review schema must bind completed visual-view events",
+    )
     proc = run(["python3", "scripts/dircreative_media_forward_audit.py", "--self-test"])
     require(
         proc.returncode == 0 and "DIRCREATIVE_MEDIA_FORWARD_SELF_TEST: PASS" in proc.stdout,
@@ -4822,17 +4853,24 @@ def validate_release_gate_script() -> None:
         "scripts/dircreative_visual_dogfood.py",
         "scripts/dircreative_release_preflight.py",
         "scripts/dircreative_build_release.py",
-        "scripts/dircreative_verify_release.py",
         "scripts/dircreative_media_forward_audit.py",
         "--media-forward-receipt",
+        "--media-review-receipt",
+        "--media-host-event-log",
+        "--media-review-host-event-log",
         "--require-media-forward",
         "--media-c2patool",
+        "--require-candidate-skill-execution",
+        "UNSIGNED_HOST_TRACE_IMAGE_PLUS_INDEPENDENT_REVIEW",
         "--expected-commit",
         "sealed commit final readback",
         "BILATERAL_MEDIA_RELEASE_GATE",
         "DIR_RELEASE_GATE",
-        "--require-reproducible-match",
-        "--require-remote-tag",
+        "verified formal artifact install",
+        "--artifact",
+        "--checksums",
+        "--expected-tag",
+        "--reproducible-source",
         "scripts/install_local_skill.py",
         "validate_explicit_staging_target",
         "tempfile.TemporaryDirectory",
@@ -4896,8 +4934,7 @@ def validate_release_gate_script() -> None:
     original_run_step = release_gate.run_step
     forbidden_artifact_steps = {
         "release artifact build",
-        "release artifact verification",
-        "release artifact install",
+        "verified formal artifact install",
         "release artifact install parity",
         "release artifact installed validation",
     }
@@ -4917,6 +4954,9 @@ def validate_release_gate_script() -> None:
                 allow_unpublished=True,
                 adco_repo=None,
                 media_forward_receipt=None,
+                media_review_receipt=None,
+                media_host_event_log=None,
+                media_review_host_event_log=None,
                 require_media_forward=False,
                 media_c2patool=None,
             )
@@ -4961,6 +5001,9 @@ def validate_release_gate_script() -> None:
                 allow_unpublished=False,
                 adco_repo=None,
                 media_forward_receipt=None,
+                media_review_receipt=None,
+                media_host_event_log=None,
+                media_review_host_event_log=None,
                 require_media_forward=False,
                 media_c2patool=None,
             )
@@ -4980,8 +5023,12 @@ def validate_release_gate_script() -> None:
         "formal release gate must require the exact annotated tag by default",
     )
     require(
-        "--require-remote-tag" in captured_commands.get("release artifact verification", []),
-        "formal release gate must bind artifact verification to the canonical remote tag",
+        "--allow-unpublished" not in captured_commands.get("verified formal artifact install", []),
+        "formal release gate must not relax canonical remote tag verification",
+    )
+    require(
+        "--expected-tag" in captured_commands.get("verified formal artifact install", []),
+        "formal release gate must bind formal installation to the expected tag",
     )
     require(
         release_gate.sealed_head_unchanged("a" * 40, reader=lambda: "b" * 40) is False,
@@ -5529,9 +5576,19 @@ def validate_release_distribution_contract() -> None:
     require(f"## {version}" in changelog, f"CHANGELOG must contain {version}")
     require("--expected-commit \"$EXPECTED_COMMIT\"" in readme, "formal install docs must bind archive metadata to the remote tag commit")
     require("refs/tags/$TAG^{}" in readme, "formal install docs must resolve the annotated remote tag commit")
-    require("--require-reproducible-match" in readme, "formal install docs must require a reproducible exact-commit artifact match")
-    require("--require-remote-tag" in readme, "formal install docs must bind reproducible verification to the canonical remote tag")
     require("--formal-install" in readme, "formal install docs must explicitly authorize replacing the canonical installation")
+    for option in (
+        "--artifact",
+        "--checksums",
+        "--expected-tag",
+        "--reproducible-source",
+        "--allow-unpublished",
+    ):
+        require(option in readme, f"formal install docs must describe {option}")
+    require(
+        "不能运行归档内的 installer" in readme,
+        "formal install docs must reject the extracted-installer trust bypass",
+    )
 
     sources = {
         "release preflight": require_path("scripts/dircreative_release_preflight.py").read_text(encoding="utf-8"),
@@ -5593,6 +5650,9 @@ def validate_release_distribution_contract() -> None:
             "O_NOFOLLOW",
             "canonical USTAR",
             "release artifact does not match the reproducible exact-commit build",
+            "ArchiveManifestEntry",
+            "archive_manifest_sha256",
+            "assert_tree_matches_manifest",
             "provenance_scope",
             "local_exact_commit_rebuild_only",
             "canonical_remote_tag",
@@ -5613,9 +5673,13 @@ def validate_release_distribution_contract() -> None:
             "previous install is retained at",
             "DIRCREATIVE_INSTALLER_SELF_TEST: PASS",
             "formal DIRcreative installation requires explicit --formal-install authorization",
-            "validate_release_metadata",
-            "git archive of exact commit",
-            "root_skill_sha256",
+            "formal DIRcreative installation requires a verified artifact",
+            "FORMAL_REQUIRED_OPTIONS",
+            "verify_release_detailed",
+            "assert_tree_matches_manifest",
+            "archive_manifest_sha256",
+            "UNPUBLISHED_LOCAL_CANDIDATE",
+            "CANONICAL_REMOTE_TAG",
             "install target must not be a symlink",
             ".codex\" / \"dev-skills",
         ],
@@ -5631,17 +5695,19 @@ def validate_release_distribution_contract() -> None:
             "scripts/validate_project.py",
             "scripts/install_local_skill.py",
             "scripts/dircreative_build_release.py",
-            "scripts/dircreative_verify_release.py",
             "scripts/dircreative_adco_native_exchange.py",
-            "--extract-to",
             "dircreative-archive-installed",
             "c19e3f92bdf4d311ab4ed79831b344979f1df01f",
             "101132984166d9580589b2ba2c6590d7f88d7509",
             "ADCO_TESTED_SHA",
             "ADCO_V2_TESTED_SHA",
             "--formal-install",
-            "--require-reproducible-match",
-            "--require-remote-tag",
+            "FORMAL_ARGS",
+            "--artifact",
+            "--checksums",
+            "--expected-tag",
+            "--reproducible-source",
+            "--allow-unpublished",
             'python-version: ["3.10", "3.12", "3.14"]',
             "dist-umask-077",
             "compare-reproducibility",

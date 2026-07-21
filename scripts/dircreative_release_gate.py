@@ -112,6 +112,18 @@ def main() -> int:
         help="Absolute receipt for a real image-generation forward test bound to this candidate.",
     )
     parser.add_argument(
+        "--media-review-receipt",
+        help="Absolute independent visual-review receipt bound to the media execution receipt.",
+    )
+    parser.add_argument(
+        "--media-host-event-log",
+        help="Absolute Codex JSONL task log for the candidate execution trace prefix.",
+    )
+    parser.add_argument(
+        "--media-review-host-event-log",
+        help="Absolute Codex JSONL task log from the separate visual-review task.",
+    )
+    parser.add_argument(
         "--require-media-forward",
         action="store_true",
         help="Fail unless a valid real-media forward-test receipt is supplied.",
@@ -136,10 +148,31 @@ def main() -> int:
         help="Directory for the exact-commit release artifact.",
     )
     args = parser.parse_args()
-    if args.require_media_forward and not args.media_forward_receipt:
-        parser.error("--require-media-forward requires --media-forward-receipt")
+    if args.require_tag and args.allow_unpublished:
+        parser.error("--require-tag and --allow-unpublished are mutually exclusive")
+    if args.require_media_forward and (
+        not args.media_forward_receipt
+        or not args.media_review_receipt
+        or not args.media_host_event_log
+        or not args.media_review_host_event_log
+    ):
+        parser.error(
+            "--require-media-forward requires both media receipts and both host event logs"
+        )
+    if args.media_review_receipt and not args.media_forward_receipt:
+        parser.error("--media-review-receipt requires --media-forward-receipt")
+    if (args.media_host_event_log or args.media_review_host_event_log) and not args.media_forward_receipt:
+        parser.error("media host event logs require --media-forward-receipt")
     if args.media_forward_receipt and not Path(args.media_forward_receipt).expanduser().is_absolute():
         parser.error("--media-forward-receipt must be an absolute path")
+    if args.media_review_receipt and not Path(args.media_review_receipt).expanduser().is_absolute():
+        parser.error("--media-review-receipt must be an absolute path")
+    for option, value in (
+        ("--media-host-event-log", args.media_host_event_log),
+        ("--media-review-host-event-log", args.media_review_host_event_log),
+    ):
+        if value and not Path(value).expanduser().is_absolute():
+            parser.error(f"{option} must be an absolute path")
     if args.media_forward_receipt and not args.media_c2patool:
         parser.error("--media-forward-receipt requires --media-c2patool")
     if args.media_c2patool and not Path(args.media_c2patool).expanduser().is_absolute():
@@ -181,8 +214,6 @@ def run_gate(
     version = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
     artifact = output_dir / f"dircreative-{version}.tar.gz"
     checksums = output_dir / "SHA256SUMS"
-    extract_root = scratch / "release-extract"
-    extracted_package = extract_root / f"dircreative-{version}"
     archive_install_target = scratch / "archive-installed"
 
     preflight_cmd = [
@@ -199,31 +230,32 @@ def run_gate(
         "--expected-commit",
         sealed_commit,
     ]
-    require_tag = args.require_tag or not args.allow_unpublished
+    require_tag = not args.allow_unpublished
     if require_tag:
         preflight_cmd.append("--require-tag")
         build_cmd.append("--require-tag")
     if args.allow_unpublished:
         preflight_cmd.append("--allow-unpublished")
         build_cmd.append("--allow-unpublished")
-    verify_cmd = [
+    formal_install_cmd = [
         "python3",
-        "scripts/dircreative_verify_release.py",
+        "scripts/install_local_skill.py",
+        "--target",
+        str(archive_install_target),
+        "--formal-install",
         "--artifact",
         str(artifact),
         "--checksums",
         str(checksums),
-        "--expect-current-head",
-        "--reproducible-source",
-        str(ROOT),
-        "--require-reproducible-match",
         "--expected-commit",
         sealed_commit,
-        "--extract-to",
-        str(extract_root),
+        "--expected-tag",
+        f"v{version}",
+        "--reproducible-source",
+        str(ROOT),
     ]
-    if require_tag and not args.allow_unpublished:
-        verify_cmd.extend(["--expected-tag", f"v{version}", "--require-remote-tag"])
+    if args.allow_unpublished:
+        formal_install_cmd.append("--allow-unpublished")
 
     steps = [
         Step("exact commit release preflight", preflight_cmd, ROOT),
@@ -268,22 +300,10 @@ def run_gate(
         Step("diff whitespace check", ["git", "diff", "--check"], ROOT),
         Step("release artifact build", build_cmd, ROOT),
         Step(
-            "release artifact verification",
-            verify_cmd,
+            "verified formal artifact install",
+            formal_install_cmd,
             ROOT,
             depends_on="release artifact build",
-        ),
-        Step(
-            "release artifact install",
-            [
-                "python3",
-                str(extracted_package / "scripts/install_local_skill.py"),
-                "--target",
-                str(archive_install_target),
-                "--formal-install",
-            ],
-            ROOT,
-            depends_on="release artifact verification",
         ),
         Step(
             "release artifact install parity",
@@ -293,8 +313,8 @@ def run_gate(
                 "--target",
                 str(archive_install_target),
             ],
-            extracted_package,
-            depends_on="release artifact install",
+            ROOT,
+            depends_on="verified formal artifact install",
         ),
         Step(
             "release artifact installed validation",
@@ -305,6 +325,36 @@ def run_gate(
     ]
     if args.media_forward_receipt:
         receipt = Path(args.media_forward_receipt).expanduser()
+        media_cmd = [
+            "python3",
+            "scripts/dircreative_media_forward_audit.py",
+            "--receipt",
+            str(receipt),
+            "--expected-commit",
+            sealed_commit,
+            "--c2patool",
+            str(Path(args.media_c2patool).expanduser()),
+        ]
+        if args.media_review_receipt:
+            media_cmd.extend(
+                [
+                    "--review-receipt",
+                    str(Path(args.media_review_receipt).expanduser()),
+                ]
+            )
+        if args.media_host_event_log:
+            media_cmd.extend(
+                ["--host-event-log", str(Path(args.media_host_event_log).expanduser())]
+            )
+        if args.media_review_host_event_log:
+            media_cmd.extend(
+                [
+                    "--review-host-event-log",
+                    str(Path(args.media_review_host_event_log).expanduser()),
+                ]
+            )
+        if args.require_media_forward:
+            media_cmd.append("--require-candidate-skill-execution")
         insertion_index = next(
             index for index, step in enumerate(steps) if step.label == "Goal autorun dry-run audit"
         )
@@ -312,16 +362,7 @@ def run_gate(
             insertion_index,
             Step(
                 "real image media-forward audit",
-                [
-                    "python3",
-                    "scripts/dircreative_media_forward_audit.py",
-                    "--receipt",
-                    str(receipt),
-                    "--expected-commit",
-                    sealed_commit,
-                    "--c2patool",
-                    str(Path(args.media_c2patool).expanduser()),
-                ],
+                media_cmd,
                 ROOT,
             ),
         )
@@ -371,7 +412,9 @@ def run_gate(
         else "RELEASE_GATE_SCOPE: DIR_ONLY (ADCO bilateral audit not run)"
     )
     print(
-        "MEDIA_FORWARD_SCOPE: VERIFIED_IMAGE_ONLY"
+        "MEDIA_FORWARD_SCOPE: UNSIGNED_HOST_TRACE_IMAGE_PLUS_INDEPENDENT_REVIEW"
+        if args.require_media_forward
+        else "MEDIA_FORWARD_SCOPE: PROVENANCE_ONLY_ALLOWED"
         if args.media_forward_receipt
         else "MEDIA_FORWARD_SCOPE: NOT_RUN"
     )
@@ -394,7 +437,7 @@ def run_gate(
             important_lines = [
                 line
                 for line in output.splitlines()
-                if line.startswith(("ok ", "STATUS:", "READINESS:", "QUALITY_AUDIT:", "CREATIVE_PRODUCTION_AUDIT:", "ADCO_NATIVE_", "DIRCREATIVE_MEDIA_FORWARD_AUDIT:", "GOAL_AUTORUN_AUDIT:", "LOOP_ENGINEERING_AUDIT:", "SECOND_LEVEL_DISPATCH_AUDIT:", "DIRCREATIVE_DIRECTOR_HARNESS_AUDIT:", "DIRCREATIVE_CREATIVE_COPY_DECK_AUDIT:", "DIRCREATIVE_MODEL_CAPABILITY_AUDIT:", "DIRCREATIVE_STATE_AUDIT_SELF_TEST=", "RELEASE_PREFLIGHT:", "RELEASE_BUILD:", "RELEASE_ARTIFACT_VERIFY:", "PROJECT_AGENTS_AUDIT:", "film_grade_ready:", "commercial_grade_ready:", "adapter_source_of_truth:", "review_surface:", "goal_autorun_dry_run_complete:", "real_media_generated:", "typed_action_observation_contract:", "receipt_persistence_contract:", "retry_loop_contract:", "council_review_contract:", "codex_thread_boundary_contract:", "second_level_dispatch_contract:", "goal_autorun_dry_run_boundary:", "live_acceptance_boundary:", "creative_quality_approval_claimed:", "stateless_subagent_tool_verdict:", "negative_fixture_rejected:", "second_level_subagents_are_durable_truth:", "second_level_subagents_may_write_live_acceptance:", "second_level_subagents_may_mark_goal_complete:", "VISUAL_DOGFOOD_PAGES:", "INSTALL_PARITY:", "TECHNICAL_READINESS:", "GOAL_COMPLETE:", "OBJECTIVE_TECHNICAL_READINESS:", "OBJECTIVE_COMPLETE:", "COUNCIL_AUDIT:", "THREAD_AUDIT:", "CHAT_SURFACE_AUDIT:", "NEXT_REQUIRED_ACTION:", "completion_estimate_percent:", "technical_readiness:", "objective_complete:", "remaining_blocker:", "estimated_remaining_time:", "latest_commit:", "worktree_state:", "required_viewpoints_present:", "council_trigger_surface_present:", "external_research_boundary_present:", "failure_ids_present:", "main_controller_pinned:", "disposable_workers_archived:", "unintended_worker_worktrees_present:", "git_worktree_count:", "completion_claim_allowed:", "runbook_present:", "template_guarded:", "live_receipt_absent:", "technical_readiness_pass:", "objective_still_blocked:", "receipt_creation_allowed:", "acceptance_mode:", "require_installed:", "installed DIRcreative", "NOTE:", "NEXT_USER_DECISION:"))
+                if line.startswith(("ok ", "STATUS:", "READINESS:", "QUALITY_AUDIT:", "CREATIVE_PRODUCTION_AUDIT:", "ADCO_NATIVE_", "DIRCREATIVE_MEDIA_FORWARD_AUDIT:", "media_provenance:", "candidate_skill_execution:", "tool_request_binding:", "independent_visual_review:", "continuity_quality:", "video_verified:", "GOAL_AUTORUN_AUDIT:", "LOOP_ENGINEERING_AUDIT:", "SECOND_LEVEL_DISPATCH_AUDIT:", "DIRCREATIVE_DIRECTOR_HARNESS_AUDIT:", "DIRCREATIVE_CREATIVE_COPY_DECK_AUDIT:", "DIRCREATIVE_MODEL_CAPABILITY_AUDIT:", "DIRCREATIVE_STATE_AUDIT_SELF_TEST=", "RELEASE_PREFLIGHT:", "RELEASE_BUILD:", "RELEASE_ARTIFACT_VERIFY:", "formal_release_commit:", "formal_artifact_sha256:", "formal_manifest_sha256:", "FORMAL_INSTALL_MODE:", "PROJECT_AGENTS_AUDIT:", "film_grade_ready:", "commercial_grade_ready:", "adapter_source_of_truth:", "review_surface:", "goal_autorun_dry_run_complete:", "real_media_generated:", "typed_action_observation_contract:", "receipt_persistence_contract:", "retry_loop_contract:", "council_review_contract:", "codex_thread_boundary_contract:", "second_level_dispatch_contract:", "goal_autorun_dry_run_boundary:", "live_acceptance_boundary:", "creative_quality_approval_claimed:", "stateless_subagent_tool_verdict:", "negative_fixture_rejected:", "second_level_subagents_are_durable_truth:", "second_level_subagents_may_write_live_acceptance:", "second_level_subagents_may_mark_goal_complete:", "VISUAL_DOGFOOD_PAGES:", "INSTALL_PARITY:", "TECHNICAL_READINESS:", "GOAL_COMPLETE:", "OBJECTIVE_TECHNICAL_READINESS:", "OBJECTIVE_COMPLETE:", "COUNCIL_AUDIT:", "THREAD_AUDIT:", "CHAT_SURFACE_AUDIT:", "NEXT_REQUIRED_ACTION:", "completion_estimate_percent:", "technical_readiness:", "objective_complete:", "remaining_blocker:", "estimated_remaining_time:", "latest_commit:", "worktree_state:", "required_viewpoints_present:", "council_trigger_surface_present:", "external_research_boundary_present:", "failure_ids_present:", "main_controller_pinned:", "disposable_workers_archived:", "unintended_worker_worktrees_present:", "git_worktree_count:", "completion_claim_allowed:", "runbook_present:", "template_guarded:", "live_receipt_absent:", "technical_readiness_pass:", "objective_still_blocked:", "receipt_creation_allowed:", "acceptance_mode:", "require_installed:", "installed DIRcreative", "NOTE:", "NEXT_USER_DECISION:"))
             ]
             for line in important_lines[-8:]:
                 print(f"       {line}")
@@ -410,11 +453,11 @@ def run_gate(
     if failures:
         gate_marker = (
             "BILATERAL_MEDIA_RELEASE_GATE"
-            if args.adco_repo and args.media_forward_receipt
+            if args.adco_repo and args.require_media_forward
             else "BILATERAL_RELEASE_GATE"
             if args.adco_repo
             else "DIR_MEDIA_RELEASE_GATE"
-            if args.media_forward_receipt
+            if args.require_media_forward
             else "DIR_RELEASE_GATE"
         )
         print(f"{gate_marker}: FAIL")
@@ -426,11 +469,11 @@ def run_gate(
 
     gate_marker = (
         "BILATERAL_MEDIA_RELEASE_GATE"
-        if args.adco_repo and args.media_forward_receipt
+        if args.adco_repo and args.require_media_forward
         else "BILATERAL_RELEASE_GATE"
         if args.adco_repo
         else "DIR_MEDIA_RELEASE_GATE"
-        if args.media_forward_receipt
+        if args.require_media_forward
         else "DIR_RELEASE_GATE"
     )
     print(f"{gate_marker}: PASS")

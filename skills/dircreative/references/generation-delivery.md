@@ -32,6 +32,15 @@ Once authorized:
   representative assets and approve, reject, or retry them yourself. Continue
   without asking for test-only confirmation; test evidence is never client or
   production approval.
+- Only for a formal release or global-install forward test, keep the execution
+  evidence separate from visual judgment: bind the exact candidate, invocation,
+  prompt, ordered references, tool observation, and outputs to a bounded prefix
+  of the host's raw event log. The invocation must be an exact sealed user request,
+  not a receipt-only string. Then give a different task a sealed request containing
+  only raw references, outputs, and rubric; bind one actual image-view event per
+  output plus the review claim. Label this evidence `unsigned_host_trace` and label
+  visual conclusions as reviewer judgment. Do not add this receipt work to normal
+  creative generation.
 
 ## Client-visible delivery
 

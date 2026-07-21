@@ -1,0 +1,248 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://paperrolling.local/dircreative/media-forward-execution-v2.schema.json",
+  "title": "DIRcreative Media Forward Execution Receipt v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "product",
+    "media_type",
+    "candidate",
+    "host_trace",
+    "host_execution",
+    "reference_assets",
+    "continuity_lock",
+    "generation_calls",
+    "attempts",
+    "shots",
+    "video_verified",
+    "limitations"
+  ],
+  "properties": {
+    "schema_version": {"const": "2.0.0"},
+    "product": {"const": "DIRcreative"},
+    "media_type": {"const": "image"},
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["commit", "observed_skill_paths"],
+      "properties": {
+        "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "observed_skill_paths": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {"$ref": "#/$defs/pathHash"}
+        }
+      }
+    },
+    "host_trace": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "thread_id",
+        "prefix_bytes",
+        "prefix_sha256",
+        "invocation_event_id",
+        "candidate_observation_event_id",
+        "evidence_level",
+        "cryptographically_signed"
+      ],
+      "properties": {
+        "thread_id": {"type": "string", "minLength": 1, "maxLength": 256},
+        "prefix_bytes": {"type": "integer", "minimum": 1, "maximum": 536870912},
+        "prefix_sha256": {"$ref": "#/$defs/sha256"},
+        "invocation_event_id": {"type": "string", "minLength": 1, "maxLength": 256},
+        "candidate_observation_event_id": {"type": "string", "minLength": 1, "maxLength": 256},
+        "evidence_level": {"const": "unsigned_host_trace"},
+        "cryptographically_signed": {"const": false}
+      }
+    },
+    "host_execution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "actor_id",
+        "task_id",
+        "explicit_invocation",
+        "explicit_invocation_sha256",
+        "started_at",
+        "completed_at",
+        "evidence_level",
+        "cryptographically_signed"
+      ],
+      "properties": {
+        "actor_id": {"type": "string", "minLength": 1, "maxLength": 256},
+        "task_id": {"type": "string", "minLength": 1, "maxLength": 256},
+        "explicit_invocation": {"type": "string", "minLength": 1},
+        "explicit_invocation_sha256": {"$ref": "#/$defs/sha256"},
+        "started_at": {"type": "string", "format": "date-time"},
+        "completed_at": {"type": "string", "format": "date-time"},
+        "evidence_level": {"const": "unsigned_host_trace"},
+        "cryptographically_signed": {"const": false}
+      }
+    },
+    "reference_assets": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["reference_id", "role", "artifact"],
+        "properties": {
+          "reference_id": {"$ref": "#/$defs/snakeId"},
+          "role": {"$ref": "#/$defs/snakeId"},
+          "artifact": {"$ref": "#/$defs/artifact"}
+        }
+      }
+    },
+    "continuity_lock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["identity_reference_ids", "locked_attributes"],
+      "properties": {
+        "identity_reference_ids": {
+          "type": "array",
+          "minItems": 2,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/snakeId"}
+        },
+        "locked_attributes": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "generation_calls": {
+      "type": "array",
+      "minItems": 5,
+      "items": {"$ref": "#/$defs/generationCall"}
+    },
+    "attempts": {
+      "type": "array",
+      "minItems": 2,
+      "items": {"$ref": "#/$defs/attempt"}
+    },
+    "shots": {
+      "type": "array",
+      "minItems": 3,
+      "items": {"$ref": "#/$defs/shot"}
+    },
+    "video_verified": {"const": false},
+    "limitations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1}
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "snakeId": {"type": "string", "pattern": "^[a-z][a-z0-9_]{2,63}$"},
+    "pathHash": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "width", "height"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "width": {"type": "integer", "minimum": 1},
+        "height": {"type": "integer", "minimum": 1}
+      }
+    },
+    "referenceInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_id", "role", "sha256"],
+      "properties": {
+        "source_id": {"type": "string", "pattern": "^(reference|generation):[a-z][a-z0-9_]{2,63}$"},
+        "role": {"$ref": "#/$defs/snakeId"},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "generationCall": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "generation_id",
+        "host_call_id",
+        "host_call_id_status",
+        "provider_response_id",
+        "provider_response_id_status",
+        "tool",
+        "provider",
+        "model",
+        "started_at",
+        "completed_at",
+        "prompt",
+        "prompt_sha256",
+        "reference_inputs",
+        "input_manifest_sha256",
+        "output"
+      ],
+      "properties": {
+        "generation_id": {"$ref": "#/$defs/snakeId"},
+        "host_call_id": {"type": "string", "minLength": 1, "maxLength": 256},
+        "host_call_id_status": {"const": "available"},
+        "provider_response_id": {"type": ["string", "null"]},
+        "provider_response_id_status": {"enum": ["available", "unavailable"]},
+        "tool": {"const": "image_gen.imagegen"},
+        "provider": {"const": "OpenAI Media Service"},
+        "model": {"const": "gpt-image 2.0"},
+        "started_at": {"type": "string", "format": "date-time"},
+        "completed_at": {"type": "string", "format": "date-time"},
+        "prompt": {"type": "string", "minLength": 1},
+        "prompt_sha256": {"$ref": "#/$defs/sha256"},
+        "reference_inputs": {
+          "type": "array",
+          "minItems": 2,
+          "items": {"$ref": "#/$defs/referenceInput"}
+        },
+        "input_manifest_sha256": {"$ref": "#/$defs/sha256"},
+        "output": {"$ref": "#/$defs/artifact"}
+      }
+    },
+    "attempt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["attempt_id", "generation_id", "retry_of", "corrected_layer", "unchanged_lock_sha256"],
+      "properties": {
+        "attempt_id": {"$ref": "#/$defs/snakeId"},
+        "generation_id": {"$ref": "#/$defs/snakeId"},
+        "retry_of": {"type": ["string", "null"]},
+        "corrected_layer": {"type": ["string", "null"]},
+        "unchanged_lock_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "shot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "shot_id",
+        "generation_id",
+        "inherits_from",
+        "continuity_lock_sha256",
+        "shot_delta",
+        "shot_delta_sha256"
+      ],
+      "properties": {
+        "shot_id": {"$ref": "#/$defs/snakeId"},
+        "generation_id": {"$ref": "#/$defs/snakeId"},
+        "inherits_from": {"$ref": "#/$defs/snakeId"},
+        "continuity_lock_sha256": {"$ref": "#/$defs/sha256"},
+        "shot_delta": {"type": "string", "minLength": 1},
+        "shot_delta_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    }
+  }
+}
