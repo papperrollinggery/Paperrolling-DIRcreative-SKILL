@@ -164,6 +164,31 @@ These deterministic source fixtures prove routing and answer production. They do
 not prove external model generation, client approval, a published release, or
 live creative acceptance.
 
+Visual asset plan v2.2 binds the plan to a colocated source inventory, the
+approved shot-card file, full per-shot creative truth, and their canonical
+SHA-256 values. Shot-card ranges must be continuous, agree with declared
+durations, end at the film duration, and land on the selected frame rate.
+`--stamp-evidence` accepts dependency-free canonical PNG evidence, full-decodes
+each required raster under one normalization profile, checks scene/style/shot
+and clean-input frames against the delivery aspect, records file and pixel
+hashes, and emits only a bound technical receipt; the decoder name is diagnostic
+and does not make the receipt environment-specific. It never grants visual QA.
+JPEG/WebP may remain source or preview media but must be normalized to canonical
+PNG before completion. Every completion-path asset,
+including `user_locked` and `reused_locked`, needs a role-specific review entry
+in a separate package-local review manifest read as one hash-bound byte snapshot,
+and a receipt bound to that file's SHA-256. Generated paths must remain relative
+to the plan directory. These
+local receipts are content-bound attestations, not cryptographic signatures or
+client/broadcaster acceptance.
+
+```bash
+python3 scripts/dircreative_visual_asset_plan.py \
+  --plan /path/to/package/visual-asset-plan.json \
+  --stamp-evidence \
+  --output /path/to/package/visual-asset-plan.json
+```
+
 For a real model-level forward test, install the source package into an isolated
 repo-local `.agents/skills/dircreative` target and run:
 

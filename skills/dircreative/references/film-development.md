@@ -62,8 +62,15 @@ frames and production instructions; it does not replace scene truth or clean
 video inputs. Reuse, derive, generate, and assemble are explicit actions.
 
 Use `runtime/visual-asset-plan.schema.json` when this matrix is persisted. Studio
-may claim `plan_complete` after coverage is valid, but not image generation.
-`representative_sample` always remains incomplete for whole-film coverage.
+may claim `plan_complete` after inventory-bound coverage is valid, but not image
+generation. Persist exact per-shot truth and exact storyboard/direct-input
+dependencies; bind the approved shot-card file and preserve each shot's
+timecode, duration, narrative purpose, shot design, action, sound/edit, and
+continuity/model notes alongside its scene and entity coverage. Each storyboard,
+director page, and clean input inherits a hash of the relevant truth. Do not
+replace these records with global entity lists. A representative
+sample may claim only `sample_plan_complete`. `representative_sample` always
+remains incomplete for whole-film coverage.
 
 ## Dynamic perspectives
 

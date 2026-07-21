@@ -1,0 +1,12 @@
+{
+  "schema_version": "1.0",
+  "inventory": "valid-coverage-unit-inventory.json",
+  "cards": [
+    {"shot_id": "S01", "timecode": "00:00-00:05", "duration_seconds": 5, "shot_design": "24mm locked office wide with clear desk geography", "action": "The protagonist sorts urgent work without touching the product", "sound_edit": "Office room tone and keyboard rhythm establish pressure", "continuity_model": "Desk axis, wardrobe, chair position, and screen direction remain locked"},
+    {"shot_id": "S02", "timecode": "00:05-00:10", "duration_seconds": 5, "shot_design": "50mm controlled push along the established desk axis", "action": "The protagonist pauses and reaches toward the product area", "sound_edit": "Keyboard rhythm thins and one breath creates the transition", "continuity_model": "Right-hand reach and eyeline continue directly from S01"},
+    {"shot_id": "S03", "timecode": "00:10-00:15", "duration_seconds": 5, "shot_design": "85mm product and ice-cup insert with protected label", "action": "The bottle opens and pours once into the verified cup", "sound_edit": "Seal crack, pour, and ice movement replace the office bed", "continuity_model": "Bottle, label, liquid level, cup, ice, and right hand remain exact"},
+    {"shot_id": "S04", "timecode": "00:15-00:20", "duration_seconds": 5, "shot_design": "75mm profile close-up held without an energy-effect transition", "action": "The protagonist takes one sip and allows a restrained pause", "sound_edit": "One sip and quiet breath play without an impact effect", "continuity_model": "Cup level, bottle-open state, hand ownership, and wardrobe remain fixed"},
+    {"shot_id": "S05", "timecode": "00:20-00:25", "duration_seconds": 5, "shot_design": "35mm return to the locked office geography and work surface", "action": "The protagonist resumes one concrete task at the same desk", "sound_edit": "Keyboard rhythm returns at the original natural intensity", "continuity_model": "No location reset, costume change, or unsupported performance jump"},
+    {"shot_id": "S06", "timecode": "00:25-00:30", "duration_seconds": 5, "shot_design": "65mm broadcast-safe bottle composition with clear negative space", "action": "The product and cup hold while the work context stays visible", "sound_edit": "Office tone resolves beneath a short brand mnemonic", "continuity_model": "Bottle, cup, label, title-safe field, and legal-safe field remain readable"}
+  ]
+}

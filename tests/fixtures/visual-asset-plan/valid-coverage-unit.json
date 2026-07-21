@@ -1,6 +1,13 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "2.2",
   "project_id": "coverage-validator-unit-30s",
+  "truth_revision": "approved-r1",
+  "truth_locked_at": "2026-07-21T00:00:00Z",
+  "inventory_file": "valid-coverage-unit-inventory.json",
+  "inventory_sha256": "4a0c495cb34cd79addc1df849fb386fa99039748dc37308a12a3585261e7d1c9",
+  "shot_cards_file": "valid-coverage-unit-shot-cards.json",
+  "shot_cards_sha256": "e3a551b95e2d8d32f82f8a1ef7d3d1972f60a1c9ad74201557cc630dd5e93716",
+  "shot_truth_sha256": "942a1da2e66f84a317c6e434ac0e18d20eceb0a2f7fdd4eff5bdaddc6d875293",
   "scope": "sequence",
   "duration_seconds": 30,
   "delivery_profile": {
@@ -15,30 +22,189 @@
     "brand_endframe_min_seconds": 3,
     "target_master_spec_status": "requires_target_spec"
   },
-  "scene_ids": ["office-desk"],
-  "character_ids": ["protagonist"],
-  "product_ids": ["coldbrew-bottle"],
-  "prop_ids": ["ice-cup-state"],
-  "shot_ids": ["S01", "S02", "S03", "S04", "S05", "S06"],
-  "rhythm_point_ids": ["R01", "R02", "R03", "R04", "R05", "R06"],
+  "scene_ids": [
+    "office-desk"
+  ],
+  "character_ids": [
+    "protagonist"
+  ],
+  "product_ids": [
+    "coldbrew-bottle"
+  ],
+  "prop_ids": [
+    "ice-cup-state"
+  ],
+  "shot_ids": [
+    "S01",
+    "S02",
+    "S03",
+    "S04",
+    "S05",
+    "S06"
+  ],
+  "shot_truth": [
+    {
+      "shot_id": "S01",
+      "scene_id": "office-desk",
+      "character_ids": [
+        "protagonist"
+      ],
+      "product_ids": [],
+      "prop_ids": [],
+      "generation_unit_id": "G01",
+      "narrative_purpose": "Establish the office pressure and protagonist position without expository text.",
+      "timecode": "00:00-00:05",
+      "duration_seconds": 5,
+      "shot_design": "24mm locked office wide with clear desk geography",
+      "action": "The protagonist sorts urgent work without touching the product",
+      "sound_edit": "Office room tone and keyboard rhythm establish pressure",
+      "continuity_model": "Desk axis, wardrobe, chair position, and screen direction remain locked"
+    },
+    {
+      "shot_id": "S02",
+      "scene_id": "office-desk",
+      "character_ids": [
+        "protagonist"
+      ],
+      "product_ids": [],
+      "prop_ids": [],
+      "generation_unit_id": "G01",
+      "narrative_purpose": "Move from accumulated pressure toward the product action while preserving screen direction.",
+      "timecode": "00:05-00:10",
+      "duration_seconds": 5,
+      "shot_design": "50mm controlled push along the established desk axis",
+      "action": "The protagonist pauses and reaches toward the product area",
+      "sound_edit": "Keyboard rhythm thins and one breath creates the transition",
+      "continuity_model": "Right-hand reach and eyeline continue directly from S01"
+    },
+    {
+      "shot_id": "S03",
+      "scene_id": "office-desk",
+      "character_ids": [
+        "protagonist"
+      ],
+      "product_ids": [
+        "coldbrew-bottle"
+      ],
+      "prop_ids": [
+        "ice-cup-state"
+      ],
+      "generation_unit_id": "G02",
+      "narrative_purpose": "Show the bottle and cup action with readable identity, level, hand, and label states.",
+      "timecode": "00:10-00:15",
+      "duration_seconds": 5,
+      "shot_design": "85mm product and ice-cup insert with protected label",
+      "action": "The bottle opens and pours once into the verified cup",
+      "sound_edit": "Seal crack, pour, and ice movement replace the office bed",
+      "continuity_model": "Bottle, label, liquid level, cup, ice, and right hand remain exact"
+    },
+    {
+      "shot_id": "S04",
+      "scene_id": "office-desk",
+      "character_ids": [
+        "protagonist"
+      ],
+      "product_ids": [
+        "coldbrew-bottle"
+      ],
+      "prop_ids": [
+        "ice-cup-state"
+      ],
+      "generation_unit_id": "G02",
+      "narrative_purpose": "Hold the first sip as a performance beat without implying an unapproved product effect.",
+      "timecode": "00:15-00:20",
+      "duration_seconds": 5,
+      "shot_design": "75mm profile close-up held without an energy-effect transition",
+      "action": "The protagonist takes one sip and allows a restrained pause",
+      "sound_edit": "One sip and quiet breath play without an impact effect",
+      "continuity_model": "Cup level, bottle-open state, hand ownership, and wardrobe remain fixed"
+    },
+    {
+      "shot_id": "S05",
+      "scene_id": "office-desk",
+      "character_ids": [
+        "protagonist"
+      ],
+      "product_ids": [],
+      "prop_ids": [],
+      "generation_unit_id": "G03",
+      "narrative_purpose": "Resolve the performance beat with a concrete return to work and stable spatial continuity.",
+      "timecode": "00:20-00:25",
+      "duration_seconds": 5,
+      "shot_design": "35mm return to the locked office geography and work surface",
+      "action": "The protagonist resumes one concrete task at the same desk",
+      "sound_edit": "Keyboard rhythm returns at the original natural intensity",
+      "continuity_model": "No location reset, costume change, or unsupported performance jump"
+    },
+    {
+      "shot_id": "S06",
+      "scene_id": "office-desk",
+      "character_ids": [
+        "protagonist"
+      ],
+      "product_ids": [
+        "coldbrew-bottle"
+      ],
+      "prop_ids": [
+        "ice-cup-state"
+      ],
+      "generation_unit_id": "G03",
+      "narrative_purpose": "Finish on a broadcast-readable product composition with protected brand and legal areas.",
+      "timecode": "00:25-00:30",
+      "duration_seconds": 5,
+      "shot_design": "65mm broadcast-safe bottle composition with clear negative space",
+      "action": "The product and cup hold while the work context stays visible",
+      "sound_edit": "Office tone resolves beneath a short brand mnemonic",
+      "continuity_model": "Bottle, cup, label, title-safe field, and legal-safe field remain readable"
+    }
+  ],
+  "rhythm_point_ids": [
+    "R01",
+    "R02",
+    "R03",
+    "R04",
+    "R05",
+    "R06"
+  ],
   "style_reference_required": true,
   "generation_units": [
     {
       "unit_id": "G01",
-      "shot_ids": ["S01", "S02"],
-      "direct_input_required": true,
+      "shot_ids": [
+        "S01",
+        "S02"
+      ],
+      "direct_input_min": 1,
+      "direct_input_max": 1,
+      "direct_input_roles": [
+        "clean_first_frame"
+      ],
       "direct_input_not_required_reason": ""
     },
     {
       "unit_id": "G02",
-      "shot_ids": ["S03", "S04"],
-      "direct_input_required": true,
+      "shot_ids": [
+        "S03",
+        "S04"
+      ],
+      "direct_input_min": 1,
+      "direct_input_max": 1,
+      "direct_input_roles": [
+        "clean_key_frame"
+      ],
       "direct_input_not_required_reason": ""
     },
     {
       "unit_id": "G03",
-      "shot_ids": ["S05", "S06"],
-      "direct_input_required": true,
+      "shot_ids": [
+        "S05",
+        "S06"
+      ],
+      "direct_input_min": 1,
+      "direct_input_max": 1,
+      "direct_input_roles": [
+        "clean_end_frame"
+      ],
       "direct_input_not_required_reason": ""
     }
   ],
@@ -49,209 +215,573 @@
       "required": true,
       "action": "generate",
       "purpose": "Lock the recurring protagonist face, body proportion, hair, wardrobe, and handedness.",
-      "coverage": {"scene_ids": [], "character_ids": ["protagonist"], "product_ids": [], "prop_ids": [], "shot_ids": [], "generation_unit_ids": []},
+      "coverage": {
+        "scene_ids": [],
+        "character_ids": [
+          "protagonist"
+        ],
+        "product_ids": [],
+        "prop_ids": [],
+        "shot_ids": [],
+        "generation_unit_ids": []
+      },
       "inherits_from": [],
       "planning_only": true,
       "direct_video_input": false,
       "status": "planned",
-      "qa_status": "not_run",
-      "generated_file": ""
+      "generated_file": "",
+      "generated_sha256": "",
+      "generated_pixel_sha256": "",
+      "generated_perceptual_hash": "",
+      "truth_sha256": "8ec3b33e26385443b8ee94e41d22f4756724dc3f471e263b78d43fb258e8c3fa",
+      "technical_receipt": null,
+      "visual_qa_receipt": null
     },
     {
-      "asset_id": "identity-product-coldbrew",
+      "asset_id": "identity-product-coldbrew-bottle",
       "role": "product_identity_board",
       "required": true,
       "action": "generate",
-      "purpose": "Lock bottle silhouette, label, cap, liquid color, and hero orientation.",
-      "coverage": {"scene_ids": [], "character_ids": [], "product_ids": ["coldbrew-bottle"], "prop_ids": [], "shot_ids": [], "generation_unit_ids": []},
+      "purpose": "Lock the cold-brew bottle silhouette, label, cap, liquid color, and hero orientation.",
+      "coverage": {
+        "scene_ids": [],
+        "character_ids": [],
+        "product_ids": [
+          "coldbrew-bottle"
+        ],
+        "prop_ids": [],
+        "shot_ids": [],
+        "generation_unit_ids": []
+      },
       "inherits_from": [],
       "planning_only": true,
       "direct_video_input": false,
       "status": "planned",
-      "qa_status": "not_run",
-      "generated_file": ""
+      "generated_file": "",
+      "generated_sha256": "",
+      "generated_pixel_sha256": "",
+      "generated_perceptual_hash": "",
+      "truth_sha256": "24671cd73341a52990dac8e3e402a8085c1a5b2ae00bf50efd5a54ad37f2dc9c",
+      "technical_receipt": null,
+      "visual_qa_receipt": null
     },
     {
-      "asset_id": "continuity-prop-ice-cup",
+      "asset_id": "continuity-prop-ice-cup-state",
       "role": "prop_continuity_board",
       "required": true,
       "action": "generate",
-      "purpose": "Lock cup, cap, ice, liquid level, and state changes through the pour and end frame.",
-      "coverage": {"scene_ids": [], "character_ids": [], "product_ids": [], "prop_ids": ["ice-cup-state"], "shot_ids": ["S03", "S04", "S06"], "generation_unit_ids": []},
-      "inherits_from": ["identity-product-coldbrew"],
+      "purpose": "Lock the cup, ice, liquid level, and state changes through the pour and end frame.",
+      "coverage": {
+        "scene_ids": [],
+        "character_ids": [],
+        "product_ids": [],
+        "prop_ids": [
+          "ice-cup-state"
+        ],
+        "shot_ids": [
+          "S03",
+          "S04",
+          "S06"
+        ],
+        "generation_unit_ids": []
+      },
+      "inherits_from": [],
       "planning_only": true,
       "direct_video_input": false,
       "status": "planned",
-      "qa_status": "not_run",
-      "generated_file": ""
+      "generated_file": "",
+      "generated_sha256": "",
+      "generated_pixel_sha256": "",
+      "generated_perceptual_hash": "",
+      "truth_sha256": "537e44136054885b663acc2ce6792d8c080279e443b68b97c340778cf4fa84c5",
+      "technical_receipt": null,
+      "visual_qa_receipt": null
     },
     {
-      "asset_id": "scene-office-geography",
+      "asset_id": "scene-office-desk",
       "role": "scene_geography_camera_fov_reference",
       "required": true,
       "action": "generate",
       "purpose": "Lock desk geography, product position, screen direction, light sources, camera positions, and fields of view.",
-      "coverage": {"scene_ids": ["office-desk"], "character_ids": [], "product_ids": [], "prop_ids": [], "shot_ids": ["S01", "S02", "S03", "S04", "S05", "S06"], "generation_unit_ids": []},
+      "coverage": {
+        "scene_ids": [
+          "office-desk"
+        ],
+        "character_ids": [],
+        "product_ids": [],
+        "prop_ids": [],
+        "shot_ids": [
+          "S01",
+          "S02",
+          "S03",
+          "S04",
+          "S05",
+          "S06"
+        ],
+        "generation_unit_ids": []
+      },
       "inherits_from": [],
       "planning_only": true,
       "direct_video_input": false,
       "status": "planned",
-      "qa_status": "not_run",
-      "generated_file": ""
+      "generated_file": "",
+      "generated_sha256": "",
+      "generated_pixel_sha256": "",
+      "generated_perceptual_hash": "",
+      "truth_sha256": "21a2ad7b6d3273d621879e899de3f3f78fccd9d675f770b8984ce3b82b7b8859",
+      "technical_receipt": null,
+      "visual_qa_receipt": null
     },
     {
-      "asset_id": "look-office-noise-to-clarity",
+      "asset_id": "look-whole-film",
       "role": "lighting_material_style_board",
       "required": true,
       "action": "generate",
-      "purpose": "Lock the shift from compressed cool office light to clear neutral product light and stable final grade.",
-      "coverage": {"scene_ids": ["office-desk"], "character_ids": [], "product_ids": [], "prop_ids": [], "shot_ids": ["S01", "S02", "S03", "S04", "S05", "S06"], "generation_unit_ids": []},
-      "inherits_from": ["scene-office-geography"],
+      "purpose": "Lock whole-film lighting, material, atmosphere, optics, and grade transitions without replacing scene geography.",
+      "coverage": {
+        "scene_ids": [
+          "office-desk"
+        ],
+        "character_ids": [],
+        "product_ids": [],
+        "prop_ids": [],
+        "shot_ids": [
+          "S01",
+          "S02",
+          "S03",
+          "S04",
+          "S05",
+          "S06"
+        ],
+        "generation_unit_ids": []
+      },
+      "inherits_from": [
+        "scene-office-desk"
+      ],
       "planning_only": true,
       "direct_video_input": false,
       "status": "planned",
-      "qa_status": "not_run",
-      "generated_file": ""
+      "generated_file": "",
+      "generated_sha256": "",
+      "generated_pixel_sha256": "",
+      "generated_perceptual_hash": "",
+      "truth_sha256": "e1ae87b027e7109e981d142ef38bacc7d59fe33cfcbb64e0063ff6c440c0b67d",
+      "technical_receipt": null,
+      "visual_qa_receipt": null
     },
     {
       "asset_id": "storyboard-frame-S01",
       "role": "storyboard_frame",
       "required": true,
       "action": "generate",
-      "purpose": "Visualize the approved S01 frame without production text.",
-      "coverage": {"scene_ids": ["office-desk"], "character_ids": ["protagonist"], "product_ids": [], "prop_ids": [], "shot_ids": ["S01"], "generation_unit_ids": ["G01"]},
-      "inherits_from": ["identity-character-protagonist", "scene-office-geography", "look-office-noise-to-clarity"],
+      "purpose": "Visualize S01: Establish the office pressure and protagonist position without expository text.",
+      "coverage": {
+        "scene_ids": [
+          "office-desk"
+        ],
+        "character_ids": [
+          "protagonist"
+        ],
+        "product_ids": [],
+        "prop_ids": [],
+        "shot_ids": [
+          "S01"
+        ],
+        "generation_unit_ids": [
+          "G01"
+        ]
+      },
+      "inherits_from": [
+        "scene-office-desk",
+        "identity-character-protagonist",
+        "look-whole-film"
+      ],
       "planning_only": true,
       "direct_video_input": false,
       "status": "planned",
-      "qa_status": "not_run",
-      "generated_file": ""
+      "generated_file": "",
+      "generated_sha256": "",
+      "generated_pixel_sha256": "",
+      "generated_perceptual_hash": "",
+      "truth_sha256": "d2ebe96ff49c484835a8d82f55177c4354848c9fba10879601207c1530b77323",
+      "technical_receipt": null,
+      "visual_qa_receipt": null
     },
     {
       "asset_id": "storyboard-frame-S02",
       "role": "storyboard_frame",
       "required": true,
       "action": "generate",
-      "purpose": "Visualize the approved S02 frame without production text.",
-      "coverage": {"scene_ids": ["office-desk"], "character_ids": ["protagonist"], "product_ids": [], "prop_ids": [], "shot_ids": ["S02"], "generation_unit_ids": ["G01"]},
-      "inherits_from": ["identity-character-protagonist", "scene-office-geography", "look-office-noise-to-clarity"],
+      "purpose": "Visualize S02: Move from accumulated pressure toward the product action while preserving screen direction.",
+      "coverage": {
+        "scene_ids": [
+          "office-desk"
+        ],
+        "character_ids": [
+          "protagonist"
+        ],
+        "product_ids": [],
+        "prop_ids": [],
+        "shot_ids": [
+          "S02"
+        ],
+        "generation_unit_ids": [
+          "G01"
+        ]
+      },
+      "inherits_from": [
+        "scene-office-desk",
+        "identity-character-protagonist",
+        "look-whole-film"
+      ],
       "planning_only": true,
       "direct_video_input": false,
       "status": "planned",
-      "qa_status": "not_run",
-      "generated_file": ""
+      "generated_file": "",
+      "generated_sha256": "",
+      "generated_pixel_sha256": "",
+      "generated_perceptual_hash": "",
+      "truth_sha256": "a810f868053c27e3244023835791da264f0b40ff0408a1402e469fe6b0f1c691",
+      "technical_receipt": null,
+      "visual_qa_receipt": null
     },
     {
       "asset_id": "storyboard-frame-S03",
       "role": "storyboard_frame",
       "required": true,
       "action": "generate",
-      "purpose": "Visualize the approved S03 product-action frame without production text.",
-      "coverage": {"scene_ids": ["office-desk"], "character_ids": ["protagonist"], "product_ids": ["coldbrew-bottle"], "prop_ids": ["ice-cup-state"], "shot_ids": ["S03"], "generation_unit_ids": ["G02"]},
-      "inherits_from": ["identity-character-protagonist", "identity-product-coldbrew", "continuity-prop-ice-cup", "scene-office-geography", "look-office-noise-to-clarity"],
+      "purpose": "Visualize S03: Show the bottle and cup action with readable identity, level, hand, and label states.",
+      "coverage": {
+        "scene_ids": [
+          "office-desk"
+        ],
+        "character_ids": [
+          "protagonist"
+        ],
+        "product_ids": [
+          "coldbrew-bottle"
+        ],
+        "prop_ids": [
+          "ice-cup-state"
+        ],
+        "shot_ids": [
+          "S03"
+        ],
+        "generation_unit_ids": [
+          "G02"
+        ]
+      },
+      "inherits_from": [
+        "scene-office-desk",
+        "identity-character-protagonist",
+        "identity-product-coldbrew-bottle",
+        "continuity-prop-ice-cup-state",
+        "look-whole-film"
+      ],
       "planning_only": true,
       "direct_video_input": false,
       "status": "planned",
-      "qa_status": "not_run",
-      "generated_file": ""
+      "generated_file": "",
+      "generated_sha256": "",
+      "generated_pixel_sha256": "",
+      "generated_perceptual_hash": "",
+      "truth_sha256": "914d01c9ee329aa01fab6998fc426605999b57fa7780b423fdcbadfc9922426b",
+      "technical_receipt": null,
+      "visual_qa_receipt": null
     },
     {
       "asset_id": "storyboard-frame-S04",
       "role": "storyboard_frame",
       "required": true,
       "action": "generate",
-      "purpose": "Visualize the approved S04 first-sip frame without production text.",
-      "coverage": {"scene_ids": ["office-desk"], "character_ids": ["protagonist"], "product_ids": ["coldbrew-bottle"], "prop_ids": ["ice-cup-state"], "shot_ids": ["S04"], "generation_unit_ids": ["G02"]},
-      "inherits_from": ["identity-character-protagonist", "identity-product-coldbrew", "continuity-prop-ice-cup", "scene-office-geography", "look-office-noise-to-clarity"],
+      "purpose": "Visualize S04: Hold the first sip as a performance beat without implying an unapproved product effect.",
+      "coverage": {
+        "scene_ids": [
+          "office-desk"
+        ],
+        "character_ids": [
+          "protagonist"
+        ],
+        "product_ids": [
+          "coldbrew-bottle"
+        ],
+        "prop_ids": [
+          "ice-cup-state"
+        ],
+        "shot_ids": [
+          "S04"
+        ],
+        "generation_unit_ids": [
+          "G02"
+        ]
+      },
+      "inherits_from": [
+        "scene-office-desk",
+        "identity-character-protagonist",
+        "identity-product-coldbrew-bottle",
+        "continuity-prop-ice-cup-state",
+        "look-whole-film"
+      ],
       "planning_only": true,
       "direct_video_input": false,
       "status": "planned",
-      "qa_status": "not_run",
-      "generated_file": ""
+      "generated_file": "",
+      "generated_sha256": "",
+      "generated_pixel_sha256": "",
+      "generated_perceptual_hash": "",
+      "truth_sha256": "802e4e6a11f2d78b916e50d75364fdd0ab23c8a8d45be3ed9468c199e6372faf",
+      "technical_receipt": null,
+      "visual_qa_receipt": null
     },
     {
       "asset_id": "storyboard-frame-S05",
       "role": "storyboard_frame",
       "required": true,
       "action": "generate",
-      "purpose": "Visualize the approved S05 recovery frame without production text.",
-      "coverage": {"scene_ids": ["office-desk"], "character_ids": ["protagonist"], "product_ids": [], "prop_ids": [], "shot_ids": ["S05"], "generation_unit_ids": ["G03"]},
-      "inherits_from": ["identity-character-protagonist", "scene-office-geography", "look-office-noise-to-clarity"],
+      "purpose": "Visualize S05: Resolve the performance beat with a concrete return to work and stable spatial continuity.",
+      "coverage": {
+        "scene_ids": [
+          "office-desk"
+        ],
+        "character_ids": [
+          "protagonist"
+        ],
+        "product_ids": [],
+        "prop_ids": [],
+        "shot_ids": [
+          "S05"
+        ],
+        "generation_unit_ids": [
+          "G03"
+        ]
+      },
+      "inherits_from": [
+        "scene-office-desk",
+        "identity-character-protagonist",
+        "look-whole-film"
+      ],
       "planning_only": true,
       "direct_video_input": false,
       "status": "planned",
-      "qa_status": "not_run",
-      "generated_file": ""
+      "generated_file": "",
+      "generated_sha256": "",
+      "generated_pixel_sha256": "",
+      "generated_perceptual_hash": "",
+      "truth_sha256": "4a691da158944b1c096550b3e488198a2552fc1b01c6027a0e0a881c291275a6",
+      "technical_receipt": null,
+      "visual_qa_receipt": null
     },
     {
       "asset_id": "storyboard-frame-S06",
       "role": "storyboard_frame",
       "required": true,
       "action": "generate",
-      "purpose": "Visualize the approved S06 product end frame without production text.",
-      "coverage": {"scene_ids": ["office-desk"], "character_ids": ["protagonist"], "product_ids": ["coldbrew-bottle"], "prop_ids": ["ice-cup-state"], "shot_ids": ["S06"], "generation_unit_ids": ["G03"]},
-      "inherits_from": ["identity-character-protagonist", "identity-product-coldbrew", "continuity-prop-ice-cup", "scene-office-geography", "look-office-noise-to-clarity"],
+      "purpose": "Visualize S06: Finish on a broadcast-readable product composition with protected brand and legal areas.",
+      "coverage": {
+        "scene_ids": [
+          "office-desk"
+        ],
+        "character_ids": [
+          "protagonist"
+        ],
+        "product_ids": [
+          "coldbrew-bottle"
+        ],
+        "prop_ids": [
+          "ice-cup-state"
+        ],
+        "shot_ids": [
+          "S06"
+        ],
+        "generation_unit_ids": [
+          "G03"
+        ]
+      },
+      "inherits_from": [
+        "scene-office-desk",
+        "identity-character-protagonist",
+        "identity-product-coldbrew-bottle",
+        "continuity-prop-ice-cup-state",
+        "look-whole-film"
+      ],
       "planning_only": true,
       "direct_video_input": false,
       "status": "planned",
-      "qa_status": "not_run",
-      "generated_file": ""
+      "generated_file": "",
+      "generated_sha256": "",
+      "generated_pixel_sha256": "",
+      "generated_perceptual_hash": "",
+      "truth_sha256": "132647d4bf8987d30410d9d03789f37b2b2ca6f241786d78959cd7458441cd1a",
+      "technical_receipt": null,
+      "visual_qa_receipt": null
     },
     {
       "asset_id": "director-storyboard-page-01",
       "role": "professional_storyboard_motion_map",
       "required": true,
       "action": "assemble",
-      "purpose": "Assemble all six approved shot frames with full director shot-card and motion information.",
-      "coverage": {"scene_ids": ["office-desk"], "character_ids": ["protagonist"], "product_ids": ["coldbrew-bottle"], "prop_ids": ["ice-cup-state"], "shot_ids": ["S01", "S02", "S03", "S04", "S05", "S06"], "generation_unit_ids": ["G01", "G02", "G03"]},
-      "inherits_from": ["storyboard-frame-S01", "storyboard-frame-S02", "storyboard-frame-S03", "storyboard-frame-S04", "storyboard-frame-S05", "storyboard-frame-S06"],
+      "purpose": "Assemble director storyboard page 1 with shot-card, blocking, continuity, sound, edit, and model-risk fields.",
+      "coverage": {
+        "scene_ids": [
+          "office-desk"
+        ],
+        "character_ids": [
+          "protagonist"
+        ],
+        "product_ids": [
+          "coldbrew-bottle"
+        ],
+        "prop_ids": [
+          "ice-cup-state"
+        ],
+        "shot_ids": [
+          "S01",
+          "S02",
+          "S03",
+          "S04",
+          "S05",
+          "S06"
+        ],
+        "generation_unit_ids": [
+          "G01",
+          "G02",
+          "G03"
+        ]
+      },
+      "inherits_from": [
+        "storyboard-frame-S01",
+        "storyboard-frame-S02",
+        "storyboard-frame-S03",
+        "storyboard-frame-S04",
+        "storyboard-frame-S05",
+        "storyboard-frame-S06"
+      ],
       "planning_only": true,
       "direct_video_input": false,
       "status": "planned",
-      "qa_status": "not_run",
-      "generated_file": ""
+      "generated_file": "",
+      "generated_sha256": "",
+      "generated_pixel_sha256": "",
+      "generated_perceptual_hash": "",
+      "truth_sha256": "942a1da2e66f84a317c6e434ac0e18d20eceb0a2f7fdd4eff5bdaddc6d875293",
+      "technical_receipt": null,
+      "visual_qa_receipt": null
     },
     {
       "asset_id": "clean-input-G01",
       "role": "clean_first_frame",
       "required": true,
       "action": "derive",
-      "purpose": "Provide the text-free direct input that establishes generation unit G01.",
-      "coverage": {"scene_ids": ["office-desk"], "character_ids": ["protagonist"], "product_ids": [], "prop_ids": [], "shot_ids": ["S01"], "generation_unit_ids": ["G01"]},
-      "inherits_from": ["storyboard-frame-S01"],
+      "purpose": "Provide a text-free clean_first_frame model input for generation unit G01 from approved shot S01.",
+      "coverage": {
+        "scene_ids": [
+          "office-desk"
+        ],
+        "character_ids": [
+          "protagonist"
+        ],
+        "product_ids": [],
+        "prop_ids": [],
+        "shot_ids": [
+          "S01"
+        ],
+        "generation_unit_ids": [
+          "G01"
+        ]
+      },
+      "inherits_from": [
+        "storyboard-frame-S01"
+      ],
       "planning_only": false,
       "direct_video_input": true,
       "status": "planned",
-      "qa_status": "not_run",
-      "generated_file": ""
+      "generated_file": "",
+      "generated_sha256": "",
+      "generated_pixel_sha256": "",
+      "generated_perceptual_hash": "",
+      "truth_sha256": "4951b5d65a6cdc54c63e6a07b5291c3db2e582d91f1f3ae7fc101fc0451edeba",
+      "technical_receipt": null,
+      "visual_qa_receipt": null
     },
     {
       "asset_id": "clean-input-G02",
       "role": "clean_key_frame",
       "required": true,
       "action": "derive",
-      "purpose": "Provide the text-free product-action input for generation unit G02.",
-      "coverage": {"scene_ids": ["office-desk"], "character_ids": ["protagonist"], "product_ids": ["coldbrew-bottle"], "prop_ids": ["ice-cup-state"], "shot_ids": ["S03"], "generation_unit_ids": ["G02"]},
-      "inherits_from": ["storyboard-frame-S03"],
+      "purpose": "Provide a text-free clean_key_frame model input for generation unit G02 from approved shot S03.",
+      "coverage": {
+        "scene_ids": [
+          "office-desk"
+        ],
+        "character_ids": [
+          "protagonist"
+        ],
+        "product_ids": [
+          "coldbrew-bottle"
+        ],
+        "prop_ids": [
+          "ice-cup-state"
+        ],
+        "shot_ids": [
+          "S03"
+        ],
+        "generation_unit_ids": [
+          "G02"
+        ]
+      },
+      "inherits_from": [
+        "storyboard-frame-S03"
+      ],
       "planning_only": false,
       "direct_video_input": true,
       "status": "planned",
-      "qa_status": "not_run",
-      "generated_file": ""
+      "generated_file": "",
+      "generated_sha256": "",
+      "generated_pixel_sha256": "",
+      "generated_perceptual_hash": "",
+      "truth_sha256": "32e6d8822a5101a158e1eae422e54f91949029ccdd72575ed330de0515eb0b17",
+      "technical_receipt": null,
+      "visual_qa_receipt": null
     },
     {
       "asset_id": "clean-input-G03",
       "role": "clean_end_frame",
       "required": true,
       "action": "derive",
-      "purpose": "Provide the text-free direct input that locks the G03 product end state.",
-      "coverage": {"scene_ids": ["office-desk"], "character_ids": ["protagonist"], "product_ids": ["coldbrew-bottle"], "prop_ids": ["ice-cup-state"], "shot_ids": ["S06"], "generation_unit_ids": ["G03"]},
-      "inherits_from": ["storyboard-frame-S06"],
+      "purpose": "Provide a text-free clean_end_frame model input for generation unit G03 from approved shot S06.",
+      "coverage": {
+        "scene_ids": [
+          "office-desk"
+        ],
+        "character_ids": [
+          "protagonist"
+        ],
+        "product_ids": [
+          "coldbrew-bottle"
+        ],
+        "prop_ids": [
+          "ice-cup-state"
+        ],
+        "shot_ids": [
+          "S06"
+        ],
+        "generation_unit_ids": [
+          "G03"
+        ]
+      },
+      "inherits_from": [
+        "storyboard-frame-S06"
+      ],
       "planning_only": false,
       "direct_video_input": true,
       "status": "planned",
-      "qa_status": "not_run",
-      "generated_file": ""
+      "generated_file": "",
+      "generated_sha256": "",
+      "generated_pixel_sha256": "",
+      "generated_perceptual_hash": "",
+      "truth_sha256": "ebe7d9478b05b06d5191c80c592aaeb6ec37d508ac345fbcef0bdd951229802a",
+      "technical_receipt": null,
+      "visual_qa_receipt": null
     }
   ],
   "completion_claim": "plan_complete"

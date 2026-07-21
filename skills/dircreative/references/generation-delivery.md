@@ -24,7 +24,7 @@ Resolve scope before the first media call:
 - `sequence`: require the same coverage for the selected sequence only and name
   the excluded shots/scenes;
 - `representative_sample`: generate only the explicitly bounded test assets and
-  label the result `sample_complete`, never whole-film complete.
+  label the result `sample_visual_assets_complete`, never whole-film complete.
 
 Bind every generated image to the current delivery profile. A TVC test uses a
 landscape broadcast profile and its safe-area/packshot constraints; a 9:16
@@ -36,9 +36,11 @@ For whole-film scope, each recurring character, hero product/critical prop,
 distinct scene, approved shot, director-storyboard cell, and generation unit
 must map to at least one required asset. Every approved shot needs an individual
 `storyboard_frame`; the `professional_storyboard_motion_map` must cover every
-shot exactly once. In visual asset plan v1, split a generation unit at every
-scene-anchor change so one clean input never pretends to govern two unrelated
-locations. Planning boards remain separate from clean direct inputs.
+shot exactly once. In visual asset plan v2, split a generation unit at every
+scene-anchor change. Let the selected model strategy require zero, one, or
+multiple clean first/key/end inputs within an explicit minimum/maximum range;
+do not force every model into a one-frame rule. Planning boards remain separate
+from clean direct inputs.
 
 An explicit “generate now” instruction can satisfy generation authorization. A
 planning request, ambiguous “prepare,” or missing rights cannot. If blocked, ask
@@ -68,11 +70,24 @@ Once authorized:
   visual conclusions as reviewer judgment. Do not add this receipt work to normal
   creative generation.
 
-Whole-film generation is complete only when every required matrix row has a
-non-placeholder saved file, scoped QA passes, scene and shot coverage is exact,
-the director storyboard is assembled from current shot frames, and each
-generation unit has its required clean input or a model-backed reason that none
-is needed. Prompt-ready, previewed, or sample-only assets are not completion.
+`visual_assets_complete` is allowed only when every required matrix row has a
+fully decodable canonical PNG inside the evidence root; scene, style, per-shot
+storyboard, and clean video-input frames match the delivery-profile aspect; its
+file hash, normalized pixel hash, perceptual fingerprint, normalization profile,
+and technical receipt match; and a separate role-specific visual-review manifest covers the exact
+asset, truth and pixels. The plan validator never creates that manifest.
+JPEG/WebP may remain source or preview assets, but normalize them to canonical
+PNG before they can become completion evidence.
+`user_locked` and `reused_locked` remain workflow states and cannot bypass visual
+review. Duplicate pixels are rejected unless explicitly inherited by a
+`derive`/`reuse` asset. The inventory and approved shot-card hash, continuous
+frame-aligned timecodes, complete per-shot creative truth, asset purpose/truth
+hashes, scene and shot coverage, director-page dependencies, and model-specific
+input ranges must remain exact. Technical stamping alone, prompt-ready,
+previewed, or sample-only assets are not completion.
+This visual contract has no `accepted` state: a final video/audio master,
+loudness, subtitles, legal/rights checks, client approval, and broadcaster QC
+belong to the delivery acceptance contract.
 
 ## Client-visible delivery
 

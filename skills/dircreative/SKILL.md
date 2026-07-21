@@ -128,9 +128,18 @@ project-wide debt may be reported separately, but it cannot block or downgrade a
 scoped result that does not depend on it.
 
 A whole-film plan is not complete until every distinct scene and approved shot
-is represented in an explicit visual asset matrix. A generated sample is not a
-whole-film completion claim. When persisted, validate the matrix against
-`runtime/visual-asset-plan.schema.json` before generating or claiming completion.
+is represented in an explicit visual asset matrix. Bind a persisted matrix to
+its source inventory revision and approved shot-card file; each shot keeps its
+exact timecode, purpose, camera design, action, sound/edit, continuity/model
+notes, scene, character, product, prop, generation-unit, and dependency truth.
+A generated sample is not a whole-film completion claim.
+`visual_assets_complete` means the required visual-preproduction files are
+canonical PNG evidence, fully decode, match the delivery aspect where they are
+frame-bound, have distinct or explicitly inherited normalized pixels, pass
+technical evidence checks, and are all bound to a separately persisted role-specific
+visual-review manifest. `user_locked` and `reused_locked` do not bypass that
+review. It never means the
+finished master, client approval, or broadcaster acceptance.
 
 Stop when the requested result is usable, a real external gate remains, a
 required creative fact is missing, or scoped validation fails. Never claim

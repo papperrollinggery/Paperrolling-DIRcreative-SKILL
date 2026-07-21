@@ -197,8 +197,13 @@ def tvc_case_data(
                 f"TVC generation unit crosses scene anchors: {unit.get('unit_id', 'unknown')}"
             )
 
-    plan = derive_plan(inventory)
-    plan_errors, metrics = validate_plan(plan, base_dir=ROOT / Path(inventory_path).parent)
+    plan_base_dir = ROOT / Path(inventory_path).parent
+    plan = derive_plan(
+        inventory,
+        inventory_file=Path(inventory_path).name,
+        base_dir=plan_base_dir,
+    )
+    plan_errors, metrics = validate_plan(plan, base_dir=plan_base_dir)
     if plan_errors:
         raise HeadlessAcceptanceError("TVC visual asset plan is invalid: " + "; ".join(plan_errors))
     expected_metrics = {

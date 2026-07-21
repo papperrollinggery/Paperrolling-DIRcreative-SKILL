@@ -148,7 +148,7 @@ def audit() -> tuple[list[str], dict[str, Any]]:
             "`sequence`",
             "`representative_sample`",
             "landscape broadcast profile",
-            "whole-film generation is complete only when every required matrix row",
+            "`visual_assets_complete` is allowed only when every required matrix row",
         ):
             if term.casefold() not in delivery_text:
                 failures.append(f"generation-delivery craft card lost required coverage rule: {term}")

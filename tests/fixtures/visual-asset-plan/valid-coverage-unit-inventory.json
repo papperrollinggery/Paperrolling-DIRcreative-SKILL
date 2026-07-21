@@ -1,0 +1,49 @@
+{
+  "schema_version": "2.2",
+  "project_id": "coverage-validator-unit-30s",
+  "truth_revision": "approved-r1",
+  "truth_locked_at": "2026-07-21T00:00:00Z",
+  "shot_cards_file": "valid-coverage-unit-shot-cards.json",
+  "shot_cards_sha256": "e3a551b95e2d8d32f82f8a1ef7d3d1972f60a1c9ad74201557cc630dd5e93716",
+  "scope": "sequence",
+  "duration_seconds": 30,
+  "delivery_profile": {
+    "medium": "broadcast_tvc",
+    "aspect_ratio": "16:9",
+    "raster_width": 1920,
+    "raster_height": 1080,
+    "frame_rate_fps": 25,
+    "audio_sample_rate_hz": 48000,
+    "action_safe_percent": 90,
+    "title_safe_percent": 80,
+    "brand_endframe_min_seconds": 3,
+    "target_master_spec_status": "requires_target_spec"
+  },
+  "characters": [
+    {"id": "protagonist", "purpose": "Lock the recurring protagonist face, body proportion, hair, wardrobe, and handedness."}
+  ],
+  "products": [
+    {"id": "coldbrew-bottle", "purpose": "Lock the cold-brew bottle silhouette, label, cap, liquid color, and hero orientation."}
+  ],
+  "props": [
+    {"id": "ice-cup-state", "purpose": "Lock the cup, ice, liquid level, and state changes through the pour and end frame."}
+  ],
+  "scenes": [
+    {"id": "office-desk", "purpose": "Lock desk geography, product position, screen direction, light sources, camera positions, and fields of view."}
+  ],
+  "shots": [
+    {"shot_id": "S01", "scene_id": "office-desk", "character_ids": ["protagonist"], "product_ids": [], "prop_ids": [], "generation_unit_id": "G01", "narrative_purpose": "Establish the office pressure and protagonist position without expository text."},
+    {"shot_id": "S02", "scene_id": "office-desk", "character_ids": ["protagonist"], "product_ids": [], "prop_ids": [], "generation_unit_id": "G01", "narrative_purpose": "Move from accumulated pressure toward the product action while preserving screen direction."},
+    {"shot_id": "S03", "scene_id": "office-desk", "character_ids": ["protagonist"], "product_ids": ["coldbrew-bottle"], "prop_ids": ["ice-cup-state"], "generation_unit_id": "G02", "narrative_purpose": "Show the bottle and cup action with readable identity, level, hand, and label states."},
+    {"shot_id": "S04", "scene_id": "office-desk", "character_ids": ["protagonist"], "product_ids": ["coldbrew-bottle"], "prop_ids": ["ice-cup-state"], "generation_unit_id": "G02", "narrative_purpose": "Hold the first sip as a performance beat without implying an unapproved product effect."},
+    {"shot_id": "S05", "scene_id": "office-desk", "character_ids": ["protagonist"], "product_ids": [], "prop_ids": [], "generation_unit_id": "G03", "narrative_purpose": "Resolve the performance beat with a concrete return to work and stable spatial continuity."},
+    {"shot_id": "S06", "scene_id": "office-desk", "character_ids": ["protagonist"], "product_ids": ["coldbrew-bottle"], "prop_ids": ["ice-cup-state"], "generation_unit_id": "G03", "narrative_purpose": "Finish on a broadcast-readable product composition with protected brand and legal areas."}
+  ],
+  "rhythm_point_ids": ["R01", "R02", "R03", "R04", "R05", "R06"],
+  "style_reference_required": true,
+  "generation_units": [
+    {"unit_id": "G01", "shot_ids": ["S01", "S02"], "direct_input_min": 1, "direct_input_max": 1, "direct_input_roles": ["clean_first_frame"], "direct_input_not_required_reason": ""},
+    {"unit_id": "G02", "shot_ids": ["S03", "S04"], "direct_input_min": 1, "direct_input_max": 1, "direct_input_roles": ["clean_key_frame"], "direct_input_not_required_reason": ""},
+    {"unit_id": "G03", "shot_ids": ["S05", "S06"], "direct_input_min": 1, "direct_input_max": 1, "direct_input_roles": ["clean_end_frame"], "direct_input_not_required_reason": ""}
+  ]
+}

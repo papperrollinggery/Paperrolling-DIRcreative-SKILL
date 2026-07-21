@@ -1,6 +1,10 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "2.2",
   "project_id": "chengchuan-sunrise-tvc-60s",
+  "truth_revision": "approved-r1",
+  "truth_locked_at": "2026-07-21T00:00:00Z",
+  "shot_cards_file": "tvc-60s-shot-cards.json",
+  "shot_cards_sha256": "5a06b39332962dad5d06b985487b0655f98668118581fb95c9aef386091623d7",
   "scope": "whole_film",
   "duration_seconds": 60,
   "delivery_profile": {
@@ -88,15 +92,15 @@
   "rhythm_point_ids": ["R01", "R02", "R03", "R04", "R05", "R06", "R07", "R08", "R09", "R10", "R11", "R12", "R13", "R14", "R15", "R16", "R17", "R18", "R19", "R20", "R21", "R22", "R23", "R24", "R25", "R26", "R27", "R28", "R29", "R30", "R31", "R32"],
   "style_reference_required": true,
   "generation_units": [
-    {"unit_id": "G01", "shot_ids": ["S01", "S02", "S03"], "direct_input_required": true, "direct_input_not_required_reason": "", "direct_input_role": "clean_first_frame"},
-    {"unit_id": "G02", "shot_ids": ["S04", "S05", "S06"], "direct_input_required": true, "direct_input_not_required_reason": "", "direct_input_role": "clean_key_frame"},
-    {"unit_id": "G03", "shot_ids": ["S07", "S08", "S09"], "direct_input_required": true, "direct_input_not_required_reason": "", "direct_input_role": "clean_first_frame"},
-    {"unit_id": "G04", "shot_ids": ["S10", "S11", "S12"], "direct_input_required": true, "direct_input_not_required_reason": "", "direct_input_role": "clean_end_frame"},
-    {"unit_id": "G05", "shot_ids": ["S13", "S14"], "direct_input_required": true, "direct_input_not_required_reason": "", "direct_input_role": "clean_first_frame"},
-    {"unit_id": "G06", "shot_ids": ["S15"], "direct_input_required": true, "direct_input_not_required_reason": "", "direct_input_role": "clean_key_frame"},
-    {"unit_id": "G07", "shot_ids": ["S16", "S17"], "direct_input_required": true, "direct_input_not_required_reason": "", "direct_input_role": "clean_end_frame"},
-    {"unit_id": "G08", "shot_ids": ["S18", "S19"], "direct_input_required": true, "direct_input_not_required_reason": "", "direct_input_role": "clean_first_frame"},
-    {"unit_id": "G09", "shot_ids": ["S20", "S21"], "direct_input_required": true, "direct_input_not_required_reason": "", "direct_input_role": "clean_first_frame"},
-    {"unit_id": "G10", "shot_ids": ["S22", "S23", "S24"], "direct_input_required": true, "direct_input_not_required_reason": "", "direct_input_role": "clean_end_frame"}
+    {"unit_id": "G01", "shot_ids": ["S01", "S02", "S03"], "direct_input_min": 1, "direct_input_max": 1, "direct_input_roles": ["clean_first_frame"], "direct_input_not_required_reason": ""},
+    {"unit_id": "G02", "shot_ids": ["S04", "S05", "S06"], "direct_input_min": 1, "direct_input_max": 1, "direct_input_roles": ["clean_key_frame"], "direct_input_not_required_reason": ""},
+    {"unit_id": "G03", "shot_ids": ["S07", "S08", "S09"], "direct_input_min": 1, "direct_input_max": 1, "direct_input_roles": ["clean_first_frame"], "direct_input_not_required_reason": ""},
+    {"unit_id": "G04", "shot_ids": ["S10", "S11", "S12"], "direct_input_min": 1, "direct_input_max": 1, "direct_input_roles": ["clean_end_frame"], "direct_input_not_required_reason": ""},
+    {"unit_id": "G05", "shot_ids": ["S13", "S14"], "direct_input_min": 1, "direct_input_max": 1, "direct_input_roles": ["clean_first_frame"], "direct_input_not_required_reason": ""},
+    {"unit_id": "G06", "shot_ids": ["S15"], "direct_input_min": 1, "direct_input_max": 1, "direct_input_roles": ["clean_key_frame"], "direct_input_not_required_reason": ""},
+    {"unit_id": "G07", "shot_ids": ["S16", "S17"], "direct_input_min": 1, "direct_input_max": 1, "direct_input_roles": ["clean_end_frame"], "direct_input_not_required_reason": ""},
+    {"unit_id": "G08", "shot_ids": ["S18", "S19"], "direct_input_min": 1, "direct_input_max": 1, "direct_input_roles": ["clean_first_frame"], "direct_input_not_required_reason": ""},
+    {"unit_id": "G09", "shot_ids": ["S20", "S21"], "direct_input_min": 1, "direct_input_max": 1, "direct_input_roles": ["clean_first_frame"], "direct_input_not_required_reason": ""},
+    {"unit_id": "G10", "shot_ids": ["S22", "S23", "S24"], "direct_input_min": 1, "direct_input_max": 1, "direct_input_roles": ["clean_end_frame"], "direct_input_not_required_reason": ""}
   ]
 }
