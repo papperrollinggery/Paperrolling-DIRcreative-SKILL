@@ -1,9 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "adco-specialist-handoff-v2.schema.json",
-  "title": "ADCO Specialist Exchange v2 Handoff",
+  "$id": "adco.specialist-exchange/handoff/2.0",
+  "title": "ADCO specialist handoff v2",
   "type": "object",
-  "additionalProperties": false,
   "required": [
     "protocol_id",
     "contract_version",
@@ -15,50 +14,63 @@
     "execution_mode"
   ],
   "properties": {
-    "protocol_id": {
-      "const": "adco.specialist-exchange"
-    },
-    "contract_version": {
-      "const": "2.0"
-    },
-    "task": {
-      "type": "string",
-      "minLength": 1
-    },
-    "brief_snapshot": {
-      "type": "string",
-      "minLength": 1
-    },
+    "protocol_id": {"const": "adco.specialist-exchange"},
+    "contract_version": {"const": "2.0"},
+    "task": {"type": "string", "minLength": 1},
+    "brief_snapshot": {"$ref": "#/$defs/relativePath"},
     "locked_decisions": {
-      "$ref": "#/$defs/stringList"
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/lockedDecision"}
     },
     "requested_outputs": {
-      "$ref": "#/$defs/nonEmptyStringList"
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/requestedOutput"}
     },
     "quality_targets": {
-      "$ref": "#/$defs/stringList"
-    },
-    "execution_mode": {
-      "const": "inline"
-    }
-  },
-  "$defs": {
-    "stringList": {
-      "type": "array",
-      "uniqueItems": true,
-      "items": {
-        "type": "string",
-        "minLength": 1
-      }
-    },
-    "nonEmptyStringList": {
       "type": "array",
       "minItems": 1,
       "uniqueItems": true,
-      "items": {
-        "type": "string",
-        "minLength": 1
-      }
+      "items": {"type": "string", "minLength": 1}
+    },
+    "execution_mode": {"const": "inline"}
+  },
+  "$defs": {
+    "safeToken": {
+      "type": "string",
+      "pattern": "^(?!.*\\.\\.)[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "relativePath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*\\\\)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"
+    },
+    "lockedDecision": {
+      "type": "object",
+      "required": ["artifact_id", "type", "path", "sha256"],
+      "properties": {
+        "artifact_id": {"$ref": "#/$defs/safeToken"},
+        "type": {"$ref": "#/$defs/safeToken"},
+        "path": {"$ref": "#/$defs/relativePath"},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      },
+      "additionalProperties": false
+    },
+    "requestedOutput": {
+      "type": "object",
+      "required": ["output_id", "type", "path_root"],
+      "properties": {
+        "output_id": {"$ref": "#/$defs/safeToken"},
+        "type": {"$ref": "#/$defs/safeToken"},
+        "path_root": {"$ref": "#/$defs/relativePath"}
+      },
+      "additionalProperties": false
     }
-  }
+  },
+  "additionalProperties": false
 }

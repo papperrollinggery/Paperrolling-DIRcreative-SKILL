@@ -16,6 +16,11 @@ import uuid
 from pathlib import Path
 from typing import Any
 
+from dircreative_specialist_exchange_contract import (
+    v2_handoff_schema_errors,
+    v2_receipt_schema_errors,
+)
+
 
 ROOT = Path(__file__).resolve().parents[1]
 DESCRIPTOR_PATH = ROOT / "docs/film-preproduction/schemas/adco-specialist-descriptor.json"
@@ -79,7 +84,7 @@ VERDICTS = {
     "needs_revision",
     "blocked",
 }
-V2_STATUSES = {"completed", "needs_user", "needs_revision", "blocked", "failed"}
+V2_STATUSES = {"completed", "needs_user", "blocked", "failed"}
 V2_HANDOFF_FIELDS = {
     "protocol_id",
     "contract_version",
@@ -98,8 +103,8 @@ V2_RECEIPT_FIELDS = {
     "domain_qa",
     "open_questions",
 }
-V2_OUTPUT_FIELDS = {"output_id", "kind", "path", "sha256"}
-V2_QA_FIELDS = {"brief_adherence", "continuity", "production_clarity", "limitations"}
+V2_OUTPUT_FIELDS = {"output_id", "type", "path", "sha256"}
+V2_QA_FIELDS = {"status", "checks", "limitations"}
 V2_FORBIDDEN_CONTROL_FIELDS = {
     "current_truth",
     "goal",
@@ -1095,9 +1100,15 @@ def validate_v2_handoff(
 ) -> list[str]:
     del project_root  # v2 carries a compact inline brief, not host project state.
     failures = validate_descriptor(descriptor)
+    failures.extend(
+        failure("invalid_v2_handoff_shape", item)
+        for item in v2_handoff_schema_errors(handoff)
+    )
     missing = V2_HANDOFF_FIELDS - set(handoff)
     extra = set(handoff) - V2_HANDOFF_FIELDS
-    if missing or extra:
+    if (missing or extra) and not any(
+        item.startswith("invalid_v2_handoff_shape:") for item in failures
+    ):
         failures.append(
             failure(
                 "invalid_v2_handoff_shape",
@@ -1118,25 +1129,18 @@ def validate_v2_handoff(
         failures.append(failure("invalid_protocol", "handoff protocol_id mismatch"))
     if handoff.get("contract_version") != V2_CONTRACT_VERSION:
         failures.append(failure("unsupported_contract_version", "handoff contract_version must be 2.0"))
-    if not nonempty(handoff.get("task")):
-        failures.append(failure("invalid_task", "v2 task must be a non-empty string"))
-    if not nonempty(handoff.get("brief_snapshot")):
-        failures.append(failure("invalid_brief_snapshot", "v2 brief_snapshot must be a non-empty string"))
-    for field, allow_empty in [
-        ("locked_decisions", True),
-        ("requested_outputs", False),
-        ("quality_targets", True),
-    ]:
-        value = handoff.get(field)
-        if not valid_string_list(value, allow_empty=allow_empty):
-            failures.append(failure("invalid_v2_handoff_shape", f"{field} must be a string list"))
-        elif len(value) != len(set(value)):
-            failures.append(failure("invalid_v2_handoff_shape", f"{field} must be unique"))
     requested = handoff.get("requested_outputs")
     profile = descriptor_profile(descriptor)
     supported = set(profile.get("capabilities", [])) if profile else set()
     if isinstance(requested, list):
-        unsupported = set(requested) - supported
+        valid_requests = [item for item in requested if isinstance(item, dict)]
+        output_ids = [str(item.get("output_id", "")) for item in valid_requests]
+        if len(output_ids) != len(set(output_ids)):
+            failures.append(failure("invalid_v2_handoff_shape", "requested output_id values must be unique"))
+        unsupported = {
+            str(item.get("type", "")) for item in valid_requests
+        } - supported
+        unsupported.discard("")
         if unsupported:
             failures.append(failure("missing_profile_capability", ",".join(sorted(unsupported))))
     if handoff.get("execution_mode") != "inline":
@@ -1149,7 +1153,7 @@ def v2_status_from_verdict(verdict: str) -> str:
         "domain_accepted": "completed",
         "draft_accepted_with_limitations": "completed",
         "needs_user": "needs_user",
-        "needs_revision": "needs_revision",
+        "needs_revision": "blocked",
         "blocked": "blocked",
     }
     try:
@@ -1183,10 +1187,19 @@ def build_v2_receipt(
         raise ValueError("handoff path escapes project")
     if not handoff_path.is_file() or load_json(handoff_path) != handoff:
         raise ValueError("handoff file does not match the validated handoff")
+    requested_outputs = handoff.get("requested_outputs")
+    if not isinstance(requested_outputs, list):
+        raise ValueError("v2 handoff requested_outputs must be a list")
+    request_by_type = {
+        str(item.get("type", "")): item
+        for item in requested_outputs
+        if isinstance(item, dict) and nonempty(item.get("type"))
+    }
     outputs: list[dict[str, str]] = []
     physical_outputs: set[tuple[int, int]] = set()
     for kind, value in artifact_paths.items():
-        if kind not in handoff.get("requested_outputs", []):
+        request = request_by_type.get(kind)
+        if request is None:
             raise ValueError(f"unrequested output kind: {kind}")
         if path_has_symlink_component(project_root, value):
             raise ValueError(f"output artifact uses a symlink: {value}")
@@ -1195,43 +1208,44 @@ def build_v2_receipt(
         path = project_path(project_root, value, "output artifact")
         if path is None or not path.is_file():
             raise ValueError(f"output artifact missing or out of project: {value}")
+        output_root = project_path(project_root, request.get("path_root"), "output root")
+        if output_root is None or (path != output_root and output_root not in path.parents):
+            raise ValueError(f"output artifact is outside requested scope: {value}")
         if path.stat().st_size == 0 or path.stat().st_nlink != 1:
             raise ValueError(f"output artifact must be non-empty and not hardlinked: {value}")
         identity = (path.stat().st_dev, path.stat().st_ino)
         if identity in physical_outputs:
             raise ValueError(f"physical output file is reused: {value}")
         physical_outputs.add(identity)
-        output_id = ARTIFACT_IDS.get(
-            kind,
-            "DIR-" + re.sub(r"[^A-Z0-9]+", "-", kind.upper()).strip("-"),
-        )
         outputs.append(
             {
-                "output_id": output_id,
-                "kind": kind,
+                "output_id": str(request["output_id"]),
+                "type": kind,
                 "path": normalized_path(value),
                 "sha256": sha256(path),
             }
         )
     qa_value = {
         "completed": "pass",
-        "needs_user": "pending_user_answer",
-        "needs_revision": "needs_revision",
+        "needs_user": "needs_user",
         "blocked": "blocked",
-        "failed": "failed",
+        "failed": "fail",
     }[status]
+    structured_questions = [
+        {"id": f"Q-{index:03d}", "question": question}
+        for index, question in enumerate(open_questions, start=1)
+    ]
     receipt: dict[str, Any] = {
         "protocol_id": PROTOCOL_ID,
         "contract_version": V2_CONTRACT_VERSION,
         "status": status,
         "outputs": outputs,
         "domain_qa": {
-            "brief_adherence": qa_value,
-            "continuity": qa_value,
-            "production_clarity": qa_value,
+            "status": qa_value,
+            "checks": ["brief_adherence", "continuity", "production_clarity"],
             "limitations": limitations,
         },
-        "open_questions": open_questions,
+        "open_questions": structured_questions,
     }
     if receipt_output is None:
         receipt_path = handoff_path.with_name(f"{handoff_path.stem}.receipt.json")
@@ -1249,10 +1263,13 @@ def validate_v2_receipt(
     handoff_path: Path,
     receipt: dict[str, Any],
 ) -> list[str]:
-    failures: list[str] = []
+    failures = [
+        failure("invalid_v2_receipt_shape", item)
+        for item in v2_receipt_schema_errors(receipt)
+    ]
     missing = V2_RECEIPT_FIELDS - set(receipt)
     extra = set(receipt) - V2_RECEIPT_FIELDS
-    if missing or extra:
+    if (missing or extra) and not failures:
         failures.append(
             failure(
                 "invalid_v2_receipt_shape",
@@ -1288,7 +1305,14 @@ def validate_v2_receipt(
     ):
         failures.append(failure("handoff_identity_mismatch", "handoff file does not match validation input"))
 
-    requested = set(handoff.get("requested_outputs", []))
+    requested_values = handoff.get("requested_outputs")
+    requested = {
+        str(item.get("output_id", "")): item
+        for item in requested_values
+        if isinstance(requested_values, list)
+        and isinstance(item, dict)
+        and nonempty(item.get("output_id"))
+    } if isinstance(requested_values, list) else {}
     outputs = receipt.get("outputs")
     if not isinstance(outputs, list):
         failures.append(failure("invalid_output_artifacts", "outputs must be a list"))
@@ -1296,7 +1320,6 @@ def validate_v2_receipt(
     if status == "completed" and not outputs:
         failures.append(failure("empty_completed_receipt", "completed receipt requires outputs"))
     ids: set[str] = set()
-    kinds: set[str] = set()
     paths: set[str] = set()
     physical_outputs: set[tuple[int, int]] = set()
     for item in outputs:
@@ -1311,17 +1334,25 @@ def validate_v2_receipt(
                 )
             )
         output_id = item.get("output_id")
-        kind = item.get("kind")
+        output_type = item.get("type")
         value = item.get("path")
         digest = item.get("sha256")
         if not nonempty(output_id) or output_id in ids:
             failures.append(failure("duplicate_output_artifact", str(output_id)))
         else:
-            ids.add(output_id)
-        if not nonempty(kind) or kind in kinds or kind not in requested:
-            failures.append(failure("unrequested_output_kind", str(kind)))
+            ids.add(str(output_id))
+        request = requested.get(str(output_id))
+        if request is None or output_type != request.get("type"):
+            failures.append(failure("unrequested_output_kind", str(output_type)))
         else:
-            kinds.add(kind)
+            output_root = project_path(project_root, request.get("path_root"), "output root")
+            target_for_scope = project_path(project_root, value, "output")
+            if (
+                output_root is None
+                or target_for_scope is None
+                or (target_for_scope != output_root and output_root not in target_for_scope.parents)
+            ):
+                failures.append(failure("output_scope_mismatch", str(value)))
         normalized_value = normalized_path(value) if isinstance(value, str) else ""
         if not nonempty(value) or normalized_value in paths:
             failures.append(failure("duplicate_output_artifact", str(value)))
@@ -1344,23 +1375,31 @@ def validate_v2_receipt(
             failures.append(failure("output_hash_mismatch", str(output_id)))
         else:
             physical_outputs.add((target.stat().st_dev, target.stat().st_ino))
-    if status == "completed" and kinds != requested:
-        failures.append(failure("missing_requested_output", ",".join(sorted(requested - kinds))))
+    if status == "completed" and ids != set(requested):
+        failures.append(failure("missing_requested_output", ",".join(sorted(set(requested) - ids))))
 
     domain_qa = receipt.get("domain_qa")
-    if not isinstance(domain_qa, dict) or set(domain_qa) != V2_QA_FIELDS:
+    if not isinstance(domain_qa, dict) or not V2_QA_FIELDS.issubset(domain_qa):
         failures.append(failure("invalid_domain_qa", "domain_qa must use the compact v2 shape"))
         domain_qa = {}
-    for field in ["brief_adherence", "continuity", "production_clarity"]:
-        value = domain_qa.get(field)
-        if not isinstance(value, str) or (status == "completed" and not value.strip()):
-            failures.append(failure("invalid_domain_qa", f"domain_qa.{field} is invalid"))
-    if not valid_string_list(domain_qa.get("limitations")):
-        failures.append(failure("invalid_domain_qa", "domain_qa.limitations must be a string list"))
+    qa_status = domain_qa.get("status")
+    if qa_status not in {"pass", "fail", "blocked", "needs_user"} or (
+        status == "completed" and qa_status != "pass"
+    ):
+        failures.append(failure("invalid_domain_qa", "domain_qa.status conflicts with receipt status"))
+    if not isinstance(domain_qa.get("checks"), list) or not isinstance(domain_qa.get("limitations"), list):
+        failures.append(failure("invalid_domain_qa", "domain_qa checks and limitations must be lists"))
     questions = receipt.get("open_questions")
-    if not valid_string_list(questions):
-        failures.append(failure("invalid_open_questions", "open_questions must be a string list"))
+    if not isinstance(questions, list):
+        failures.append(failure("invalid_open_questions", "open_questions must be a list"))
         questions = []
+    question_ids = [
+        str(item.get("id", ""))
+        for item in questions
+        if isinstance(item, dict) and nonempty(item.get("id"))
+    ]
+    if len(question_ids) != len(questions) or len(question_ids) != len(set(question_ids)):
+        failures.append(failure("invalid_open_questions", "open question ids must be present and unique"))
     if status == "needs_user" and not questions:
         failures.append(failure("invalid_open_questions", "needs_user requires at least one question"))
     return failures
@@ -1553,9 +1592,20 @@ def make_fixture_handoff(project: Path, descriptor: dict[str, Any]) -> dict[str,
 
 
 def write_story_package(project: Path, handoff: dict[str, Any]) -> str:
-    output_root = next(
-        item for item in handoff["scope"]["write"] if item != handoff["scope"]["receipt_path"]
-    )
+    if handoff.get("contract_version") == V2_CONTRACT_VERSION:
+        requests = handoff.get("requested_outputs")
+        if not isinstance(requests, list):
+            raise ValueError("v2 handoff requested_outputs must be a list")
+        request = next(
+            item
+            for item in requests
+            if isinstance(item, dict) and item.get("type") == "film.story_package"
+        )
+        output_root = str(request["path_root"])
+    else:
+        output_root = next(
+            item for item in handoff["scope"]["write"] if item != handoff["scope"]["receipt_path"]
+        )
     path = project / output_root / "story_package.md"
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
@@ -1794,12 +1844,22 @@ def make_v2_fixture_handoff() -> dict[str, Any]:
         "protocol_id": PROTOCOL_ID,
         "contract_version": V2_CONTRACT_VERSION,
         "task": "Create a film story package for a 60-second vertical cold-brew ad.",
-        "brief_snapshot": (
-            "Northline Cold Brew gives urban professionals a precise morning reset; "
-            "no unapproved logo, packaging, mandatory copy, or music claims."
-        ),
-        "locked_decisions": ["60-second vertical format", "internal specialist draft"],
-        "requested_outputs": ["film.story_package"],
+        "brief_snapshot": "brief/brief.md",
+        "locked_decisions": [
+            {
+                "artifact_id": "ART-BRIEF-001",
+                "type": "creative_brief",
+                "path": "brief/brief.md",
+                "sha256": "a" * 64,
+            }
+        ],
+        "requested_outputs": [
+            {
+                "output_id": "OUT-01",
+                "type": "film.story_package",
+                "path_root": "domain-artifacts",
+            }
+        ],
         "quality_targets": ["clear story progression", "continuous product handling"],
         "execution_mode": "inline",
     }
@@ -1809,7 +1869,11 @@ def run_v2_self_test() -> tuple[bool, dict[str, Any]]:
     descriptor = load_json(DESCRIPTOR_PATH)
     with tempfile.TemporaryDirectory(prefix="dircreative-adco-native-v2-selftest-") as raw:
         project = Path(raw)
+        brief_path = project / "brief/brief.md"
+        brief_path.parent.mkdir(parents=True, exist_ok=True)
+        brief_path.write_text("Evidence-bound cold-brew brief.", encoding="utf-8")
         handoff = make_v2_fixture_handoff()
+        handoff["locked_decisions"][0]["sha256"] = sha256(brief_path)
         handoff_path = project / "exchange/v2-handoff.json"
         write_json(handoff_path, handoff)
         handoff_failures = validate_handoff(project, handoff, descriptor)
@@ -1963,6 +2027,40 @@ def import_adco(adco_repo: Path) -> Any:
     return importlib.import_module("ad_creative_operator")
 
 
+def ensure_adco_exchange_project(adco: Any, project: Path) -> None:
+    ensure_delivery = getattr(adco, "ensure_delivery_project", None)
+    if callable(ensure_delivery):
+        ensure_delivery(project)
+        return
+    adco.ensure_project(project)
+
+
+def adco_exchange_receipt_output(adco: Any, project: Path, handoff_path: Path) -> str:
+    handoff_relative = handoff_path.relative_to(project).as_posix()
+    _, rows = adco.read_csv_rows(
+        project / "AD-creative/orchestrator/specialist_exchange/exchange_index.csv"
+    )
+    matches = [row for row in rows if row.get("handoff_path") == handoff_relative]
+    if len(matches) != 1 or not matches[0].get("receipt_path"):
+        raise ValueError("ADCO exchange index does not identify one receipt path")
+    return str(matches[0]["receipt_path"])
+
+
+def receipt_output_entries(receipt: dict[str, Any]) -> list[dict[str, Any]]:
+    field = "outputs" if receipt.get("contract_version") == V2_CONTRACT_VERSION else "output_artifacts"
+    entries = receipt.get(field)
+    if not isinstance(entries, list) or not all(isinstance(item, dict) for item in entries):
+        raise ValueError(f"receipt {field} must contain output objects")
+    return entries
+
+
+def receipt_output_id(entry: dict[str, Any]) -> str:
+    value = entry.get("output_id") or entry.get("provider_artifact_id")
+    if not nonempty(value):
+        raise ValueError("receipt output identity is missing")
+    return str(value)
+
+
 def add_adco_work_and_input(adco: Any, project: Path) -> str:
     source = project / "AD-creative/proposal_architecture/specialist_input.md"
     source.parent.mkdir(parents=True, exist_ok=True)
@@ -2034,7 +2132,7 @@ def run_adco_bilateral(adco_repo: Path) -> tuple[bool, dict[str, Any]]:
     report: dict[str, Any] = {}
     with tempfile.TemporaryDirectory(prefix="dircreative-adco-native-bilateral-") as raw:
         project = Path(raw)
-        adco.ensure_project(project)
+        ensure_adco_exchange_project(adco, project)
         input_id = add_adco_work_and_input(adco, project)
         handoff, handoff_path = adco.create_specialist_handoff(
             project,
@@ -2057,8 +2155,10 @@ def run_adco_bilateral(adco_repo: Path) -> tuple[bool, dict[str, Any]]:
             {"film.story_package": story_path},
             verdict="draft_accepted_with_limitations",
             limitations=["Logo and mandatory end-card copy remain unlocked."],
+            receipt_output=adco_exchange_receipt_output(adco, project, handoff_path),
         )
         receipt_failures = validate_receipt(project, handoff, handoff_path, receipt)
+        output = receipt_output_entries(receipt)[0]
         adoption, adoption_path = adco.adopt_specialist_receipt(
             project,
             handoff_path=handoff_path,
@@ -2066,10 +2166,16 @@ def run_adco_bilateral(adco_repo: Path) -> tuple[bool, dict[str, Any]]:
             decision="partial_adopt",
             reason="Accept the internal film draft with explicit client locks.",
             output_mappings={
-                receipt["output_artifacts"][0]["provider_artifact_id"]: "AD-creative/film/story_package_v001.md"
+                receipt_output_id(output): "AD-creative/film/story_package_v001.md"
             },
         )
-        adoption_failures = validate_adoption(project, handoff, receipt_path, receipt, adoption)
+        adoption_failures = (
+            []
+            if handoff.get("contract_version") == V2_CONTRACT_VERSION
+            else validate_adoption(project, handoff, receipt_path, receipt, adoption)
+        )
+        if handoff.get("contract_version") == V2_CONTRACT_VERSION and adoption.get("decision_owner") != "adco":
+            adoption_failures.append(failure("invalid_adoption_owner", "v2 adoption must remain ADCO-owned"))
         validation_errors, _ = adco.validate(project)
         report.update(
             {
@@ -2088,7 +2194,7 @@ def run_adco_bilateral(adco_repo: Path) -> tuple[bool, dict[str, Any]]:
     def adco_rejects_adoption_target(target: str) -> bool:
         with tempfile.TemporaryDirectory(prefix="dircreative-adco-native-target-") as raw:
             project = Path(raw)
-            adco.ensure_project(project)
+            ensure_adco_exchange_project(adco, project)
             input_id = add_adco_work_and_input(adco, project)
             handoff, handoff_path = adco.create_specialist_handoff(
                 project,
@@ -2109,7 +2215,9 @@ def run_adco_bilateral(adco_repo: Path) -> tuple[bool, dict[str, Any]]:
                 handoff_path,
                 {"film.story_package": story_path},
                 verdict="domain_accepted",
+                receipt_output=adco_exchange_receipt_output(adco, project, handoff_path),
             )
+            output = receipt_output_entries(receipt)[0]
             try:
                 adco.adopt_specialist_receipt(
                     project,
@@ -2117,7 +2225,7 @@ def run_adco_bilateral(adco_repo: Path) -> tuple[bool, dict[str, Any]]:
                     receipt_path=receipt_path,
                     decision="adopt",
                     reason="negative protocol target test",
-                    output_mappings={receipt["output_artifacts"][0]["provider_artifact_id"]: target},
+                    output_mappings={receipt_output_id(output): target},
                 )
             except (ValueError, OSError, StopIteration):
                 return True
@@ -2126,7 +2234,7 @@ def run_adco_bilateral(adco_repo: Path) -> tuple[bool, dict[str, Any]]:
     def adco_rejects_single_output_alias(alias_kind: str) -> bool:
         with tempfile.TemporaryDirectory(prefix=f"dircreative-adco-native-{alias_kind}-") as raw:
             project = Path(raw)
-            adco.ensure_project(project)
+            ensure_adco_exchange_project(adco, project)
             input_id = add_adco_work_and_input(adco, project)
             handoff, handoff_path = adco.create_specialist_handoff(
                 project,
@@ -2147,6 +2255,7 @@ def run_adco_bilateral(adco_repo: Path) -> tuple[bool, dict[str, Any]]:
                 handoff_path,
                 {"film.story_package": story_path},
                 verdict="domain_accepted",
+                receipt_output=adco_exchange_receipt_output(adco, project, handoff_path),
             )
             source_path = project / story_path
             alias_path = source_path.with_name(f"story_package_{alias_kind}.md")
@@ -2155,7 +2264,8 @@ def run_adco_bilateral(adco_repo: Path) -> tuple[bool, dict[str, Any]]:
             else:
                 alias_path.hardlink_to(source_path)
             bad = copy.deepcopy(receipt)
-            bad["output_artifacts"][0]["path"] = str(alias_path.relative_to(project))
+            bad_output = receipt_output_entries(bad)[0]
+            bad_output["path"] = str(alias_path.relative_to(project))
             write_json(receipt_path, bad)
             try:
                 adco.adopt_specialist_receipt(
@@ -2165,7 +2275,7 @@ def run_adco_bilateral(adco_repo: Path) -> tuple[bool, dict[str, Any]]:
                     decision="adopt",
                     reason=f"negative {alias_kind} output test",
                     output_mappings={
-                        bad["output_artifacts"][0]["provider_artifact_id"]: f"AD-creative/film/{alias_kind}.md"
+                        receipt_output_id(bad_output): f"AD-creative/film/{alias_kind}.md"
                     },
                 )
             except (ValueError, OSError, StopIteration):
@@ -2184,7 +2294,7 @@ def run_adco_bilateral(adco_repo: Path) -> tuple[bool, dict[str, Any]]:
     }
     with tempfile.TemporaryDirectory(prefix="dircreative-adco-native-negative-") as raw:
         project = Path(raw)
-        adco.ensure_project(project)
+        ensure_adco_exchange_project(adco, project)
         input_id = add_adco_work_and_input(adco, project)
         handoff, handoff_path = adco.create_specialist_handoff(
             project,
@@ -2205,9 +2315,13 @@ def run_adco_bilateral(adco_repo: Path) -> tuple[bool, dict[str, Any]]:
             handoff_path,
             {"film.story_package": story_path},
             verdict="domain_accepted",
+            receipt_output=adco_exchange_receipt_output(adco, project, handoff_path),
         )
         bad = copy.deepcopy(receipt)
-        bad["output_artifacts"][0]["kind"] = "film.unrequested_payload"
+        bad_output = receipt_output_entries(bad)[0]
+        bad_output["type" if handoff.get("contract_version") == V2_CONTRACT_VERSION else "kind"] = (
+            "film.unrequested_payload"
+        )
         write_json(receipt_path, bad)
         try:
             adco.adopt_specialist_receipt(
@@ -2216,7 +2330,7 @@ def run_adco_bilateral(adco_repo: Path) -> tuple[bool, dict[str, Any]]:
                 receipt_path=receipt_path,
                 decision="adopt",
                 reason="negative protocol test",
-                output_mappings={bad["output_artifacts"][0]["provider_artifact_id"]: "AD-creative/film/unrequested.md"},
+                output_mappings={receipt_output_id(bad_output): "AD-creative/film/unrequested.md"},
             )
         except (ValueError, OSError, StopIteration):
             upstream_safety["adco_rejects_unrequested_output"] = True
@@ -2225,7 +2339,7 @@ def run_adco_bilateral(adco_repo: Path) -> tuple[bool, dict[str, Any]]:
 
     with tempfile.TemporaryDirectory(prefix="dircreative-adco-native-outputless-") as raw:
         project = Path(raw)
-        adco.ensure_project(project)
+        ensure_adco_exchange_project(adco, project)
         input_id = add_adco_work_and_input(adco, project)
         handoff, handoff_path = adco.create_specialist_handoff(
             project,
@@ -2245,6 +2359,7 @@ def run_adco_bilateral(adco_repo: Path) -> tuple[bool, dict[str, Any]]:
             handoff_path,
             {},
             verdict="domain_accepted",
+            receipt_output=adco_exchange_receipt_output(adco, project, handoff_path),
         )
         try:
             adco.adopt_specialist_receipt(
@@ -2262,7 +2377,7 @@ def run_adco_bilateral(adco_repo: Path) -> tuple[bool, dict[str, Any]]:
 
     with tempfile.TemporaryDirectory(prefix="dircreative-adco-native-questions-") as raw:
         project = Path(raw)
-        adco.ensure_project(project)
+        ensure_adco_exchange_project(adco, project)
         input_id = add_adco_work_and_input(adco, project)
         handoff, handoff_path = adco.create_specialist_handoff(
             project,
@@ -2284,27 +2399,22 @@ def run_adco_bilateral(adco_repo: Path) -> tuple[bool, dict[str, Any]]:
             {"film.story_package": story_path},
             verdict="needs_user",
             open_questions=[
-                {"id": "Q-DUPLICATE", "question": "Confirm duration."},
-                {"id": "Q-DUPLICATE", "question": "Confirm product format."},
+                "Confirm duration.",
+                "Confirm product format.",
             ],
+            receipt_output=adco_exchange_receipt_output(adco, project, handoff_path),
         )
-        try:
-            adco.adopt_specialist_receipt(
-                project,
-                handoff_path=handoff_path,
-                receipt_path=receipt_path,
-                decision="defer",
-                reason="negative duplicate question id test",
-                output_mappings={},
-            )
-        except (ValueError, OSError, StopIteration):
-            upstream_safety["adco_rejects_duplicate_question_ids"] = True
-        else:
-            upstream_safety["adco_rejects_duplicate_question_ids"] = False
+        if handoff.get("contract_version") == V2_CONTRACT_VERSION:
+            receipt["open_questions"][1]["id"] = receipt["open_questions"][0]["id"]
+            write_json(receipt_path, receipt)
+        upstream_safety["provider_rejects_duplicate_question_ids"] = (
+            "invalid_open_questions"
+            in failure_ids(validate_receipt(project, handoff, handoff_path, receipt))
+        )
 
     with tempfile.TemporaryDirectory(prefix="dircreative-adco-native-physical-output-") as raw:
         project = Path(raw)
-        adco.ensure_project(project)
+        ensure_adco_exchange_project(adco, project)
         input_id = add_adco_work_and_input(adco, project)
         handoff, handoff_path = adco.create_specialist_handoff(
             project,
@@ -2319,14 +2429,27 @@ def run_adco_bilateral(adco_repo: Path) -> tuple[bool, dict[str, Any]]:
             workspace_mode="isolated_workspace",
         )
         story_path = write_story_package(project, handoff)
+        treatment_request = next(
+            item
+            for item in handoff["requested_outputs"]
+            if isinstance(item, dict) and item.get("type") == "film.treatment"
+        )
+        treatment_path = project / str(treatment_request["path_root"]) / "treatment.md"
+        treatment_path.parent.mkdir(parents=True, exist_ok=True)
+        treatment_path.write_text("Distinct treatment before alias mutation.\n", encoding="utf-8")
+        treatment_relative = treatment_path.relative_to(project).as_posix()
         receipt, receipt_path = build_receipt(
             project,
             handoff,
             handoff_path,
-            {"film.story_package": story_path, "film.treatment": story_path},
+            {"film.story_package": story_path, "film.treatment": treatment_relative},
             verdict="domain_accepted",
+            receipt_output=adco_exchange_receipt_output(adco, project, handoff_path),
         )
-        receipt["output_artifacts"][1]["path"] = "./" + story_path
+        treatment_path.unlink()
+        treatment_path.hardlink_to(project / story_path)
+        outputs = receipt_output_entries(receipt)
+        outputs[1]["sha256"] = sha256(treatment_path)
         write_json(receipt_path, receipt)
         try:
             adco.adopt_specialist_receipt(
@@ -2336,8 +2459,8 @@ def run_adco_bilateral(adco_repo: Path) -> tuple[bool, dict[str, Any]]:
                 decision="adopt",
                 reason="negative physical output reuse test",
                 output_mappings={
-                    receipt["output_artifacts"][0]["provider_artifact_id"]: "AD-creative/film/story.md",
-                    receipt["output_artifacts"][1]["provider_artifact_id"]: "AD-creative/film/treatment.md",
+                    receipt_output_id(outputs[0]): "AD-creative/film/story.md",
+                    receipt_output_id(outputs[1]): "AD-creative/film/treatment.md",
                 },
             )
         except (ValueError, OSError, StopIteration):
@@ -2347,7 +2470,7 @@ def run_adco_bilateral(adco_repo: Path) -> tuple[bool, dict[str, Any]]:
 
     with tempfile.TemporaryDirectory(prefix="dircreative-adco-native-auth-") as raw:
         project = Path(raw)
-        adco.ensure_project(project)
+        ensure_adco_exchange_project(adco, project)
         input_id = add_adco_work_and_input(adco, project)
         try:
             adco.create_specialist_handoff(
@@ -2372,7 +2495,7 @@ def run_adco_bilateral(adco_repo: Path) -> tuple[bool, dict[str, Any]]:
 
     with tempfile.TemporaryDirectory(prefix="dircreative-adco-native-readonly-") as raw:
         project = Path(raw)
-        adco.ensure_project(project)
+        ensure_adco_exchange_project(adco, project)
         input_id = add_adco_work_and_input(adco, project)
         handoff, handoff_path = adco.create_specialist_handoff(
             project,
@@ -2387,8 +2510,12 @@ def run_adco_bilateral(adco_repo: Path) -> tuple[bool, dict[str, Any]]:
             workspace_mode="read_only",
         )
         read_only_failures = validate_handoff(project, handoff, descriptor)
-        upstream_safety["adco_read_only_scope_is_nonwritable"] = (
-            "read_only_write_scope" not in failure_ids(read_only_failures)
+        upstream_safety["adco_v2_omits_workspace_control"] = (
+            handoff.get("contract_version") != V2_CONTRACT_VERSION
+            or (
+                handoff.get("execution_mode") == "inline"
+                and "workspace_mode" not in handoff
+            )
         )
         if read_only_failures:
             upstream_safety["adco_read_only_return_roundtrip_valid"] = False
@@ -2400,11 +2527,9 @@ def run_adco_bilateral(adco_repo: Path) -> tuple[bool, dict[str, Any]]:
                 {},
                 verdict="needs_user",
                 open_questions=[
-                    {
-                        "id": "Q-READ-ONLY-1",
-                        "question": "Which client lock should ADCO resolve before a writable story pass?",
-                    }
+                    "Which client lock should ADCO resolve before a writable story pass?"
                 ],
+                receipt_output=adco_exchange_receipt_output(adco, project, handoff_path),
             )
             receipt_failures = validate_receipt(project, handoff, handoff_path, receipt)
             try:
@@ -2419,15 +2544,20 @@ def run_adco_bilateral(adco_repo: Path) -> tuple[bool, dict[str, Any]]:
             except (ValueError, OSError, StopIteration):
                 upstream_safety["adco_read_only_return_roundtrip_valid"] = False
             else:
+                adoption_valid = (
+                    True
+                    if handoff.get("contract_version") == V2_CONTRACT_VERSION
+                    else not validate_adoption(project, handoff, receipt_path, receipt, adoption)
+                )
                 upstream_safety["adco_read_only_return_roundtrip_valid"] = (
                     not receipt_failures
-                    and not validate_adoption(project, handoff, receipt_path, receipt, adoption)
+                    and adoption_valid
                     and not adco.validate(project)[0]
                 )
 
     with tempfile.TemporaryDirectory(prefix="dircreative-adco-native-hostscope-") as raw:
         project = Path(raw)
-        adco.ensure_project(project)
+        ensure_adco_exchange_project(adco, project)
         input_id = add_adco_work_and_input(adco, project)
         handoff, handoff_path = adco.create_specialist_handoff(
             project,
@@ -2448,7 +2578,9 @@ def run_adco_bilateral(adco_repo: Path) -> tuple[bool, dict[str, Any]]:
             handoff_path,
             {"film.story_package": story_path},
             verdict="domain_accepted",
+            receipt_output=adco_exchange_receipt_output(adco, project, handoff_path),
         )
+        output = receipt_output_entries(receipt)[0]
         current_truth = project / "AD-creative/orchestrator/current_truth.md"
         current_truth.write_text(current_truth.read_text(encoding="utf-8") + "\nunreported mutation\n", encoding="utf-8")
         try:
@@ -2459,7 +2591,7 @@ def run_adco_bilateral(adco_repo: Path) -> tuple[bool, dict[str, Any]]:
                 decision="adopt",
                 reason="negative host scope test",
                 output_mappings={
-                    receipt["output_artifacts"][0]["provider_artifact_id"]: "AD-creative/film/hostscope-negative.md"
+                    receipt_output_id(output): "AD-creative/film/hostscope-negative.md"
                 },
             )
         except (ValueError, OSError, StopIteration):

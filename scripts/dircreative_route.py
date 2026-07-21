@@ -202,7 +202,14 @@ def self_test() -> list[str]:
         dict(handoff, requested_outputs=[]),
         dict(handoff, locked_decisions=[1]),
         dict(handoff, quality_targets=[""]),
-        dict(handoff, requested_outputs=["storyboard_review", "storyboard_review"]),
+        dict(handoff, requested_outputs=[handoff["requested_outputs"][0]] * 2),
+        dict(
+            handoff,
+            requested_outputs=[
+                handoff["requested_outputs"][0],
+                {**handoff["requested_outputs"][0], "output_id": "OUT-02"},
+            ],
+        ),
     ]
     for index, invalid_shape in enumerate(invalid_shapes, start=1):
         invalid_result = route_request("", invalid_shape)

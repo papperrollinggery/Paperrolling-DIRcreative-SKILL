@@ -2,9 +2,22 @@
   "protocol_id": "adco.specialist-exchange",
   "contract_version": "2.0",
   "task": "Review the storyboard continuity.",
-  "brief_snapshot": "A 30-second product film with six approved shots.",
-  "locked_decisions": ["six-shot structure"],
-  "requested_outputs": ["storyboard_review"],
+  "brief_snapshot": "AD-creative/proposal_architecture/brief.md",
+  "locked_decisions": [
+    {
+      "artifact_id": "ART-BRIEF-001",
+      "type": "creative_brief",
+      "path": "AD-creative/proposal_architecture/brief.md",
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    }
+  ],
+  "requested_outputs": [
+    {
+      "output_id": "OUT-01",
+      "type": "storyboard_review",
+      "path_root": "AD-creative/workspaces/WORK-001/specialists/SPH-001/outputs"
+    }
+  ],
   "quality_targets": ["continuity", "production_clarity"],
   "execution_mode": "inline"
 }
