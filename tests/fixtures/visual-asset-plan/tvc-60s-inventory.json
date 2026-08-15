@@ -1,10 +1,10 @@
 {
-  "schema_version": "2.2",
+  "schema_version": "2.3",
   "project_id": "chengchuan-sunrise-tvc-60s",
   "truth_revision": "approved-r1",
   "truth_locked_at": "2026-07-21T00:00:00Z",
   "shot_cards_file": "tvc-60s-shot-cards.json",
-  "shot_cards_sha256": "5a06b39332962dad5d06b985487b0655f98668118581fb95c9aef386091623d7",
+  "shot_cards_sha256": "d6412108a3dd56a36e07f4e97a4a3c43303d5d0e4b4bcc725d23f15678e279c9",
   "scope": "whole_film",
   "duration_seconds": 60,
   "delivery_profile": {
@@ -64,43 +64,940 @@
     }
   ],
   "shots": [
-    {"shot_id": "S01", "scene_id": "radio-studio-night", "character_ids": ["lin-che"], "product_ids": [], "prop_ids": [], "generation_unit_id": "G01", "narrative_purpose": "Establish the live pre-dawn broadcast and the deadline pressure of the on-air clock."},
-    {"shot_id": "S02", "scene_id": "radio-studio-night", "character_ids": ["lin-che"], "product_ids": [], "prop_ids": [], "generation_unit_id": "G01", "narrative_purpose": "Reveal Lin Che's accumulated fatigue through precise fader work and a held breath rather than exposition."},
-    {"shot_id": "S03", "scene_id": "radio-studio-night", "character_ids": ["lin-che"], "product_ids": ["coldbrew-bottle"], "prop_ids": ["handwritten-note"], "generation_unit_id": "G01", "narrative_purpose": "Introduce the bottle and attached note as a personal invitation that competes with work urgency."},
-    {"shot_id": "S04", "scene_id": "radio-studio-night", "character_ids": ["lin-che"], "product_ids": [], "prop_ids": [], "generation_unit_id": "G02", "narrative_purpose": "Let the father's saved voice message establish the promised sunrise without showing an explanatory flashback."},
-    {"shot_id": "S05", "scene_id": "radio-studio-night", "character_ids": ["lin-che"], "product_ids": ["coldbrew-bottle"], "prop_ids": ["handwritten-note"], "generation_unit_id": "G02", "narrative_purpose": "Make Lin Che choose by opening the note and bottle while the final broadcast sentence continues."},
-    {"shot_id": "S06", "scene_id": "radio-studio-night", "character_ids": ["lin-che"], "product_ids": ["coldbrew-bottle"], "prop_ids": [], "generation_unit_id": "G02", "narrative_purpose": "Turn the red on-air light off and launch the physical journey with product, coat, and bag states readable."},
-    {"shot_id": "S07", "scene_id": "station-concourse-rain", "character_ids": ["lin-che"], "product_ids": [], "prop_ids": ["red-umbrella"], "generation_unit_id": "G03", "narrative_purpose": "Carry momentum from the studio into hard rain while preserving right-hand umbrella and screen direction."},
-    {"shot_id": "S08", "scene_id": "station-concourse-rain", "character_ids": ["lin-che"], "product_ids": [], "prop_ids": ["red-umbrella"], "generation_unit_id": "G03", "narrative_purpose": "Show the red umbrella opening as a visual motif and practical transition into the station approach."},
-    {"shot_id": "S09", "scene_id": "station-concourse-rain", "character_ids": ["lin-che"], "product_ids": ["coldbrew-bottle"], "prop_ids": [], "generation_unit_id": "G03", "narrative_purpose": "Use the opened bottle and departure board in one frame to make time pressure and product state coexist."},
-    {"shot_id": "S10", "scene_id": "station-concourse-rain", "character_ids": ["lin-che"], "product_ids": [], "prop_ids": ["red-umbrella"], "generation_unit_id": "G04", "narrative_purpose": "Let the train doors close before Lin Che reaches them, creating a real setback without melodrama."},
-    {"shot_id": "S11", "scene_id": "station-concourse-rain", "character_ids": ["lin-che"], "product_ids": [], "prop_ids": [], "generation_unit_id": "G04", "narrative_purpose": "Hold on her decision to continue as she notices the last night bus across the wet concourse."},
-    {"shot_id": "S12", "scene_id": "station-concourse-rain", "character_ids": ["lin-che"], "product_ids": [], "prop_ids": ["red-umbrella"], "generation_unit_id": "G04", "narrative_purpose": "Resolve the station obstacle by boarding the bus at the final moment with direction and prop states intact."},
-    {"shot_id": "S13", "scene_id": "night-bus-interior", "character_ids": ["lin-che"], "product_ids": ["coldbrew-bottle"], "prop_ids": ["red-umbrella"], "generation_unit_id": "G05", "narrative_purpose": "Reset rhythm inside the nearly empty bus and show the city sliding backward while she moves toward the promise."},
-    {"shot_id": "S14", "scene_id": "night-bus-interior", "character_ids": ["lin-che"], "product_ids": ["coldbrew-bottle"], "prop_ids": [], "generation_unit_id": "G05", "narrative_purpose": "Make the first sip a quiet emotional release synchronized with the father's voice rather than an energy claim."},
-    {"shot_id": "S15", "scene_id": "riverside-dawn", "character_ids": ["father"], "product_ids": ["coldbrew-bottle"], "prop_ids": [], "generation_unit_id": "G06", "narrative_purpose": "Cross-cut to the father waiting without complaint, with a matching bottle and the first pale horizon behind him."},
-    {"shot_id": "S16", "scene_id": "night-bus-interior", "character_ids": ["lin-che"], "product_ids": [], "prop_ids": [], "generation_unit_id": "G07", "narrative_purpose": "Show Lin Che sending a restrained ten-minute message as the bus reflection shifts from night toward blue hour."},
-    {"shot_id": "S17", "scene_id": "night-bus-interior", "character_ids": ["lin-che"], "product_ids": [], "prop_ids": ["red-umbrella"], "generation_unit_id": "G07", "narrative_purpose": "Follow her through the bus exit in one continuous direction as dawn light replaces the artificial interior."},
-    {"shot_id": "S18", "scene_id": "riverside-dawn", "character_ids": ["lin-che", "father"], "product_ids": [], "prop_ids": ["red-umbrella"], "generation_unit_id": "G08", "narrative_purpose": "Reveal the father at the end of Lin Che's approach path before either character speaks or embraces."},
-    {"shot_id": "S19", "scene_id": "riverside-dawn", "character_ids": ["lin-che", "father"], "product_ids": [], "prop_ids": [], "generation_unit_id": "G08", "narrative_purpose": "Pay off the relationship through a small shared smile and a respectful pause instead of sentimental dialogue."},
-    {"shot_id": "S20", "scene_id": "riverside-dawn", "character_ids": ["lin-che", "father"], "product_ids": ["coldbrew-bottle"], "prop_ids": [], "generation_unit_id": "G09", "narrative_purpose": "Bring the matching bottles together and establish that the product carried the invitation across both timelines."},
-    {"shot_id": "S21", "scene_id": "riverside-dawn", "character_ids": ["lin-che", "father"], "product_ids": ["coldbrew-bottle"], "prop_ids": [], "generation_unit_id": "G09", "narrative_purpose": "Let both characters watch the sunrise in silence while the bottle silhouettes remain naturally readable."},
-    {"shot_id": "S22", "scene_id": "riverside-dawn", "character_ids": ["lin-che", "father"], "product_ids": ["coldbrew-bottle"], "prop_ids": ["handwritten-note"], "generation_unit_id": "G10", "narrative_purpose": "Resolve the handwritten note beside two hands and the opened product without turning the moment into a tabletop catalog shot."},
-    {"shot_id": "S23", "scene_id": "riverside-dawn", "character_ids": [], "product_ids": ["coldbrew-bottle"], "prop_ids": [], "generation_unit_id": "G10", "narrative_purpose": "Deliver the first half of the four-second brand end frame with the bottle hero, dawn reflection, and protected title-safe area."},
-    {"shot_id": "S24", "scene_id": "riverside-dawn", "character_ids": [], "product_ids": ["coldbrew-bottle"], "prop_ids": [], "generation_unit_id": "G10", "narrative_purpose": "Hold the final brand and legal-safe composition long enough for broadcast readability and sound resolution."}
+    {
+      "shot_id": "S01",
+      "scene_id": "radio-studio-night",
+      "character_ids": [
+        "lin-che"
+      ],
+      "product_ids": [],
+      "prop_ids": [],
+      "generation_unit_id": "G01",
+      "narrative_purpose": "Establish the live pre-dawn broadcast and the deadline pressure of the on-air clock.",
+      "story_beat_ids": [
+        "B01"
+      ],
+      "script_line_ids": [],
+      "appearance_state_ids": [
+        "lin-che-studio-coat"
+      ]
+    },
+    {
+      "shot_id": "S02",
+      "scene_id": "radio-studio-night",
+      "character_ids": [
+        "lin-che"
+      ],
+      "product_ids": [],
+      "prop_ids": [],
+      "generation_unit_id": "G01",
+      "narrative_purpose": "Reveal Lin Che's accumulated fatigue through precise fader work and a held breath rather than exposition.",
+      "story_beat_ids": [
+        "B01"
+      ],
+      "script_line_ids": [],
+      "appearance_state_ids": [
+        "lin-che-studio-coat"
+      ]
+    },
+    {
+      "shot_id": "S03",
+      "scene_id": "radio-studio-night",
+      "character_ids": [
+        "lin-che"
+      ],
+      "product_ids": [
+        "coldbrew-bottle"
+      ],
+      "prop_ids": [
+        "handwritten-note"
+      ],
+      "generation_unit_id": "G01",
+      "narrative_purpose": "Introduce the bottle and attached note as a personal invitation that competes with work urgency.",
+      "story_beat_ids": [
+        "B01"
+      ],
+      "script_line_ids": [],
+      "appearance_state_ids": [
+        "lin-che-studio-coat"
+      ]
+    },
+    {
+      "shot_id": "S04",
+      "scene_id": "radio-studio-night",
+      "character_ids": [
+        "lin-che"
+      ],
+      "product_ids": [],
+      "prop_ids": [],
+      "generation_unit_id": "G02",
+      "narrative_purpose": "Let the father's saved voice message establish the promised sunrise without showing an explanatory flashback.",
+      "story_beat_ids": [
+        "B01"
+      ],
+      "script_line_ids": [
+        "L01"
+      ],
+      "appearance_state_ids": [
+        "lin-che-studio-coat"
+      ]
+    },
+    {
+      "shot_id": "S05",
+      "scene_id": "radio-studio-night",
+      "character_ids": [
+        "lin-che"
+      ],
+      "product_ids": [
+        "coldbrew-bottle"
+      ],
+      "prop_ids": [
+        "handwritten-note"
+      ],
+      "generation_unit_id": "G02",
+      "narrative_purpose": "Make Lin Che choose by opening the note and bottle while the final broadcast sentence continues.",
+      "story_beat_ids": [
+        "B02"
+      ],
+      "script_line_ids": [],
+      "appearance_state_ids": [
+        "lin-che-studio-coat"
+      ]
+    },
+    {
+      "shot_id": "S06",
+      "scene_id": "radio-studio-night",
+      "character_ids": [
+        "lin-che"
+      ],
+      "product_ids": [
+        "coldbrew-bottle"
+      ],
+      "prop_ids": [],
+      "generation_unit_id": "G02",
+      "narrative_purpose": "Turn the red on-air light off and launch the physical journey with product, coat, and bag states readable.",
+      "story_beat_ids": [
+        "B02"
+      ],
+      "script_line_ids": [],
+      "appearance_state_ids": [
+        "lin-che-studio-coat"
+      ]
+    },
+    {
+      "shot_id": "S07",
+      "scene_id": "station-concourse-rain",
+      "character_ids": [
+        "lin-che"
+      ],
+      "product_ids": [],
+      "prop_ids": [
+        "red-umbrella"
+      ],
+      "generation_unit_id": "G03",
+      "narrative_purpose": "Carry momentum from the studio into hard rain while preserving right-hand umbrella and screen direction.",
+      "story_beat_ids": [
+        "B03"
+      ],
+      "script_line_ids": [],
+      "appearance_state_ids": [
+        "lin-che-rain-transit"
+      ]
+    },
+    {
+      "shot_id": "S08",
+      "scene_id": "station-concourse-rain",
+      "character_ids": [
+        "lin-che"
+      ],
+      "product_ids": [],
+      "prop_ids": [
+        "red-umbrella"
+      ],
+      "generation_unit_id": "G03",
+      "narrative_purpose": "Show the red umbrella opening as a visual motif and practical transition into the station approach.",
+      "story_beat_ids": [
+        "B03"
+      ],
+      "script_line_ids": [],
+      "appearance_state_ids": [
+        "lin-che-rain-transit"
+      ]
+    },
+    {
+      "shot_id": "S09",
+      "scene_id": "station-concourse-rain",
+      "character_ids": [
+        "lin-che"
+      ],
+      "product_ids": [
+        "coldbrew-bottle"
+      ],
+      "prop_ids": [],
+      "generation_unit_id": "G03",
+      "narrative_purpose": "Use the opened bottle and departure board in one frame to make time pressure and product state coexist.",
+      "story_beat_ids": [
+        "B03"
+      ],
+      "script_line_ids": [],
+      "appearance_state_ids": [
+        "lin-che-rain-transit"
+      ]
+    },
+    {
+      "shot_id": "S10",
+      "scene_id": "station-concourse-rain",
+      "character_ids": [
+        "lin-che"
+      ],
+      "product_ids": [],
+      "prop_ids": [
+        "red-umbrella"
+      ],
+      "generation_unit_id": "G04",
+      "narrative_purpose": "Let the train doors close before Lin Che reaches them, creating a real setback without melodrama.",
+      "story_beat_ids": [
+        "B03"
+      ],
+      "script_line_ids": [],
+      "appearance_state_ids": [
+        "lin-che-rain-transit"
+      ]
+    },
+    {
+      "shot_id": "S11",
+      "scene_id": "station-concourse-rain",
+      "character_ids": [
+        "lin-che"
+      ],
+      "product_ids": [],
+      "prop_ids": [],
+      "generation_unit_id": "G04",
+      "narrative_purpose": "Hold on her decision to continue as she notices the last night bus across the wet concourse.",
+      "story_beat_ids": [
+        "B04"
+      ],
+      "script_line_ids": [],
+      "appearance_state_ids": [
+        "lin-che-rain-transit"
+      ]
+    },
+    {
+      "shot_id": "S12",
+      "scene_id": "station-concourse-rain",
+      "character_ids": [
+        "lin-che"
+      ],
+      "product_ids": [],
+      "prop_ids": [
+        "red-umbrella"
+      ],
+      "generation_unit_id": "G04",
+      "narrative_purpose": "Resolve the station obstacle by boarding the bus at the final moment with direction and prop states intact.",
+      "story_beat_ids": [
+        "B04"
+      ],
+      "script_line_ids": [],
+      "appearance_state_ids": [
+        "lin-che-rain-transit"
+      ]
+    },
+    {
+      "shot_id": "S13",
+      "scene_id": "night-bus-interior",
+      "character_ids": [
+        "lin-che"
+      ],
+      "product_ids": [
+        "coldbrew-bottle"
+      ],
+      "prop_ids": [
+        "red-umbrella"
+      ],
+      "generation_unit_id": "G05",
+      "narrative_purpose": "Reset rhythm inside the nearly empty bus and show the city sliding backward while she moves toward the promise.",
+      "story_beat_ids": [
+        "B05"
+      ],
+      "script_line_ids": [],
+      "appearance_state_ids": [
+        "lin-che-rain-transit"
+      ]
+    },
+    {
+      "shot_id": "S14",
+      "scene_id": "night-bus-interior",
+      "character_ids": [
+        "lin-che"
+      ],
+      "product_ids": [
+        "coldbrew-bottle"
+      ],
+      "prop_ids": [],
+      "generation_unit_id": "G05",
+      "narrative_purpose": "Make the first sip a quiet emotional release synchronized with the father's voice rather than an energy claim.",
+      "story_beat_ids": [
+        "B05"
+      ],
+      "script_line_ids": [],
+      "appearance_state_ids": [
+        "lin-che-rain-transit"
+      ]
+    },
+    {
+      "shot_id": "S15",
+      "scene_id": "riverside-dawn",
+      "character_ids": [
+        "father"
+      ],
+      "product_ids": [
+        "coldbrew-bottle"
+      ],
+      "prop_ids": [],
+      "generation_unit_id": "G06",
+      "narrative_purpose": "Cross-cut to the father waiting without complaint, with a matching bottle and the first pale horizon behind him.",
+      "story_beat_ids": [
+        "B06"
+      ],
+      "script_line_ids": [],
+      "appearance_state_ids": [
+        "father-dawn-riverside"
+      ]
+    },
+    {
+      "shot_id": "S16",
+      "scene_id": "night-bus-interior",
+      "character_ids": [
+        "lin-che"
+      ],
+      "product_ids": [],
+      "prop_ids": [],
+      "generation_unit_id": "G07",
+      "narrative_purpose": "Show Lin Che sending a restrained ten-minute message as the bus reflection shifts from night toward blue hour.",
+      "story_beat_ids": [
+        "B06"
+      ],
+      "script_line_ids": [
+        "L02"
+      ],
+      "appearance_state_ids": [
+        "lin-che-rain-transit"
+      ]
+    },
+    {
+      "shot_id": "S17",
+      "scene_id": "night-bus-interior",
+      "character_ids": [
+        "lin-che"
+      ],
+      "product_ids": [],
+      "prop_ids": [
+        "red-umbrella"
+      ],
+      "generation_unit_id": "G07",
+      "narrative_purpose": "Follow her through the bus exit in one continuous direction as dawn light replaces the artificial interior.",
+      "story_beat_ids": [
+        "B06"
+      ],
+      "script_line_ids": [],
+      "appearance_state_ids": [
+        "lin-che-rain-transit"
+      ]
+    },
+    {
+      "shot_id": "S18",
+      "scene_id": "riverside-dawn",
+      "character_ids": [
+        "lin-che",
+        "father"
+      ],
+      "product_ids": [],
+      "prop_ids": [
+        "red-umbrella"
+      ],
+      "generation_unit_id": "G08",
+      "narrative_purpose": "Reveal the father at the end of Lin Che's approach path before either character speaks or embraces.",
+      "story_beat_ids": [
+        "B07"
+      ],
+      "script_line_ids": [],
+      "appearance_state_ids": [
+        "lin-che-dawn-riverside",
+        "father-dawn-riverside"
+      ]
+    },
+    {
+      "shot_id": "S19",
+      "scene_id": "riverside-dawn",
+      "character_ids": [
+        "lin-che",
+        "father"
+      ],
+      "product_ids": [],
+      "prop_ids": [],
+      "generation_unit_id": "G08",
+      "narrative_purpose": "Pay off the relationship through a small shared smile and a respectful pause instead of sentimental dialogue.",
+      "story_beat_ids": [
+        "B07"
+      ],
+      "script_line_ids": [],
+      "appearance_state_ids": [
+        "lin-che-dawn-riverside",
+        "father-dawn-riverside"
+      ]
+    },
+    {
+      "shot_id": "S20",
+      "scene_id": "riverside-dawn",
+      "character_ids": [
+        "lin-che",
+        "father"
+      ],
+      "product_ids": [
+        "coldbrew-bottle"
+      ],
+      "prop_ids": [],
+      "generation_unit_id": "G09",
+      "narrative_purpose": "Bring the matching bottles together and establish that the product carried the invitation across both timelines.",
+      "story_beat_ids": [
+        "B07"
+      ],
+      "script_line_ids": [],
+      "appearance_state_ids": [
+        "lin-che-dawn-riverside",
+        "father-dawn-riverside"
+      ]
+    },
+    {
+      "shot_id": "S21",
+      "scene_id": "riverside-dawn",
+      "character_ids": [
+        "lin-che",
+        "father"
+      ],
+      "product_ids": [
+        "coldbrew-bottle"
+      ],
+      "prop_ids": [],
+      "generation_unit_id": "G09",
+      "narrative_purpose": "Let both characters watch the sunrise in silence while the bottle silhouettes remain naturally readable.",
+      "story_beat_ids": [
+        "B07"
+      ],
+      "script_line_ids": [],
+      "appearance_state_ids": [
+        "lin-che-dawn-riverside",
+        "father-dawn-riverside"
+      ]
+    },
+    {
+      "shot_id": "S22",
+      "scene_id": "riverside-dawn",
+      "character_ids": [
+        "lin-che",
+        "father"
+      ],
+      "product_ids": [
+        "coldbrew-bottle"
+      ],
+      "prop_ids": [
+        "handwritten-note"
+      ],
+      "generation_unit_id": "G10",
+      "narrative_purpose": "Resolve the handwritten note beside two hands and the opened product without turning the moment into a tabletop catalog shot.",
+      "story_beat_ids": [
+        "B08"
+      ],
+      "script_line_ids": [
+        "L03"
+      ],
+      "appearance_state_ids": [
+        "lin-che-dawn-riverside",
+        "father-dawn-riverside"
+      ]
+    },
+    {
+      "shot_id": "S23",
+      "scene_id": "riverside-dawn",
+      "character_ids": [],
+      "product_ids": [
+        "coldbrew-bottle"
+      ],
+      "prop_ids": [],
+      "generation_unit_id": "G10",
+      "narrative_purpose": "Deliver the first half of the four-second brand end frame with the bottle hero, dawn reflection, and protected title-safe area.",
+      "story_beat_ids": [
+        "B08"
+      ],
+      "script_line_ids": [],
+      "appearance_state_ids": []
+    },
+    {
+      "shot_id": "S24",
+      "scene_id": "riverside-dawn",
+      "character_ids": [],
+      "product_ids": [
+        "coldbrew-bottle"
+      ],
+      "prop_ids": [],
+      "generation_unit_id": "G10",
+      "narrative_purpose": "Hold the final brand and legal-safe composition long enough for broadcast readability and sound resolution.",
+      "story_beat_ids": [
+        "B08"
+      ],
+      "script_line_ids": [],
+      "appearance_state_ids": []
+    }
   ],
-  "rhythm_point_ids": ["R01", "R02", "R03", "R04", "R05", "R06", "R07", "R08", "R09", "R10", "R11", "R12", "R13", "R14", "R15", "R16", "R17", "R18", "R19", "R20", "R21", "R22", "R23", "R24", "R25", "R26", "R27", "R28", "R29", "R30", "R31", "R32"],
   "style_reference_required": true,
   "generation_units": [
-    {"unit_id": "G01", "shot_ids": ["S01", "S02", "S03"], "direct_input_min": 1, "direct_input_max": 1, "direct_input_roles": ["clean_first_frame"], "direct_input_not_required_reason": ""},
-    {"unit_id": "G02", "shot_ids": ["S04", "S05", "S06"], "direct_input_min": 1, "direct_input_max": 1, "direct_input_roles": ["clean_key_frame"], "direct_input_not_required_reason": ""},
-    {"unit_id": "G03", "shot_ids": ["S07", "S08", "S09"], "direct_input_min": 1, "direct_input_max": 1, "direct_input_roles": ["clean_first_frame"], "direct_input_not_required_reason": ""},
-    {"unit_id": "G04", "shot_ids": ["S10", "S11", "S12"], "direct_input_min": 1, "direct_input_max": 1, "direct_input_roles": ["clean_end_frame"], "direct_input_not_required_reason": ""},
-    {"unit_id": "G05", "shot_ids": ["S13", "S14"], "direct_input_min": 1, "direct_input_max": 1, "direct_input_roles": ["clean_first_frame"], "direct_input_not_required_reason": ""},
-    {"unit_id": "G06", "shot_ids": ["S15"], "direct_input_min": 1, "direct_input_max": 1, "direct_input_roles": ["clean_key_frame"], "direct_input_not_required_reason": ""},
-    {"unit_id": "G07", "shot_ids": ["S16", "S17"], "direct_input_min": 1, "direct_input_max": 1, "direct_input_roles": ["clean_end_frame"], "direct_input_not_required_reason": ""},
-    {"unit_id": "G08", "shot_ids": ["S18", "S19"], "direct_input_min": 1, "direct_input_max": 1, "direct_input_roles": ["clean_first_frame"], "direct_input_not_required_reason": ""},
-    {"unit_id": "G09", "shot_ids": ["S20", "S21"], "direct_input_min": 1, "direct_input_max": 1, "direct_input_roles": ["clean_first_frame"], "direct_input_not_required_reason": ""},
-    {"unit_id": "G10", "shot_ids": ["S22", "S23", "S24"], "direct_input_min": 1, "direct_input_max": 1, "direct_input_roles": ["clean_end_frame"], "direct_input_not_required_reason": ""}
+    {
+      "unit_id": "G01",
+      "shot_ids": [
+        "S01",
+        "S02",
+        "S03"
+      ],
+      "direct_input_min": 1,
+      "direct_input_max": 1,
+      "direct_input_roles": [
+        "clean_first_frame"
+      ],
+      "direct_input_not_required_reason": ""
+    },
+    {
+      "unit_id": "G02",
+      "shot_ids": [
+        "S04",
+        "S05",
+        "S06"
+      ],
+      "direct_input_min": 1,
+      "direct_input_max": 1,
+      "direct_input_roles": [
+        "clean_key_frame"
+      ],
+      "direct_input_not_required_reason": ""
+    },
+    {
+      "unit_id": "G03",
+      "shot_ids": [
+        "S07",
+        "S08",
+        "S09"
+      ],
+      "direct_input_min": 1,
+      "direct_input_max": 1,
+      "direct_input_roles": [
+        "clean_first_frame"
+      ],
+      "direct_input_not_required_reason": ""
+    },
+    {
+      "unit_id": "G04",
+      "shot_ids": [
+        "S10",
+        "S11",
+        "S12"
+      ],
+      "direct_input_min": 1,
+      "direct_input_max": 1,
+      "direct_input_roles": [
+        "clean_end_frame"
+      ],
+      "direct_input_not_required_reason": ""
+    },
+    {
+      "unit_id": "G05",
+      "shot_ids": [
+        "S13",
+        "S14"
+      ],
+      "direct_input_min": 1,
+      "direct_input_max": 1,
+      "direct_input_roles": [
+        "clean_first_frame"
+      ],
+      "direct_input_not_required_reason": ""
+    },
+    {
+      "unit_id": "G06",
+      "shot_ids": [
+        "S15"
+      ],
+      "direct_input_min": 1,
+      "direct_input_max": 1,
+      "direct_input_roles": [
+        "clean_key_frame"
+      ],
+      "direct_input_not_required_reason": ""
+    },
+    {
+      "unit_id": "G07",
+      "shot_ids": [
+        "S16",
+        "S17"
+      ],
+      "direct_input_min": 1,
+      "direct_input_max": 1,
+      "direct_input_roles": [
+        "clean_end_frame"
+      ],
+      "direct_input_not_required_reason": ""
+    },
+    {
+      "unit_id": "G08",
+      "shot_ids": [
+        "S18",
+        "S19"
+      ],
+      "direct_input_min": 1,
+      "direct_input_max": 1,
+      "direct_input_roles": [
+        "clean_first_frame"
+      ],
+      "direct_input_not_required_reason": ""
+    },
+    {
+      "unit_id": "G09",
+      "shot_ids": [
+        "S20",
+        "S21"
+      ],
+      "direct_input_min": 1,
+      "direct_input_max": 1,
+      "direct_input_roles": [
+        "clean_first_frame"
+      ],
+      "direct_input_not_required_reason": ""
+    },
+    {
+      "unit_id": "G10",
+      "shot_ids": [
+        "S22",
+        "S23",
+        "S24"
+      ],
+      "direct_input_min": 1,
+      "direct_input_max": 1,
+      "direct_input_roles": [
+        "clean_end_frame"
+      ],
+      "direct_input_not_required_reason": ""
+    }
+  ],
+  "creative_source_file": "tvc-60s-creative-source.json",
+  "creative_source_sha256": "07a1c10ae24514aa3db228176440122a3d56b164479e4b9ba4cff2e2ccaecaf0",
+  "appearance_states": [
+    {
+      "id": "lin-che-studio-coat",
+      "character_id": "lin-che",
+      "purpose": "Lock Lin Che in the dry dark studio coat, pinned hair, work bag, and right-hand product use for S01-S06."
+    },
+    {
+      "id": "lin-che-rain-transit",
+      "character_id": "lin-che",
+      "purpose": "Lock Lin Che with the same coat visibly rain-wet, red umbrella ownership, work bag, and transit continuity for S07-S17."
+    },
+    {
+      "id": "lin-che-dawn-riverside",
+      "character_id": "lin-che",
+      "purpose": "Lock Lin Che at dawn with rain-softened coat texture, pinned hair, bag, and tracked bottle state for S18-S24."
+    },
+    {
+      "id": "father-dawn-riverside",
+      "character_id": "father",
+      "purpose": "Lock the father in his gray rain jacket, weathered face, dawn silhouette, and matching bottle state for S15 and S18-S24."
+    }
+  ],
+  "rhythm_points": [
+    {
+      "id": "R01",
+      "timecode": "00:00",
+      "shot_ids": [
+        "S01"
+      ],
+      "action": "Begin S01: Lin Che rides the last music bed and watches the second hand reach the handoff",
+      "sound_transition": "Begin S01 sound: Station ident, low console hum; hard cut on fader touch"
+    },
+    {
+      "id": "R02",
+      "timecode": "00:02.4",
+      "shot_ids": [
+        "S02"
+      ],
+      "action": "Begin S02: She completes a precise fade while fatigue appears only in a brief pause",
+      "sound_transition": "Begin S02 sound: Fader travel and held breath isolated under thinning music"
+    },
+    {
+      "id": "R03",
+      "timecode": "00:05",
+      "shot_ids": [
+        "S03"
+      ],
+      "action": "Begin S03: Her hand stops beside the bottle but does not take it yet",
+      "sound_transition": "Begin S03 sound: Paper edge tremor enters before the next voice cue"
+    },
+    {
+      "id": "R04",
+      "timecode": "00:06.2",
+      "shot_ids": [
+        "S03"
+      ],
+      "action": "Turn within S03: Her hand stops beside the bottle but does not take it yet",
+      "sound_transition": "Turn within S03 sound: Paper edge tremor enters before the next voice cue"
+    },
+    {
+      "id": "R05",
+      "timecode": "00:07.4",
+      "shot_ids": [
+        "S04"
+      ],
+      "action": "Begin S04: She plays her father's saved message while continuing the final link",
+      "sound_transition": "Begin S04 sound: Father: '日出还等你。' Booth bed remains beneath the message"
+    },
+    {
+      "id": "R06",
+      "timecode": "00:10.4",
+      "shot_ids": [
+        "S05"
+      ],
+      "action": "Begin S05: Lin Che unfolds the note, pockets it, then twists open the bottle",
+      "sound_transition": "Begin S05 sound: Paper unfold, cap seal crack, final broadcast sentence continues"
+    },
+    {
+      "id": "R07",
+      "timecode": "00:11.9",
+      "shot_ids": [
+        "S05"
+      ],
+      "action": "Turn within S05: Lin Che unfolds the note, pockets it, then twists open the bottle",
+      "sound_transition": "Turn within S05 sound: Paper unfold, cap seal crack, final broadcast sentence continues"
+    },
+    {
+      "id": "R08",
+      "timecode": "00:13.4",
+      "shot_ids": [
+        "S06"
+      ],
+      "action": "Begin S06: She kills the ON AIR lamp, shoulders the bag and leaves with the open bottle",
+      "sound_transition": "Begin S06 sound: Switch click removes booth hum; rain rises across the cut"
+    },
+    {
+      "id": "R09",
+      "timecode": "00:15.4",
+      "shot_ids": [
+        "S07"
+      ],
+      "action": "Begin S07: Lin Che exits the station-side door and accelerates toward the concourse",
+      "sound_transition": "Begin S07 sound: Rain impact, shoes, distant departure chime"
+    },
+    {
+      "id": "R10",
+      "timecode": "00:17.4",
+      "shot_ids": [
+        "S08"
+      ],
+      "action": "Begin S08: The red umbrella snaps open and becomes the transition motif",
+      "sound_transition": "Begin S08 sound: Umbrella snap replaces the station chime transient"
+    },
+    {
+      "id": "R11",
+      "timecode": "00:18.4",
+      "shot_ids": [
+        "S08"
+      ],
+      "action": "Turn within S08: The red umbrella snaps open and becomes the transition motif",
+      "sound_transition": "Turn within S08 sound: Umbrella snap replaces the station chime transient"
+    },
+    {
+      "id": "R12",
+      "timecode": "00:19.4",
+      "shot_ids": [
+        "S09"
+      ],
+      "action": "Begin S09: She checks the final departure while the bottle state remains readable",
+      "sound_transition": "Begin S09 sound: PA countdown and rain; no health or energy line"
+    },
+    {
+      "id": "R13",
+      "timecode": "00:22",
+      "shot_ids": [
+        "S10"
+      ],
+      "action": "Begin S10: Train doors close one pace before she reaches them",
+      "sound_transition": "Begin S10 sound: Door warning, seal thump, music drops to one low pulse"
+    },
+    {
+      "id": "R14",
+      "timecode": "00:23.2",
+      "shot_ids": [
+        "S10"
+      ],
+      "action": "Turn within S10: Train doors close one pace before she reaches them",
+      "sound_transition": "Turn within S10 sound: Door warning, seal thump, music drops to one low pulse"
+    },
+    {
+      "id": "R15",
+      "timecode": "00:24.4",
+      "shot_ids": [
+        "S11"
+      ],
+      "action": "Begin S11: She absorbs the setback and sees the last bus across the concourse",
+      "sound_transition": "Begin S11 sound: One breath, then bus indicator beep across space"
+    },
+    {
+      "id": "R16",
+      "timecode": "00:26.4",
+      "shot_ids": [
+        "S12"
+      ],
+      "action": "Begin S12: She crosses the wet concourse and boards just before the door closes",
+      "sound_transition": "Begin S12 sound: Footsteps accelerate; door closes into interior ambience"
+    },
+    {
+      "id": "R17",
+      "timecode": "00:29",
+      "shot_ids": [
+        "S13"
+      ],
+      "action": "Begin S13: Lin Che settles beside the window in an almost empty night bus",
+      "sound_transition": "Begin S13 sound: Engine, wiper and low tire wash establish a slower pulse"
+    },
+    {
+      "id": "R18",
+      "timecode": "00:31.4",
+      "shot_ids": [
+        "S14"
+      ],
+      "action": "Begin S14: She takes the first quiet sip and releases the breath held in S02",
+      "sound_transition": "Begin S14 sound: Single sip, father's message tail and restrained score resolve together"
+    },
+    {
+      "id": "R19",
+      "timecode": "00:32.9",
+      "shot_ids": [
+        "S14"
+      ],
+      "action": "Turn within S14: She takes the first quiet sip and releases the breath held in S02",
+      "sound_transition": "Turn within S14 sound: Single sip, father's message tail and restrained score resolve together"
+    },
+    {
+      "id": "R20",
+      "timecode": "00:34.4",
+      "shot_ids": [
+        "S15"
+      ],
+      "action": "Begin S15: He checks the pale horizon, then rests his matching bottle beside him",
+      "sound_transition": "Begin S15 sound: River air and first birds replace bus interior for the cross-cut"
+    },
+    {
+      "id": "R21",
+      "timecode": "00:37",
+      "shot_ids": [
+        "S16"
+      ],
+      "action": "Begin S16: Lin Che sends a restrained ten-minute message as blue hour enters the glass",
+      "sound_transition": "Begin S16 sound: One message-send tone, then wiper rhythm resumes"
+    },
+    {
+      "id": "R22",
+      "timecode": "00:39.4",
+      "shot_ids": [
+        "S17"
+      ],
+      "action": "Begin S17: She collects the folded umbrella and steps into the first dawn light",
+      "sound_transition": "Begin S17 sound: Door pneumatic release opens into river wind"
+    },
+    {
+      "id": "R23",
+      "timecode": "00:42",
+      "shot_ids": [
+        "S18"
+      ],
+      "action": "Begin S18: The father appears at path end before either person speaks",
+      "sound_transition": "Begin S18 sound: Score holds one unresolved chord; footsteps stay foreground"
+    },
+    {
+      "id": "R24",
+      "timecode": "00:43.5",
+      "shot_ids": [
+        "S18"
+      ],
+      "action": "Turn within S18: The father appears at path end before either person speaks",
+      "sound_transition": "Turn within S18 sound: Score holds one unresolved chord; footsteps stay foreground"
+    },
+    {
+      "id": "R25",
+      "timecode": "00:45",
+      "shot_ids": [
+        "S19"
+      ],
+      "action": "Begin S19: They stop, exchange a small smile and allow a respectful pause",
+      "sound_transition": "Begin S19 sound: Footsteps stop; only river, fabric and one shared breath"
+    },
+    {
+      "id": "R26",
+      "timecode": "00:47.4",
+      "shot_ids": [
+        "S20"
+      ],
+      "action": "Begin S20: Their two bottles meet on the railing, linking invitation and arrival",
+      "sound_transition": "Begin S20 sound: Two bottle bases touch wood; score gains one warm harmonic"
+    },
+    {
+      "id": "R27",
+      "timecode": "00:48.7",
+      "shot_ids": [
+        "S20"
+      ],
+      "action": "Turn within S20: Their two bottles meet on the railing, linking invitation and arrival",
+      "sound_transition": "Turn within S20 sound: Two bottle bases touch wood; score gains one warm harmonic"
+    },
+    {
+      "id": "R28",
+      "timecode": "00:50",
+      "shot_ids": [
+        "S21"
+      ],
+      "action": "Begin S21: They watch sunrise together while bottle silhouettes remain naturally readable",
+      "sound_transition": "Begin S21 sound: Music opens; no explanatory voiceover"
+    },
+    {
+      "id": "R29",
+      "timecode": "00:53",
+      "shot_ids": [
+        "S22"
+      ],
+      "action": "Begin S22: Lin Che places the unfolded note between them without turning it into a catalog pose",
+      "sound_transition": "Begin S22 sound: Paper settles; father quietly says '赶上了。'"
+    },
+    {
+      "id": "R30",
+      "timecode": "00:55.4",
+      "shot_ids": [
+        "S23"
+      ],
+      "action": "Begin S23: Bottle holds against moving river light; verified label faces camera",
+      "sound_transition": "Begin S23 sound: Brand mnemonic begins; river texture remains"
+    },
+    {
+      "id": "R31",
+      "timecode": "00:57.4",
+      "shot_ids": [
+        "S24"
+      ],
+      "action": "Begin S24: Brand end frame holds to broadcast readability, then resolves cleanly",
+      "sound_transition": "Begin S24 sound: Mnemonic completes on the final river glint; 48 kHz master path"
+    },
+    {
+      "id": "R32",
+      "timecode": "00:58.7",
+      "shot_ids": [
+        "S24"
+      ],
+      "action": "Turn within S24: Brand end frame holds to broadcast readability, then resolves cleanly",
+      "sound_transition": "Turn within S24 sound: Mnemonic completes on the final river glint; 48 kHz master path"
+    }
   ]
 }

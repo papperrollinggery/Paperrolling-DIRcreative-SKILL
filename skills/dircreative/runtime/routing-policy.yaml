@@ -1,188 +1,270 @@
-policy_version: "2.0"
-default_mode: studio
-default_execution_context: standalone_chat
+{
+  "policy_version": "2.0",
+  "default_mode": "studio",
+  "default_execution_context": "standalone_chat",
+  "interaction_contract": {
+    "external_user_gates": [
+      "concept_lock",
+      "generation_authorization",
+      "client_delivery_approval"
+    ],
+    "reversible_internal_states": [
+      "story_state",
+      "script_state",
+      "shot_state",
+      "visual_state",
+      "reference_state",
+      "prompt_state",
+      "qa_state"
+    ],
+    "continue_without_gate": [
+      "explicit_continue_without_real_blocker",
+      "bounded_artifact_revision",
+      "complete_brief_with_no_material_conflict",
+      "direct_artifact_request"
+    ],
+    "first_response_contract": "useful_artifact_first",
+    "known_brief_policy": "reuse_without_reasking",
+    "obvious_route_without_router_tool": true,
+    "scoped_validation_policy": "current_task_and_direct_dependencies_only",
+    "unrelated_global_debt_blocks_scoped_work": false,
+    "state_persistence": {
+      "fast": "memory_only",
+      "studio": "pause_cross_session_or_multi_file_only",
+      "delivery": "required"
+    }
+  },
+  "route_cards": {
+    "fast": "skills/dircreative/routes/fast-task.md",
+    "studio": "skills/dircreative/routes/studio-development.md",
+    "delivery": "skills/dircreative/routes/delivery-audit.md"
+  },
+  "external_user_gates": [
+    "concept_lock",
+    "generation_authorization",
+    "client_delivery_approval"
+  ],
+  "performance_budgets": {
+    "fast": {
+      "threads": 0,
+      "director_room": 0,
+      "external_user_gates_max": 1,
+      "full_receipt": false,
+      "full_project_validation": false,
+      "adco_documents": 0,
+      "route_cards": 1,
+      "task_files_max": 1,
+      "loaded_context_files_max": 4,
+      "loaded_context_bytes_max": 14000,
+      "pre_artifact_routing_or_audit_tool_calls_max": 0,
+      "task_context_reads_max": 2,
+      "useful_content_ratio_min": 0.75,
+      "process_narration_ratio_max": 0.1
+    },
+    "studio": {
+      "threads_default": 0,
+      "perspectives_max": 3,
+      "independent_critics_max": 1,
+      "external_gates_only_for_material_decisions": true,
+      "final_delivery_documents": 0,
+      "route_cards": 1,
+      "task_files_max": 1,
+      "loaded_context_files_max": 6,
+      "loaded_context_bytes_max": 20000,
+      "pre_artifact_routing_or_audit_tool_calls_max": 0,
+      "task_context_reads_max": 2,
+      "useful_content_ratio_min": 0.7,
+      "process_narration_ratio_max": 0.15,
+      "full_project_validation": false
+    },
+    "delivery": {
+      "full_audit_allowed": true,
+      "duplicate_state_owners_allowed": false,
+      "route_cards": 1,
+      "task_files_max": 2,
+      "loaded_context_files_max": 5,
+      "loaded_context_bytes_max": 30000,
+      "scoped_validation_required": true
+    }
+  },
+  "skill_stack_policy": {
+    "selection_phase": "after_mode_and_deliverable",
+    "policy_registry": "skills/dircreative/runtime/visual-skill-policy.json",
+    "conditional_reference": "skills/dircreative/references/visual-skill-stack.md",
+    "discovery_tool": "scripts/dircreative_skill_stack.py",
+    "candidate_metadata_max": 12,
+    "candidate_body_loading": "selected_only_after_metadata",
+    "used_claim": "primary_host_independent_full_body_read_and_hash_verification_required",
+    "route_authority": "validated_primary_route_only",
+    "controller_owner": {
+      "standalone_chat": "dircreative",
+      "orchestrated_worker": "adco"
+    },
+    "provider_bodies_max": {
+      "fast": 1,
+      "studio": 3,
+      "delivery": 1
+    },
+    "execution_adapter_context_bytes_max": {
+      "delivery": 24576
+    },
+    "validators_max": 1,
+    "explicit_overlays": [
+      "liu-creative-workflow",
+      "sophia-research-mode"
+    ],
+    "nested_controller": "forbidden",
+    "missing_provider": "skip_or_dircreative_fallback",
+    "execution_adapter": "select_only_after_real_side_effect_and_existing_gate",
+    "artifact_before_skill_card": true
+  },
+  "routes": {
+    "source_maintenance": {
+      "mode": "fast",
+      "route_card": "skills/dircreative/routes/fast-task.md",
+      "required_files": [
 
-interaction_contract:
-  external_user_gates:
-    - concept_lock
-    - generation_authorization
-    - client_delivery_approval
-  reversible_internal_states:
-    - story_state
-    - script_state
-    - shot_state
-    - visual_state
-    - reference_state
-    - prompt_state
-    - qa_state
-  continue_without_gate:
-    - explicit_continue_without_real_blocker
-    - bounded_artifact_revision
-    - complete_brief_with_no_material_conflict
-    - direct_artifact_request
-  first_response_contract: useful_artifact_first
-  known_brief_policy: reuse_without_reasking
-  obvious_route_without_router_tool: true
-  scoped_validation_policy: current_task_and_direct_dependencies_only
-  unrelated_global_debt_blocks_scoped_work: false
-  state_persistence:
-    fast: memory_only
-    studio: pause_cross_session_or_multi_file_only
-    delivery: required
+      ],
+      "optional_files": [
 
-route_cards:
-  fast: skills/dircreative/routes/fast-task.md
-  studio: skills/dircreative/routes/studio-development.md
-  delivery: skills/dircreative/routes/delivery-audit.md
+      ],
+      "external_user_gate": null,
+      "threads_allowed": false,
+      "full_receipt_required": false
+    },
+    "copy_revision": {
+      "mode": "fast",
+      "route_card": "skills/dircreative/routes/fast-task.md",
+      "required_files": [
+        "skills/dircreative/references/copy-script.md"
+      ],
+      "optional_files": [
 
-external_user_gates:
-  - concept_lock
-  - generation_authorization
-  - client_delivery_approval
+      ],
+      "external_user_gate": null,
+      "threads_allowed": false,
+      "full_receipt_required": false
+    },
+    "shot_optimization": {
+      "mode": "fast",
+      "route_card": "skills/dircreative/routes/fast-task.md",
+      "required_files": [
+        "skills/dircreative/references/shot-storyboard.md"
+      ],
+      "optional_files": [
 
-performance_budgets:
-  fast:
-    threads: 0
-    director_room: 0
-    external_user_gates_max: 1
-    full_receipt: false
-    full_project_validation: false
-    adco_documents: 0
-    route_cards: 1
-    task_files_max: 1
-    loaded_context_files_max: 3
-    loaded_context_bytes_max: 14000
-    pre_artifact_routing_or_audit_tool_calls_max: 0
-    task_context_reads_max: 2
-    useful_content_ratio_min: 0.75
-    process_narration_ratio_max: 0.10
-  studio:
-    threads_default: 0
-    perspectives_max: 3
-    independent_critics_max: 1
-    external_gates_only_for_material_decisions: true
-    final_delivery_documents: 0
-    route_cards: 1
-    task_files_max: 1
-    loaded_context_files_max: 3
-    loaded_context_bytes_max: 20000
-    pre_artifact_routing_or_audit_tool_calls_max: 0
-    task_context_reads_max: 2
-    useful_content_ratio_min: 0.70
-    process_narration_ratio_max: 0.15
-    full_project_validation: false
-  delivery:
-    full_audit_allowed: true
-    duplicate_state_owners_allowed: false
-    route_cards: 1
-    task_files_max: 2
-    loaded_context_files_max: 4
-    loaded_context_bytes_max: 30000
-    scoped_validation_required: true
+      ],
+      "external_user_gate": null,
+      "threads_allowed": false,
+      "full_receipt_required": false
+    },
+    "storyboard_review": {
+      "mode": "fast",
+      "route_card": "skills/dircreative/routes/fast-task.md",
+      "required_files": [
+        "skills/dircreative/references/shot-storyboard.md"
+      ],
+      "optional_files": [
 
-routes:
-  source_maintenance:
-    mode: fast
-    route_card: skills/dircreative/routes/fast-task.md
-    required_files: []
-    optional_files: []
-    external_user_gate: null
-    threads_allowed: false
-    full_receipt_required: false
-  copy_revision:
-    mode: fast
-    route_card: skills/dircreative/routes/fast-task.md
-    required_files:
-      - skills/dircreative/references/copy-script.md
-    optional_files: []
-    external_user_gate: null
-    threads_allowed: false
-    full_receipt_required: false
-  shot_optimization:
-    mode: fast
-    route_card: skills/dircreative/routes/fast-task.md
-    required_files:
-      - skills/dircreative/references/shot-storyboard.md
-    optional_files: []
-    external_user_gate: null
-    threads_allowed: false
-    full_receipt_required: false
-  storyboard_review:
-    mode: fast
-    route_card: skills/dircreative/routes/fast-task.md
-    required_files:
-      - skills/dircreative/references/shot-storyboard.md
-    optional_files: []
-    external_user_gate: null
-    threads_allowed: false
-    full_receipt_required: false
-  prompt_revision:
-    mode: fast
-    route_card: skills/dircreative/routes/fast-task.md
-    required_files:
-      - skills/dircreative/references/prompt-model.md
-    optional_files: []
-    external_user_gate: null
-    threads_allowed: false
-    full_receipt_required: false
-  bounded_revision:
-    mode: fast
-    route_card: skills/dircreative/routes/fast-task.md
-    required_files: []
-    optional_files: []
-    external_user_gate: null
-    threads_allowed: false
-    full_receipt_required: false
-  film_development:
-    mode: studio
-    route_card: skills/dircreative/routes/studio-development.md
-    required_files:
-      - skills/dircreative/references/film-development.md
-    optional_files: []
-    external_user_gate: concept_lock
-    gate_condition: incompatible_creative_directions
-    threads_allowed: false
-    full_receipt_required: false
-  generation_authorization:
-    mode: delivery
-    route_card: skills/dircreative/routes/delivery-audit.md
-    required_files:
-      - skills/dircreative/references/generation-delivery.md
-    optional_files: []
-    external_user_gate: generation_authorization
-    threads_allowed: false
-    full_receipt_required: true
-  client_delivery:
-    mode: delivery
-    route_card: skills/dircreative/routes/delivery-audit.md
-    required_files:
-      - skills/dircreative/references/generation-delivery.md
-    optional_files: []
-    external_user_gate: client_delivery_approval
-    threads_allowed: false
-    full_receipt_required: true
-  adco_specialist_exchange:
-    mode: delivery
-    route_card: skills/dircreative/routes/delivery-audit.md
-    required_files:
-      - skills/dircreative/references/specialist-exchange.md
-      - docs/film-preproduction/schemas/adco-specialist-descriptor.json
-    optional_files: []
-    external_user_gate: null
-    threads_allowed: false
-    full_receipt_required: false
+      ],
+      "external_user_gate": null,
+      "threads_allowed": false,
+      "full_receipt_required": false
+    },
+    "prompt_revision": {
+      "mode": "fast",
+      "route_card": "skills/dircreative/routes/fast-task.md",
+      "required_files": [
+        "skills/dircreative/references/prompt-model.md"
+      ],
+      "optional_files": [
 
-contract_owners:
-  activation: skills/dircreative/agents/openai.yaml
-  routing: skills/dircreative/runtime/routing-policy.yaml
-  interaction_and_external_gates: skills/dircreative/runtime/routing-policy.yaml
-  compact_state: skills/dircreative/runtime/state-snapshot.schema.json
-  whole_film_visual_asset_plan: skills/dircreative/runtime/visual-asset-plan.schema.json
-  fast_execution: skills/dircreative/routes/fast-task.md
-  studio_execution: skills/dircreative/routes/studio-development.md
-  delivery_execution: skills/dircreative/routes/delivery-audit.md
-  director_perspective_selection: docs/film-preproduction/director-room-routing.md
-  prompt_ir: docs/film-preproduction/schemas/prompt-ir.schema.json
-  model_adapter_interface: scripts/dircreative_adapters/base.py
-  specialist_exchange: docs/film-preproduction/schemas/adco-specialist-descriptor.json
-  legacy_thread_evidence: docs/film-preproduction/thread-orchestration-protocol.md
+      ],
+      "external_user_gate": null,
+      "threads_allowed": false,
+      "full_receipt_required": false
+    },
+    "bounded_revision": {
+      "mode": "fast",
+      "route_card": "skills/dircreative/routes/fast-task.md",
+      "required_files": [
+
+      ],
+      "optional_files": [
+
+      ],
+      "external_user_gate": null,
+      "threads_allowed": false,
+      "full_receipt_required": false
+    },
+    "film_development": {
+      "mode": "studio",
+      "route_card": "skills/dircreative/routes/studio-development.md",
+      "required_files": [
+        "skills/dircreative/references/film-development.md"
+      ],
+      "optional_files": [
+
+      ],
+      "external_user_gate": "concept_lock",
+      "gate_condition": "incompatible_creative_directions",
+      "threads_allowed": false,
+      "full_receipt_required": false
+    },
+    "generation_authorization": {
+      "mode": "delivery",
+      "route_card": "skills/dircreative/routes/delivery-audit.md",
+      "required_files": [
+        "skills/dircreative/references/generation-delivery.md"
+      ],
+      "optional_files": [
+
+      ],
+      "external_user_gate": "generation_authorization",
+      "threads_allowed": false,
+      "full_receipt_required": true
+    },
+    "client_delivery": {
+      "mode": "delivery",
+      "route_card": "skills/dircreative/routes/delivery-audit.md",
+      "required_files": [
+        "skills/dircreative/references/generation-delivery.md"
+      ],
+      "optional_files": [
+
+      ],
+      "external_user_gate": "client_delivery_approval",
+      "threads_allowed": false,
+      "full_receipt_required": true
+    },
+    "adco_specialist_exchange": {
+      "mode": "delivery",
+      "route_card": "skills/dircreative/routes/delivery-audit.md",
+      "required_files": [
+        "skills/dircreative/references/specialist-exchange.md",
+        "docs/film-preproduction/schemas/adco-specialist-descriptor.json"
+      ],
+      "optional_files": [
+
+      ],
+      "external_user_gate": null,
+      "threads_allowed": false,
+      "full_receipt_required": false
+    }
+  },
+  "contract_owners": {
+    "activation": "skills/dircreative/agents/openai.yaml",
+    "routing": "skills/dircreative/runtime/routing-policy.yaml",
+    "interaction_and_external_gates": "skills/dircreative/runtime/routing-policy.yaml",
+    "compact_state": "skills/dircreative/runtime/state-snapshot.schema.json",
+    "whole_film_visual_asset_plan": "skills/dircreative/runtime/visual-asset-plan.schema.json",
+    "fast_execution": "skills/dircreative/routes/fast-task.md",
+    "studio_execution": "skills/dircreative/routes/studio-development.md",
+    "delivery_execution": "skills/dircreative/routes/delivery-audit.md",
+    "director_perspective_selection": "docs/film-preproduction/director-room-routing.md",
+    "prompt_ir": "docs/film-preproduction/schemas/prompt-ir.schema.json",
+    "model_adapter_interface": "scripts/dircreative_adapters/base.py",
+    "specialist_exchange": "docs/film-preproduction/schemas/adco-specialist-descriptor.json",
+    "legacy_thread_evidence": "docs/film-preproduction/thread-orchestration-protocol.md"
+  }
+}

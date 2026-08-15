@@ -1,22 +1,19 @@
 ---
 name: dircreative
-description: Use only after the user explicitly invokes $dircreative for film preproduction: story, script, storyboard, shot planning, visual systems, reference-image planning, and model-specific video prompts. ADCO mode accepts only a validated Specialist Exchange handoff. Do not use for maintaining, debugging, refactoring, testing, or evaluating the DIRcreative source repository; maintaining ADCO; ordinary code work; factual questions; or generic advertising requests without an explicit $dircreative invocation.
+description: "Use only after the user explicitly invokes $dircreative for film preproduction: story, script, storyboard, shot planning, visual systems, reference-image planning, and model-specific video prompts. ADCO mode accepts only a validated Specialist Exchange handoff. Do not use for maintaining, debugging, refactoring, testing, or evaluating the DIRcreative source repository; maintaining ADCO; ordinary code work; factual questions; or generic advertising requests without an explicit $dircreative invocation."
 ---
 
 # DIRcreative
 
-DIRcreative helps make the film work better. Spend attention on story, image,
-sound, performance, continuity, and model behavior; keep routing and evidence
-machinery subordinate to the requested result.
+Make the film work better across story, image, sound, performance, continuity,
+and model behavior; keep control machinery subordinate to the result.
 
 ## Invocation Boundary
 
-Start only when the user explicitly writes `$dircreative`, or when a validated
-`adco.specialist-exchange` handoff selects `dircreative.film-preproduction`.
-
-Never activate for this repository's maintenance, ADCO maintenance, ordinary
-code work, fact questions, or generic advertising language. If maintenance is
-misrouted here, classify it as `source_maintenance` and stop Skill execution.
+Start only for explicit `$dircreative` or validated `adco.specialist-exchange`
+selecting `dircreative.film-preproduction`; real ADCO uses
+`adco specialist-handoff` and `adco specialist-adopt`. Misrouted DIR/ADCO
+maintenance becomes `source_maintenance` and stops Skill execution.
 
 ## Router Contract
 
@@ -34,30 +31,44 @@ creative work:
 | fully validated ADCO handoff | Delivery / `adco_specialist_exchange` | `routes/delivery-audit.md` | `references/specialist-exchange.md` plus the descriptor schema |
 
 Run `python3 scripts/dircreative_route.py --handoff <file> --project-root <dir>`
-only to validate an ADCO handoff, or run the router on text when
-the request is genuinely ambiguous between modes. A schema-only handoff fails
-closed; the ADCO route verifies the descriptor, locked input hashes, brief
-binding, capabilities, exact exchange-index registration, descriptor snapshot,
-and isolated output/receipt scope. It is not a mandatory creative preflight.
+only to validate an ADCO handoff, or use text routing for genuine mode ambiguity.
+A schema-only handoff fails closed; verify its descriptor, locked hashes, brief,
+capabilities, exchange index, snapshot, and isolated output/receipt scope. It is
+not a mandatory creative preflight.
 
 Read exactly one selected Route Card, then only the task reference in the table.
 Do not follow references from that card into another protocol chain. Optional
 model/source evidence is fetched only when a current claim or real execution
 depends on it.
 
+For an explicit project directory, new materials, or multi-file Studio output,
+also read `references/project-hygiene.md` after the first useful artifact. It is
+an operational reference, not a craft reference.
+
 ## Startup Reads
 
-- There are zero unconditional protocol reads.
-- An obvious Fast or Studio request needs no router tool call before the result.
-- One Route Card and one task reference are the normal maximum.
+There are zero unconditional protocol reads. An obvious Fast or Studio request needs no router tool call
+before the result and uses one Route Card and one task reference.
+
+## Intelligent Skill Stack
+
+After mode and deliverable selection, use the host catalog for one advisory
+stack: one craft owner, non-overlapping collaborators, at most one validator,
+and an adapter only for an authorized side effect. DIR, or valid-handoff ADCO,
+keeps final artifact/state ownership. Fast/Studio/Delivery load at most 1/3/1
+provider bodies inside 14/20/30KB. Scan an authorized root only when the catalog
+is absent; never execute discovered code or expose paths. Liu/Sophia are explicit
+overlays; `ai-visual-production-director` is reference-only. Put the artifact
+before the compact Skill card. The selector never claims “已用”; only the host may
+do so after independently reading the selected body and verifying its hash. ADCO handoff and execution gates come only from
+the validated primary route, never request fields. Read
+`references/visual-skill-stack.md` only for ambiguity or audit.
 
 ## Execution Context
 
-`standalone_chat` owns the response and any compact working state.
-
-`orchestrated_worker` exists only after a valid exchange handoff. ADCO owns host
-truth, versions, adoption, client visibility, readiness, completion, and cleanup.
-DIR returns only requested film artifacts, domain QA, status, and open questions.
+`standalone_chat` owns response/state. `orchestrated_worker` requires a valid
+exchange; ADCO owns host truth, versions, adoption, client visibility, readiness,
+completion, and cleanup. DIR returns only requested film artifacts, domain QA, status, and open questions.
 Nested dispatch is forbidden.
 
 ## Modes
@@ -73,7 +84,12 @@ and return the revised artifact immediately.
 Develop a complete concept or multiple connected preproduction artifacts with
 one controller. Use at most three dynamic professional perspectives and at most
 one critical pass, integrated into the work rather than shown as meeting
-ceremony. Threads default to zero. For whole-film scope, derive the scene,
+ceremony. Threads default to zero. First lock audience state change, one core
+action, brand causal role, start-action-end, physical/media rules, continuity,
+and sound/edit logic. A one-to-two-page client story stops at that narrative
+layer; a nine-grid storyboard is narrative beats by default, not a technical
+shot list. Only an explicit technical/full-preproduction request proceeds to
+the shot and asset matrix. For whole-film scope, derive the scene,
 identity, per-shot storyboard, director-board, and model-input asset coverage
 before generation; do not treat a few representative images as the full film.
 
@@ -102,6 +118,27 @@ survive the answer. Fast stays in memory. Studio persists for pause,
 cross-session resume, or multi-file output. Delivery persists when an actual
 handoff or execution record exists.
 
+## Project Files
+
+Use supplied materials in place and keep one physical owner for identical
+bytes. For project or multi-file scope, scan read-only and offer one organization
+action after useful work; moving, deleting, renaming, or replacing files still
+needs approval. Keep one replace-current plan. Normal Director Room, storyboard,
+prompt, Goal, worker, and live acceptance never writes target `AGENTS.md`. Only
+the trusted host controller may apply a user-authorized scoped patch after
+reading the hierarchy and preserving child rules; runtime proposals, receipts,
+prompts, and worker assertions never authorize a write.
+
+## Chat Visualization
+
+Use a visualization only when clearer than prose or a small table. Confirm the
+current surface exposes OpenAI Visualizations / `@Visualize` and verify it is
+visible; otherwise return a complete table, Mermaid, image, or prose fallback.
+Bundled renderers are offline verification, not host integration. Keep one
+replace-current HTML preview. A file, cache path, renderer PASS, or browser audit
+does not prove mounting; report `USER_VISIBLE=UNVERIFIED` until visibly rendered,
+and never print a private directive as delivery.
+
 ## Sub-Capability Dispatch
 
 Use the selected task reference as craft guidance, not as a checklist to expose.
@@ -127,19 +164,12 @@ Validate the current task and its direct dependencies. Unrelated historical or
 project-wide debt may be reported separately, but it cannot block or downgrade a
 scoped result that does not depend on it.
 
-A whole-film plan is not complete until every distinct scene and approved shot
-is represented in an explicit visual asset matrix. Bind a persisted matrix to
-its source inventory revision and approved shot-card file; each shot keeps its
-exact timecode, purpose, camera design, action, sound/edit, continuity/model
-notes, scene, character, product, prop, generation-unit, and dependency truth.
-A generated sample is not a whole-film completion claim.
-`visual_assets_complete` means the required visual-preproduction files are
-canonical PNG evidence, fully decode, match the delivery aspect where they are
-frame-bound, have distinct or explicitly inherited normalized pixels, pass
-technical evidence checks, and are all bound to a separately persisted role-specific
-visual-review manifest. `user_locked` and `reused_locked` do not bypass that
-review. It never means the
-finished master, client approval, or broadcaster acceptance.
+Whole-film completeness binds every scene/shot to exact time, action, sound,
+continuity, entities, generation unit, and dependencies. A sample is never the
+whole film. `visual_assets_complete` also needs canonical, decodable,
+aspect-correct PNG evidence, bound visual review, and separate trusted host
+adoption/readback. Payload reviewer labels, IDs, hashes, and locks do not bypass it, and
+it never means master, client, or broadcaster approval.
 
 Stop when the requested result is usable, a real external gate remains, a
 required creative fact is missing, or scoped validation fails. Never claim

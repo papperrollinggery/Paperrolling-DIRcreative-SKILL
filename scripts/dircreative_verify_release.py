@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import copy
 import gzip
 import hashlib
 import io
@@ -522,6 +523,78 @@ def reject_hidden_index_state(source: Path) -> None:
         raise ValueError("reproducible source must not use sparse checkout")
 
 
+def canonicalize_rebuilt_release(
+    rebuilt: Path,
+    output: Path,
+) -> None:
+    metadata_count = 0
+    with tarfile.open(rebuilt, mode="r:gz") as source_tar:
+        members = source_tar.getmembers()
+        if not members:
+            raise ValueError("rebuilt release archive is empty")
+        commit_timestamp = int(members[0].mtime)
+        output.parent.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryFile(mode="w+b") as raw_tar:
+            with tarfile.open(
+                fileobj=raw_tar,
+                mode="w",
+                format=tarfile.USTAR_FORMAT,
+            ) as target_tar:
+                for member in members:
+                    info = copy.copy(member)
+                    data: bytes | None = None
+                    if member.isfile():
+                        data = read_member(source_tar, member)
+                        if member.name.endswith("/RELEASE-METADATA.json"):
+                            metadata_count += 1
+                            try:
+                                metadata = json.loads(data.decode("utf-8"))
+                            except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+                                raise ValueError(
+                                    "rebuilt release metadata is invalid"
+                                ) from exc
+                            if (
+                                not isinstance(metadata, dict)
+                                or metadata.get("release_status")
+                                != "UNPUBLISHED_LOCAL_CANDIDATE"
+                            ):
+                                raise ValueError(
+                                    "sealed rebuild must start as an unpublished local candidate"
+                                )
+                            metadata["release_status"] = "CANONICAL_REMOTE_TAG"
+                            data = (
+                                json.dumps(
+                                    metadata,
+                                    ensure_ascii=False,
+                                    indent=2,
+                                    sort_keys=True,
+                                )
+                                + "\n"
+                            ).encode("utf-8")
+                        info.size = len(data)
+                        target_tar.addfile(info, io.BytesIO(data))
+                    else:
+                        target_tar.addfile(info)
+            if metadata_count != 1:
+                raise ValueError(
+                    "rebuilt release must contain exactly one release metadata file"
+                )
+            raw_tar.seek(0)
+            with output.open("wb") as raw_output:
+                with gzip.GzipFile(
+                    filename="",
+                    mode="wb",
+                    fileobj=raw_output,
+                    compresslevel=0,
+                    mtime=commit_timestamp,
+                ) as compressed:
+                    while True:
+                        chunk = raw_tar.read(COPY_CHUNK_BYTES)
+                        if not chunk:
+                            break
+                        compressed.write(chunk)
+
+
 def verify_reproducible_build(
     source: Path,
     artifact: Path,
@@ -531,6 +604,8 @@ def verify_reproducible_build(
     expected_hash: str,
     expected_tag: str | None,
     require_remote_tag: bool,
+    _remote_tag_verifier: Callable[[Path, str, str], None] = verify_canonical_remote_tag,
+    _canonicalizer: Callable[[Path, Path], None] = canonicalize_rebuilt_release,
 ) -> None:
     if not source.is_dir():
         raise ValueError(f"reproducible source is not a directory: {source}")
@@ -549,7 +624,7 @@ def verify_reproducible_build(
     if require_remote_tag:
         if not expected_tag:
             raise ValueError("canonical remote tag verification requires an expected tag")
-        verify_canonical_remote_tag(source, expected_tag, expected_commit)
+        _remote_tag_verifier(source, expected_tag, expected_commit)
     with tempfile.TemporaryDirectory(prefix="dircreative-reproducible-build-") as raw:
         sealed_source = Path(raw) / "source"
         clone = subprocess.run(
@@ -578,16 +653,17 @@ def verify_reproducible_build(
         output_dir = Path(raw) / "dist"
         env = os.environ.copy()
         env["PYTHONDONTWRITEBYTECODE"] = "1"
+        build_command = [
+            sys.executable,
+            str(builder),
+            "--expected-commit",
+            expected_commit,
+            "--output-dir",
+            str(output_dir),
+        ]
+        build_command.append("--allow-unpublished")
         proc = subprocess.run(
-            [
-                sys.executable,
-                str(builder),
-                "--allow-unpublished",
-                "--expected-commit",
-                expected_commit,
-                "--output-dir",
-                str(output_dir),
-            ],
+            build_command,
             cwd=sealed_source,
             env=env,
             text=True,
@@ -603,8 +679,14 @@ def verify_reproducible_build(
         rebuilt = output_dir / f"dircreative-{version}.tar.gz"
         if not rebuilt.is_file():
             raise ValueError("reproducible source build did not create the expected artifact")
-        rebuilt_hash = sha256_file(rebuilt)
-        if rebuilt_hash != expected_hash or rebuilt.name != artifact.name:
+        comparable = rebuilt
+        if require_remote_tag:
+            canonical_dir = output_dir / "canonicalized"
+            canonical_dir.mkdir()
+            comparable = canonical_dir / rebuilt.name
+            _canonicalizer(rebuilt, comparable)
+        rebuilt_hash = sha256_file(comparable)
+        if rebuilt_hash != expected_hash or comparable.name != artifact.name:
             raise ValueError("release artifact does not match the reproducible exact-commit build")
 
 
@@ -1076,11 +1158,12 @@ def verify_release_detailed(
                     "commit_timestamp",
                     "root_skill_sha256",
                     "source",
+                    "release_status",
                 }
                 if set(metadata) != required_metadata_fields:
                     raise ValueError("release metadata field set mismatch")
-                if metadata.get("schema_version") != "1.0.0":
-                    raise ValueError("release metadata schema_version must be 1.0.0")
+                if metadata.get("schema_version") != "1.1.0":
+                    raise ValueError("release metadata schema_version must be 1.1.0")
                 if metadata.get("product") != "DIRcreative":
                     raise ValueError("release metadata product mismatch")
                 if metadata.get("version") != version or metadata.get("tag") != f"v{version}":
@@ -1092,6 +1175,14 @@ def verify_release_detailed(
                     raise ValueError("release metadata commit_sha does not equal expected commit")
                 if metadata.get("source") != "git archive of exact commit":
                     raise ValueError("release metadata source mismatch")
+                release_status = metadata.get("release_status")
+                if release_status not in {
+                    "UNPUBLISHED_LOCAL_CANDIDATE",
+                    "CANONICAL_REMOTE_TAG",
+                }:
+                    raise ValueError("release metadata release_status is invalid")
+                if require_remote_tag and release_status != "CANONICAL_REMOTE_TAG":
+                    raise ValueError("remote-tag verification requires CANONICAL_REMOTE_TAG metadata")
                 timestamp = metadata.get("commit_timestamp")
                 if not isinstance(timestamp, str) or not timestamp.endswith("Z"):
                     raise ValueError("release metadata commit_timestamp must be UTC")
@@ -1224,7 +1315,7 @@ def build_test_archive(
         else:
             files[relative] = data
     metadata: dict[str, object] = {
-        "schema_version": "1.0.0",
+        "schema_version": "1.1.0",
         "product": "DIRcreative",
         "version": version,
         "tag": f"v{version}",
@@ -1232,6 +1323,7 @@ def build_test_archive(
         "commit_timestamp": "2026-07-21T00:00:00Z",
         "root_skill_sha256": sha256_bytes(files["SKILL.md"]),
         "source": "git archive of exact commit",
+        "release_status": "CANONICAL_REMOTE_TAG",
     }
     metadata.update(metadata_overrides or {})
     files["RELEASE-METADATA.json"] = (json.dumps(metadata, sort_keys=True) + "\n").encode("utf-8")
@@ -1261,6 +1353,54 @@ def build_test_archive(
     return artifact, checksums
 
 
+def build_deterministic_status_archive(path: Path, status: str) -> None:
+    version = "9.9.9"
+    root_name = f"dircreative-{version}"
+    files: dict[str, bytes] = {
+        "SKILL.md": b"---\nname: dircreative\ndescription: fixture\n---\n",
+        "VERSION": (version + "\n").encode("utf-8"),
+        "CHANGELOG.md": b"# Fixture\n",
+        "scripts/validate_project.py": b"print('ok')\n",
+    }
+    metadata = {
+        "schema_version": "1.1.0",
+        "product": "DIRcreative",
+        "version": version,
+        "tag": f"v{version}",
+        "commit_sha": "a" * 40,
+        "commit_timestamp": "1970-01-01T00:00:00Z",
+        "root_skill_sha256": sha256_bytes(files["SKILL.md"]),
+        "source": "git archive of exact commit",
+        "release_status": status,
+    }
+    files["RELEASE-METADATA.json"] = (
+        json.dumps(metadata, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
+    ).encode("utf-8")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryFile(mode="w+b") as raw_tar:
+        with tarfile.open(
+            fileobj=raw_tar, mode="w", format=tarfile.USTAR_FORMAT
+        ) as tar:
+            add_test_member(tar, root_name, b"", tarfile.DIRTYPE)
+            add_test_member(tar, f"{root_name}/scripts", b"", tarfile.DIRTYPE)
+            for relative, data in sorted(files.items()):
+                add_test_member(tar, f"{root_name}/{relative}", data)
+        raw_tar.seek(0)
+        with path.open("wb") as raw_output:
+            with gzip.GzipFile(
+                filename="",
+                mode="wb",
+                fileobj=raw_output,
+                compresslevel=0,
+                mtime=0,
+            ) as compressed:
+                while True:
+                    chunk = raw_tar.read(COPY_CHUNK_BYTES)
+                    if not chunk:
+                        break
+                    compressed.write(chunk)
+
+
 def expect_test_failure(
     label: str,
     artifact: Path,
@@ -1282,6 +1422,68 @@ def self_test() -> int:
         with tempfile.TemporaryDirectory(prefix="dircreative-release-verify-") as raw:
             root = Path(raw).resolve()
             valid_artifact, valid_checksums = build_test_archive(root, "valid")
+            local_artifact, _ = build_test_archive(
+                root,
+                "local-candidate",
+                metadata_overrides={
+                    "release_status": "UNPUBLISHED_LOCAL_CANDIDATE"
+                },
+            )
+            canonicalized_artifact = root / "canonicalized" / local_artifact.name
+            canonicalize_rebuilt_release(local_artifact, canonicalized_artifact)
+            with tarfile.open(canonicalized_artifact, mode="r:gz") as canonical_tar:
+                metadata_members = [
+                    member
+                    for member in canonical_tar.getmembers()
+                    if member.name.endswith("/RELEASE-METADATA.json")
+                ]
+                if len(metadata_members) != 1:
+                    raise AssertionError(
+                        "canonicalized fixture has invalid metadata member count"
+                    )
+                canonical_metadata = json.loads(
+                    read_member(canonical_tar, metadata_members[0]).decode("utf-8")
+                )
+            if canonical_metadata.get("release_status") != "CANONICAL_REMOTE_TAG":
+                raise AssertionError(
+                    "canonical metadata normalization did not set remote-tag status"
+                )
+            deterministic_local = root / "deterministic" / "local.tar.gz"
+            deterministic_direct = root / "deterministic" / "direct.tar.gz"
+            deterministic_first = root / "deterministic" / "first.tar.gz"
+            deterministic_second = root / "deterministic" / "second.tar.gz"
+            build_deterministic_status_archive(
+                deterministic_local, "UNPUBLISHED_LOCAL_CANDIDATE"
+            )
+            build_deterministic_status_archive(
+                deterministic_direct, "CANONICAL_REMOTE_TAG"
+            )
+            canonicalize_rebuilt_release(
+                deterministic_local, deterministic_first
+            )
+            canonicalize_rebuilt_release(
+                deterministic_local, deterministic_second
+            )
+            if not (
+                sha256_file(deterministic_first)
+                == sha256_file(deterministic_second)
+                == sha256_file(deterministic_direct)
+            ):
+                raise AssertionError(
+                    "canonical metadata normalization is not byte-for-byte reproducible"
+                )
+            try:
+                canonicalize_rebuilt_release(
+                    deterministic_direct,
+                    root / "deterministic" / "invalid-rewrite.tar.gz",
+                )
+            except ValueError as exc:
+                if "must start as an unpublished local candidate" not in str(exc):
+                    raise
+            else:
+                raise AssertionError(
+                    "canonical metadata normalization accepted a pre-claimed canonical artifact"
+                )
             verified_control = verify_release_detailed(
                 valid_artifact,
                 valid_checksums,
@@ -1592,6 +1794,15 @@ shutil.copyfile(
             git_at(reproducible_source, "add", ".")
             git_at(reproducible_source, "commit", "--quiet", "-m", "fixture")
             reproducible_commit = git_at(reproducible_source, "rev-parse", "HEAD")
+            git_at(
+                reproducible_source,
+                "tag",
+                "-a",
+                "v9.9.9",
+                "-m",
+                "fixture tag",
+                reproducible_commit,
+            )
             canonical_url = (
                 "https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL.git"
             )
@@ -1611,6 +1822,44 @@ shutil.copyfile(
                 expected_tag="v9.9.9",
                 require_remote_tag=False,
             )
+            remote_tag_checks: list[tuple[Path, str, str]] = []
+
+            def record_remote_tag_check(
+                checked_source: Path, checked_tag: str, checked_commit: str
+            ) -> None:
+                remote_tag_checks.append(
+                    (checked_source, checked_tag, checked_commit)
+                )
+
+            canonicalization_checks: list[tuple[str, str]] = []
+
+            def record_canonicalization(rebuilt: Path, output: Path) -> None:
+                canonicalization_checks.append((rebuilt.name, output.name))
+                shutil.copyfile(rebuilt, output)
+
+            verify_reproducible_build(
+                reproducible_source,
+                reproducible_artifact,
+                version="9.9.9",
+                expected_commit=reproducible_commit,
+                expected_hash=sha256_file(reproducible_artifact),
+                expected_tag="v9.9.9",
+                require_remote_tag=True,
+                _remote_tag_verifier=record_remote_tag_check,
+                _canonicalizer=record_canonicalization,
+            )
+            if remote_tag_checks != [
+                (reproducible_source, "v9.9.9", reproducible_commit)
+            ]:
+                raise AssertionError(
+                    "canonical reproducible rebuild skipped remote tag verification"
+                )
+            if canonicalization_checks != [
+                ("dircreative-9.9.9.tar.gz", "dircreative-9.9.9.tar.gz")
+            ]:
+                raise AssertionError(
+                    "canonical reproducible rebuild skipped deterministic metadata normalization"
+                )
             forged_artifact_dir = root / "forged-artifact"
             forged_artifact_dir.mkdir()
             forged_artifact = forged_artifact_dir / "dircreative-9.9.9.tar.gz"

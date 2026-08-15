@@ -1,0 +1,29 @@
+{
+  "catalog_version": "1.0",
+  "skills": [
+    {
+      "skill_id": "creative-anchor-director",
+      "description": "Creates an executable creative spine.",
+      "source_type": "host_catalog",
+      "available": true
+    },
+    {
+      "skill_id": "mechanical-transformation-design",
+      "description": "Designs explainable mechanical transformation.",
+      "source_type": "host_catalog",
+      "available": true
+    },
+    {
+      "skill_id": "imagegen",
+      "description": "Host image generation adapter.",
+      "source_type": "system_skill",
+      "available": true
+    },
+    {
+      "skill_id": "unavailable-example",
+      "description": "Unavailable entry must be ignored.",
+      "source_type": "host_catalog",
+      "available": false
+    }
+  ]
+}

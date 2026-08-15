@@ -22,6 +22,15 @@ PROCESS_OPENERS = (
     "阶段：",
     "阶段:",
 )
+SHOT_LINE_RE = re.compile(
+    r"^\s*(?:\|\s*|[-*]\s*|#{1,6}\s*)?(?:\*\*)?"
+    r"(?P<shot>S?[0-9]{2})(?:\*\*)?(?=\s*(?:[|·:\-–—]|$))(?P<body>[^\n]*)",
+    flags=re.MULTILINE,
+)
+LINE_TIMECODE_RE = re.compile(
+    r"(?P<start>[0-9]{2,}:[0-5][0-9](?:\.[0-9]+)?)\s*[\-–—]\s*"
+    r"(?P<end>[0-9]{2,}:[0-5][0-9](?:\.[0-9]+)?)"
+)
 
 
 def load_payload() -> dict[str, Any]:
@@ -59,6 +68,70 @@ def user_question_count(answer: str) -> int:
         if line.endswith(("?", "？")) and not re.match(r"^[\"“'‘].*[\"”'’][?？]?$", line):
             count += 1
     return count
+
+
+def timecode_seconds(value: str) -> float:
+    minutes, seconds = value.split(":", 1)
+    return int(minutes) * 60 + float(seconds)
+
+
+def audit_shot_structure(answer: str, contract: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
+    errors: list[str] = []
+    expected_count = int(contract["shot_count"])
+    expected_ids = [f"S{index:02d}" for index in range(1, expected_count + 1)]
+    entries: list[tuple[str, float, float, int]] = []
+    for match in SHOT_LINE_RE.finditer(answer):
+        raw_shot_id = match.group("shot")
+        shot_id = raw_shot_id if raw_shot_id.startswith("S") else f"S{raw_shot_id}"
+        body = match.group("body")
+        timecode = LINE_TIMECODE_RE.search(body)
+        if timecode is None:
+            continue
+        entries.append(
+            (
+                shot_id,
+                timecode_seconds(timecode.group("start")),
+                timecode_seconds(timecode.group("end")),
+                len(body.strip()),
+            )
+        )
+
+    shot_ids = [item[0] for item in entries]
+    if shot_ids != expected_ids:
+        missing = [shot_id for shot_id in expected_ids if shot_id not in shot_ids]
+        duplicates = sorted({shot_id for shot_id in shot_ids if shot_ids.count(shot_id) > 1})
+        errors.append(
+            "shot_structure_coverage:"
+            f"expected={expected_count}:found={len(shot_ids)}:"
+            f"missing={','.join(missing)}:duplicates={','.join(duplicates)}"
+        )
+
+    minimum_detail = int(contract.get("minimum_shot_line_chars", 60))
+    sparse = [shot_id for shot_id, _, _, length in entries if length < minimum_detail]
+    if sparse:
+        errors.append("shot_structure_too_sparse:" + ",".join(sparse))
+
+    expected_start = 0.0
+    timeline_ok = len(entries) == expected_count
+    for shot_id, start, end, _ in entries:
+        if abs(start - expected_start) > 0.001 or end <= start:
+            timeline_ok = False
+            errors.append(
+                f"shot_timeline_discontinuous:{shot_id}:expected={expected_start:.3f}:start={start:.3f}:end={end:.3f}"
+            )
+            break
+        expected_start = end
+    expected_duration = float(contract["duration_seconds"])
+    if not timeline_ok or abs(expected_start - expected_duration) > 0.001:
+        errors.append(
+            f"shot_timeline_duration:expected={expected_duration:.3f}:actual={expected_start:.3f}"
+        )
+    return {
+        "formal_shot_lines": len(entries),
+        "unique_formal_shots": len(set(shot_ids)),
+        "timeline_end_seconds": round(expected_start, 3),
+        "timeline_continuous": timeline_ok and abs(expected_start - expected_duration) <= 0.001,
+    }, errors
 
 
 def audit_answer(answer: str, case: dict[str, Any], process_terms: list[str]) -> tuple[dict[str, Any], list[str]]:
@@ -106,6 +179,12 @@ def audit_answer(answer: str, case: dict[str, Any], process_terms: list[str]) ->
     if question_count > int(case["maximum_questions"]):
         errors.append(f"too_many_questions:{question_count}")
 
+    structural_metrics: dict[str, Any] = {}
+    structural_contract = case.get("structural_contract")
+    if isinstance(structural_contract, dict):
+        structural_metrics, structural_errors = audit_shot_structure(answer, structural_contract)
+        errors.extend(structural_errors)
+
     metrics = {
         "answer_bytes": answer_bytes,
         "concepts_passed": sum(concept_hits),
@@ -114,6 +193,7 @@ def audit_answer(answer: str, case: dict[str, Any], process_terms: list[str]) ->
         "process_narration_ratio": round(process_ratio, 4),
         "useful_content_ratio": round(useful_ratio, 4),
         "questions": question_count,
+        **structural_metrics,
     }
     return metrics, errors
 
@@ -136,11 +216,56 @@ def audit_baselines() -> tuple[dict[str, Any], list[str]]:
     negative_control = bool(negative_errors)
     if not negative_control:
         failures.append("process-only negative control was accepted")
+    studio_case = next(case for case in payload["cases"] if case["id"] == "studio_film_live")
+    padded_single_shot = (
+        "# 60 秒 16:9 方案\n"
+        "| S01 · 00:00.0-01:00.0 | 24 个镜头、场景地理 Camera-FOV、逐镜分镜、"
+        "导演故事板、clean_first_frame、声音、澄川冷萃 |\n"
+        + "视觉与声音细节。" * 500
+    )
+    _, padded_errors = audit_answer(
+        padded_single_shot,
+        studio_case,
+        payload["process_terms"],
+    )
+    padded_negative_control = any(
+        error.startswith("shot_structure_coverage:") for error in padded_errors
+    )
+    if not padded_negative_control:
+        failures.append("single-shot keyword-padded TVC negative control was accepted")
+
+    def compact_timecode(seconds: float) -> str:
+        minutes = int(seconds // 60)
+        remainder = seconds - minutes * 60
+        return f"{minutes:02d}:{remainder:04.1f}"
+
+    alternate_table = "\n".join(
+        (
+            f"| **{index:02d}** | {compact_timecode((index - 1) * 2.5)}"
+            f"–{compact_timecode(index * 2.5)} | "
+            + "specific image, performance, camera, sound, edit, continuity and model-risk detail "
+            + "for this formal shot row |"
+        )
+        for index in range(1, 25)
+    )
+    alternate_metrics, alternate_errors = audit_shot_structure(
+        alternate_table,
+        studio_case["structural_contract"],
+    )
+    alternate_table_control = not alternate_errors
+    if not alternate_table_control:
+        failures.append(
+            "valid bold numeric/en-dash shot table was rejected: "
+            + ";".join(alternate_errors)
+        )
     return {
         "status": "PASS" if not failures else "FAIL",
         "baseline_answers": results,
         "negative_control_rejected": negative_control,
         "negative_control_metrics": negative_metrics,
+        "single_shot_padded_negative_control_rejected": padded_negative_control,
+        "bold_numeric_en_dash_table_control": alternate_table_control,
+        "bold_numeric_en_dash_table_metrics": alternate_metrics,
     }, failures
 
 

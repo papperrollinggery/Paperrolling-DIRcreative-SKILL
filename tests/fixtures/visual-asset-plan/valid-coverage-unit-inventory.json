@@ -1,5 +1,5 @@
 {
-  "schema_version": "2.2",
+  "schema_version": "2.3",
   "project_id": "coverage-validator-unit-30s",
   "truth_revision": "approved-r1",
   "truth_locked_at": "2026-07-21T00:00:00Z",
@@ -20,30 +20,258 @@
     "target_master_spec_status": "requires_target_spec"
   },
   "characters": [
-    {"id": "protagonist", "purpose": "Lock the recurring protagonist face, body proportion, hair, wardrobe, and handedness."}
+    {
+      "id": "protagonist",
+      "purpose": "Lock the recurring protagonist face, body proportion, hair, wardrobe, and handedness."
+    }
   ],
   "products": [
-    {"id": "coldbrew-bottle", "purpose": "Lock the cold-brew bottle silhouette, label, cap, liquid color, and hero orientation."}
+    {
+      "id": "coldbrew-bottle",
+      "purpose": "Lock the cold-brew bottle silhouette, label, cap, liquid color, and hero orientation."
+    }
   ],
   "props": [
-    {"id": "ice-cup-state", "purpose": "Lock the cup, ice, liquid level, and state changes through the pour and end frame."}
+    {
+      "id": "ice-cup-state",
+      "purpose": "Lock the cup, ice, liquid level, and state changes through the pour and end frame."
+    }
   ],
   "scenes": [
-    {"id": "office-desk", "purpose": "Lock desk geography, product position, screen direction, light sources, camera positions, and fields of view."}
+    {
+      "id": "office-desk",
+      "purpose": "Lock desk geography, product position, screen direction, light sources, camera positions, and fields of view."
+    }
   ],
   "shots": [
-    {"shot_id": "S01", "scene_id": "office-desk", "character_ids": ["protagonist"], "product_ids": [], "prop_ids": [], "generation_unit_id": "G01", "narrative_purpose": "Establish the office pressure and protagonist position without expository text."},
-    {"shot_id": "S02", "scene_id": "office-desk", "character_ids": ["protagonist"], "product_ids": [], "prop_ids": [], "generation_unit_id": "G01", "narrative_purpose": "Move from accumulated pressure toward the product action while preserving screen direction."},
-    {"shot_id": "S03", "scene_id": "office-desk", "character_ids": ["protagonist"], "product_ids": ["coldbrew-bottle"], "prop_ids": ["ice-cup-state"], "generation_unit_id": "G02", "narrative_purpose": "Show the bottle and cup action with readable identity, level, hand, and label states."},
-    {"shot_id": "S04", "scene_id": "office-desk", "character_ids": ["protagonist"], "product_ids": ["coldbrew-bottle"], "prop_ids": ["ice-cup-state"], "generation_unit_id": "G02", "narrative_purpose": "Hold the first sip as a performance beat without implying an unapproved product effect."},
-    {"shot_id": "S05", "scene_id": "office-desk", "character_ids": ["protagonist"], "product_ids": [], "prop_ids": [], "generation_unit_id": "G03", "narrative_purpose": "Resolve the performance beat with a concrete return to work and stable spatial continuity."},
-    {"shot_id": "S06", "scene_id": "office-desk", "character_ids": ["protagonist"], "product_ids": ["coldbrew-bottle"], "prop_ids": ["ice-cup-state"], "generation_unit_id": "G03", "narrative_purpose": "Finish on a broadcast-readable product composition with protected brand and legal areas."}
+    {
+      "shot_id": "S01",
+      "scene_id": "office-desk",
+      "character_ids": [
+        "protagonist"
+      ],
+      "product_ids": [],
+      "prop_ids": [],
+      "generation_unit_id": "G01",
+      "narrative_purpose": "Establish the office pressure and protagonist position without expository text.",
+      "appearance_state_ids": [
+        "protagonist-office-look"
+      ],
+      "story_beat_ids": [
+        "B01"
+      ],
+      "script_line_ids": []
+    },
+    {
+      "shot_id": "S02",
+      "scene_id": "office-desk",
+      "character_ids": [
+        "protagonist"
+      ],
+      "product_ids": [],
+      "prop_ids": [],
+      "generation_unit_id": "G01",
+      "narrative_purpose": "Move from accumulated pressure toward the product action while preserving screen direction.",
+      "appearance_state_ids": [
+        "protagonist-office-look"
+      ],
+      "story_beat_ids": [
+        "B01"
+      ],
+      "script_line_ids": []
+    },
+    {
+      "shot_id": "S03",
+      "scene_id": "office-desk",
+      "character_ids": [
+        "protagonist"
+      ],
+      "product_ids": [
+        "coldbrew-bottle"
+      ],
+      "prop_ids": [
+        "ice-cup-state"
+      ],
+      "generation_unit_id": "G02",
+      "narrative_purpose": "Show the bottle and cup action with readable identity, level, hand, and label states.",
+      "appearance_state_ids": [
+        "protagonist-office-look"
+      ],
+      "story_beat_ids": [
+        "B02"
+      ],
+      "script_line_ids": []
+    },
+    {
+      "shot_id": "S04",
+      "scene_id": "office-desk",
+      "character_ids": [
+        "protagonist"
+      ],
+      "product_ids": [
+        "coldbrew-bottle"
+      ],
+      "prop_ids": [
+        "ice-cup-state"
+      ],
+      "generation_unit_id": "G02",
+      "narrative_purpose": "Hold the first sip as a performance beat without implying an unapproved product effect.",
+      "appearance_state_ids": [
+        "protagonist-office-look"
+      ],
+      "story_beat_ids": [
+        "B02"
+      ],
+      "script_line_ids": []
+    },
+    {
+      "shot_id": "S05",
+      "scene_id": "office-desk",
+      "character_ids": [
+        "protagonist"
+      ],
+      "product_ids": [],
+      "prop_ids": [],
+      "generation_unit_id": "G03",
+      "narrative_purpose": "Resolve the performance beat with a concrete return to work and stable spatial continuity.",
+      "appearance_state_ids": [
+        "protagonist-office-look"
+      ],
+      "story_beat_ids": [
+        "B03"
+      ],
+      "script_line_ids": []
+    },
+    {
+      "shot_id": "S06",
+      "scene_id": "office-desk",
+      "character_ids": [
+        "protagonist"
+      ],
+      "product_ids": [
+        "coldbrew-bottle"
+      ],
+      "prop_ids": [
+        "ice-cup-state"
+      ],
+      "generation_unit_id": "G03",
+      "narrative_purpose": "Finish on a broadcast-readable product composition with protected brand and legal areas.",
+      "appearance_state_ids": [
+        "protagonist-office-look"
+      ],
+      "story_beat_ids": [
+        "B03"
+      ],
+      "script_line_ids": [
+        "L01"
+      ]
+    }
   ],
-  "rhythm_point_ids": ["R01", "R02", "R03", "R04", "R05", "R06"],
   "style_reference_required": true,
   "generation_units": [
-    {"unit_id": "G01", "shot_ids": ["S01", "S02"], "direct_input_min": 1, "direct_input_max": 1, "direct_input_roles": ["clean_first_frame"], "direct_input_not_required_reason": ""},
-    {"unit_id": "G02", "shot_ids": ["S03", "S04"], "direct_input_min": 1, "direct_input_max": 1, "direct_input_roles": ["clean_key_frame"], "direct_input_not_required_reason": ""},
-    {"unit_id": "G03", "shot_ids": ["S05", "S06"], "direct_input_min": 1, "direct_input_max": 1, "direct_input_roles": ["clean_end_frame"], "direct_input_not_required_reason": ""}
+    {
+      "unit_id": "G01",
+      "shot_ids": [
+        "S01",
+        "S02"
+      ],
+      "direct_input_min": 1,
+      "direct_input_max": 1,
+      "direct_input_roles": [
+        "clean_first_frame"
+      ],
+      "direct_input_not_required_reason": ""
+    },
+    {
+      "unit_id": "G02",
+      "shot_ids": [
+        "S03",
+        "S04"
+      ],
+      "direct_input_min": 1,
+      "direct_input_max": 1,
+      "direct_input_roles": [
+        "clean_key_frame"
+      ],
+      "direct_input_not_required_reason": ""
+    },
+    {
+      "unit_id": "G03",
+      "shot_ids": [
+        "S05",
+        "S06"
+      ],
+      "direct_input_min": 1,
+      "direct_input_max": 1,
+      "direct_input_roles": [
+        "clean_end_frame"
+      ],
+      "direct_input_not_required_reason": ""
+    }
+  ],
+  "creative_source_file": "valid-coverage-unit-creative-source.json",
+  "creative_source_sha256": "897c64c96055c4b64085431759b50eeb4a7a182488c369f98c7a0d3c82a7b725",
+  "appearance_states": [
+    {
+      "id": "protagonist-office-look",
+      "character_id": "protagonist",
+      "purpose": "Lock the protagonist office wardrobe, face, hair, seated proportions, and right-hand action throughout the sequence."
+    }
+  ],
+  "rhythm_points": [
+    {
+      "id": "R01",
+      "timecode": "00:00",
+      "shot_ids": [
+        "S01"
+      ],
+      "action": "Begin S01: The protagonist sorts urgent work without touching the product",
+      "sound_transition": "Begin S01 sound: Office room tone and keyboard rhythm establish pressure"
+    },
+    {
+      "id": "R02",
+      "timecode": "00:05",
+      "shot_ids": [
+        "S02"
+      ],
+      "action": "Begin S02: The protagonist pauses and reaches toward the product area",
+      "sound_transition": "Begin S02 sound: Keyboard rhythm thins and one breath creates the transition"
+    },
+    {
+      "id": "R03",
+      "timecode": "00:10",
+      "shot_ids": [
+        "S03"
+      ],
+      "action": "Begin S03: The bottle opens and pours once into the verified cup",
+      "sound_transition": "Begin S03 sound: Seal crack, pour, and ice movement replace the office bed"
+    },
+    {
+      "id": "R04",
+      "timecode": "00:15",
+      "shot_ids": [
+        "S04"
+      ],
+      "action": "Begin S04: The protagonist takes one sip and allows a restrained pause",
+      "sound_transition": "Begin S04 sound: One sip and quiet breath play without an impact effect"
+    },
+    {
+      "id": "R05",
+      "timecode": "00:20",
+      "shot_ids": [
+        "S05"
+      ],
+      "action": "Begin S05: The protagonist resumes one concrete task at the same desk",
+      "sound_transition": "Begin S05 sound: Keyboard rhythm returns at the original natural intensity"
+    },
+    {
+      "id": "R06",
+      "timecode": "00:25",
+      "shot_ids": [
+        "S06"
+      ],
+      "action": "Begin S06: The product and cup hold while the work context stays visible",
+      "sound_transition": "Begin S06 sound: Office tone resolves beneath a short brand mnemonic"
+    }
   ]
 }

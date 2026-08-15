@@ -6,6 +6,7 @@ import hashlib
 import json
 import re
 import subprocess
+from datetime import datetime, timezone
 from pathlib import Path
 
 from dircreative_package_layout import (
@@ -16,6 +17,7 @@ from dircreative_package_layout import (
     sanitize_package_bytes,
     should_ignore,
 )
+from dircreative_release_preflight import EXPECTED_ORIGIN_SLUG, github_slug
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -25,6 +27,18 @@ FORMAL_INSTALL_TARGETS = (
     Path.home() / ".skillshub" / "dircreative",
 )
 RELEASE_METADATA_NAME = "RELEASE-METADATA.json"
+RELEASE_METADATA_FIELDS = {
+    "schema_version",
+    "product",
+    "version",
+    "tag",
+    "commit_sha",
+    "commit_timestamp",
+    "root_skill_sha256",
+    "source",
+    "release_status",
+}
+RELEASE_STATUSES = {"UNPUBLISHED_LOCAL_CANDIDATE", "CANONICAL_REMOTE_TAG"}
 INTERNAL_SKILL_FILE = "INTERNAL_SKILL.md"
 IGNORED_TARGET_DIR_NAMES = {"__pycache__"}
 IGNORED_TARGET_FILE_NAMES = {".DS_Store"}
@@ -193,9 +207,9 @@ def expected_manifest(base: Path) -> dict[str, str]:
     return manifest
 
 
-def source_commit_sha() -> str | None:
+def source_commit_sha(source_root: Path) -> str | None:
     proc = subprocess.run(
-        ["git", "-C", str(ROOT), "rev-parse", "HEAD"],
+        ["git", "-C", str(source_root), "rev-parse", "HEAD"],
         text=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
@@ -207,9 +221,107 @@ def source_commit_sha() -> str | None:
     return value if re.fullmatch(r"[0-9a-f]{40}", value) else None
 
 
-def validate_external_release_metadata(target: Path) -> tuple[set[str], list[str]]:
+def source_checkout_clean(source_root: Path) -> bool:
+    proc = subprocess.run(
+        [
+            "git",
+            "-C",
+            str(source_root),
+            "status",
+            "--porcelain=v1",
+            "--untracked-files=all",
+        ],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    return proc.returncode == 0 and not proc.stdout
+
+
+def source_commit_timestamp(source_root: Path) -> str | None:
+    proc = subprocess.run(
+        ["git", "-C", str(source_root), "show", "-s", "--format=%ct", "HEAD"],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    if proc.returncode != 0 or not proc.stdout.strip().isdigit():
+        return None
+    return datetime.fromtimestamp(
+        int(proc.stdout.strip()), tz=timezone.utc
+    ).isoformat().replace("+00:00", "Z")
+
+
+def verify_canonical_source_refs(
+    source_root: Path, tag: str, commit: str
+) -> list[str]:
+    failures: list[str] = []
+    for arguments, label in (
+        (("remote", "get-url", "origin"), "origin"),
+        (("remote", "get-url", "--push", "origin"), "origin push URL"),
+    ):
+        proc = subprocess.run(
+            ["git", "-C", str(source_root), *arguments],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        if proc.returncode != 0 or github_slug(proc.stdout.strip()) != EXPECTED_ORIGIN_SLUG:
+            failures.append(
+                f"invalid installed release metadata: {label} is not canonical"
+            )
+    remote = subprocess.run(
+        [
+            "git",
+            "-C",
+            str(source_root),
+            "ls-remote",
+            "origin",
+            f"refs/tags/{tag}",
+            f"refs/tags/{tag}^{{}}",
+        ],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    if remote.returncode != 0:
+        return [
+            *failures,
+            "invalid installed release metadata: canonical remote refs unavailable",
+        ]
+    refs: dict[str, str] = {}
+    for line in remote.stdout.splitlines():
+        parts = line.split()
+        if len(parts) == 2 and re.fullmatch(r"[0-9a-f]{40}", parts[0]):
+            refs[parts[1]] = parts[0]
+    return [*failures, *validate_canonical_tag_refs(refs, tag, commit)]
+
+
+def validate_canonical_tag_refs(
+    refs: dict[str, str], tag: str, commit: str
+) -> list[str]:
+    if (
+        f"refs/tags/{tag}" not in refs
+        or refs.get(f"refs/tags/{tag}^{{}}") != commit
+    ):
+        return [
+            "invalid installed release metadata: annotated canonical remote tag mismatch"
+        ]
+    return []
+
+
+def validate_external_release_metadata(
+    source_root: Path,
+    target: Path,
+    *,
+    verify_remote_tag: bool = False,
+) -> tuple[set[str], list[str]]:
     """Allow only a current, hash-bound release metadata sidecar on a source checkout."""
-    source_metadata = ROOT / RELEASE_METADATA_NAME
+    source_metadata = source_root / RELEASE_METADATA_NAME
     target_metadata = target / RELEASE_METADATA_NAME
     if path_entry_exists(source_metadata) or not path_entry_exists(target_metadata):
         return set(), []
@@ -224,17 +336,24 @@ def validate_external_release_metadata(target: Path) -> tuple[set[str], list[str
     if not isinstance(payload, dict):
         return allowed, ["invalid installed release metadata: expected an object"]
 
-    version = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
-    expected_commit = source_commit_sha()
+    version = (source_root / "VERSION").read_text(encoding="utf-8").strip()
+    expected_commit = source_commit_sha(source_root)
+    expected_timestamp = source_commit_timestamp(source_root)
     expected_root_hash = file_hash(target / "SKILL.md") if (target / "SKILL.md").is_file() else None
     required = {
-        "schema_version": "1.0.0",
+        "schema_version": "1.1.0",
         "product": "DIRcreative",
         "version": version,
         "tag": f"v{version}",
         "source": "git archive of exact commit",
     }
     failures: list[str] = []
+    if not source_checkout_clean(source_root):
+        failures.append(
+            "invalid installed release metadata: source checkout is dirty or not a Git worktree"
+        )
+    if set(payload) != RELEASE_METADATA_FIELDS:
+        failures.append("invalid installed release metadata: field set mismatch")
     for key, expected in required.items():
         if payload.get(key) != expected:
             failures.append(f"invalid installed release metadata: {key} mismatch")
@@ -242,6 +361,24 @@ def validate_external_release_metadata(target: Path) -> tuple[set[str], list[str
         failures.append("invalid installed release metadata: commit_sha does not match source HEAD")
     if expected_root_hash is None or payload.get("root_skill_sha256") != expected_root_hash:
         failures.append("invalid installed release metadata: root_skill_sha256 does not match installed SKILL.md")
+    timestamp = payload.get("commit_timestamp")
+    if expected_timestamp is None or timestamp != expected_timestamp:
+        failures.append(
+            "invalid installed release metadata: commit_timestamp does not match source commit"
+        )
+    if payload.get("release_status") not in RELEASE_STATUSES:
+        failures.append("invalid installed release metadata: release_status is invalid")
+    elif payload.get("release_status") == "CANONICAL_REMOTE_TAG":
+        if not verify_remote_tag:
+            failures.append(
+                "invalid installed release metadata: CANONICAL_REMOTE_TAG requires remote tag verification"
+            )
+        elif expected_commit is not None:
+            failures.extend(
+                verify_canonical_source_refs(
+                    source_root, str(payload.get("tag", "")), expected_commit
+                )
+            )
     return allowed, failures
 
 
@@ -301,13 +438,37 @@ def main() -> int:
         default=str(resolve_default_target()),
         help="Installed local skill directory; defaults to the current formal Codex install when present.",
     )
+    parser.add_argument(
+        "--source-root",
+        default=str(ROOT),
+        help="Canonical source checkout used as the independent comparison root.",
+    )
+    parser.add_argument(
+        "--verify-remote-tag",
+        action="store_true",
+        help="For CANONICAL_REMOTE_TAG metadata, verify canonical origin and annotated remote tag.",
+    )
     args = parser.parse_args()
 
     target = Path(args.target).expanduser().resolve()
-    source_manifest = expected_manifest(ROOT)
+    source_root = Path(args.source_root).expanduser().resolve()
+    if source_root == target or installed_layout(source_root):
+        print("DIRcreative Install Parity")
+        print("=" * 72)
+        print(f"source: {source_root}")
+        print(f"target: {target}")
+        print("INSTALL_PARITY: FAIL")
+        print(
+            "- independent source required: an installed copy cannot certify itself; "
+            "compare against a source checkout or use verified-artifact installation"
+        )
+        return 1
+    source_manifest = expected_manifest(source_root)
     target_manifest, invalid_entries = collect_target_manifest(target)
     failures: list[str] = []
-    metadata_extras, metadata_failures = validate_external_release_metadata(target)
+    metadata_extras, metadata_failures = validate_external_release_metadata(
+        source_root, target, verify_remote_tag=args.verify_remote_tag
+    )
     failures.extend(metadata_failures)
 
     if invalid_entries:
@@ -334,20 +495,20 @@ def main() -> int:
     if changed:
         failures.append("changed installed files: " + ", ".join(changed[:20]))
 
-    source_root_skill = root_skill_source(ROOT)
+    source_root_skill = root_skill_source(source_root)
     installed_root_skill = target / "SKILL.md"
     if not installed_root_skill.exists():
         failures.append("missing installed root SKILL.md")
     elif bytes_hash(
         source_root_skill.read_bytes()
-        if installed_layout(ROOT)
+        if installed_layout(source_root)
         else sanitize_package_bytes("SKILL.md", source_root_skill.read_bytes(), {})
     ) != file_hash(installed_root_skill):
         failures.append("installed root SKILL.md differs from source root DIRcreative SKILL.md")
 
     print("DIRcreative Install Parity")
     print("=" * 72)
-    print(f"source: {ROOT}")
+    print(f"source: {source_root}")
     print(f"target: {target}")
     print(f"source_files: {len(source_manifest)}")
     print(f"target_files: {len(target_manifest)}")

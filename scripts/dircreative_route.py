@@ -6,7 +6,6 @@ import copy
 import hashlib
 import json
 import re
-import subprocess
 import tempfile
 from functools import lru_cache
 from pathlib import Path
@@ -20,22 +19,10 @@ DESCRIPTOR_PATH = ROOT / "docs/film-preproduction/schemas/adco-specialist-descri
 
 @lru_cache(maxsize=1)
 def load_policy() -> dict[str, Any]:
-    ruby = (
-        "require 'yaml'; require 'json'; "
-        "data = YAML.safe_load(File.read(ARGV[0]), permitted_classes: [], aliases: true); "
-        "puts JSON.generate(data)"
-    )
-    proc = subprocess.run(
-        ["ruby", "-e", ruby, str(POLICY_PATH)],
-        cwd=ROOT,
-        text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        check=False,
-    )
-    if proc.returncode != 0:
-        raise RuntimeError(f"routing policy parse failed: {proc.stderr.strip()}")
-    data = json.loads(proc.stdout)
+    try:
+        data = json.loads(POLICY_PATH.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise RuntimeError(f"routing policy parse failed: {exc}") from exc
     if not isinstance(data, dict):
         raise RuntimeError("routing policy must be a mapping")
     return data
@@ -43,6 +30,176 @@ def load_policy() -> dict[str, Any]:
 
 def has(text: str, pattern: str) -> bool:
     return re.search(pattern, text, flags=re.IGNORECASE) is not None
+
+
+QUOTED_OR_CODE_RE = re.compile(
+    r"```.*?```|`[^`]*`|“[^”]*”|‘[^’]*’|\"[^\"]*\"|'[^']*'|"
+    r"【[^】]*】|「[^」]*」|『[^』]*』|《[^》]*》|〈[^〉]*〉|〔[^〕]*〕|"
+    r"\[[^\]]*\]|（[^）]*）|\([^)]*\)",
+    flags=re.DOTALL,
+)
+
+
+def action_text(request: str) -> str:
+    """Remove quoted/example payloads before deciding whether an action was authorized."""
+    return " ".join(QUOTED_OR_CODE_RE.sub(" ", request).split())
+
+
+def explicit_action_match(text: str, pattern: str) -> bool:
+    """Accept an imperative only when it is not negated, conditional, or a question."""
+    for match in re.finditer(pattern, text, flags=re.IGNORECASE):
+        before = text[max(0, match.start() - 36) : match.start()]
+        after = text[match.end() : match.end() + 48]
+        if has(
+            before,
+            r"(?:不要|别|暂时别|暂不|先别|先不要|无需|不用|不需要|不可|不能|禁止|勿|"
+            r"尚未|还未|还没|并未|未经|未获|未曾|未批准|未授权|是否|能否|可否|可以不|"
+            r"should\s+we|could\s+we|do\s+not|don't|\bnot\b(?:\s+yet)?|"
+            r"without\s+(?:approval|authorization)|unauthori[sz]ed|unapproved).{0,12}$|"
+            r"未\s*$|"
+            r"(?:如果|若|假如|if\s+).{0,20}$|等.{0,8}(?:再|后).{0,8}$",
+        ):
+            continue
+        if has(
+            after,
+            r"^[\s:：=，,;；。]*(?:false\b|no\b|否(?:\s|[.。;；]|$)|未批准|未授权|"
+            r"不得|不要|别|禁止|勿|do\s+not\b|don't\b)",
+        ):
+            continue
+        if has(
+            after,
+            r"(?:[?？]|吗(?:\s|$)|呢(?:\s|$)|是否|能否|可否|可不可以|会不会|要不要|"
+            r"多少钱|费用|成本|价格|如何|怎么|哪些|谁|何时|为什么)",
+        ):
+            continue
+        return True
+    return False
+
+
+GENERATION_DENIAL_RE = re.compile(
+    r"没有(?:获得)?授权|未获(?:得)?授权|未经授权|从未批准|从未授权|"
+    r"(?:生成授权|授权).{0,12}没有(?:获得)?批准|"
+    r"(?:客户|用户).{0,16}?(?:没有|未|不同意|不|拒绝|撤销).{0,8}?"
+    r"(?:同意|批准)?(?:生成授权|生成|授权)|"
+    r"授权(?:已|被)?(?:撤销了?|拒绝|失效)|不得(?:执行|生成)|不要生成|禁止生成|"
+    r"(?:authorization|approval)(?:\s+for\s+generation)?\s+"
+    r"(?:has(?:\s+not|n't)\s+been\s+granted|"
+    r"(?:was|is)(?:\s+not|n't)\s+(?:granted|approved)|"
+    r"never\s+(?:granted|approved)|(?:(?:was|is|has\s+been)\s+)?"
+    r"(?:denied|revoked|rejected|refused|declined|expired))|"
+    r"(?:client|user).{0,24}?(?:denied|revoked|rejected|refused|declined|"
+    r"did(?:\s+not|n't)|does(?:\s+not|n't)|has(?:\s+not|n't)|never)"
+    r".{0,20}?(?:generation|generat(?:e|ion)|authorization|approval)|"
+    r"never\s+(?:authorized|approved)|do\s+not\s+generate",
+    re.IGNORECASE,
+)
+GENERATION_REAUTH_RE = re.compile(
+    r"(?:我|本人)\s*(?:(?:现在|重新|明确|正式|确认)\s*)*授权\s*(?:真实)?生成|"
+    r"\bi\s+(?:now\s+|hereby\s+|explicitly\s+|re-?)?authorize\s+"
+    r"(?:real\s+)?generation(?:\s+now)?",
+    re.IGNORECASE,
+)
+DELIVERY_DENIAL_RE = re.compile(
+    r"(?:客户交付|外发|发给客户).{0,12}(?:没有(?:获得)?批准|未获(?:得)?批准|"
+    r"未经批准|从未批准|批准(?:已|被)?(?:撤销|拒绝|失效)|不得|禁止)|"
+    r"(?:客户|用户).{0,16}?(?:没有|未|不同意|不|拒绝|撤销).{0,8}?"
+    r"(?:同意|批准|授权)?(?:客户交付|外发|发给客户)|"
+    r"没有(?:获得)?批准.{0,12}(?:客户交付|外发|发给客户)|"
+    r"(?:client\s+delivery|send(?:ing)?\s+to\s+(?:the\s+)?client).{0,24}"
+    r"(?:not\s+approved|never\s+approved|denied|revoked|expired)|"
+    r"(?:approval|client\s+delivery\s+approval)\s+(?:has\s+)?"
+    r"(?:not\s+been\s+granted|never\s+approved|denied|revoked|expired)|"
+    r"(?:client|user).{0,24}?(?:denied|revoked|rejected|refused|declined|"
+    r"did(?:\s+not|n't)|does(?:\s+not|n't)|has(?:\s+not|n't)|never)"
+    r".{0,20}?(?:delivery|send(?:ing)?|approval|authorization)|"
+    r"do\s+not\s+send",
+    re.IGNORECASE,
+)
+DELIVERY_REAUTH_RE = re.compile(
+    r"(?:我|本人)\s*(?:(?:现在|重新|明确|正式|确认)\s*)*(?:批准|授权)\s*"
+    r"(?:客户交付|外发|发给客户)|"
+    r"\bi\s+(?:now\s+|hereby\s+|explicitly\s+|re-?)?(?:approve|authorize)\s+"
+    r"(?:the\s+)?client\s+delivery",
+    re.IGNORECASE,
+)
+
+
+def generation_authorized(request: str) -> bool:
+    text = action_text(request)
+    denials = list(GENERATION_DENIAL_RE.finditer(text))
+    if denials:
+        return explicit_action_match(
+            text[denials[-1].end() :], GENERATION_REAUTH_RE.pattern
+        )
+    return explicit_action_match(
+        text,
+        r"(?:现在|立即|直接|马上|开始|(?<!申)请)\s*(?:真实)?生成|"
+        r"(?:我|本人)\s*(?:(?:现在|重新|明确|正式|确认)\s*)*授权\s*(?:真实)?生成|"
+        r"(?:please\s+)?generate\s+now|start\s+(?:real\s+)?generation(?:\s+now)?|"
+        r"\bi\s+(?:hereby\s+)?authorize\s+(?:real\s+)?generation(?:\s+now)?",
+    )
+
+
+def client_delivery_authorized(request: str) -> bool:
+    text = action_text(request)
+    denials = list(DELIVERY_DENIAL_RE.finditer(text))
+    if denials:
+        return explicit_action_match(
+            text[denials[-1].end() :], DELIVERY_REAUTH_RE.pattern
+        )
+    return explicit_action_match(
+        text,
+        r"(?:现在|立即|直接|马上|(?<!申)请)\s*(?:正式\s*)?"
+        r"(?:交付(?:给)?|发送(?:给)?|发给)客户|"
+        r"正式\s*(?:交付(?:给)?|发送(?:给)?|发给)客户|"
+        r"(?:我|本人)\s*(?:(?:现在|重新|明确|正式|确认)\s*)*(?:批准|授权)\s*"
+        r"(?:客户交付|外发|发给客户)|"
+        r"(?:please\s+)?send\s+to\s+(?:the\s+)?client\s+now|"
+        r"send\s+(?:the\s+)?client\s+delivery\s+now",
+    )
+
+
+def denied_generation_followed_by_imperative(request: str) -> bool:
+    text = action_text(request)
+    denials = list(GENERATION_DENIAL_RE.finditer(text))
+    if not denials:
+        return False
+    return explicit_action_match(
+        text[denials[-1].end() :],
+        r"(?:现在|立即|直接|马上|开始)\s*(?:真实)?生成|"
+        r"(?:please\s+)?generate\s+now|start\s+(?:real\s+)?generation",
+    )
+
+
+TECHNICAL_DELIVERABLE_RE = re.compile(
+    r"技术(?:制作|分镜)|镜头表|逐镜(?:脚本|规格|分镜|清单)|shot\s*list|"
+    r"technical\s*storyboard|production\s*worksheet|制作工作表|素材槽|"
+    r"TN\s*[/+-]?\s*CG|资产矩阵|asset\s*matrix",
+    re.IGNORECASE,
+)
+TECHNICAL_ACTION_RE = re.compile(
+    r"制作|输出|需要|请给|展开|生成|整理|提供|也给我|给我|要|"
+    r"create|deliver|build|provide|include",
+    re.IGNORECASE,
+)
+TECHNICAL_NEGATION_RE = re.compile(
+    r"不要|不展开|不需要|无需|不用|不做|别|禁止|勿|do\s+not|don't|without|exclude",
+    re.IGNORECASE,
+)
+
+
+def explicit_technical_request(text: str) -> bool:
+    """Require an affirmative technical-deliverable request in the same clause."""
+    clauses = re.split(r"[。；;!?！？\n，,]", text)
+    for clause in clauses:
+        for match in TECHNICAL_DELIVERABLE_RE.finditer(clause):
+            before = clause[max(0, match.start() - 24) : match.start()]
+            after = clause[match.end() : match.end() + 24]
+            if TECHNICAL_NEGATION_RE.search(before) or TECHNICAL_NEGATION_RE.search(after):
+                continue
+            if TECHNICAL_ACTION_RE.search(before) or TECHNICAL_ACTION_RE.search(after):
+                return True
+    return False
 
 
 def classify_route(
@@ -77,6 +234,7 @@ def classify_route(
         return "adco_specialist_exchange", ["validated_adco_v2_handoff", "inline_execution"]
 
     text = " ".join(request.split())
+    actionable = action_text(request)
     maintenance_target = has(
         text,
         r"(?:DIRcreative\s+Skill\s*(?:本身)?|DIR\s*(?:的)?\s*SKILL\.md|DIR\s*安装器|"
@@ -86,42 +244,87 @@ def classify_route(
     if maintenance_target and maintenance_action:
         return "source_maintenance", ["repository_maintenance", "skill_runtime_forbidden"]
 
-    if has(text, r"客户交付|客户可见|正式交付|client[- ]visible|client delivery|send[- ]ready"):
+    if has(
+        actionable,
+        r"客户交付|客户可见|正式交付|发给客户|发送客户|client[- ]visible|"
+        r"client delivery|send[- ]ready|send\s+to\s+(?:the\s+)?client",
+    ):
         return "client_delivery", ["client_delivery_intent"]
-    if has(text, r"真实生成|生成授权|授权生成|generation authorization|authorize (?:real )?generation") or (
-        has(text, r"(?:现在|立即|直接|马上|开始|(?<!申)请)\s*(?:真实)?生成|generate\s+now|start\s+generation")
-        and not has(text, r"Prompt|提示词|方案|计划|plan")
+    if has(
+        actionable,
+        r"真实生成|生成授权|授权生成|generation authorization|generation\s+authorized|"
+        r"authorize (?:real )?generation",
+    ) or (
+        (generation_authorized(request) or denied_generation_followed_by_imperative(request))
+        and not has(actionable, r"Prompt|提示词|方案|计划|plan")
     ):
         return "generation_authorization", ["real_generation_requires_authorization"]
 
     if has(
-        text,
+        actionable,
         r"方向(?:互不兼容|不可兼容|冲突)|不可兼容(?:的)?(?:创意)?方向|incompatible (?:creative )?directions?|material concept conflict",
     ):
         return "film_development", ["incompatible_creative_directions", "concept_lock_required"]
 
     bounded = has(
-        text,
+        actionable,
         r"第三句|一句|一段|单镜头|这个镜头|一个镜头|少量分镜|局部分镜|局部|"
         r"one sentence|one paragraph|single shot|this shot|few storyboards|bounded",
     )
-    revision = has(text, r"修改|优化|调整|润色|改写|评审|补充|revise|rewrite|polish|adjust|review|improve")
-    complete = has(text, r"完整|全套|多产物|概念\s*\+|故事\s*\+|脚本\s*\+\s*分镜|full|complete|multi[- ]artifact")
+    revision = has(actionable, r"修改|优化|调整|润色|改写|评审|补充|改(?:得|成|为)|revise|rewrite|polish|adjust|review|improve")
+    complete = has(actionable, r"完整|全套|多产物|概念\s*\+|故事\s*\+|脚本\s*\+\s*分镜|full|complete|multi[- ]artifact")
+    broad_scope = has(
+        actionable,
+        r"(?:整个|整支|整部|全片|全部|全套|逐一|每个)\s*(?:[0-9]+\s*个?)?"
+        r"(?:广告片|品牌片|短片|TVC|film|commercial|脚本|镜头|分镜)|"
+        r"(?:这|共|全部)?\s*[0-9]+\s*(?:个\s*)?(?:镜头|分镜|镜)|"
+        r"[0-9]+\s*秒\s*(?:广告片|品牌片|TVC|film|commercial)",
+    )
 
-    if revision and (bounded or not complete):
-        if has(text, r"Prompt|提示词"):
+    if revision and not broad_scope and (bounded or not complete):
+        if has(actionable, r"Prompt|提示词"):
             return "prompt_revision", ["bounded_revision", "prompt_target"]
-        if has(text, r"分镜|storyboard") and not has(text, r"脚本\s*\+\s*分镜"):
+        if has(actionable, r"分镜|storyboard") and not has(actionable, r"脚本\s*\+\s*分镜"):
             return "storyboard_review", ["bounded_review", "storyboard_target"]
-        if has(text, r"镜头|shot"):
+        if has(actionable, r"镜头|shot"):
             return "shot_optimization", ["bounded_revision", "shot_target"]
-        if has(text, r"句|段|文案|脚本|copy|line|paragraph|script"):
+        if has(actionable, r"句|段|文案|脚本|copy|line|paragraph|script"):
             return "copy_revision", ["bounded_revision", "copy_target"]
         return "bounded_revision", ["bounded_revision"]
 
-    if complete or has(text, r"广告片|品牌片|短片|film|commercial|故事|脚本|story|script"):
+    if broad_scope or complete or has(actionable, r"广告片|品牌片|短片|film|commercial|故事|脚本|story|script"):
         return "film_development", ["multi_artifact_or_complete_creation"]
     return "bounded_revision", ["single_output_default"]
+
+
+def classify_deliverable_layer(request: str, route: str) -> tuple[str | None, bool]:
+    """Keep client narrative, frame content, and technical production as separate layers."""
+    if route == "invalid_specialist_exchange":
+        return None, False
+    if route == "adco_specialist_exchange":
+        return "bounded_specialist_output", False
+    if route != "film_development":
+        return "bounded_output", False
+
+    text = action_text(request)
+    technical = explicit_technical_request(text)
+    if technical:
+        return "technical_production", True
+    if has(text, r"九宫格|九格(?:故事板|分镜)?|9\s*(?:宫格|格)|nine[- ]grid"):
+        return "narrative_storyboard", False
+    if has(
+        text,
+        r"逐帧内容|逐格内容|每一帧(?:的)?(?:内容|storyline|故事线)|"
+        r"frame[- ]by[- ]frame\s*content|View\s*[/+|]\s*Storyline",
+    ):
+        return "frame_content_spec", False
+    compact_pages = has(text, r"一至两页|一到两页|一两页|1\s*(?:-|至|到)\s*2\s*页|两页")
+    dual_story = has(text, r"双方向|两个方向|两种方向|两条方向|dual[- ]direction") and has(
+        text, r"故事|故事线|story|客户|提案"
+    )
+    if dual_story and (compact_pages or has(text, r"讲清|客户可读|纯故事线")):
+        return "client_story", False
+    return "full_preproduction", True
 
 
 def route_request(
@@ -154,6 +357,8 @@ def route_request(
             "state_persistence": "none",
             "threads_allowed": False,
             "full_receipt_required": False,
+            "deliverable_layer": None,
+            "shot_matrix_allowed": False,
             "reason_codes": [*reason_codes, "skill_runtime_forbidden"],
         }
     config = policy["routes"][route]
@@ -168,18 +373,10 @@ def route_request(
     if route == "film_development" and "incompatible_creative_directions" not in reason_codes:
         external_user_gate = None
         reason_codes = [*reason_codes, "no_material_blocker"]
-    if route == "generation_authorization" and has(
-        request,
-        r"(?:现在|立即|直接|马上|开始|(?<!申)请)\s*(?:真实)?生成|(?:已|确认|明确)?授权(?:真实)?生成|"
-        r"generate\s+now|start\s+generation|generation\s+authorized",
-    ):
+    if route == "generation_authorization" and generation_authorized(request):
         external_user_gate = None
         reason_codes = [*reason_codes, "authorization_satisfied_by_current_request"]
-    if route == "client_delivery" and has(
-        request,
-        r"(?:现在|立即|直接|正式)\s*(?:交付|发送|发给)客户|批准客户交付|客户交付已批准|"
-        r"send\s+to\s+(?:the\s+)?client\s+now|client\s+delivery\s+approved",
-    ):
+    if route == "client_delivery" and client_delivery_authorized(request):
         external_user_gate = None
         reason_codes = [*reason_codes, "approval_satisfied_by_current_request"]
     action = (
@@ -190,6 +387,7 @@ def route_request(
         else "continue"
     )
     persistence = policy["interaction_contract"]["state_persistence"][config["mode"]]
+    deliverable_layer, shot_matrix_allowed = classify_deliverable_layer(request, route)
     return {
         "execution_context": execution_context,
         "mode": config["mode"],
@@ -209,6 +407,8 @@ def route_request(
         "state_persistence": persistence,
         "threads_allowed": config["threads_allowed"],
         "full_receipt_required": config["full_receipt_required"],
+        "deliverable_layer": deliverable_layer,
+        "shot_matrix_allowed": shot_matrix_allowed,
         "reason_codes": reason_codes,
     }
 
@@ -225,6 +425,8 @@ def self_test() -> list[str]:
             "action",
             "first_response_contract",
             "state_persistence",
+            "deliverable_layer",
+            "shot_matrix_allowed",
         ):
             if field not in case:
                 continue

@@ -24,7 +24,9 @@ The memorable product behavior is: **one visible production decision at a time, 
 - `co-creation-run.yaml` already records gate status, options, selection, rationale, downstream artifacts, and blocks.
 - The planned Workbench already defines a workflow rail, artifact canvas, comparison pane, QA drawer, and timeline.
 - The current visual dogfood is static standalone HTML containing transcript text. It verifies visible terms and browser cleanliness, but it is not an interactive in-conversation decision surface.
-- The installed ChatGPT desktop app includes the Visualize plugin and supports thread-scoped inline HTML fragments in supported conversations.
+- Visualizations availability depends on the current account, workspace,
+  platform, rollout, and whether `@Visualize` is actually exposed. A Skill cannot
+  activate it by writing a thread-scoped HTML fragment.
 - OpenAI's current Visualizations documentation says rendering is available only on supported ChatGPT web/desktop/mobile surfaces, not Codex CLI or the IDE extension.
 
 ## Research Findings

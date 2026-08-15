@@ -33,7 +33,7 @@
 | S08 · 00:17.4-00:19.4 · 2s | 50mm low three-quarter angle; umbrella bloom wipes the lens | The red umbrella snaps open and becomes the transition motif | Umbrella snap replaces the station chime transient | Umbrella opens once, stays in right hand, fabric becomes visibly wet |
 | S09 · 00:19.4-00:22.0 · 2.6s | 85mm insert with open bottle foreground and departure board bokeh | She checks the final departure while the bottle state remains readable | PA countdown and rain; no health or energy line | Bottle remains open; exact label silhouette; board text supplied separately in post |
 | S10 · 00:22.0-00:24.4 · 2.4s | 70mm lateral track parallel to closing platform doors | Train doors close one pace before she reaches them | Door warning, seal thump, music drops to one low pulse | Travel direction remains left-to-right; umbrella now folded but wet |
-| S11 · 00:24.4-00:26.4 · 2s | 50mm locked medium, then a controlled rack focus to the bus bay | She absorbs the setback and sees the last bus across the concourse | One breath, then bus indicator beep across space | No reset to intake or flashback; eyeline connects directly to S12 |
+| S11 · 00:24.4-00:26.4 · 2s | 50mm locked medium, then a controlled rack focus to the bus bay | She absorbs the setback and sees the last bus across the concourse | One breath, then bus indicator beep across space | Wardrobe, wet umbrella, bag, and travel direction stay continuous; eyeline connects directly to S12 |
 | S12 · 00:26.4-00:29.0 · 2.6s | 28mm running gimbal ending at the bus doorway | She crosses the wet concourse and boards just before the door closes | Footsteps accelerate; door closes into interior ambience | Folded wet umbrella right hand; bag and open-bottle state preserved |
 | S13 · 00:29.0-00:31.4 · 2.4s | 24mm static aisle wide with city reflections moving right-to-left | Lin Che settles beside the window in an almost empty night bus | Engine, wiper and low tire wash establish a slower pulse | Bus geography, seat side, window direction and umbrella floor position locked |
 | S14 · 00:31.4-00:34.4 · 3s | 85mm controlled push from bottle to face in window reflection | She takes the first quiet sip and releases the breath held in S02 | Single sip, father's message tail and restrained score resolve together | Open bottle, right hand and liquid level tracked; no energy transformation |
@@ -57,9 +57,9 @@
 | 夜班巴士 | S13, S14, S16, S17 | Lock the late-night bus aisle, window direction, seat geography, passing-city reflections, exit door, and camera positions for S13-S14 and S16-S17. |
 | 黎明河岸 | S15, S18, S19, S20, S21, S22, S23, S24 | Lock the riverside steps, railing, bench, skyline, sunrise direction, approach path, product hero surface, and camera axis for S15 and S18-S24. |
 
-## 全片必须生成的 48 项视觉资产
+## 全片必须生成的 50 项视觉资产
 
-- 2 张角色身份参考图：林澈、父亲；跨夜景与黎明保持脸、体型、发型、服装和持物手一致。
+- 4 张角色 / appearance-state 身份参考图：林澈的棚内、雨夜转场、黎明状态与父亲黎明状态分别锁定；同一角色跨状态保持脸、体型、发型和持物手一致。
 - 1 张产品身份板：瓶型、黑盖、深色液体、白色标签、已开/未开状态。
 - 2 张道具连续性板：纸条的折叠/展开/收入口袋状态；红伞的折叠/打开/湿润与右手归属。
 - 4 张场景地理 / Camera-FOV 图：每个场景一张，不能用逐镜分镜图替代。
@@ -67,7 +67,7 @@
 - 24 张逐镜分镜图：S01-S24 每镜恰好一张，不能用六格拼图代替独立文件。
 - 4 页导演故事板 / motion map：每页 6 镜，覆盖 S01-S24，不得漏镜或重复。
 - 10 张干净视频输入帧：G01-G10 每个场景内生成单元一张已锁定首帧、关键帧或尾帧。
-- 合计 48 项；场景图、逐镜分镜图、导演故事板与视频模型输入帧是四类不同交付物。
+- 合计 50 项；场景图、逐镜分镜图、导演故事板与视频模型输入帧是四类不同交付物。
 
 ## 导演故事板分页
 
@@ -108,5 +108,5 @@
 - Brief adherence：通过。60 秒、16:9、四场景、两角色、24 镜、32 节奏点、广播尾帧与声音结构均已落入可执行方案。
 - Coverage：通过。资产矩阵逐项覆盖场景、身份、S01-S24、四页导演故事板和 G01-G10 干净输入；生成单元不跨场景锚点。
 - Continuity：计划级通过。人物、产品、纸条、红伞、左右手、屏幕方向与夜到黎明状态均有明确锁点。
-- Completion：当前只能声明 `plan_complete`。只有 48 项真实文件全部存在、逐项 QA 通过并与清单绑定后，才能声明全片生成完成；代表性样片不能声明全片生成完成。
+- Completion：当前只能声明 `plan_complete`。只有 50 项真实文件全部存在、逐项 QA 通过并与清单绑定后，才能声明全片生成完成；代表性样片不能声明全片生成完成。
 - Acceptance：电视台/平台的最终母版、响度、字幕、法律行和品牌批准尚未提供，因此不能声明 `accepted`。

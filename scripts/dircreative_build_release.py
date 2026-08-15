@@ -92,6 +92,18 @@ def sealed_candidate(expected_commit: str | None, current_head: str) -> str:
     return candidate
 
 
+def resolve_release_status(
+    *,
+    require_tag: bool,
+    allow_unpublished: bool,
+) -> str:
+    if require_tag == allow_unpublished:
+        raise ValueError(
+            "choose exactly one release mode: --require-tag or --allow-unpublished"
+        )
+    return "CANONICAL_REMOTE_TAG" if require_tag else "UNPUBLISHED_LOCAL_CANDIDATE"
+
+
 def self_test() -> int:
     candidate = "a" * 40
     swapped = "b" * 40
@@ -129,6 +141,23 @@ def self_test() -> int:
     else:
         print("RELEASE_BUILD_SELF_TEST: FAIL_NONCANONICAL_COMMIT_ACCEPTED")
         return 1
+    mode_cases = (
+        (False, False, None),
+        (True, True, None),
+        (False, True, "UNPUBLISHED_LOCAL_CANDIDATE"),
+        (True, False, "CANONICAL_REMOTE_TAG"),
+    )
+    for require_tag, allow_unpublished, expected in mode_cases:
+        try:
+            actual = resolve_release_status(
+                require_tag=require_tag,
+                allow_unpublished=allow_unpublished,
+            )
+        except ValueError:
+            actual = None
+        if actual != expected:
+            print("RELEASE_BUILD_SELF_TEST: FAIL_RELEASE_MODE_CONTRACT")
+            return 1
     with tempfile.TemporaryDirectory(prefix="dircreative-build-self-test-") as raw:
         artifact = Path(raw) / "artifact.tar.gz"
         checksums = Path(raw) / "SHA256SUMS"
@@ -203,6 +232,15 @@ def main() -> int:
         return self_test()
 
     try:
+        release_status = resolve_release_status(
+            require_tag=args.require_tag,
+            allow_unpublished=args.allow_unpublished,
+        )
+    except ValueError as exc:
+        print(f"RELEASE_BUILD: FAIL_MODE ({exc})")
+        return 1
+
+    try:
         current_head = git_bytes("rev-parse", "HEAD").decode().strip()
         candidate = sealed_candidate(args.expected_commit, current_head)
     except (ValueError, UnicodeDecodeError) as exc:
@@ -271,7 +309,7 @@ def main() -> int:
 
         root_skill_hash = sha256(payload / "SKILL.md")
         metadata = {
-            "schema_version": "1.0.0",
+            "schema_version": "1.1.0",
             "product": "DIRcreative",
             "version": version,
             "tag": f"v{version}",
@@ -279,6 +317,7 @@ def main() -> int:
             "commit_timestamp": datetime.fromtimestamp(commit_timestamp, tz=timezone.utc).isoformat().replace("+00:00", "Z"),
             "root_skill_sha256": root_skill_hash,
             "source": "git archive of exact commit",
+            "release_status": release_status,
         }
         (payload / "RELEASE-METADATA.json").write_text(
             json.dumps(metadata, ensure_ascii=False, indent=2, sort_keys=True) + "\n",

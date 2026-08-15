@@ -10,6 +10,21 @@ Author template: `schemas/chat-visualization-spec.template.yaml`
 
 Use a visualization only when it makes the current creative decision easier to understand than concise chat text. The visualization is a review surface, not source truth, a live dashboard, an approval receipt, or an authorization mechanism.
 
+## Product Availability Boundary
+
+OpenAI Visualizations is a host capability, not an HTML file format. Use the
+native surface only when the current composer visibly exposes `@Visualize` or the
+current callable tool surface provides an actual Visualizations capability, the
+result is mounted into this conversation, and a readback confirms that mount. A
+Skill cannot activate it by creating `.codex/visualizations`, rendering HTML, or
+printing a private/raw directive. Those actions produce an offline preview only.
+
+Codex CLI and IDE surfaces do not render ChatGPT Visualizations. Desktop/web
+availability varies by account, workspace, platform, and rollout. If native
+rendering is unavailable or not visibly mounted, use the complete fallback and
+report user visibility as `未验证` or `验证失败`; do not retry by accumulating HTML
+fragments.
+
 The user must be able to see, in this order:
 
 1. current stage,
@@ -189,7 +204,8 @@ PYTHONDONTWRITEBYTECODE=1 python3 scripts/dircreative_visualization_spec.py vali
   <spec.json-or-yaml> --project-root <active-project-root>
 ```
 
-Render a standalone-chat fragment into the current thread visualization directory:
+Render a standalone-chat fragment only for offline inspection or hostile-input
+verification:
 
 ```text
 PYTHONDONTWRITEBYTECODE=1 python3 scripts/dircreative_visualization_render.py render-html \
@@ -198,7 +214,12 @@ PYTHONDONTWRITEBYTECODE=1 python3 scripts/dircreative_visualization_render.py re
   --output ~/.codex/visualizations/<date>/<thread-id>/<lowercase-title>.html
 ```
 
-The renderer fails closed for `orchestrated_worker` specs. ADCO must consume those specs through its negotiated controller path. Image paths are project-relative and must stay inside `--project-root`; the renderer rejects missing files, path escapes, hash mismatches, active/external SVG, and fragments above 2 MB. Create bounded review thumbnails rather than embedding full-resolution originals.
+The renderer reports `USER_VISIBLE=UNVERIFIED`; a PASS never means the host
+displayed the preview. It fails closed for `orchestrated_worker` specs. ADCO must
+consume those specs through its negotiated controller path. Image paths are
+project-relative and must stay inside `--project-root`; the renderer rejects
+missing files, path escapes, hash mismatches, active/external SVG, and fragments
+above 2 MB. Create bounded review thumbnails rather than embedding full-resolution originals.
 
 Run the positive and negative fixture gate:
 

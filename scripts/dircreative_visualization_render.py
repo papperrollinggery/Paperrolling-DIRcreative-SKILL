@@ -6,7 +6,10 @@ import base64
 import hashlib
 import html
 import json
+import os
 import re
+import subprocess
+import sys
 import tempfile
 from pathlib import Path
 from typing import Any
@@ -49,6 +52,17 @@ STORY_FIELD_LABELS = {
 
 class RenderError(Exception):
     pass
+
+
+def user_visibility_status(
+    *, native_capability_exposed: bool, mounted_in_conversation: bool, readback_confirmed: bool
+) -> str:
+    """Host visibility is verified only when capability, mount, and readback all exist."""
+    return (
+        "VERIFIED"
+        if native_capability_exposed and mounted_in_conversation and readback_confirmed
+        else "UNVERIFIED"
+    )
 
 
 def esc(value: Any) -> str:
@@ -697,11 +711,53 @@ def write_fragment(
     if output.exists() and not force:
         raise RenderError(f"refusing to overwrite existing output: {output}")
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(render_fragment(document, project_root), encoding="utf-8")
+    rendered = render_fragment(document, project_root)
+    descriptor, temporary_value = tempfile.mkstemp(
+        prefix=f".{output.name}.", suffix=".tmp", dir=output.parent
+    )
+    temporary = Path(temporary_value)
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+            handle.write(rendered)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary, output)
+    finally:
+        if temporary.exists():
+            temporary.unlink()
 
 
 def self_test() -> list[str]:
     failures: list[str] = []
+    verified_combinations = {(True, True, True)}
+    for native_capability_exposed in (False, True):
+        for mounted_in_conversation in (False, True):
+            for readback_confirmed in (False, True):
+                actual = user_visibility_status(
+                    native_capability_exposed=native_capability_exposed,
+                    mounted_in_conversation=mounted_in_conversation,
+                    readback_confirmed=readback_confirmed,
+                )
+                expected = "VERIFIED" if (
+                    native_capability_exposed,
+                    mounted_in_conversation,
+                    readback_confirmed,
+                ) in verified_combinations else "UNVERIFIED"
+                if actual != expected:
+                    failures.append("host visibility truth table drifted")
+    visibility_surfaces = [
+        (
+            ROOT / "skills/dircreative/SKILL.md"
+            if (ROOT / "skills/dircreative/SKILL.md").is_file()
+            else ROOT / "SKILL.md"
+        ),
+        ROOT / "docs/film-preproduction/chat-inline-visualization-interface.md",
+        ROOT / "docs/film-preproduction/chat-inline-visualization-plan.md",
+    ]
+    forbidden_private_directive = "codex-inline" + "-vis"
+    for path in visibility_surfaces:
+        if forbidden_private_directive in path.read_text(encoding="utf-8"):
+            failures.append(f"private host directive resurfaced: {path.relative_to(ROOT)}")
     fixture_names = [
         "valid-idea-brief-inline.json",
         "valid-director-compare-inline.json",
@@ -730,6 +786,32 @@ def self_test() -> list[str]:
                     failures.append(f"{filename}: forbidden fragment token {forbidden}")
             if "sendFollowUpMessage" not in text or "writes_authoritative_state" not in text:
                 failures.append(f"{filename}: missing interaction or write-boundary evidence")
+            try:
+                write_fragment(document, output, test_output=True, force=True)
+            except RenderError as exc:
+                failures.append(f"{filename}: stable current-view replacement failed: {exc}")
+            if list(output.parent.glob(f".{output.name}.*.tmp")):
+                failures.append(f"{filename}: atomic render left a temporary file")
+        cli_output = Path(tmp) / "cli-current.html"
+        cli = subprocess.run(
+            [
+                sys.executable,
+                str(Path(__file__).resolve()),
+                "render-html",
+                str(FIXTURE_ROOT / "valid-idea-brief-inline.json"),
+                "--output",
+                str(cli_output),
+                "--test-output",
+            ],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        if cli.returncode != 0 or not cli_output.is_file():
+            failures.append("render-html CLI did not create the current fallback surface")
+        if "USER_VISIBLE=UNVERIFIED" not in cli.stdout or "USER_VISIBLE=VERIFIED" in cli.stdout:
+            failures.append("render-html CLI overstated native host visibility")
     worker = load_document(FIXTURE_ROOT / "valid-adco-worker-fallback.json")
     try:
         render_fragment(worker)
@@ -813,7 +895,16 @@ def main() -> int:
         print(f"CHAT_VISUALIZATION_RENDER: FAIL\n- {exc}")
         return 1
     print("CHAT_VISUALIZATION_RENDER: PASS")
-    print(output.resolve())
+    print(f"OUTPUT={output.resolve()}")
+    print(
+        "USER_VISIBLE="
+        + user_visibility_status(
+            native_capability_exposed=False,
+            mounted_in_conversation=False,
+            readback_confirmed=False,
+        )
+    )
+    print("NATIVE_VISUALIZATION=NOT_INVOKED")
     return 0
 
 

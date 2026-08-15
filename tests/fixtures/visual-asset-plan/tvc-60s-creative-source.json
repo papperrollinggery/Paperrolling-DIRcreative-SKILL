@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0",
+  "project_id": "chengchuan-sunrise-tvc-60s",
+  "brief": {
+    "brand": "Chengchuan Cold Brew",
+    "format": "60-second 16:9 broadcast TVC",
+    "story": "A night-radio producer follows her father's invitation through rain, a missed train, a night bus, and a dawn riverside reunion.",
+    "required_scenes": ["radio studio", "rain station", "night bus", "dawn riverside"],
+    "required_characters": ["Lin Che", "father"],
+    "prohibited_claims": ["energy", "alertness", "health benefit"]
+  },
+  "story_beats": [
+    {"id": "B01", "summary": "The live radio shift and father's saved message create a time-bound invitation."},
+    {"id": "B02", "summary": "Lin Che commits to leaving with the note and already-opened bottle."},
+    {"id": "B03", "summary": "Hard rain and a missed train create a real obstacle rather than a symbolic montage."},
+    {"id": "B04", "summary": "She notices and catches the last night bus without resetting established continuity."},
+    {"id": "B05", "summary": "The bus ride slows the rhythm while the product carries memory without a performance claim."},
+    {"id": "B06", "summary": "Blue hour links the moving bus to the father's dawn riverside wait."},
+    {"id": "B07", "summary": "Father and daughter reunite with restrained performance and two tracked bottles."},
+    {"id": "B08", "summary": "The note, product hero, and protected end frame close the invitation motif."}
+  ],
+  "script_lines": [
+    {"id": "L01", "speaker": "father-message", "text": "The sunrise is still waiting for you."},
+    {"id": "L02", "speaker": "lin-che-message", "text": "Ten minutes."},
+    {"id": "L03", "speaker": "father", "text": "You made it."}
+  ]
+}

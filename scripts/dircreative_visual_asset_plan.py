@@ -63,8 +63,11 @@ TECHNICAL_RECEIPT_VERSION = "2.0"
 VISUAL_QA_RULESET = "dircreative-role-truth-review-v2"
 VISUAL_QA_RECEIPT_VERSION = "2.0"
 VISUAL_REVIEW_MANIFEST_VERSION = "1.0"
-SCHEMA_VERSION = "2.2"
+SCHEMA_VERSION = "2.3"
 FUTURE_TIMESTAMP_TOLERANCE_SECONDS = 300
+TRUSTED_VISUAL_REVIEW_ADOPTION_REQUIRED = (
+    "visual_assets_complete_requires_trusted_host_review_adoption"
+)
 
 ROLES = {
     "character_identity_reference",
@@ -126,6 +129,7 @@ ASSET_FIELDS = {
 COVERAGE_FIELDS = {
     "scene_ids",
     "character_ids",
+    "appearance_state_ids",
     "product_ids",
     "prop_ids",
     "shot_ids",
@@ -1194,6 +1198,7 @@ def empty_coverage() -> dict[str, list[str]]:
     return {
         "scene_ids": [],
         "character_ids": [],
+        "appearance_state_ids": [],
         "product_ids": [],
         "prop_ids": [],
         "shot_ids": [],
@@ -1329,6 +1334,11 @@ def parse_timecode_range(value: str) -> tuple[Decimal, Decimal]:
     return start, end
 
 
+def timecode_seconds(value: str) -> float:
+    minutes, seconds = value.split(":", 1)
+    return int(minutes) * 60 + float(seconds)
+
+
 def validate_shot_card_timeline(
     cards: list[dict[str, Any]],
     *,
@@ -1372,17 +1382,20 @@ def parse_inventory(
         "project_id",
         "truth_revision",
         "truth_locked_at",
+        "creative_source_file",
+        "creative_source_sha256",
         "shot_cards_file",
         "shot_cards_sha256",
         "scope",
         "duration_seconds",
         "delivery_profile",
         "characters",
+        "appearance_states",
         "products",
         "props",
         "scenes",
         "shots",
-        "rhythm_point_ids",
+        "rhythm_points",
         "style_reference_required",
         "generation_units",
     }
@@ -1413,6 +1426,47 @@ def parse_inventory(
         or SHA256_RE.fullmatch(inventory["shot_cards_sha256"]) is None
     ):
         raise ValueError("inventory shot_cards_sha256 is invalid")
+    creative_source_path = contained_file(inventory.get("creative_source_file"), base_dir)
+    if creative_source_path is None:
+        raise ValueError("inventory creative source is missing or outside the evidence root")
+    creative_source = load_json(creative_source_path)
+    actual_creative_source_hash = canonical_json_sha256(creative_source)
+    if inventory.get("creative_source_sha256") != actual_creative_source_hash:
+        raise ValueError("inventory creative_source_sha256 mismatch")
+    if (
+        not isinstance(inventory.get("creative_source_sha256"), str)
+        or SHA256_RE.fullmatch(inventory["creative_source_sha256"]) is None
+    ):
+        raise ValueError("inventory creative_source_sha256 is invalid")
+    if (
+        set(creative_source) != {"schema_version", "project_id", "brief", "story_beats", "script_lines"}
+        or creative_source.get("schema_version") != "1.0"
+        or creative_source.get("project_id") != inventory.get("project_id")
+        or not isinstance(creative_source.get("brief"), dict)
+        or not creative_source["brief"]
+    ):
+        raise ValueError("creative source root is invalid")
+
+    def creative_item_map(label: str, fields: set[str]) -> dict[str, dict[str, Any]]:
+        values = creative_source.get(label)
+        if not isinstance(values, list) or not values:
+            raise ValueError(f"creative source {label} must be a non-empty list")
+        mapped: dict[str, dict[str, Any]] = {}
+        for item in values:
+            if not isinstance(item, dict) or set(item) != fields:
+                raise ValueError(f"creative source {label} item is invalid")
+            item_id = item.get("id")
+            if not isinstance(item_id, str) or not ID_RE.fullmatch(item_id) or item_id in mapped:
+                raise ValueError(f"creative source {label} id is invalid")
+            for field in fields - {"id"}:
+                value = item.get(field)
+                if not isinstance(value, str) or len(value.strip()) < 2 or PLACEHOLDER_RE.search(value):
+                    raise ValueError(f"creative source {label} {item_id} has invalid {field}")
+            mapped[item_id] = item
+        return mapped
+
+    story_beat_map = creative_item_map("story_beats", {"id", "summary"})
+    script_line_map = creative_item_map("script_lines", {"id", "speaker", "text"})
     if (
         set(shot_cards) != {"schema_version", "inventory", "cards"}
         or shot_cards.get("schema_version") != "1.0"
@@ -1428,14 +1482,32 @@ def parse_inventory(
         raise ValueError("inventory delivery profile is invalid: " + ",".join(profile_errors))
     if not isinstance(inventory.get("style_reference_required"), bool):
         raise ValueError("inventory style-reference policy is invalid")
-    rhythm_ids = inventory.get("rhythm_point_ids")
-    if (
-        not isinstance(rhythm_ids, list)
-        or not rhythm_ids
-        or not all(isinstance(item, str) and ID_RE.fullmatch(item) for item in rhythm_ids)
-        or duplicate_values(rhythm_ids)
-    ):
+    raw_rhythm_points = inventory.get("rhythm_points")
+    if not isinstance(raw_rhythm_points, list) or not raw_rhythm_points:
         raise ValueError("inventory rhythm points are invalid")
+    rhythm_ids: list[str] = []
+    for point in raw_rhythm_points:
+        if not isinstance(point, dict) or set(point) != {
+            "id",
+            "timecode",
+            "shot_ids",
+            "action",
+            "sound_transition",
+        }:
+            raise ValueError("inventory rhythm point item is invalid")
+        point_id = point.get("id")
+        if not isinstance(point_id, str) or not ID_RE.fullmatch(point_id) or point_id in rhythm_ids:
+            raise ValueError("inventory rhythm point id is invalid")
+        if (
+            not isinstance(point.get("timecode"), str)
+            or re.fullmatch(r"[0-9]{2,}:[0-5][0-9](?:\.[0-9]+)?", point["timecode"]) is None
+        ):
+            raise ValueError(f"inventory rhythm point {point_id} timecode is invalid")
+        for field in ("action", "sound_transition"):
+            value = point.get(field)
+            if not isinstance(value, str) or len(value.strip()) < 12 or PLACEHOLDER_RE.search(value):
+                raise ValueError(f"inventory rhythm point {point_id} {field} is invalid")
+        rhythm_ids.append(point_id)
 
     def entity_map(label: str) -> dict[str, dict[str, Any]]:
         values = inventory.get(label)
@@ -1460,6 +1532,28 @@ def parse_inventory(
         return result
 
     character_map = entity_map("characters")
+    raw_appearance_states = inventory.get("appearance_states")
+    if not isinstance(raw_appearance_states, list) or not raw_appearance_states:
+        raise ValueError("inventory appearance_states must be a non-empty list")
+    appearance_state_map: dict[str, dict[str, Any]] = {}
+    for item in raw_appearance_states:
+        if not isinstance(item, dict) or set(item) != {"id", "character_id", "purpose"}:
+            raise ValueError("inventory appearance state item is invalid")
+        state_id = item.get("id")
+        purpose = item.get("purpose")
+        if (
+            not isinstance(state_id, str)
+            or not ID_RE.fullmatch(state_id)
+            or state_id in appearance_state_map
+            or item.get("character_id") not in character_map
+            or not isinstance(purpose, str)
+            or len(purpose.strip()) < 12
+            or PLACEHOLDER_RE.search(purpose)
+        ):
+            raise ValueError("inventory appearance state identity or purpose is invalid")
+        appearance_state_map[state_id] = item
+    if set(character_map) - {item["character_id"] for item in appearance_state_map.values()}:
+        raise ValueError("inventory character lacks an appearance state")
     product_map = entity_map("products")
     prop_map = entity_map("props")
     scene_map = entity_map("scenes")
@@ -1528,8 +1622,11 @@ def parse_inventory(
             "shot_id",
             "scene_id",
             "character_ids",
+            "appearance_state_ids",
             "product_ids",
             "prop_ids",
+            "story_beat_ids",
+            "script_line_ids",
             "generation_unit_id",
             "narrative_purpose",
         }
@@ -1542,12 +1639,32 @@ def parse_inventory(
             raise ValueError(f"inventory shot {shot_id} has unknown scene or generation unit")
         for field, known in (
             ("character_ids", character_map),
+            ("appearance_state_ids", appearance_state_map),
             ("product_ids", product_map),
             ("prop_ids", prop_map),
         ):
             values = shot.get(field)
             if (
                 not isinstance(values, list)
+                or not all(isinstance(item, str) and ID_RE.fullmatch(item) for item in values)
+                or duplicate_values(values)
+                or set(values) - set(known)
+            ):
+                raise ValueError(f"inventory shot {shot_id} has invalid {field}")
+        appearance_characters = [
+            appearance_state_map[state_id]["character_id"]
+            for state_id in shot["appearance_state_ids"]
+        ]
+        if duplicate_values(appearance_characters) or set(appearance_characters) != set(shot["character_ids"]):
+            raise ValueError(f"inventory shot {shot_id} appearance states do not map one-to-one to characters")
+        for field, known in (
+            ("story_beat_ids", story_beat_map),
+            ("script_line_ids", script_line_map),
+        ):
+            values = shot.get(field)
+            if (
+                not isinstance(values, list)
+                or (field == "story_beat_ids" and not values)
                 or not all(isinstance(item, str) and ID_RE.fullmatch(item) for item in values)
                 or duplicate_values(values)
                 or set(values) - set(known)
@@ -1610,14 +1727,37 @@ def parse_inventory(
         duration_seconds=duration,
         frame_rate_fps=inventory["delivery_profile"]["frame_rate_fps"],
     )
+    covered_story_beats = {value for shot in raw_shots for value in shot["story_beat_ids"]}
+    covered_script_lines = {value for shot in raw_shots for value in shot["script_line_ids"]}
+    if covered_story_beats != set(story_beat_map):
+        raise ValueError("inventory shots do not cover every creative story beat")
+    if covered_script_lines != set(script_line_map):
+        raise ValueError("inventory shots do not cover every approved script line")
+    previous_rhythm_time = -1.0
+    for point in raw_rhythm_points:
+        point_shots = point.get("shot_ids")
+        if (
+            not isinstance(point_shots, list)
+            or not point_shots
+            or duplicate_values(point_shots)
+            or not all(isinstance(item, str) and item in shot_map for item in point_shots)
+        ):
+            raise ValueError(f"inventory rhythm point {point['id']} has invalid shot coverage")
+        point_time = timecode_seconds(point["timecode"])
+        if point_time < previous_rhythm_time or point_time > float(duration):
+            raise ValueError(f"inventory rhythm point {point['id']} is out of timeline order")
+        previous_rhythm_time = point_time
 
     shot_truth = [
         {
             "shot_id": shot_id,
             "scene_id": shot_map[shot_id]["scene_id"],
             "character_ids": list(shot_map[shot_id]["character_ids"]),
+            "appearance_state_ids": list(shot_map[shot_id]["appearance_state_ids"]),
             "product_ids": list(shot_map[shot_id]["product_ids"]),
             "prop_ids": list(shot_map[shot_id]["prop_ids"]),
+            "story_beat_ids": list(shot_map[shot_id]["story_beat_ids"]),
+            "script_line_ids": list(shot_map[shot_id]["script_line_ids"]),
             "generation_unit_id": shot_map[shot_id]["generation_unit_id"],
             "narrative_purpose": shot_map[shot_id]["narrative_purpose"],
             "timecode": card_map[shot_id]["timecode"],
@@ -1661,6 +1801,7 @@ def parse_inventory(
         raise ValueError("inventory rhythm points are fewer than shots")
     return {
         "character_map": character_map,
+        "appearance_state_map": appearance_state_map,
         "product_map": product_map,
         "prop_map": prop_map,
         "scene_map": scene_map,
@@ -1671,6 +1812,9 @@ def parse_inventory(
         "shot_cards_sha256": actual_shot_cards_hash,
         "shot_truth": shot_truth,
         "shot_truth_sha256": canonical_json_sha256(shot_truth),
+        "creative_source": creative_source,
+        "creative_source_sha256": actual_creative_source_hash,
+        "rhythm_points": copy.deepcopy(raw_rhythm_points),
     }
 
 
@@ -1693,6 +1837,7 @@ def derive_plan(
 ) -> dict[str, Any]:
     parsed = parse_inventory(inventory, base_dir=base_dir)
     character_map = parsed["character_map"]
+    appearance_state_map = parsed["appearance_state_map"]
     product_map = parsed["product_map"]
     prop_map = parsed["prop_map"]
     scene_map = parsed["scene_map"]
@@ -1703,26 +1848,30 @@ def derive_plan(
     shot_truth_map = {item["shot_id"]: item for item in shot_truth}
 
     assets: list[dict[str, Any]] = []
-    character_asset_ids: dict[str, str] = {}
+    appearance_asset_ids: dict[str, str] = {}
     product_asset_ids: dict[str, str] = {}
     prop_asset_ids: dict[str, str] = {}
     scene_asset_ids: dict[str, str] = {}
-    for entity_id, item in character_map.items():
-        asset_id = f"identity-character-{entity_id}"
-        character_asset_ids[entity_id] = asset_id
+    for state_id, state in appearance_state_map.items():
+        entity_id = state["character_id"]
+        item = character_map[entity_id]
+        asset_id = f"identity-character-{entity_id}-{state_id}"
+        appearance_asset_ids[state_id] = asset_id
         coverage = empty_coverage()
         coverage["character_ids"] = [entity_id]
+        coverage["appearance_state_ids"] = [state_id]
         assets.append(
             planned_asset(
                 asset_id,
                 "character_identity_reference",
-                item["purpose"],
+                f"{item['purpose']} Appearance state: {state['purpose']}",
                 truth_payload={
                     "entity": item,
+                    "appearance_state": state,
                     "shots": [
                         shot_truth_map[shot_id]
                         for shot_id in shot_ids
-                        if entity_id in shot_map[shot_id]["character_ids"]
+                        if state_id in shot_map[shot_id]["appearance_state_ids"]
                     ],
                 },
                 coverage=coverage,
@@ -1824,12 +1973,13 @@ def derive_plan(
         coverage = empty_coverage()
         coverage["scene_ids"] = [shot["scene_id"]]
         coverage["character_ids"] = list(shot["character_ids"])
+        coverage["appearance_state_ids"] = list(shot["appearance_state_ids"])
         coverage["product_ids"] = list(shot["product_ids"])
         coverage["prop_ids"] = list(shot["prop_ids"])
         coverage["shot_ids"] = [shot_id]
         coverage["generation_unit_ids"] = [shot["generation_unit_id"]]
         inherits = [scene_asset_ids[shot["scene_id"]]]
-        inherits.extend(character_asset_ids[item] for item in shot["character_ids"])
+        inherits.extend(appearance_asset_ids[item] for item in shot["appearance_state_ids"])
         inherits.extend(product_asset_ids[item] for item in shot["product_ids"])
         inherits.extend(prop_asset_ids[item] for item in shot["prop_ids"])
         if inventory["style_reference_required"] is True:
@@ -1852,6 +2002,9 @@ def derive_plan(
         coverage["scene_ids"] = list(dict.fromkeys(shot_map[item]["scene_id"] for item in page_shots))
         coverage["character_ids"] = list(
             dict.fromkeys(value for item in page_shots for value in shot_map[item]["character_ids"])
+        )
+        coverage["appearance_state_ids"] = list(
+            dict.fromkeys(value for item in page_shots for value in shot_map[item]["appearance_state_ids"])
         )
         coverage["product_ids"] = list(
             dict.fromkeys(value for item in page_shots for value in shot_map[item]["product_ids"])
@@ -1886,6 +2039,7 @@ def derive_plan(
             coverage = empty_coverage()
             coverage["scene_ids"] = [shot["scene_id"]]
             coverage["character_ids"] = list(shot["character_ids"])
+            coverage["appearance_state_ids"] = list(shot["appearance_state_ids"])
             coverage["product_ids"] = list(shot["product_ids"])
             coverage["prop_ids"] = list(shot["prop_ids"])
             coverage["shot_ids"] = [selected_shot]
@@ -1927,6 +2081,8 @@ def derive_plan(
         "truth_locked_at": inventory["truth_locked_at"],
         "inventory_file": inventory_file,
         "inventory_sha256": canonical_json_sha256(inventory),
+        "creative_source_file": inventory["creative_source_file"],
+        "creative_source_sha256": parsed["creative_source_sha256"],
         "shot_cards_file": inventory["shot_cards_file"],
         "shot_cards_sha256": parsed["shot_cards_sha256"],
         "shot_truth_sha256": parsed["shot_truth_sha256"],
@@ -1935,11 +2091,13 @@ def derive_plan(
         "delivery_profile": copy.deepcopy(inventory["delivery_profile"]),
         "scene_ids": list(scene_map),
         "character_ids": list(character_map),
+        "appearance_state_ids": list(appearance_state_map),
         "product_ids": list(product_map),
         "prop_ids": list(prop_map),
         "shot_ids": list(shot_ids),
         "shot_truth": shot_truth,
-        "rhythm_point_ids": list(inventory["rhythm_point_ids"]),
+        "rhythm_point_ids": [point["id"] for point in parsed["rhythm_points"]],
+        "rhythm_points": parsed["rhythm_points"],
         "style_reference_required": inventory["style_reference_required"],
         "generation_units": output_units,
         "assets": assets,
@@ -2080,7 +2238,7 @@ def validate_plan(
         payload.get("inventory_sha256", "")
     ):
         errors.append("inventory_sha256_invalid")
-    for field in ("shot_cards_sha256", "shot_truth_sha256"):
+    for field in ("creative_source_sha256", "shot_cards_sha256", "shot_truth_sha256"):
         value = payload.get(field)
         if not isinstance(value, str) or SHA256_RE.fullmatch(value) is None:
             errors.append(f"{field}_invalid")
@@ -2090,6 +2248,8 @@ def validate_plan(
             "truth_revision",
             "truth_locked_at",
             "inventory_sha256",
+            "creative_source_file",
+            "creative_source_sha256",
             "shot_cards_file",
             "shot_cards_sha256",
             "shot_truth_sha256",
@@ -2098,11 +2258,13 @@ def validate_plan(
             "delivery_profile",
             "scene_ids",
             "character_ids",
+            "appearance_state_ids",
             "product_ids",
             "prop_ids",
             "shot_ids",
             "shot_truth",
             "rhythm_point_ids",
+            "rhythm_points",
             "style_reference_required",
             "generation_units",
         ):
@@ -2116,6 +2278,11 @@ def validate_plan(
         nonempty=scope != "representative_sample",
     )
     character_ids = validate_id_list(payload.get("character_ids"), "character_ids", errors)
+    appearance_state_ids = validate_id_list(
+        payload.get("appearance_state_ids"),
+        "appearance_state_ids",
+        errors,
+    )
     product_ids = validate_id_list(payload.get("product_ids"), "product_ids", errors)
     prop_ids = validate_id_list(payload.get("prop_ids"), "prop_ids", errors)
     shot_ids = validate_id_list(payload.get("shot_ids"), "shot_ids", errors, nonempty=True)
@@ -2127,6 +2294,52 @@ def validate_plan(
     )
     if len(rhythm_ids) < len(shot_ids):
         errors.append("rhythm_points_fewer_than_shots")
+    rhythm_points = payload.get("rhythm_points")
+    if not isinstance(rhythm_points, list) or not rhythm_points:
+        errors.append("rhythm_points_missing")
+        rhythm_points = []
+    parsed_rhythm_ids: list[str] = []
+    previous_rhythm_time = -1.0
+    for index, point in enumerate(rhythm_points):
+        expected_fields = {"id", "timecode", "shot_ids", "action", "sound_transition"}
+        if not isinstance(point, dict) or set(point) != expected_fields:
+            errors.append(f"rhythm_point_invalid:{index}")
+            continue
+        point_id = point.get("id")
+        if not isinstance(point_id, str) or not ID_RE.fullmatch(point_id):
+            errors.append(f"rhythm_point_id_invalid:{index}")
+            continue
+        parsed_rhythm_ids.append(point_id)
+        point_shots = validate_id_list(
+            point.get("shot_ids"),
+            f"rhythm_points[{point_id}].shot_ids",
+            errors,
+            nonempty=True,
+        )
+        add_coverage_error(
+            errors,
+            f"rhythm_point_unknown_shots:{point_id}",
+            sorted(set(point_shots) - set(shot_ids)),
+        )
+        point_timecode = point.get("timecode")
+        if not isinstance(point_timecode, str) or re.fullmatch(
+            r"[0-9]{2,}:[0-5][0-9](?:\.[0-9]+)?",
+            point_timecode,
+        ) is None:
+            errors.append(f"rhythm_point_timecode_invalid:{point_id}")
+        else:
+            point_time = timecode_seconds(point_timecode)
+            if point_time < previous_rhythm_time or (
+                isinstance(duration, (int, float)) and point_time > float(duration)
+            ):
+                errors.append(f"rhythm_point_timeline_invalid:{point_id}")
+            previous_rhythm_time = point_time
+        for field in ("action", "sound_transition"):
+            value = point.get(field)
+            if not isinstance(value, str) or len(value.strip()) < 12 or PLACEHOLDER_RE.search(value):
+                errors.append(f"rhythm_point_text_invalid:{point_id}:{field}")
+    if parsed_rhythm_ids != rhythm_ids:
+        errors.append("rhythm_point_ids_mismatch")
     if not isinstance(payload.get("style_reference_required"), bool):
         errors.append("style_reference_required_invalid")
 
@@ -2140,8 +2353,11 @@ def validate_plan(
             "shot_id",
             "scene_id",
             "character_ids",
+            "appearance_state_ids",
             "product_ids",
             "prop_ids",
+            "story_beat_ids",
+            "script_line_ids",
             "generation_unit_id",
             "narrative_purpose",
             "timecode",
@@ -2158,7 +2374,14 @@ def validate_plan(
         if not isinstance(shot_id, str) or not ID_RE.fullmatch(shot_id) or shot_id in truth_map:
             errors.append(f"shot_truth_id_invalid:{index}")
             continue
-        for field in ("character_ids", "product_ids", "prop_ids"):
+        for field in (
+            "character_ids",
+            "appearance_state_ids",
+            "product_ids",
+            "prop_ids",
+            "story_beat_ids",
+            "script_line_ids",
+        ):
             validate_id_list(truth.get(field), f"shot_truth[{shot_id}].{field}", errors)
         for field in (
             "narrative_purpose",
@@ -2265,6 +2488,7 @@ def validate_plan(
     valid_coverage = {
         "scene_ids": set(scene_ids),
         "character_ids": set(character_ids),
+        "appearance_state_ids": set(appearance_state_ids),
         "product_ids": set(product_ids),
         "prop_ids": set(prop_ids),
         "shot_ids": set(shot_ids),
@@ -2352,6 +2576,8 @@ def validate_plan(
             errors.append(f"asset_self_inheritance:{asset_id}")
         if role == "character_identity_reference" and len(safe_coverage_ids(asset, "character_ids")) != 1:
             errors.append(f"character_identity_scope_invalid:{asset_id}")
+        if role == "character_identity_reference" and len(safe_coverage_ids(asset, "appearance_state_ids")) != 1:
+            errors.append(f"character_identity_appearance_scope_invalid:{asset_id}")
         if role == "product_identity_board" and len(safe_coverage_ids(asset, "product_ids")) != 1:
             errors.append(f"product_identity_scope_invalid:{asset_id}")
         if role == "prop_continuity_board" and len(safe_coverage_ids(asset, "prop_ids")) != 1:
@@ -2371,6 +2597,7 @@ def validate_plan(
                 expected_coverage = {
                     "scene_ids": [truth["scene_id"]],
                     "character_ids": list(truth["character_ids"]),
+                    "appearance_state_ids": list(truth["appearance_state_ids"]),
                     "product_ids": list(truth["product_ids"]),
                     "prop_ids": list(truth["prop_ids"]),
                     "shot_ids": [truth["shot_id"]],
@@ -2389,6 +2616,9 @@ def validate_plan(
                     "scene_ids": list(dict.fromkeys(truth_map[item]["scene_id"] for item in page_shots)),
                     "character_ids": list(
                         dict.fromkeys(value for item in page_shots for value in truth_map[item]["character_ids"])
+                    ),
+                    "appearance_state_ids": list(
+                        dict.fromkeys(value for item in page_shots for value in truth_map[item]["appearance_state_ids"])
                     ),
                     "product_ids": list(
                         dict.fromkeys(value for item in page_shots for value in truth_map[item]["product_ids"])
@@ -2419,6 +2649,7 @@ def validate_plan(
                 expected_clean_coverage = {
                     "scene_ids": [truth["scene_id"]],
                     "character_ids": list(truth["character_ids"]),
+                    "appearance_state_ids": list(truth["appearance_state_ids"]),
                     "product_ids": list(truth["product_ids"]),
                     "prop_ids": list(truth["prop_ids"]),
                     "shot_ids": [truth["shot_id"]],
@@ -2479,6 +2710,12 @@ def validate_plan(
         "character_ids",
         character_ids,
     )
+    appearance_counts = _coverage_counts(
+        assets,
+        "character_identity_reference",
+        "appearance_state_ids",
+        appearance_state_ids,
+    )
     product_counts = _coverage_counts(assets, "product_identity_board", "product_ids", product_ids)
     prop_counts = _coverage_counts(assets, "prop_continuity_board", "prop_ids", prop_ids)
     scene_counts = _coverage_counts(
@@ -2494,6 +2731,11 @@ def validate_plan(
     )
     add_coverage_error(
         errors,
+        "appearance_state_coverage_missing",
+        [key for key, value in appearance_counts.items() if value == 0],
+    )
+    add_coverage_error(
+        errors,
         "product_coverage_missing",
         [key for key, value in product_counts.items() if value == 0],
     )
@@ -2501,9 +2743,9 @@ def validate_plan(
     add_coverage_error(errors, "scene_coverage_missing", [key for key, value in scene_counts.items() if value == 0])
     exact_coverage(
         "character_identity_reference",
-        "character_ids",
-        character_ids,
-        "character_identity_coverage_invalid",
+        "appearance_state_ids",
+        appearance_state_ids,
+        "appearance_state_identity_coverage_invalid",
     )
     exact_coverage(
         "product_identity_board",
@@ -2673,6 +2915,17 @@ def validate_plan(
                 errors.append(
                     f"required_asset_visual_qa_receipt_invalid:{asset_id}:{visual_problem}"
                 )
+        if any(
+            isinstance(asset.get("visual_qa_receipt"), dict)
+            and asset["visual_qa_receipt"].get("reviewer_type") == "independent_ai"
+            for asset in assets
+            if asset.get("required") is True
+        ):
+            errors.append(
+                "independent_ai_review_cannot_grant_visual_assets_complete_without_human_or_authorized_review"
+            )
+        if completion_claim == "visual_assets_complete":
+            errors.append(TRUSTED_VISUAL_REVIEW_ADOPTION_REQUIRED)
 
         content_groups: dict[str, list[str]] = {}
         for asset_id, evidence in evidence_by_asset.items():
@@ -2704,6 +2957,7 @@ def validate_plan(
         "duration_seconds": duration,
         "scenes": len(scene_ids),
         "characters": len(character_ids),
+        "appearance_states": len(appearance_state_ids),
         "products": len(product_ids),
         "props": len(prop_ids),
         "shots": len(shot_ids),
@@ -2902,6 +3156,7 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
         and tvc_plan.get("delivery_profile", {}).get("aspect_ratio") == "16:9",
         "scenes_at_least_4": len(tvc_plan.get("scene_ids", [])) >= 4,
         "recurring_characters_at_least_2": len(tvc_plan.get("character_ids", [])) >= 2,
+        "appearance_states_at_least_4": len(tvc_plan.get("appearance_state_ids", [])) >= 4,
         "formal_shots_at_least_24": len(tvc_plan.get("shot_ids", [])) >= 24,
         "rhythm_points_at_least_30": len(tvc_plan.get("rhythm_point_ids", [])) >= 30,
         "generation_units_scene_coherent": all(
@@ -2919,7 +3174,7 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
     if not all(tvc_checks.values()):
         failures.append(f"TVC acceptance fixture is too small: {tvc_checks}")
     expected_tvc_asset_counts = {
-        "character_identity_references": 2,
+        "character_identity_references": 4,
         "product_identity_boards": 1,
         "prop_continuity_boards": 2,
         "scene_references": 4,
@@ -2927,7 +3182,7 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
         "storyboard_frames": 24,
         "director_storyboard_pages": 4,
         "clean_video_inputs": 10,
-        "assets": 48,
+        "assets": 50,
     }
     for key, expected in expected_tvc_asset_counts.items():
         if tvc_metrics.get(key) != expected:
@@ -3092,12 +3347,19 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
 
     duplicate_identity = copy.deepcopy(tvc_plan)
     duplicate_character = copy.deepcopy(
-        next(asset for asset in duplicate_identity["assets"] if asset["asset_id"] == "identity-character-lin-che")
+        next(
+            asset
+            for asset in duplicate_identity["assets"]
+            if asset["asset_id"] == "identity-character-lin-che-lin-che-studio-coat"
+        )
     )
-    duplicate_character["asset_id"] = "identity-character-lin-che-duplicate"
+    duplicate_character["asset_id"] = "identity-character-lin-che-studio-coat-duplicate"
     duplicate_identity["assets"].append(duplicate_character)
     duplicate_identity_errors, _ = validate_plan(duplicate_identity, base_dir=TVC_INVENTORY_PATH.parent)
-    duplicate_identity_negative_control = "character_identity_coverage_invalid:lin-che:2" in duplicate_identity_errors
+    duplicate_identity_negative_control = (
+        "appearance_state_identity_coverage_invalid:lin-che-studio-coat:2"
+        in duplicate_identity_errors
+    )
     if not duplicate_identity_negative_control:
         failures.append("duplicate required character identity negative control was accepted")
 
@@ -3121,9 +3383,11 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
     shot_cards_staleness_negative_control = False
     evidence_root_negative_control = False
     inventory_staleness_negative_control = False
+    creative_source_staleness_negative_control = False
     multiple_direct_inputs_positive_control = False
     multiple_direct_inputs_dependency_negative_control = False
-    generated_evidence_control = False
+    self_attested_visual_completion_rejected_control = False
+    payload_reviewer_labels_cannot_grant_completion_control = False
     stdlib_png_decode_control = False
     stdlib_png_trns_negative_control = False
     user_locked_requires_review_negative_control = False
@@ -3140,6 +3404,14 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
         inventory_file = temp_root / "inventory.json"
         shot_cards_fixture = load_json(
             TVC_INVENTORY_PATH.parent / str(tvc_inventory["shot_cards_file"])
+        )
+        creative_source_fixture = load_json(
+            TVC_INVENTORY_PATH.parent / str(tvc_inventory["creative_source_file"])
+        )
+        creative_source_file = temp_root / str(tvc_inventory["creative_source_file"])
+        creative_source_file.write_text(
+            json.dumps(creative_source_fixture, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
         )
         shot_cards_file = temp_root / str(tvc_inventory["shot_cards_file"])
         shot_cards_file.write_text(
@@ -3211,6 +3483,33 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
             failures.append(f"representative sample plan could not reach its bounded claim: {sample_errors}")
         inventory_file.write_text(
             json.dumps(tvc_inventory, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        creative_bound_plan = derive_plan(
+            tvc_inventory,
+            inventory_file=inventory_file.name,
+            base_dir=temp_root,
+        )
+        stale_creative_source = copy.deepcopy(creative_source_fixture)
+        stale_creative_source["brief"]["story"] = (
+            "A different Mars mission story that must invalidate the old visual plan."
+        )
+        creative_source_file.write_text(
+            json.dumps(stale_creative_source, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        stale_creative_errors, _ = validate_plan(
+            creative_bound_plan,
+            base_dir=temp_root,
+        )
+        creative_source_staleness_negative_control = any(
+            "creative_source_sha256_mismatch" in error
+            for error in stale_creative_errors
+        )
+        if not creative_source_staleness_negative_control:
+            failures.append("a changed upstream brief/story/script left the old visual plan valid")
+        creative_source_file.write_text(
+            json.dumps(creative_source_fixture, ensure_ascii=False, indent=2) + "\n",
             encoding="utf-8",
         )
         stdlib_png_path = temp_root / "stdlib-control.png"
@@ -3389,11 +3688,56 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
             base_dir=temp_root,
             evidence_cache=raster_cache,
         )
-        generated_evidence_control = not generated_errors and generated_metrics.get(
-            "whole_film_visual_assets_complete"
-        ) is True
-        if not generated_evidence_control:
-            failures.append(f"generated whole-film visual evidence did not pass: {generated_errors}")
+        self_attested_visual_completion_rejected_control = (
+            "independent_ai_review_cannot_grant_visual_assets_complete_without_human_or_authorized_review"
+            in generated_errors
+            and TRUSTED_VISUAL_REVIEW_ADOPTION_REQUIRED in generated_errors
+            and generated_metrics.get("whole_film_visual_assets_complete") is False
+            and generated_metrics.get("evidence_files_verified") == len(generated["assets"])
+        )
+        if not self_attested_visual_completion_rejected_control:
+            failures.append(
+                "self-generated independent-AI receipts granted final visual completion: "
+                f"{generated_errors}"
+            )
+
+        payload_reviewer_labels_cannot_grant_completion_control = True
+        for reviewer_type in ("human", "authorized_reviewer"):
+            self_claimed_review = copy.deepcopy(generated)
+            self_claimed_manifest = copy.deepcopy(review_manifest)
+            self_claimed_manifest["reviewer_type"] = reviewer_type
+            self_claimed_manifest["reviewer_id"] = f"fixture-{reviewer_type}"
+            self_claimed_manifest["review_task_id"] = f"self-claimed-{reviewer_type}"
+            self_claimed_manifest_file = temp_root / f"{reviewer_type}-review-manifest.json"
+            atomic_write_json(self_claimed_manifest_file, self_claimed_manifest)
+            self_claimed_manifest_hash = sha256_file(self_claimed_manifest_file)
+            for asset in self_claimed_review["assets"]:
+                if asset.get("required") is not True:
+                    continue
+                receipt = asset["visual_qa_receipt"]
+                receipt["reviewer_type"] = reviewer_type
+                receipt["reviewer_id"] = self_claimed_manifest["reviewer_id"]
+                receipt["review_task_id"] = self_claimed_manifest["review_task_id"]
+                receipt["review_manifest_file"] = self_claimed_manifest_file.name
+                receipt["review_manifest_sha256"] = self_claimed_manifest_hash
+                receipt["receipt_sha256"] = receipt_sha256(receipt)
+            self_claimed_errors, self_claimed_metrics = validate_plan(
+                self_claimed_review,
+                base_dir=temp_root,
+                evidence_cache=raster_cache,
+            )
+            reviewer_label_blocked = (
+                TRUSTED_VISUAL_REVIEW_ADOPTION_REQUIRED in self_claimed_errors
+                and self_claimed_metrics.get("whole_film_visual_assets_complete") is False
+            )
+            payload_reviewer_labels_cannot_grant_completion_control = (
+                payload_reviewer_labels_cannot_grant_completion_control
+                and reviewer_label_blocked
+            )
+        if not payload_reviewer_labels_cannot_grant_completion_control:
+            failures.append(
+                "payload reviewer labels granted completion without trusted host adoption"
+            )
 
         vertical_plan = copy.deepcopy(generated)
         vertical_asset = next(
@@ -3537,8 +3881,13 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
             evidence_cache=raster_cache,
         )
         decoder_portability_control = (
-            not portable_errors
-            and portable_metrics.get("whole_film_visual_assets_complete") is True
+            portable_errors
+            == [
+                "independent_ai_review_cannot_grant_visual_assets_complete_without_human_or_authorized_review",
+                TRUSTED_VISUAL_REVIEW_ADOPTION_REQUIRED,
+            ]
+            and portable_metrics.get("whole_film_visual_assets_complete") is False
+            and portable_metrics.get("evidence_files_verified") == len(portable_decoder_receipt["assets"])
         )
         if not decoder_portability_control:
             failures.append("equivalent decoder provenance broke a normalized receipt")
@@ -3699,7 +4048,8 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
         "vertical_tvc_negative_control": vertical_tvc_negative_control,
         "accepted_claim_negative_control": accepted_claim_negative_control,
         "json_schema_negative_control": json_schema_negative_control,
-        "generated_evidence_control": generated_evidence_control,
+        "self_attested_visual_completion_rejected_control": self_attested_visual_completion_rejected_control,
+        "payload_reviewer_labels_cannot_grant_completion_control": payload_reviewer_labels_cannot_grant_completion_control,
         "technical_stamp_cannot_complete_negative_control": technical_stamp_cannot_complete_negative_control,
         "fake_raster_negative_control": fake_raster_negative_control,
         "reused_file_negative_control": reused_file_negative_control,
@@ -3715,6 +4065,7 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
         "receipt_timestamp_negative_control": receipt_timestamp_negative_control,
         "evidence_root_negative_control": evidence_root_negative_control,
         "inventory_staleness_negative_control": inventory_staleness_negative_control,
+        "creative_source_staleness_negative_control": creative_source_staleness_negative_control,
         "shot_cards_staleness_negative_control": shot_cards_staleness_negative_control,
         "multiple_direct_inputs_positive_control": multiple_direct_inputs_positive_control,
         "multiple_direct_inputs_dependency_negative_control": multiple_direct_inputs_dependency_negative_control,

@@ -34,3 +34,25 @@ For a review, rank only material problems, explain their audience or production
 impact, and provide a concrete replacement. Do not turn a few frames into a full
 project gate. Do not invent missing wardrobe, product, location, or source facts;
 mark the exact unknown that changes the shot.
+
+## Narrative frames and transition proof
+
+For nine-grid or frame-content work, keep these columns distinct:
+
+- `View`: visible action, object, UI node, or composition;
+- `Storyline`: the claim this frame proves and the meaning it hands to the next;
+- actual `SUPER`: supplied on-screen copy only;
+- `UI/data`: supplied interface or fact evidence only;
+- proposal brand line: creative copy, clearly labeled as a proposal.
+
+Do not replace `Storyline` with a pan, push-in, lens, or camera instruction.
+L1/L2/L3 and pending claims stay with ADCO/client evidence; never creatively
+complete an algorithm, parameter, timing, capability, or product owner.
+
+A Match Cut is `verified` only when both boundary frames exist and geometry,
+subject position, subject size, direction, speed, and the visual anchor can be
+compared. If either frame is missing—or any comparison is only an intention—mark
+it `candidate` or `unverified`. Decodable images plus caller-authored comparison
+metadata are still not visual proof: the current local validator remains
+`unverified` until a separate trusted host/human image readback is hash-bound to
+both frames. A transition label or renderer PASS is not proof.

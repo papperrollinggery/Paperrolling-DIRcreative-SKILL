@@ -29,6 +29,11 @@
       "maximum_process_narration_ratio": 0.15,
       "maximum_questions": 0,
       "maximum_tool_calls": 3,
+      "structural_contract": {
+        "shot_count": 24,
+        "duration_seconds": 60,
+        "minimum_shot_line_chars": 80
+      },
       "required_concepts": [
         ["推荐", "核心概念", "创意方向"],
         ["60 秒", "60s"],

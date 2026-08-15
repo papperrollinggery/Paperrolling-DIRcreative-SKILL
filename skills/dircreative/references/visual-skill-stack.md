@@ -1,0 +1,96 @@
+# Visual Skill Stack
+
+Read this reference only when provider choice is ambiguous, the user asks for a
+workflow/audit trail, or the host catalog is missing and a read-only refresh is
+needed. Obvious work proceeds from the selected Fast, Studio, or Delivery Route
+Card without a routing preflight.
+
+## Selection order
+
+1. Lock the requested artifact, medium, stage, model, supplied assets, and real
+   side-effect state.
+2. Use the current host Skill catalog first. If it is unavailable or refresh was
+   explicitly requested, run the read-only discovery tool on an authorized user
+   Skill root. Never execute discovered code.
+3. Keep at most 12 metadata candidates. Select one `craft_owner`, then only
+   non-overlapping collaborators and at most one validator; materialize bodies
+   lazily for those seats, not for the whole catalog. DIR, or ADCO only after
+   native handoff validation, remains final artifact and state owner.
+4. Count candidate metadata and every selected body in the existing mode byte
+   budget. The selector returns non-path `body_read_requests` with body hashes,
+   but never promotes them to “used”. The primary host independently locates the
+   injected Skill, reads its full body, verifies the hash, and applies it before
+   appending its own card. Echoing a receipt hash is not adoption. Missing,
+   oversized, unread, or unverified bodies remain suggestions.
+5. Add an execution adapter only for a real generation, edit, render, publish,
+   or external write. Selection never executes it; the existing authorization
+   gate remains decisive.
+
+## Mode caps
+
+| Mode | External bodies | Collaborators | Validator | Visible card |
+| --- | ---: | ---: | ---: | --- |
+| Fast | 1 | 0 | 0–1 | one line |
+| Studio | 3 | 0–2 | 0–1 | at most five lines |
+| Delivery | 1 | 0 | 0–1 | at most five lines |
+
+The existing 14,000 / 20,000 / 30,000-byte limits always win. When no external
+body fits, keep the internal craft reference and use DIRcreative; do not fake an
+external invocation. In Fast or Studio, an actually loaded external craft owner
+is the single task reference; do not also load the internal craft reference.
+Delivery keeps its required evidence reference.
+
+For a verified Delivery execution adapter, the host may materialize exactly one
+complete adapter `SKILL.md` in an isolated tool-contract context capped at 24
+KiB. The normal Delivery context still stays within 30 KiB; the receipt reports
+both contexts and their aggregate bytes. This exception never adds a provider
+seat, nested controller, permission, or partial read. Native `imagegen` uses the
+host-managed built-in tool when exposed: it asks for no separate API key and
+performs no payment action, but subscription, quota, and metered-cost status
+remain `UNKNOWN`. Tool availability must never be described as free or entitled.
+External or possibly charged adapters such as `fal-ai-media` remain unavailable
+without a verified tool and cost boundary.
+
+## Ownership separations
+
+- Structure owns Hook and macro beats; story owns scenes/dialogue; shot
+  progression owns cut information; storyboard owns delivery rows; master-shot
+  planning owns geography.
+- Performance owns observable acting. Model Skills compile an approved acting
+  contract and do not perform a second creative pass.
+- General VFX owns effect causality; construction owns effect atoms; mechanical
+  transformation owns explainable mechanisms and loads; action owns contact
+  physics.
+- Aesthetic direction owns the visual system; material realism owns physical
+  response; visual bible/calibration own pre-generation locks; consistency audit
+  owns post-generation drift evidence.
+- Prompt preflight is before generation, output review is after real evidence,
+  and iteration doctor prescribes the next bounded retry.
+- ADCO owns PPT/export/adoption. `codex-ppt` is recommendation-only inside DIR;
+  it cannot become an ADCO-worker adapter or introduce nested slide dispatch.
+
+`liu-creative-workflow` and `sophia-research-mode` are explicit overlays only.
+Inside DIR, Liu adds preference/packaging and Sophia adds evidence/risk; neither
+owns final state. Any Liu instruction to invoke `ai-visual-production-director`
+is treated as a capability-map reference. That director is never a nested
+controller or provider seat inside DIR.
+
+## Media guards
+
+- Still outputs do not gain event timing, camera travel, editing, or sound.
+- Prompt-only outputs are not generated assets.
+- A locked performance handoff lets the platform compiler budget and compress;
+  it does not reopen performance direction.
+- Missing legacy handoffs fall back to a present platform compiler, task-local
+  evidence/attempt state, or a currently callable media inspection surface.
+
+## User-visible card
+
+Show it after the artifact. Fast uses one line. Studio may show owner,
+collaborator, validator, and explicit optional overlays in no more than five
+lines. Say “已用” only after independent full-body read, hash verification, and
+actual application. Without that host readback, show `已选` with
+`HOST_ADOPTION=UNVERIFIED`; an unloaded candidate is only `建议`. When nothing
+adds value, write:
+
+`本次无需额外 Skill，DIRcreative 足够。`

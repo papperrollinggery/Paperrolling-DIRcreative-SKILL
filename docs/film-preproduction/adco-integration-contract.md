@@ -6,6 +6,30 @@ Status: provider integration guide. Normative versions and message shapes are
 owned by `adco-specialist-descriptor.json` and the versioned handoff/receipt
 schemas listed below.
 
+## Real controller entry points
+
+`adco.specialist-exchange` is the protocol id. It is not an executable command.
+The ADCO controller owns the two real CLI operations:
+
+```bash
+adco specialist-handoff <project> \
+  --work-id <work-id> \
+  --objective <bounded-objective> \
+  --input-artifact <artifact-binding> \
+  --expected-output <output-binding> \
+  --execution-mode inline
+
+adco specialist-adopt <project> \
+  --handoff <registered-handoff.json> \
+  --receipt <provider-receipt.json> \
+  --decision adopt|partial_adopt|reject|defer \
+  --reason <decision-reason>
+```
+
+DIRcreative neither substitutes a protocol id for these commands nor adopts its
+own output. It validates the registered handoff, writes only the bounded provider
+artifact/receipt, and returns control to ADCO for `specialist-adopt`.
+
 ## Active Compact Transport (v2)
 
 New provider writes use `adco.specialist-exchange@2.0`. The handoff contains only the assigned task, a compact brief snapshot, locked decisions, requested domain outputs, quality targets, and inline execution mode:
@@ -65,6 +89,11 @@ DIRcreative returns only domain artifacts and domain QA:
 ```
 
 Each output entry contains only `output_id`, requested `type`, project-relative `path`, and the SHA-256 of the real non-empty output file. The status matrix is exact: `completed` returns every requested output with `domain_qa.status: pass` and no questions; `needs_user` returns no outputs, at least one uniquely identified question, and `needs_user` QA; `blocked` and `failed` return neither outputs nor questions, carry a non-empty limitation, and use `blocked` or `fail` QA respectively. They do not invent a fifth `needs_revision` transport status. The provider-facing v2 message stays compact, while activation independently binds its file and descriptor to ADCO's host-owned exchange index and descriptor snapshot. ADCO owns adoption, version mapping, client visibility, readiness, and completion after it validates the returned files.
+
+A v2 receipt rejects all six reserved controller fields even when set to
+`false`: `client_ready`, `ppt_ready`, `final_delivery_ready`, `send_ready`,
+`project_complete`, and `control_plane_updated`. The explicit false-valued
+`claims` object documented later is v1 compatibility only.
 
 Published schemas:
 

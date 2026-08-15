@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0",
+  "project_id": "coverage-validator-unit-30s",
+  "brief": {
+    "brand": "Fixture Cold Brew",
+    "format": "30-second 16:9 broadcast sequence",
+    "story": "A restrained office product action is shown without an unsupported performance claim."
+  },
+  "story_beats": [
+    {"id": "B01", "summary": "Office pressure and geography are established before the product appears."},
+    {"id": "B02", "summary": "The bottle and ice-cup action creates a concrete sensory transition."},
+    {"id": "B03", "summary": "The character resumes one task and the film resolves on a safe product frame."}
+  ],
+  "script_lines": [
+    {"id": "L01", "speaker": "brand-mnemonic", "text": "A short approved mnemonic closes the sequence."}
+  ]
+}

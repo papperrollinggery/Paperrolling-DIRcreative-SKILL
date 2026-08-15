@@ -80,6 +80,84 @@ RESERVED_CLAIMS = {
     "project_complete",
     "control_plane_updated",
 }
+RESERVED_CLAIM_PATTERNS = {
+    "client_ready": (
+        re.compile(
+            r"(?<![a-z0-9])(?:the[\s_.-]+)?client(?:[\s_.-]+is)?"
+            r"[\s_.-]+ready(?![a-z0-9])",
+            re.IGNORECASE,
+        ),
+        re.compile(r"客户.{0,8}(?:已确认|可外发|已就绪)"),
+        re.compile(r"客户(?:已|已经)?确认(?:可以|可)外发"),
+        re.compile(r"客户(?:已|已经)?同意外发"),
+    ),
+    "ppt_ready": (
+        re.compile(
+            r"(?<![a-z0-9])ppt(?:[\s_.-]+is)?[\s_.-]+ready(?![a-z0-9])",
+            re.IGNORECASE,
+        ),
+        re.compile(r"PPT\s*(?:已就绪|已准备|可交付)", re.IGNORECASE),
+    ),
+    "final_delivery_ready": (
+        re.compile(
+            r"(?<![a-z0-9])final[\s_.-]+delivery(?:[\s_.-]+is)?"
+            r"[\s_.-]+ready(?![a-z0-9])",
+            re.IGNORECASE,
+        ),
+        re.compile(r"最终交付\s*(?:已准备|已就绪|可外发)"),
+    ),
+    "send_ready": (
+        re.compile(r"(?<![a-z0-9])send[\s_.-]*ready(?![a-z0-9])", re.IGNORECASE),
+        re.compile(
+            r"(?<![a-z0-9])ready[\s_.-]+to[\s_.-]+send(?![a-z0-9])",
+            re.IGNORECASE,
+        ),
+        re.compile(r"(?:已确认)?可外发"),
+        re.compile(r"客户(?:已|已经)?确认(?:可以|可)外发"),
+        re.compile(r"客户(?:已|已经)?同意外发"),
+    ),
+    "project_complete": (
+        re.compile(r"(?<![a-z0-9])project[\s_.-]*(?:is[\s_.-]*)?complete(?:d)?(?![a-z0-9])", re.IGNORECASE),
+        re.compile(r"项目\s*(?:已经|已)完成"),
+    ),
+    "control_plane_updated": (
+        re.compile(r"(?<![a-z0-9])control[\s_.-]*plane[\s_.-]*(?:is[\s_.-]*)?updated(?![a-z0-9])", re.IGNORECASE),
+        re.compile(r"控制面\s*(?:已经|已)更新"),
+    ),
+}
+RESERVED_NEGATIVE_LIMITATION_PATTERNS = {
+    "client_ready": (
+        re.compile(r"not(?:\s+yet)?\s+client[\s_.-]*ready", re.IGNORECASE),
+        re.compile(r"client[\s_.-]*ready\s*(?:is|status|[:=])\s*(?:false|no|pending|unverified|unknown|blocked|denied|revoked|expired)", re.IGNORECASE),
+        re.compile(r"客户(?:尚未|未)确认可外发"),
+    ),
+    "ppt_ready": (
+        re.compile(r"not(?:\s+yet)?\s+ppt[\s_.-]*ready", re.IGNORECASE),
+        re.compile(r"ppt[\s_.-]*ready\s*(?:is|status|[:=])\s*(?:false|no|pending|unverified|unknown|blocked|denied|revoked|expired)", re.IGNORECASE),
+        re.compile(r"PPT\s*(?:尚未|未)就绪", re.IGNORECASE),
+    ),
+    "final_delivery_ready": (
+        re.compile(r"not(?:\s+yet)?\s+final[\s_.-]*delivery[\s_.-]*ready", re.IGNORECASE),
+        re.compile(r"final[\s_.-]*delivery[\s_.-]*ready\s*(?:is|status|[:=])\s*(?:false|no|pending|unverified|unknown|blocked|denied|revoked|expired)", re.IGNORECASE),
+        re.compile(r"最终交付(?:尚未|未)准备"),
+    ),
+    "send_ready": (
+        re.compile(r"not(?:\s+yet)?\s+send[\s_.-]*ready", re.IGNORECASE),
+        re.compile(r"send[\s_.-]*ready\s*(?:is|status|[:=])\s*(?:false|no|pending|unverified|unknown|blocked|denied|revoked|expired)", re.IGNORECASE),
+        re.compile(r"客户(?:尚未|未)确认可外发"),
+        re.compile(r"(?:尚未|未)确认可外发"),
+    ),
+    "project_complete": (
+        re.compile(r"not(?:\s+yet)?\s+project[\s_.-]*complete", re.IGNORECASE),
+        re.compile(r"project[\s_.-]*complete\s*(?:is|status|[:=])\s*(?:false|no|pending|unverified|unknown|blocked|denied|revoked|expired)", re.IGNORECASE),
+        re.compile(r"项目(?:尚未|未)完成"),
+    ),
+    "control_plane_updated": (
+        re.compile(r"not(?:\s+yet)?\s+control[\s_.-]*plane[\s_.-]*updated", re.IGNORECASE),
+        re.compile(r"control[\s_.-]*plane[\s_.-]*updated\s*(?:is|status|[:=])\s*(?:false|no|pending|unverified|unknown|blocked|denied|revoked|expired)", re.IGNORECASE),
+        re.compile(r"控制面(?:尚未|未)更新"),
+    ),
+}
 DOMAIN_EXTENSION = {"id": "dircreative.domain-delivery", "version": "1.0"}
 VERDICTS = {
     "domain_accepted",
@@ -108,7 +186,9 @@ V2_RECEIPT_FIELDS = {
     "open_questions",
 }
 V2_OUTPUT_FIELDS = {"output_id", "type", "path", "sha256"}
+V1_QA_FIELDS = {"status", "checks", "limitations"}
 V2_QA_FIELDS = {"status", "checks", "limitations"}
+V2_ALLOWED_QA_CHECKS = {"brief_adherence", "continuity", "production_clarity"}
 V2_FORBIDDEN_CONTROL_FIELDS = {
     "current_truth",
     "goal",
@@ -123,6 +203,7 @@ V2_FORBIDDEN_CONTROL_FIELDS = {
     "final_delivery_ready",
     "send_ready",
     "project_complete",
+    "control_plane_updated",
     "adoption",
     "visibility",
     "completion",
@@ -494,6 +575,66 @@ def nonempty(value: Any) -> bool:
 
 def valid_string_list(value: Any, *, allow_empty: bool = True) -> bool:
     return isinstance(value, list) and (allow_empty or bool(value)) and all(nonempty(item) for item in value)
+
+
+def positive_reserved_claims(text: str) -> set[str]:
+    """Reject reserved phrases unless the complete limitation is a canonical negative."""
+    candidate = text.strip()
+    claims: set[str] = set()
+    for claim, patterns in RESERVED_CLAIM_PATTERNS.items():
+        if not any(pattern.search(candidate) for pattern in patterns):
+            continue
+        allowed = RESERVED_NEGATIVE_LIMITATION_PATTERNS.get(claim, ())
+        if not any(pattern.fullmatch(candidate) for pattern in allowed):
+            claims.add(claim)
+    return claims
+
+
+def reserved_claim_mentions(text: str) -> set[str]:
+    return {
+        claim
+        for claim, patterns in RESERVED_CLAIM_PATTERNS.items()
+        if any(pattern.search(text) for pattern in patterns)
+    }
+
+
+def is_explicit_question(text: str) -> bool:
+    """Allow only a complete, canonical question about an ADCO-owned state.
+
+    A trailing question mark cannot turn a preceding readiness assertion into an
+    open question. Keep this grammar intentionally small and fail closed.
+    """
+    candidate = text.strip()
+    if not candidate.endswith(("?", "？")):
+        return False
+    core = candidate[:-1].strip()
+    normalized = " ".join(
+        re.sub(r"[\s_.-]+", " ", core.casefold()).split()
+    ).strip(" ,;:。；，：")
+    reserved_cores = {
+        "client ready",
+        "ppt ready",
+        "final delivery ready",
+        "send ready",
+        "project complete",
+        "control plane updated",
+    }
+    if normalized in reserved_cores:
+        return True
+    if re.fullmatch(
+        r"(?:is|are|has|have|can|could|should|would|whether)\s+"
+        r"(?:the\s+)?(?:client ready|ppt ready|final delivery ready|"
+        r"send ready|project complete|control plane updated)",
+        normalized,
+    ):
+        return True
+    compact = re.sub(r"\s+", "", core)
+    return re.fullmatch(
+        r"(?:请问)?(?:客户是否已确认可外发|PPT是否已就绪|最终交付是否已准备|"
+        r"是否可外发|项目是否已经完成|控制面是否已更新)",
+        compact,
+        re.IGNORECASE,
+    ) is not None
 
 
 def normalized_path(value: str) -> str:
@@ -1357,13 +1498,26 @@ def validate_v1_receipt(
         failures.append(failure("missing_domain_delivery", "DIR domain_delivery extension is required"))
         domain = {}
     verdict = domain.get("domain_verdict")
+    qa = receipt.get("qa")
+    if (
+        not isinstance(qa, dict)
+        or set(qa) != V1_QA_FIELDS
+        or not valid_string_list(qa.get("checks"), allow_empty=False)
+        or not valid_string_list(qa.get("limitations"))
+    ):
+        failures.append(
+            failure(
+                "invalid_domain_qa",
+                "qa must use the compact v1 shape with non-empty string checks and string limitations",
+            )
+        )
+        qa = {}
     if verdict not in VERDICTS:
         failures.append(failure("invalid_domain_verdict", str(verdict)))
     else:
         expected_outcome, expected_qa, expected_recommendation = verdict_contract(verdict)
         if outcome != expected_outcome:
             failures.append(failure("domain_state_conflict", "outcome does not match domain verdict"))
-        qa = receipt.get("qa")
         if not isinstance(qa, dict) or qa.get("status") != expected_qa:
             failures.append(failure("domain_state_conflict", "qa status does not match domain verdict"))
         if receipt.get("specialist_recommendation") != expected_recommendation:
@@ -1376,6 +1530,24 @@ def validate_v1_receipt(
             failures.append(failure("domain_state_conflict", "accepted result must be discussion/handoff ready"))
     if verdict == "draft_accepted_with_limitations" and not receipt.get("qa", {}).get("limitations"):
         failures.append(failure("missing_limitations", "limited draft must list limitations"))
+    if isinstance(qa, dict):
+        qa_reserved = sorted(
+            {
+                claim
+                for field in ("checks", "limitations")
+                for text in qa.get(field, [])
+                if isinstance(text, str)
+                for claim in positive_reserved_claims(text)
+            }
+        )
+        if qa_reserved:
+            failures.append(
+                failure(
+                    "reserved_readiness_claim",
+                    "v1 qa text contains positive ADCO-owned claims: "
+                    + ",".join(qa_reserved),
+                )
+            )
     required_extensions = handoff.get("acceptance", {}).get("required_receipt_extensions", [])
     extensions = receipt.get("extensions")
     if not isinstance(extensions, list):
@@ -1410,6 +1582,24 @@ def validate_v1_receipt(
             for item in questions
         ):
             failures.append(failure("invalid_open_questions", "needs_user requires non-empty unique structured questions"))
+    question_reserved = sorted(
+        {
+            claim
+            for item in questions
+            if isinstance(item, dict)
+            for question in [item.get("question")]
+            if isinstance(question, str) and not is_explicit_question(question)
+            for claim in reserved_claim_mentions(question)
+        }
+    )
+    if question_reserved:
+        failures.append(
+            failure(
+                "reserved_readiness_claim",
+                "v1 open_questions contains declarative ADCO-owned claims: "
+                + ",".join(question_reserved),
+            )
+        )
     return failures
 
 
@@ -2037,6 +2227,54 @@ def validate_v2_receipt(
                 "domain_qa checks must be non-empty strings and limitations must be strings",
             )
         )
+    else:
+        unknown_checks = sorted(set(domain_qa["checks"]) - V2_ALLOWED_QA_CHECKS)
+        if unknown_checks:
+            failures.append(
+                failure(
+                    "invalid_domain_qa",
+                    "domain_qa.checks contains unregistered DIR check ids: "
+                    + ",".join(unknown_checks),
+                )
+            )
+        normalized_checks = [
+            " ".join(re.sub(r"[^a-z0-9]+", " ", check.casefold()).split())
+            for check in domain_qa["checks"]
+        ]
+        nested_reserved = sorted(
+            claim
+            for claim in RESERVED_CLAIMS
+            if any(
+                re.search(
+                    rf"(?<![a-z0-9]){re.escape(claim.replace('_', ' '))}(?![a-z0-9])",
+                    check,
+                )
+                for check in normalized_checks
+            )
+        )
+        if nested_reserved:
+            failures.append(
+                failure(
+                    "reserved_readiness_claim",
+                    "domain_qa.checks contains ADCO-owned fields: "
+                    + ",".join(nested_reserved),
+                )
+            )
+        limitation_reserved = sorted(
+            {
+                claim
+                for limitation in domain_qa["limitations"]
+                for claim in positive_reserved_claims(limitation)
+            }
+        )
+        if limitation_reserved:
+            failures.append(
+                failure(
+                    "reserved_readiness_claim",
+                    "domain_qa.limitations contains positive ADCO-owned claims: "
+                    + ",".join(limitation_reserved),
+                )
+            )
     questions = receipt.get("open_questions")
     if not isinstance(questions, list):
         failures.append(failure("invalid_open_questions", "open_questions must be a list"))
@@ -2048,6 +2286,24 @@ def validate_v2_receipt(
     ]
     if len(question_ids) != len(questions) or len(question_ids) != len(set(question_ids)):
         failures.append(failure("invalid_open_questions", "open question ids must be present and unique"))
+    question_reserved = sorted(
+        {
+            claim
+            for item in questions
+            if isinstance(item, dict)
+            for question in [item.get("question")]
+            if isinstance(question, str) and not is_explicit_question(question)
+            for claim in reserved_claim_mentions(question)
+        }
+    )
+    if question_reserved:
+        failures.append(
+            failure(
+                "reserved_readiness_claim",
+                "open_questions contains declarative ADCO-owned claims: "
+                + ",".join(question_reserved),
+            )
+        )
     if status == "needs_user" and not questions:
         failures.append(failure("invalid_open_questions", "needs_user requires at least one question"))
     if status in {"completed", "blocked", "failed"} and questions:
@@ -2448,6 +2704,90 @@ def run_v1_self_test() -> tuple[bool, dict[str, Any]]:
         negative["empty_needs_user_questions_rejected"] = "invalid_open_questions" in failure_ids(
             validate_receipt(project, handoff, handoff_path, needs_user)
         )
+        v1_claim_statements = (
+            "client ready is true",
+            "the client is ready",
+            "client_ready=true",
+            "client-ready is true",
+            "client.ready confirmed",
+            "PPT ready for review",
+            "PPT is ready",
+            "ppt-ready",
+            "Final Delivery ready for export",
+            "final delivery is ready",
+            "final_delivery_ready=true",
+            "send ready after QA",
+            "ready to send",
+            "ready-to-send",
+            "ready_to_send",
+            "ready.to.send",
+            "send_ready=true",
+            "project complete and closed",
+            "project_complete=true",
+            "control plane updated successfully",
+            "control_plane_updated=true",
+            "客户已确认可外发",
+            "客户确认可以外发",
+            "客户已经同意外发",
+            "PPT 已就绪",
+            "最终交付已准备",
+            "项目已经完成",
+            "控制面已更新",
+        )
+        v1_free_text_results: dict[str, bool] = {}
+        for field in ("checks", "limitations"):
+            for statement in v1_claim_statements:
+                mutated = copy.deepcopy(receipt)
+                mutated["qa"][field] = [statement]
+                v1_free_text_results[f"{field}:{statement}"] = (
+                    "reserved_readiness_claim"
+                    in failure_ids(validate_receipt(project, handoff, handoff_path, mutated))
+                )
+        for statement in v1_claim_statements:
+            mutated = copy.deepcopy(needs_user)
+            mutated["open_questions"] = [{"id": "Q-1", "question": statement}]
+            v1_free_text_results[f"question:{statement}"] = (
+                "reserved_readiness_claim"
+                in failure_ids(validate_receipt(project, handoff, handoff_path, mutated))
+            )
+        negative["free_text_readiness_claims_rejected"] = all(
+            v1_free_text_results.values()
+        )
+        v1_non_list_qa_results: dict[str, bool] = {}
+        for field in ("checks", "limitations"):
+            mutated = copy.deepcopy(receipt)
+            mutated["qa"][field] = "client_ready=true"
+            v1_non_list_qa_results[field] = "invalid_domain_qa" in failure_ids(
+                validate_receipt(project, handoff, handoff_path, mutated)
+            )
+        negative["non_list_qa_fields_rejected"] = all(
+            v1_non_list_qa_results.values()
+        )
+        v1_compound_question_results: dict[str, bool] = {}
+        for statement in (
+            "client ready is true. Any concerns?",
+            "客户已确认可外发，对吗？",
+            "project complete and closed; anything else?",
+        ):
+            mutated = copy.deepcopy(needs_user)
+            mutated["open_questions"] = [{"id": "Q-1", "question": statement}]
+            v1_compound_question_results[statement] = (
+                "reserved_readiness_claim"
+                in failure_ids(validate_receipt(project, handoff, handoff_path, mutated))
+            )
+        negative["compound_readiness_assertions_in_questions_rejected"] = all(
+            v1_compound_question_results.values()
+        )
+        v1_actual_question = copy.deepcopy(needs_user)
+        v1_actual_question["open_questions"] = [
+            {"id": "Q-1", "question": "Is the client ready?"}
+        ]
+        negative["actual_readiness_questions_allowed"] = (
+            "reserved_readiness_claim"
+            not in failure_ids(
+                validate_receipt(project, handoff, handoff_path, v1_actual_question)
+            )
+        )
         alias_handoff = copy.deepcopy(handoff)
         alias_handoff["task"]["expected_output_kinds"] = ["film.story_package", "film.treatment"]
         alias_receipt = copy.deepcopy(receipt)
@@ -2648,12 +2988,148 @@ def run_v2_self_test() -> tuple[bool, dict[str, Any]]:
         negative["unregistered_handoff_rejected"] = "missing_handoff_registration" in failure_ids(
             validate_handoff(project, handoff, descriptor, handoff_path=unregistered_path)
         )
-        mutated_receipt = copy.deepcopy(receipt)
-        mutated_receipt["client_ready"] = False
-        negative["reserved_readiness_claim_rejected"] = "reserved_readiness_claim" in failure_ids(
-            validate_receipt(
-                project, handoff, handoff_path, mutated_receipt, receipt_path=receipt_path
+        readiness_claim_results: dict[str, bool] = {}
+        for claim in sorted(RESERVED_CLAIMS):
+            mutated_receipt = copy.deepcopy(receipt)
+            mutated_receipt[claim] = False
+            readiness_claim_results[claim] = "reserved_readiness_claim" in failure_ids(
+                validate_receipt(
+                    project, handoff, handoff_path, mutated_receipt, receipt_path=receipt_path
+                )
             )
+        negative["reserved_readiness_claim_rejected"] = all(readiness_claim_results.values())
+        negative["all_reserved_readiness_claims_rejected"] = all(readiness_claim_results.values())
+        nested_readiness_claim_results: dict[str, bool] = {}
+        for claim in sorted(RESERVED_CLAIMS):
+            mutated_receipt = copy.deepcopy(receipt)
+            mutated_receipt["domain_qa"]["checks"].append(f"{claim}=false")
+            nested_readiness_claim_results[claim] = "reserved_readiness_claim" in failure_ids(
+                validate_receipt(
+                    project, handoff, handoff_path, mutated_receipt, receipt_path=receipt_path
+                )
+            )
+        negative["nested_reserved_readiness_claims_rejected"] = all(
+            nested_readiness_claim_results.values()
+        )
+        natural_claim_checks = {
+            "client_ready": "client ready is true",
+            "ppt_ready": "PPT ready for review",
+            "final_delivery_ready": "Final Delivery ready for export",
+            "send_ready": "send ready after QA",
+            "project_complete": "project complete and closed",
+            "control_plane_updated": "control plane updated successfully",
+        }
+        natural_claim_results: dict[str, bool] = {}
+        for claim, check in natural_claim_checks.items():
+            mutated_receipt = copy.deepcopy(receipt)
+            mutated_receipt["domain_qa"]["checks"].append(check)
+            natural_claim_results[claim] = "reserved_readiness_claim" in failure_ids(
+                validate_receipt(
+                    project, handoff, handoff_path, mutated_receipt, receipt_path=receipt_path
+                )
+            )
+        negative["natural_language_readiness_claims_rejected"] = all(
+            natural_claim_results.values()
+        )
+        limitation_claims = {
+            "client_ready": "client ready is true",
+            "ppt_ready": "PPT ready for review",
+            "final_delivery_ready": "Final Delivery ready for export",
+            "send_ready": "send ready after QA",
+            "project_complete": "project complete and closed",
+            "control_plane_updated": "control plane updated successfully",
+            "client_ready_zh": "客户已确认可外发",
+            "ppt_ready_zh": "PPT 已就绪",
+            "final_delivery_ready_zh": "最终交付已准备",
+            "project_complete_zh": "项目已经完成",
+            "control_plane_updated_zh": "控制面已更新",
+            "client_ready_now_confirmed": "client ready is now confirmed",
+            "client_ready_normal": "client ready is normal and approved",
+            "client_is_ready": "the client is ready",
+            "ppt_is_ready": "PPT is ready",
+            "final_delivery_is_ready": "final delivery is ready",
+            "ready_to_send": "ready to send",
+            "ready_to_send_dash": "ready-to-send",
+            "ready_to_send_underscore": "ready_to_send",
+            "ready_to_send_dot": "ready.to.send",
+            "client_confirmed_send_zh": "客户确认可以外发",
+            "client_agreed_send_zh": "客户已经同意外发",
+            "send_ready_nobody_objects": "send ready: nobody objects",
+            "project_complete_noteworthy": "project complete is noteworthy",
+            "final_delivery_now_approved": "final delivery ready: now approved",
+            "ppt_ready_no_blockers": "PPT ready: no blockers remain",
+            "client_ready_equals": "client_ready=true",
+            "client_ready_dash": "client-ready is true",
+            "client_ready_dot": "client.ready confirmed",
+            "ppt_ready_dash": "ppt-ready",
+            "final_delivery_ready_equals": "final_delivery_ready=true",
+            "send_ready_equals": "send_ready=true",
+            "project_complete_equals": "project_complete=true",
+            "control_plane_updated_equals": "control_plane_updated=true",
+        }
+        limitation_claim_results: dict[str, bool] = {}
+        for claim, limitation in limitation_claims.items():
+            mutated_receipt = copy.deepcopy(receipt)
+            mutated_receipt["domain_qa"]["limitations"] = [limitation]
+            limitation_claim_results[claim] = "reserved_readiness_claim" in failure_ids(
+                validate_receipt(
+                    project, handoff, handoff_path, mutated_receipt, receipt_path=receipt_path
+                )
+            )
+        negative["positive_readiness_claims_in_limitations_rejected"] = all(
+            limitation_claim_results.values()
+        )
+        negative_limitations = (
+            "not client ready",
+            "not yet client ready",
+            "PPT ready=false",
+            "final delivery ready is pending",
+            "send ready status denied",
+            "project complete: no",
+            "control plane updated status unverified",
+            "客户尚未确认可外发",
+            "PPT 未就绪",
+            "最终交付未准备",
+            "项目尚未完成",
+            "控制面未更新",
+        )
+        negative_limitation_results: dict[str, bool] = {}
+        for limitation in negative_limitations:
+            mutated_receipt = copy.deepcopy(receipt)
+            mutated_receipt["domain_qa"]["limitations"] = [limitation]
+            negative_limitation_results[limitation] = (
+                "reserved_readiness_claim"
+                not in failure_ids(
+                    validate_receipt(
+                        project,
+                        handoff,
+                        handoff_path,
+                        mutated_receipt,
+                        receipt_path=receipt_path,
+                    )
+                )
+            )
+        negative["negative_readiness_limitations_allowed"] = all(
+            negative_limitation_results.values()
+        )
+        chinese_claim_checks = (
+            "客户已确认可外发",
+            "PPT 已就绪",
+            "最终交付已准备",
+            "项目已经完成",
+            "控制面已更新",
+        )
+        chinese_claim_results: dict[str, bool] = {}
+        for check in chinese_claim_checks:
+            mutated_receipt = copy.deepcopy(receipt)
+            mutated_receipt["domain_qa"]["checks"].append(check)
+            chinese_claim_results[check] = "invalid_domain_qa" in failure_ids(
+                validate_receipt(
+                    project, handoff, handoff_path, mutated_receipt, receipt_path=receipt_path
+                )
+            )
+        negative["unknown_and_chinese_domain_checks_rejected"] = all(
+            chinese_claim_results.values()
         )
         mutated_receipt = copy.deepcopy(receipt)
         mutated_receipt["domain_qa"]["client_ready"] = False
@@ -2709,6 +3185,79 @@ def run_v2_self_test() -> tuple[bool, dict[str, Any]]:
             needs_user_handoff_path,
             needs_user,
             receipt_path=needs_user_path,
+        )
+        question_claims = {
+            "client_ready": "client ready is true",
+            "client_is_ready": "the client is ready",
+            "ppt_ready": "PPT ready for review",
+            "ppt_is_ready": "PPT is ready",
+            "final_delivery_ready": "Final Delivery ready for export",
+            "final_delivery_is_ready": "final delivery is ready",
+            "send_ready": "send ready after QA",
+            "ready_to_send": "ready to send",
+            "ready_to_send_dash": "ready-to-send",
+            "ready_to_send_underscore": "ready_to_send",
+            "ready_to_send_dot": "ready.to.send",
+            "project_complete": "project complete and closed",
+            "control_plane_updated": "control plane updated successfully",
+            "client_ready_zh": "客户已确认可外发",
+            "client_ready_confirmed_zh": "客户确认可以外发",
+            "client_ready_agreed_zh": "客户已经同意外发",
+            "ppt_ready_zh": "PPT 已就绪",
+            "final_delivery_ready_zh": "最终交付已准备",
+            "project_complete_zh": "项目已经完成",
+            "control_plane_updated_zh": "控制面已更新",
+            "client_ready_compound_question": "client ready is true. Any concerns?",
+            "client_ready_zh_compound_question": "客户已确认可外发，对吗？",
+            "project_complete_compound_question": "project complete and closed; anything else?",
+        }
+        question_claim_results: dict[str, bool] = {}
+        for claim, statement in question_claims.items():
+            mutated_receipt = copy.deepcopy(needs_user)
+            mutated_receipt["open_questions"] = [
+                {"id": "Q-1", "question": statement}
+            ]
+            question_claim_results[claim] = "reserved_readiness_claim" in failure_ids(
+                validate_receipt(
+                    project,
+                    needs_user_handoff,
+                    needs_user_handoff_path,
+                    mutated_receipt,
+                    receipt_path=needs_user_path,
+                )
+            )
+        negative["declarative_readiness_claims_in_questions_rejected"] = all(
+            question_claim_results.values()
+        )
+        actual_questions = (
+            "Is the client ready?",
+            "PPT ready?",
+            "Final Delivery ready?",
+            "Send ready?",
+            "Project complete?",
+            "Control plane updated?",
+            "客户是否已确认可外发？",
+        )
+        actual_question_results: dict[str, bool] = {}
+        for question in actual_questions:
+            mutated_receipt = copy.deepcopy(needs_user)
+            mutated_receipt["open_questions"] = [
+                {"id": "Q-1", "question": question}
+            ]
+            actual_question_results[question] = (
+                "reserved_readiness_claim"
+                not in failure_ids(
+                    validate_receipt(
+                        project,
+                        needs_user_handoff,
+                        needs_user_handoff_path,
+                        mutated_receipt,
+                        receipt_path=needs_user_path,
+                    )
+                )
+            )
+        negative["actual_readiness_questions_allowed"] = all(
+            actual_question_results.values()
         )
         failed_handoff = copy.deepcopy(handoff)
         failed_handoff["requested_outputs"][0]["path_root"] = "failed/outputs"
@@ -2870,6 +3419,14 @@ def run_v2_self_test() -> tuple[bool, dict[str, Any]]:
             "output_hashes_only": output_hashes_only,
             "adco_control_fields_absent": control_fields_absent,
             "adoption_owned_by_adco": "v2_adoption_owned_by_adco" in failure_ids(adoption_failures),
+            "reserved_readiness_claim_results": readiness_claim_results,
+            "nested_reserved_readiness_claim_results": nested_readiness_claim_results,
+            "natural_language_readiness_claim_results": natural_claim_results,
+            "limitation_readiness_claim_results": limitation_claim_results,
+            "negative_limitation_results": negative_limitation_results,
+            "question_readiness_claim_results": question_claim_results,
+            "actual_readiness_question_results": actual_question_results,
+            "chinese_readiness_claim_results": chinese_claim_results,
             **negative,
             "handoff_failures": handoff_failures,
             "receipt_failures": receipt_failures,
@@ -3216,22 +3773,58 @@ def run_adco_bilateral(adco_repo: Path) -> tuple[bool, dict[str, Any]]:
     descriptor = load_json(DESCRIPTOR_PATH)
     report: dict[str, Any] = {}
     positive_contract_version = ""
+    adco_cli = adco_repo / "tools/ad_creative_operator.py"
+    if not adco_cli.is_file():
+        raise ValueError(f"ADCO CLI not found: {adco_cli}")
+
+    def cli_field(output: str, key: str) -> str:
+        prefix = key + "="
+        values = [line[len(prefix) :] for line in output.splitlines() if line.startswith(prefix)]
+        if len(values) != 1 or not values[0]:
+            raise ValueError(f"ADCO CLI output missing one {key}")
+        return values[0]
+
     with tempfile.TemporaryDirectory(prefix="dircreative-adco-native-bilateral-") as raw:
-        project = Path(raw)
+        project = Path(raw).resolve()
         ensure_adco_exchange_project(adco, project)
         input_id = add_adco_work_and_input(adco, project)
-        handoff, handoff_path = adco.create_specialist_handoff(
-            project,
-            work_id="WORK-SPX-DIR-001",
-            profile_id=PROFILE_ID,
-            objective="Create a bounded internal 60-second vertical film story package.",
-            input_artifact_ids=[input_id],
-            expected_output_kinds=["film.story_package"],
-            required_capabilities=["film.story_package"],
-            descriptor_path=DESCRIPTOR_PATH,
-            execution_mode="inline",
-            workspace_mode="isolated_workspace",
+        handoff_cli = subprocess.run(
+            [
+                sys.executable,
+                str(adco_cli),
+                "specialist-handoff",
+                str(project),
+                "--work-id",
+                "WORK-SPX-DIR-001",
+                "--profile-id",
+                PROFILE_ID,
+                "--objective",
+                "Create a bounded internal 60-second vertical film story package.",
+                "--input-artifact",
+                input_id,
+                "--expected-output",
+                "film.story_package",
+                "--require-capability",
+                "film.story_package",
+                "--descriptor",
+                str(DESCRIPTOR_PATH),
+                "--execution-mode",
+                "inline",
+                "--workspace-mode",
+                "isolated_workspace",
+            ],
+            cwd=adco_repo,
+            text=True,
+            capture_output=True,
+            check=False,
         )
+        if handoff_cli.returncode != 0 or "SPECIALIST_HANDOFF=PASS" not in handoff_cli.stdout:
+            raise ValueError(
+                "adco specialist-handoff CLI failed: "
+                + (handoff_cli.stdout + handoff_cli.stderr).strip()
+            )
+        handoff_path = Path(cli_field(handoff_cli.stdout, "HANDOFF")).resolve()
+        handoff = load_json(handoff_path)
         positive_contract_version = str(handoff.get("contract_version", ""))
         handoff_failures = validate_handoff(
             project,
@@ -3253,16 +3846,35 @@ def run_adco_bilateral(adco_repo: Path) -> tuple[bool, dict[str, Any]]:
             project, handoff, handoff_path, receipt, receipt_path=receipt_path
         )
         output = receipt_output_entries(receipt)[0]
-        adoption, adoption_path = adco.adopt_specialist_receipt(
-            project,
-            handoff_path=handoff_path,
-            receipt_path=receipt_path,
-            decision="partial_adopt",
-            reason="Accept the internal film draft with explicit client locks.",
-            output_mappings={
-                receipt_output_id(output): "AD-creative/film/story_package_v001.md"
-            },
+        adopt_cli = subprocess.run(
+            [
+                sys.executable,
+                str(adco_cli),
+                "specialist-adopt",
+                str(project),
+                "--handoff",
+                str(handoff_path),
+                "--receipt",
+                str(receipt_path),
+                "--decision",
+                "partial_adopt",
+                "--reason",
+                "Accept the internal film draft with explicit client locks.",
+                "--map-output",
+                f"{receipt_output_id(output)}=AD-creative/film/story_package_v001.md",
+            ],
+            cwd=adco_repo,
+            text=True,
+            capture_output=True,
+            check=False,
         )
+        if adopt_cli.returncode != 0 or "SPECIALIST_ADOPTION=PASS" not in adopt_cli.stdout:
+            raise ValueError(
+                "adco specialist-adopt CLI failed: "
+                + (adopt_cli.stdout + adopt_cli.stderr).strip()
+            )
+        adoption_path = Path(cli_field(adopt_cli.stdout, "ADOPTION")).resolve()
+        adoption = load_json(adoption_path)
         adoption_failures = (
             []
             if handoff.get("contract_version") == V2_CONTRACT_VERSION
@@ -3278,6 +3890,8 @@ def run_adco_bilateral(adco_repo: Path) -> tuple[bool, dict[str, Any]]:
                 "positive_adoption_valid": not adoption_failures,
                 "adco_project_validation_valid": not validation_errors,
                 "adoption_path_exists": adoption_path is not None and adoption_path.is_file(),
+                "adco_specialist_handoff_cli_executed": True,
+                "adco_specialist_adopt_cli_executed": True,
                 "handoff_failures": handoff_failures,
                 "receipt_failures": receipt_failures,
                 "adoption_failures": adoption_failures,
@@ -3775,6 +4389,8 @@ def run_adco_bilateral(adco_repo: Path) -> tuple[bool, dict[str, Any]]:
             "positive_adoption_valid",
             "adco_project_validation_valid",
             "adoption_path_exists",
+            "adco_specialist_handoff_cli_executed",
+            "adco_specialist_adopt_cli_executed",
         ]
     )
     report["positive_roundtrip_valid"] = positive

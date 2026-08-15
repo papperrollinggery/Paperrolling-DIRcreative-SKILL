@@ -70,7 +70,7 @@
         "4 张场景地理 / Camera-FOV 图",
         "4 页导演故事板",
         "10 张干净视频输入帧",
-        "48 项",
+        "50 项",
         "32 个节奏点",
         "plan_complete",
         "不能声明全片生成完成"
@@ -84,6 +84,70 @@
         "启动 Council"
       ],
       "snapshot": "tests/fixtures/headless-runtime/expected/studio-complete-film.md"
+    },
+    {
+      "id": "studio_client_story_dual_direction",
+      "request": "$dircreative 用一至两页给客户讲清完整品牌片双方向故事，不要扩成镜头表、素材槽、TN/CG 编号或 production worksheet。",
+      "expected_mode": "studio",
+      "expected_route": "film_development",
+      "expected_deliverable_layer": "client_story",
+      "minimum_answer_bytes": 1900,
+      "input": {
+        "brand": "星港跨境",
+        "audience": "第一次考虑跨境经营、又担心流程复杂的中小卖家",
+        "directions": [
+          {
+            "title": "把第一步变简单",
+            "audience_change": "从“跨境经营离我太远”变为“我知道现在该做哪一个动作”。",
+            "start": "一位卖家在不同平台、表格和通知之间来回切换，想出海，却始终没有迈出第一步。",
+            "action": "他合上杂乱页面，只把第一件商品资料交给星港跨境，做出“先开始”的单一选择。",
+            "brand_role": "品牌不是旁观口号，而是把分散任务收束成一个可理解入口；没有这个入口，人物无法完成选择。",
+            "end": "同一件商品以清晰状态进入下一阶段，卖家抬头看见第一条真实进度，焦虑变成可以继续的确定感。",
+            "sound_edit": "开场由密集提示音制造负担；核心动作发生时噪声骤停；结尾只保留一次确认声与稳定呼吸。",
+            "world_rule": "变化来自信息被收束和人物作出选择，不用魔法式界面、瞬时成功或未经证实的效率数字。",
+            "decision_value": "把复杂起点压缩为一个可执行选择"
+          },
+          {
+            "title": "生意在世界另一端醒来",
+            "audience_change": "从“我只能照看眼前这一小块”变为“我的经营可以跨时间继续发生”。",
+            "start": "卖家结束一天工作、关掉店铺灯光时，远方城市刚刚亮起清晨，新的需求开始出现。",
+            "action": "他确认唯一一次经营指令后离开，星港跨境把同一商品状态连续传递到不同市场时区。",
+            "brand_role": "品牌承担跨时区的信息连接和状态连续性；它不替人物许诺成功，只让经营动作不因地理切断。",
+            "end": "第二天卖家重新开灯，看到昨夜到清晨形成的连续反馈，世界不再是地图上的远方，而是可理解的经营现场。",
+            "sound_edit": "卷帘门落下的声音切到另一座城市的晨间环境；节奏随状态传递逐步展开，最终回到店铺开门声。",
+            "world_rule": "所有跨时区变化保持同一商品、同一状态来源和可追踪顺序，不用瞬移、全能算法或虚构平台能力。",
+            "decision_value": "让一次经营动作跨时区保持连续"
+          }
+        ],
+        "claims_pending": [
+          "开店或上架时效",
+          "市场与国家覆盖范围",
+          "算法、自动化与运营能力",
+          "具体产品功能归属"
+        ]
+      },
+      "expected_contains": [
+        "双方向客户故事提案",
+        "方向1｜把第一步变简单",
+        "方向2｜生意在世界另一端醒来",
+        "观众变化",
+        "唯一核心动作",
+        "品牌因果角色",
+        "客户事实边界",
+        "待 ADCO 绑定客户原始证据",
+        "不代表客户批准"
+      ],
+      "forbidden_contains": [
+        "镜头表",
+        "素材槽",
+        "TN/CG",
+        "production worksheet",
+        "24 个正式镜头",
+        "50 项",
+        "client_ready",
+        "send_ready"
+      ],
+      "snapshot": "tests/fixtures/headless-runtime/expected/studio-client-story-dual-direction.md"
     }
   ]
 }

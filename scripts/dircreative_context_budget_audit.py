@@ -232,6 +232,43 @@ def audit() -> tuple[list[str], dict[str, Any]]:
     }:
         failures.append("compact state persistence policy drifted")
 
+    stack_policy = policy.get("skill_stack_policy", {})
+    expected_stack_policy = {
+        "selection_phase": "after_mode_and_deliverable",
+        "policy_registry": "skills/dircreative/runtime/visual-skill-policy.json",
+        "conditional_reference": "skills/dircreative/references/visual-skill-stack.md",
+        "discovery_tool": "scripts/dircreative_skill_stack.py",
+        "candidate_metadata_max": 12,
+        "candidate_body_loading": "selected_only_after_metadata",
+        "used_claim": "primary_host_independent_full_body_read_and_hash_verification_required",
+        "route_authority": "validated_primary_route_only",
+        "controller_owner": {
+            "standalone_chat": "dircreative",
+            "orchestrated_worker": "adco",
+        },
+        "provider_bodies_max": {"fast": 1, "studio": 3, "delivery": 1},
+        "execution_adapter_context_bytes_max": {"delivery": 24576},
+        "validators_max": 1,
+        "explicit_overlays": ["liu-creative-workflow", "sophia-research-mode"],
+        "nested_controller": "forbidden",
+        "missing_provider": "skip_or_dircreative_fallback",
+        "execution_adapter": "select_only_after_real_side_effect_and_existing_gate",
+        "artifact_before_skill_card": True,
+    }
+    if stack_policy != expected_stack_policy:
+        failures.append("post-route Skill Stack policy drifted")
+    for relative in (
+        stack_policy.get("policy_registry"),
+        stack_policy.get("conditional_reference"),
+        stack_policy.get("discovery_tool"),
+    ):
+        if not isinstance(relative, str) or not (ROOT / relative).is_file():
+            failures.append(f"Skill Stack resource missing: {relative}")
+    for route_id, config in routes.items():
+        active = set(config.get("required_files", [])) | set(config.get("optional_files", []))
+        if stack_policy.get("policy_registry") in active or stack_policy.get("conditional_reference") in active:
+            failures.append(f"{route_id}: Skill Stack resources became unconditional route context")
+
     card_values = set(route_cards.values())
     for mode, path in card_paths.items():
         if not path.is_file():
@@ -259,7 +296,7 @@ def audit() -> tuple[list[str], dict[str, Any]]:
         "adco_documents": 0,
         "route_cards": 1,
         "task_files_max": 1,
-        "loaded_context_files_max": 3,
+        "loaded_context_files_max": 4,
         "loaded_context_bytes_max": 14000,
         "pre_artifact_routing_or_audit_tool_calls_max": 0,
         "task_context_reads_max": 2,
@@ -276,7 +313,7 @@ def audit() -> tuple[list[str], dict[str, Any]]:
         "independent_critics_max": 1,
         "route_cards": 1,
         "task_files_max": 1,
-        "loaded_context_files_max": 3,
+        "loaded_context_files_max": 6,
         "loaded_context_bytes_max": 20000,
         "pre_artifact_routing_or_audit_tool_calls_max": 0,
         "task_context_reads_max": 2,
@@ -291,7 +328,7 @@ def audit() -> tuple[list[str], dict[str, Any]]:
         failures.append("Delivery allows duplicate state owners")
     for key, expected in {
         "task_files_max": 2,
-        "loaded_context_files_max": 4,
+        "loaded_context_files_max": 5,
         "loaded_context_bytes_max": 30000,
         "scoped_validation_required": True,
     }.items():

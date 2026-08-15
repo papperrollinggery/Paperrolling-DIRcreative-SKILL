@@ -60,7 +60,7 @@ def main() -> int:
     failures: list[str] = []
     review = read("docs/film-preproduction/council-adversarial-review.md")
     studio_route = read("skills/dircreative/routes/studio-development.md")
-    routing_policy = read("skills/dircreative/runtime/routing-policy.yaml")
+    routing_policy = json.loads(read("skills/dircreative/runtime/routing-policy.yaml"))
     runbook = read("docs/film-preproduction/live-chat-acceptance-runbook.md")
     rehearsal = read("examples/live-acceptance-rehearsal/01-chat-transcript.md")
     taxonomy_text = read("docs/film-preproduction/qa/failure-taxonomy.yaml")
@@ -93,13 +93,17 @@ def main() -> int:
         failures.append("council review doc missing terms: " + ", ".join(missing_review))
 
     route_ok, missing_route = has_all(
-        studio_route + "\n" + routing_policy,
+        studio_route,
         [
             "at most one critical",
             "Apply only the perspectives that can materially improve the result",
-            "external_gates_only_for_material_decisions: true",
         ],
     )
+    if routing_policy.get("performance_budgets", {}).get("studio", {}).get(
+        "external_gates_only_for_material_decisions"
+    ) is not True:
+        missing_route.append("performance_budgets.studio.external_gates_only_for_material_decisions=true")
+        route_ok = False
     if not route_ok:
         failures.append("Studio route missing bounded critical-review contract: " + ", ".join(missing_route))
 

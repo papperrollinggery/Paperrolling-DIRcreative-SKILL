@@ -76,6 +76,13 @@ storyboard, and clean video-input frames match the delivery-profile aspect; its
 file hash, normalized pixel hash, perceptual fingerprint, normalization profile,
 and technical receipt match; and a separate role-specific visual-review manifest covers the exact
 asset, truth and pixels. The plan validator never creates that manifest.
+`reviewer_type`, reviewer IDs, task IDs, manifest hashes, and rehashed receipts inside
+the plan remain untrusted payload claims; none can grant whole-film completion. The
+standalone validator keeps `visual_assets_complete` fail-closed until the primary host
+binds the review to a separate trusted adoption/readback context that the plan author
+cannot mint; the current standalone CLI intentionally has no override for this gate.
+Without that host evidence, report the visual plan and review as complete
+at their bounded layers, but keep whole-film visual completion unverified.
 JPEG/WebP may remain source or preview assets, but normalize them to canonical
 PNG before they can become completion evidence.
 `user_locked` and `reused_locked` remain workflow states and cannot bypass visual

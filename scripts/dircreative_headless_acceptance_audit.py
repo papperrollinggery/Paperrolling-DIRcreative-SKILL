@@ -105,6 +105,36 @@ def copy_revision_answer(case: dict[str, Any]) -> str:
     )
 
 
+def client_story_answer(case: dict[str, Any]) -> str:
+    data = case["input"]
+    direction_sections: list[str] = []
+    for index, direction in enumerate(data["directions"], start=1):
+        direction_sections.append(
+            f"## 方向{index}｜{direction['title']}\n\n"
+            f"**观众变化**：{direction['audience_change']}\n\n"
+            f"**开场**：{direction['start']}\n\n"
+            f"**唯一核心动作**：{direction['action']}\n\n"
+            f"**品牌因果角色**：{direction['brand_role']}\n\n"
+            f"**结尾**：{direction['end']}\n\n"
+            f"**声画推进**：{direction['sound_edit']}\n\n"
+            f"**必须守住的规则**：{direction['world_rule']}\n"
+        )
+    pending = "\n".join(f"- {item}：待 ADCO 绑定客户原始证据；DIR 不推导、不代填。" for item in data["claims_pending"])
+    return (
+        f"# {data['brand']}｜双方向客户故事提案\n\n"
+        f"面向{data['audience']}，本版只回答“观众会经历什么、品牌为什么不可替代”。"
+        "两个方向各自保持完整的起点、行动和结果，不提前展开技术制作。\n\n"
+        + "\n\n".join(direction_sections)
+        + "\n\n## 两个方向的差异\n\n"
+        f"- 方向一把重点放在“{data['directions'][0]['decision_value']}”，让观众先理解进入门槛如何被移除。\n"
+        f"- 方向二把重点放在“{data['directions'][1]['decision_value']}”，让观众感受经营开始运转后的规模想象。\n"
+        "- 二者不能混成一个中间方案：前者靠一个明确选择推进，后者靠跨时区的连续响应推进。\n\n"
+        "## 客户事实边界\n\n"
+        f"{pending}\n\n"
+        "## 当前完成边界\n\n"
+        "本版已形成可供客户比较的两条完整故事。结构完整只代表领域提案可讨论；"
+        "不代表客户批准、资产获权、PPT 完成、FinalDelivery 就绪或可外发。\n"
+    )
 def load_json_object(relative: str) -> dict[str, Any]:
     path = ROOT / relative
     try:
@@ -212,7 +242,7 @@ def tvc_case_data(
         "characters": 2,
         "shots": 24,
         "rhythm_points": 32,
-        "assets": 48,
+        "assets": 50,
         "storyboard_frames": 24,
         "director_storyboard_pages": 4,
         "clean_video_inputs": 10,
@@ -300,7 +330,8 @@ def studio_film_answer(case: dict[str, Any]) -> str:
         "| 场景图 | 覆盖镜头 | 必须锁定 |\n|---|---|---|\n"
         + "\n".join(scene_rows)
         + f"\n\n## 全片必须生成的 {metrics['assets']} 项视觉资产\n\n"
-        f"- 2 张角色身份参考图：林澈、父亲；跨夜景与黎明保持脸、体型、发型、服装和持物手一致。\n"
+        f"- {metrics['character_identity_references']} 张角色 / appearance-state 身份参考图："
+        "林澈的棚内、雨夜转场、黎明状态与父亲黎明状态分别锁定；同一角色跨状态保持脸、体型、发型和持物手一致。\n"
         f"- 1 张产品身份板：瓶型、黑盖、深色液体、白色标签、已开/未开状态。\n"
         f"- 2 张道具连续性板：纸条的折叠/展开/收入口袋状态；红伞的折叠/打开/湿润与右手归属。\n"
         f"- 4 张场景地理 / Camera-FOV 图：每个场景一张，不能用逐镜分镜图替代。\n"
@@ -354,6 +385,8 @@ def execute_case(case: dict[str, Any]) -> tuple[str, dict[str, Any]]:
     route = route_request(case["request"])
     if route["mode"] != case["expected_mode"] or route["route"] != case["expected_route"]:
         raise HeadlessAcceptanceError(f"route mismatch for {case['id']}: {route}")
+    if case.get("expected_deliverable_layer") and route["deliverable_layer"] != case["expected_deliverable_layer"]:
+        raise HeadlessAcceptanceError(f"deliverable-layer mismatch for {case['id']}: {route}")
     if route["action"] != "continue" or route["first_response_contract"] != "useful_artifact_first":
         raise HeadlessAcceptanceError(f"fixture stopped before producing an answer: {case['id']}")
     loaded_files, context = load_route_context(route)
@@ -375,10 +408,12 @@ def execute_case(case: dict[str, Any]) -> tuple[str, dict[str, Any]]:
             raise HeadlessAcceptanceError("Studio Route Card lost artifact-first contract")
 
     processors = {
-        "copy_revision": copy_revision_answer,
-        "film_development": studio_film_answer,
+        ("copy_revision", "bounded_output"): copy_revision_answer,
+        ("film_development", "client_story"): client_story_answer,
+        ("film_development", "full_preproduction"): studio_film_answer,
+        ("film_development", "technical_production"): studio_film_answer,
     }
-    processor = processors.get(route["route"])
+    processor = processors.get((route["route"], route["deliverable_layer"]))
     if processor is None:
         raise HeadlessAcceptanceError(f"no headless answer processor for route: {route['route']}")
     answer = processor(case)
@@ -389,6 +424,8 @@ def execute_case(case: dict[str, Any]) -> tuple[str, dict[str, Any]]:
         "case_id": case["id"],
         "mode": route["mode"],
         "route": route["route"],
+        "deliverable_layer": route["deliverable_layer"],
+        "shot_matrix_allowed": route["shot_matrix_allowed"],
         "answer_sha256": sha256_text(answer),
         "answer_bytes": len(answer.encode("utf-8")),
         "route_cards_loaded": 1,
@@ -397,7 +434,10 @@ def execute_case(case: dict[str, Any]) -> tuple[str, dict[str, Any]]:
         "director_room_used": perspectives["director_room_used"],
         "selected_perspectives": perspectives["selected_perspectives"],
     }
-    if route["route"] == "film_development":
+    if route["route"] == "film_development" and route["deliverable_layer"] in {
+        "full_preproduction",
+        "technical_production",
+    }:
         inventory, cards, _plan, metrics = tvc_case_data(case)
         metadata.update(
             {
@@ -535,11 +575,53 @@ def audit(output_dir: Path | None = None) -> tuple[bool, dict[str, Any], list[st
         exchange_ok, exchange_report = exchange_self_test()
         compatibility = {
             "v1_read_compatibility": bool(exchange_report.get("v1_read_compatibility")),
+            "v1_free_text_readiness_claims_rejected": bool(
+                exchange_report.get("v1_free_text_readiness_claims_rejected")
+            ),
+            "v1_non_list_qa_fields_rejected": bool(
+                exchange_report.get("v1_non_list_qa_fields_rejected")
+            ),
+            "v1_compound_readiness_assertions_in_questions_rejected": bool(
+                exchange_report.get(
+                    "v1_compound_readiness_assertions_in_questions_rejected"
+                )
+            ),
+            "v1_actual_readiness_questions_allowed": bool(
+                exchange_report.get("v1_actual_readiness_questions_allowed")
+            ),
             "v2_roundtrip_valid": bool(exchange_report.get("v2_roundtrip_valid")),
             "v2_compact_receipt_valid": bool(exchange_report.get("v2_compact_receipt_valid")),
             "v2_nested_dispatch_rejected": bool(exchange_report.get("v2_nested_dispatch_field_rejected")),
             "v2_reserved_readiness_claim_rejected": bool(
                 exchange_report.get("v2_reserved_readiness_claim_rejected")
+            ),
+            "v2_all_reserved_readiness_claims_rejected": bool(
+                exchange_report.get("v2_all_reserved_readiness_claims_rejected")
+            ),
+            "v2_nested_reserved_readiness_claims_rejected": bool(
+                exchange_report.get("v2_nested_reserved_readiness_claims_rejected")
+            ),
+            "v2_natural_language_readiness_claims_rejected": bool(
+                exchange_report.get("v2_natural_language_readiness_claims_rejected")
+            ),
+            "v2_positive_readiness_claims_in_limitations_rejected": bool(
+                exchange_report.get(
+                    "v2_positive_readiness_claims_in_limitations_rejected"
+                )
+            ),
+            "v2_negative_readiness_limitations_allowed": bool(
+                exchange_report.get("v2_negative_readiness_limitations_allowed")
+            ),
+            "v2_declarative_readiness_claims_in_questions_rejected": bool(
+                exchange_report.get(
+                    "v2_declarative_readiness_claims_in_questions_rejected"
+                )
+            ),
+            "v2_actual_readiness_questions_allowed": bool(
+                exchange_report.get("v2_actual_readiness_questions_allowed")
+            ),
+            "v2_unknown_and_chinese_domain_checks_rejected": bool(
+                exchange_report.get("v2_unknown_and_chinese_domain_checks_rejected")
             ),
         }
         if not exchange_ok or not all(compatibility.values()):

@@ -1,13 +1,15 @@
 {
-  "schema_version": "2.2",
+  "schema_version": "2.3",
   "project_id": "coverage-validator-unit-30s",
   "truth_revision": "approved-r1",
   "truth_locked_at": "2026-07-21T00:00:00Z",
   "inventory_file": "valid-coverage-unit-inventory.json",
-  "inventory_sha256": "4a0c495cb34cd79addc1df849fb386fa99039748dc37308a12a3585261e7d1c9",
+  "inventory_sha256": "c61cfe378a88b1f0776d0f581cf50eec6ba88accfcb1aaa880cdbed6a45b4846",
+  "creative_source_file": "valid-coverage-unit-creative-source.json",
+  "creative_source_sha256": "897c64c96055c4b64085431759b50eeb4a7a182488c369f98c7a0d3c82a7b725",
   "shot_cards_file": "valid-coverage-unit-shot-cards.json",
   "shot_cards_sha256": "e3a551b95e2d8d32f82f8a1ef7d3d1972f60a1c9ad74201557cc630dd5e93716",
-  "shot_truth_sha256": "942a1da2e66f84a317c6e434ac0e18d20eceb0a2f7fdd4eff5bdaddc6d875293",
+  "shot_truth_sha256": "1791d581a746be3b10fa336e758d4344caeb5684d911624b9b6f9e4b48c01ab3",
   "scope": "sequence",
   "duration_seconds": 30,
   "delivery_profile": {
@@ -27,6 +29,9 @@
   ],
   "character_ids": [
     "protagonist"
+  ],
+  "appearance_state_ids": [
+    "protagonist-office-look"
   ],
   "product_ids": [
     "coldbrew-bottle"
@@ -49,8 +54,15 @@
       "character_ids": [
         "protagonist"
       ],
+      "appearance_state_ids": [
+        "protagonist-office-look"
+      ],
       "product_ids": [],
       "prop_ids": [],
+      "story_beat_ids": [
+        "B01"
+      ],
+      "script_line_ids": [],
       "generation_unit_id": "G01",
       "narrative_purpose": "Establish the office pressure and protagonist position without expository text.",
       "timecode": "00:00-00:05",
@@ -66,8 +78,15 @@
       "character_ids": [
         "protagonist"
       ],
+      "appearance_state_ids": [
+        "protagonist-office-look"
+      ],
       "product_ids": [],
       "prop_ids": [],
+      "story_beat_ids": [
+        "B01"
+      ],
+      "script_line_ids": [],
       "generation_unit_id": "G01",
       "narrative_purpose": "Move from accumulated pressure toward the product action while preserving screen direction.",
       "timecode": "00:05-00:10",
@@ -83,12 +102,19 @@
       "character_ids": [
         "protagonist"
       ],
+      "appearance_state_ids": [
+        "protagonist-office-look"
+      ],
       "product_ids": [
         "coldbrew-bottle"
       ],
       "prop_ids": [
         "ice-cup-state"
       ],
+      "story_beat_ids": [
+        "B02"
+      ],
+      "script_line_ids": [],
       "generation_unit_id": "G02",
       "narrative_purpose": "Show the bottle and cup action with readable identity, level, hand, and label states.",
       "timecode": "00:10-00:15",
@@ -104,12 +130,19 @@
       "character_ids": [
         "protagonist"
       ],
+      "appearance_state_ids": [
+        "protagonist-office-look"
+      ],
       "product_ids": [
         "coldbrew-bottle"
       ],
       "prop_ids": [
         "ice-cup-state"
       ],
+      "story_beat_ids": [
+        "B02"
+      ],
+      "script_line_ids": [],
       "generation_unit_id": "G02",
       "narrative_purpose": "Hold the first sip as a performance beat without implying an unapproved product effect.",
       "timecode": "00:15-00:20",
@@ -125,8 +158,15 @@
       "character_ids": [
         "protagonist"
       ],
+      "appearance_state_ids": [
+        "protagonist-office-look"
+      ],
       "product_ids": [],
       "prop_ids": [],
+      "story_beat_ids": [
+        "B03"
+      ],
+      "script_line_ids": [],
       "generation_unit_id": "G03",
       "narrative_purpose": "Resolve the performance beat with a concrete return to work and stable spatial continuity.",
       "timecode": "00:20-00:25",
@@ -142,11 +182,20 @@
       "character_ids": [
         "protagonist"
       ],
+      "appearance_state_ids": [
+        "protagonist-office-look"
+      ],
       "product_ids": [
         "coldbrew-bottle"
       ],
       "prop_ids": [
         "ice-cup-state"
+      ],
+      "story_beat_ids": [
+        "B03"
+      ],
+      "script_line_ids": [
+        "L01"
       ],
       "generation_unit_id": "G03",
       "narrative_purpose": "Finish on a broadcast-readable product composition with protected brand and legal areas.",
@@ -165,6 +214,62 @@
     "R04",
     "R05",
     "R06"
+  ],
+  "rhythm_points": [
+    {
+      "id": "R01",
+      "timecode": "00:00",
+      "shot_ids": [
+        "S01"
+      ],
+      "action": "Begin S01: The protagonist sorts urgent work without touching the product",
+      "sound_transition": "Begin S01 sound: Office room tone and keyboard rhythm establish pressure"
+    },
+    {
+      "id": "R02",
+      "timecode": "00:05",
+      "shot_ids": [
+        "S02"
+      ],
+      "action": "Begin S02: The protagonist pauses and reaches toward the product area",
+      "sound_transition": "Begin S02 sound: Keyboard rhythm thins and one breath creates the transition"
+    },
+    {
+      "id": "R03",
+      "timecode": "00:10",
+      "shot_ids": [
+        "S03"
+      ],
+      "action": "Begin S03: The bottle opens and pours once into the verified cup",
+      "sound_transition": "Begin S03 sound: Seal crack, pour, and ice movement replace the office bed"
+    },
+    {
+      "id": "R04",
+      "timecode": "00:15",
+      "shot_ids": [
+        "S04"
+      ],
+      "action": "Begin S04: The protagonist takes one sip and allows a restrained pause",
+      "sound_transition": "Begin S04 sound: One sip and quiet breath play without an impact effect"
+    },
+    {
+      "id": "R05",
+      "timecode": "00:20",
+      "shot_ids": [
+        "S05"
+      ],
+      "action": "Begin S05: The protagonist resumes one concrete task at the same desk",
+      "sound_transition": "Begin S05 sound: Keyboard rhythm returns at the original natural intensity"
+    },
+    {
+      "id": "R06",
+      "timecode": "00:25",
+      "shot_ids": [
+        "S06"
+      ],
+      "action": "Begin S06: The product and cup hold while the work context stays visible",
+      "sound_transition": "Begin S06 sound: Office tone resolves beneath a short brand mnemonic"
+    }
   ],
   "style_reference_required": true,
   "generation_units": [
@@ -210,15 +315,18 @@
   ],
   "assets": [
     {
-      "asset_id": "identity-character-protagonist",
+      "asset_id": "identity-character-protagonist-protagonist-office-look",
       "role": "character_identity_reference",
       "required": true,
       "action": "generate",
-      "purpose": "Lock the recurring protagonist face, body proportion, hair, wardrobe, and handedness.",
+      "purpose": "Lock the recurring protagonist face, body proportion, hair, wardrobe, and handedness. Appearance state: Lock the protagonist office wardrobe, face, hair, seated proportions, and right-hand action throughout the sequence.",
       "coverage": {
         "scene_ids": [],
         "character_ids": [
           "protagonist"
+        ],
+        "appearance_state_ids": [
+          "protagonist-office-look"
         ],
         "product_ids": [],
         "prop_ids": [],
@@ -233,7 +341,7 @@
       "generated_sha256": "",
       "generated_pixel_sha256": "",
       "generated_perceptual_hash": "",
-      "truth_sha256": "8ec3b33e26385443b8ee94e41d22f4756724dc3f471e263b78d43fb258e8c3fa",
+      "truth_sha256": "f5017dcf523beb0ee22c0b6622036d1dbfbf23ef5cb8145fec5a5a94568d12f0",
       "technical_receipt": null,
       "visual_qa_receipt": null
     },
@@ -246,6 +354,7 @@
       "coverage": {
         "scene_ids": [],
         "character_ids": [],
+        "appearance_state_ids": [],
         "product_ids": [
           "coldbrew-bottle"
         ],
@@ -261,7 +370,7 @@
       "generated_sha256": "",
       "generated_pixel_sha256": "",
       "generated_perceptual_hash": "",
-      "truth_sha256": "24671cd73341a52990dac8e3e402a8085c1a5b2ae00bf50efd5a54ad37f2dc9c",
+      "truth_sha256": "473ceb700a7289fae598ccf15771dbabe19e9d9a0c5e22675da59159bffe48e5",
       "technical_receipt": null,
       "visual_qa_receipt": null
     },
@@ -274,6 +383,7 @@
       "coverage": {
         "scene_ids": [],
         "character_ids": [],
+        "appearance_state_ids": [],
         "product_ids": [],
         "prop_ids": [
           "ice-cup-state"
@@ -293,7 +403,7 @@
       "generated_sha256": "",
       "generated_pixel_sha256": "",
       "generated_perceptual_hash": "",
-      "truth_sha256": "537e44136054885b663acc2ce6792d8c080279e443b68b97c340778cf4fa84c5",
+      "truth_sha256": "601a282b9428680f286a3f941458d9241ada1de178fbdfa3eb27024a9128f44a",
       "technical_receipt": null,
       "visual_qa_receipt": null
     },
@@ -308,6 +418,7 @@
           "office-desk"
         ],
         "character_ids": [],
+        "appearance_state_ids": [],
         "product_ids": [],
         "prop_ids": [],
         "shot_ids": [
@@ -328,7 +439,7 @@
       "generated_sha256": "",
       "generated_pixel_sha256": "",
       "generated_perceptual_hash": "",
-      "truth_sha256": "21a2ad7b6d3273d621879e899de3f3f78fccd9d675f770b8984ce3b82b7b8859",
+      "truth_sha256": "93e59fe5d0f6245920db7d6d425c33a61ed9fcb4496ed8f25dddb915a93e2e1f",
       "technical_receipt": null,
       "visual_qa_receipt": null
     },
@@ -343,6 +454,7 @@
           "office-desk"
         ],
         "character_ids": [],
+        "appearance_state_ids": [],
         "product_ids": [],
         "prop_ids": [],
         "shot_ids": [
@@ -365,7 +477,7 @@
       "generated_sha256": "",
       "generated_pixel_sha256": "",
       "generated_perceptual_hash": "",
-      "truth_sha256": "e1ae87b027e7109e981d142ef38bacc7d59fe33cfcbb64e0063ff6c440c0b67d",
+      "truth_sha256": "2434925a92e00d055407c781e0c777633afc6d2959f3d8e926b6b26794f13bc6",
       "technical_receipt": null,
       "visual_qa_receipt": null
     },
@@ -382,6 +494,9 @@
         "character_ids": [
           "protagonist"
         ],
+        "appearance_state_ids": [
+          "protagonist-office-look"
+        ],
         "product_ids": [],
         "prop_ids": [],
         "shot_ids": [
@@ -393,7 +508,7 @@
       },
       "inherits_from": [
         "scene-office-desk",
-        "identity-character-protagonist",
+        "identity-character-protagonist-protagonist-office-look",
         "look-whole-film"
       ],
       "planning_only": true,
@@ -403,7 +518,7 @@
       "generated_sha256": "",
       "generated_pixel_sha256": "",
       "generated_perceptual_hash": "",
-      "truth_sha256": "d2ebe96ff49c484835a8d82f55177c4354848c9fba10879601207c1530b77323",
+      "truth_sha256": "a89e320d924cfdf818cfc62ca28a8a4ae8ee9d7258ce505bef8c4691711c9014",
       "technical_receipt": null,
       "visual_qa_receipt": null
     },
@@ -420,6 +535,9 @@
         "character_ids": [
           "protagonist"
         ],
+        "appearance_state_ids": [
+          "protagonist-office-look"
+        ],
         "product_ids": [],
         "prop_ids": [],
         "shot_ids": [
@@ -431,7 +549,7 @@
       },
       "inherits_from": [
         "scene-office-desk",
-        "identity-character-protagonist",
+        "identity-character-protagonist-protagonist-office-look",
         "look-whole-film"
       ],
       "planning_only": true,
@@ -441,7 +559,7 @@
       "generated_sha256": "",
       "generated_pixel_sha256": "",
       "generated_perceptual_hash": "",
-      "truth_sha256": "a810f868053c27e3244023835791da264f0b40ff0408a1402e469fe6b0f1c691",
+      "truth_sha256": "044617242fa9aa0ba8dc7b5bf38b36edf7ddb8d9eaad47a01b599c49f70894a0",
       "technical_receipt": null,
       "visual_qa_receipt": null
     },
@@ -458,6 +576,9 @@
         "character_ids": [
           "protagonist"
         ],
+        "appearance_state_ids": [
+          "protagonist-office-look"
+        ],
         "product_ids": [
           "coldbrew-bottle"
         ],
@@ -473,7 +594,7 @@
       },
       "inherits_from": [
         "scene-office-desk",
-        "identity-character-protagonist",
+        "identity-character-protagonist-protagonist-office-look",
         "identity-product-coldbrew-bottle",
         "continuity-prop-ice-cup-state",
         "look-whole-film"
@@ -485,7 +606,7 @@
       "generated_sha256": "",
       "generated_pixel_sha256": "",
       "generated_perceptual_hash": "",
-      "truth_sha256": "914d01c9ee329aa01fab6998fc426605999b57fa7780b423fdcbadfc9922426b",
+      "truth_sha256": "278d6ea054f9b7009aadba7bd42f0da4433fe92ba4b74b1fadf491c40ec67d5b",
       "technical_receipt": null,
       "visual_qa_receipt": null
     },
@@ -502,6 +623,9 @@
         "character_ids": [
           "protagonist"
         ],
+        "appearance_state_ids": [
+          "protagonist-office-look"
+        ],
         "product_ids": [
           "coldbrew-bottle"
         ],
@@ -517,7 +641,7 @@
       },
       "inherits_from": [
         "scene-office-desk",
-        "identity-character-protagonist",
+        "identity-character-protagonist-protagonist-office-look",
         "identity-product-coldbrew-bottle",
         "continuity-prop-ice-cup-state",
         "look-whole-film"
@@ -529,7 +653,7 @@
       "generated_sha256": "",
       "generated_pixel_sha256": "",
       "generated_perceptual_hash": "",
-      "truth_sha256": "802e4e6a11f2d78b916e50d75364fdd0ab23c8a8d45be3ed9468c199e6372faf",
+      "truth_sha256": "bd71d9b28bcbab0c49db33b89d47f3f234f97481f2cdce29f3904579c0668f00",
       "technical_receipt": null,
       "visual_qa_receipt": null
     },
@@ -546,6 +670,9 @@
         "character_ids": [
           "protagonist"
         ],
+        "appearance_state_ids": [
+          "protagonist-office-look"
+        ],
         "product_ids": [],
         "prop_ids": [],
         "shot_ids": [
@@ -557,7 +684,7 @@
       },
       "inherits_from": [
         "scene-office-desk",
-        "identity-character-protagonist",
+        "identity-character-protagonist-protagonist-office-look",
         "look-whole-film"
       ],
       "planning_only": true,
@@ -567,7 +694,7 @@
       "generated_sha256": "",
       "generated_pixel_sha256": "",
       "generated_perceptual_hash": "",
-      "truth_sha256": "4a691da158944b1c096550b3e488198a2552fc1b01c6027a0e0a881c291275a6",
+      "truth_sha256": "66531d22b1b078683af81ee9aba6017553c8a6fab01bd508dc7ee208138becbe",
       "technical_receipt": null,
       "visual_qa_receipt": null
     },
@@ -584,6 +711,9 @@
         "character_ids": [
           "protagonist"
         ],
+        "appearance_state_ids": [
+          "protagonist-office-look"
+        ],
         "product_ids": [
           "coldbrew-bottle"
         ],
@@ -599,7 +729,7 @@
       },
       "inherits_from": [
         "scene-office-desk",
-        "identity-character-protagonist",
+        "identity-character-protagonist-protagonist-office-look",
         "identity-product-coldbrew-bottle",
         "continuity-prop-ice-cup-state",
         "look-whole-film"
@@ -611,7 +741,7 @@
       "generated_sha256": "",
       "generated_pixel_sha256": "",
       "generated_perceptual_hash": "",
-      "truth_sha256": "132647d4bf8987d30410d9d03789f37b2b2ca6f241786d78959cd7458441cd1a",
+      "truth_sha256": "0ec09c5645352d61c78a57384aaa5d4a007143659bd8b58fc89603bbb0e44312",
       "technical_receipt": null,
       "visual_qa_receipt": null
     },
@@ -627,6 +757,9 @@
         ],
         "character_ids": [
           "protagonist"
+        ],
+        "appearance_state_ids": [
+          "protagonist-office-look"
         ],
         "product_ids": [
           "coldbrew-bottle"
@@ -663,7 +796,7 @@
       "generated_sha256": "",
       "generated_pixel_sha256": "",
       "generated_perceptual_hash": "",
-      "truth_sha256": "942a1da2e66f84a317c6e434ac0e18d20eceb0a2f7fdd4eff5bdaddc6d875293",
+      "truth_sha256": "1791d581a746be3b10fa336e758d4344caeb5684d911624b9b6f9e4b48c01ab3",
       "technical_receipt": null,
       "visual_qa_receipt": null
     },
@@ -679,6 +812,9 @@
         ],
         "character_ids": [
           "protagonist"
+        ],
+        "appearance_state_ids": [
+          "protagonist-office-look"
         ],
         "product_ids": [],
         "prop_ids": [],
@@ -699,7 +835,7 @@
       "generated_sha256": "",
       "generated_pixel_sha256": "",
       "generated_perceptual_hash": "",
-      "truth_sha256": "4951b5d65a6cdc54c63e6a07b5291c3db2e582d91f1f3ae7fc101fc0451edeba",
+      "truth_sha256": "73c2719c87565a2b5ff5d1b8a05666c669d8d8218d2175bd70c003293479c758",
       "technical_receipt": null,
       "visual_qa_receipt": null
     },
@@ -715,6 +851,9 @@
         ],
         "character_ids": [
           "protagonist"
+        ],
+        "appearance_state_ids": [
+          "protagonist-office-look"
         ],
         "product_ids": [
           "coldbrew-bottle"
@@ -739,7 +878,7 @@
       "generated_sha256": "",
       "generated_pixel_sha256": "",
       "generated_perceptual_hash": "",
-      "truth_sha256": "32e6d8822a5101a158e1eae422e54f91949029ccdd72575ed330de0515eb0b17",
+      "truth_sha256": "a447098695a09e16e7ae24e7bf1080809ea24f14351615ed5c1bc843c8877581",
       "technical_receipt": null,
       "visual_qa_receipt": null
     },
@@ -755,6 +894,9 @@
         ],
         "character_ids": [
           "protagonist"
+        ],
+        "appearance_state_ids": [
+          "protagonist-office-look"
         ],
         "product_ids": [
           "coldbrew-bottle"
@@ -779,7 +921,7 @@
       "generated_sha256": "",
       "generated_pixel_sha256": "",
       "generated_perceptual_hash": "",
-      "truth_sha256": "ebe7d9478b05b06d5191c80c592aaeb6ec37d508ac345fbcef0bdd951229802a",
+      "truth_sha256": "a32f974673900aa202cb05800b038403d2fe1e0d759f1925d9751e672ae61df6",
       "technical_receipt": null,
       "visual_qa_receipt": null
     }

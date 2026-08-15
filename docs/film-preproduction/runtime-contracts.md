@@ -11,7 +11,7 @@ compatibility but do not redefine behavior.
 | Contract | Canonical owner | Supporting guide |
 | --- | --- | --- |
 | Invocation | `skills/dircreative/agents/openai.yaml` | root `SKILL.md` invocation boundary |
-| Route and mode selection | `skills/dircreative/runtime/routing-policy.yaml` | `skills/dircreative/SKILL.md` |
+| Route, mode, and post-route Skill Stack selection | `skills/dircreative/runtime/routing-policy.yaml` | root `SKILL.md` plus conditional `references/visual-skill-stack.md` |
 | Fast execution | `skills/dircreative/routes/fast-task.md` | none |
 | Studio execution | `skills/dircreative/routes/studio-development.md` | none |
 | Delivery execution | `skills/dircreative/routes/delivery-audit.md` | none |
@@ -33,6 +33,7 @@ does not own chat runtime routing, gates, state, or completion.
 explicit $dircreative or validated ADCO handoff
   -> direct route judgment for obvious standalone work
   -> exactly one mode, one Route Card, and at most one craft card
+  -> optional bounded advisory Skill Stack after mode/deliverable selection
   -> deterministic router only for ambiguity or handoff validation
   -> useful artifact first
   -> optional compact state or one real external gate
@@ -60,6 +61,8 @@ generation or delivery action satisfies its gate; the runtime does not ask twice
 - Startup has no unconditional protocol read and no mandatory router command.
 - Obvious Fast and Studio requests go directly to one Route Card and one compact
   craft card under `skills/dircreative/references/`.
+- The host catalog may supply a bounded advisory Skill Stack after that route.
+  Discovery is read-only and conditional; it is never a startup preflight.
 - The deterministic router is a machine mirror for ambiguous requests, ADCO
   validation, and tests; it is not a creative preflight.
 - Fast never loads ADCO, Thread, Goal, Delivery, or FinalDelivery contracts.
@@ -77,9 +80,9 @@ actual routing policy on every validation run.
 
 | Mode | Context | Files | Runtime behavior |
 | --- | ---: | ---: | --- |
-| Fast | <= 14,000 bytes | <= 3 | one task reference, zero routing/audit preflight, >= 75% useful content |
-| Studio | <= 20,000 bytes | <= 3 | one task reference, <= 3 perspectives, >= 70% useful content |
-| Delivery | <= 30,000 bytes | <= 4 | <= 2 task references, evidence only for the real action |
+| Fast | <= 14,000 bytes | <= 4 | one task reference, <= 1 provider body, zero routing/audit preflight, >= 75% useful content |
+| Studio | <= 20,000 bytes | <= 6 | one task reference, <= 3 provider bodies/perspectives, >= 70% useful content |
+| Delivery | <= 30,000 bytes | <= 5 | <= 2 task references, <= 1 provider body, evidence only for the real action |
 
 Fast and Studio do not run whole-project validation. Current output and direct
 dependencies define the scoped result. Unrelated historical/control-plane debt
