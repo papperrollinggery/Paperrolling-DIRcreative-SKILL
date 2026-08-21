@@ -1,0 +1,133 @@
+{
+  "contract_id": "storyboard_frame_to_jingzao_v1",
+  "authority": "compile_only",
+  "source_owner": "dircreative",
+  "target_owner": "jingzao-image-forge",
+  "output_owner": "dircreative",
+  "fixture_only": true,
+  "input_spec": {
+    "artifact_id": "DIR-FRAME-SPEC-001",
+    "relative_path": "storyboard_specs/DIR-FRAME-SPEC-001.json",
+    "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  "provider_skill": {
+    "skill_id": "jingzao-image-forge",
+    "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  },
+  "reference_reads": [
+    {"relative_path": "references/visual-spec.md", "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc", "bytes": 29007},
+    {"relative_path": "references/prompt-compiler.md", "sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd", "bytes": 16154},
+    {"relative_path": "references/reference-delivery.md", "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", "bytes": 6718},
+    {"relative_path": "references/styleboard-mode.md", "sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", "bytes": 6429},
+    {"relative_path": "references/shot-tension-design.md", "sha256": "1111111111111111111111111111111111111111111111111111111111111111", "bytes": 5096},
+    {"relative_path": "references/cinematic-shot-design.md", "sha256": "2222222222222222222222222222222222222222222222222222222222222222", "bytes": 7767}
+  ],
+  "frames": [
+    {
+      "frame_id": "FRAME-S01",
+      "shot_id": "S01",
+      "generation_unit_id": "GU01",
+      "shot_class": "action",
+      "shot_function": "follow",
+      "narrative_purpose": "show the pilot crossing the only safe route",
+      "viewer_task": "read speed, danger, and destination in one glance",
+      "viewer_position": "low beside the hull inside the fighter path",
+      "dominant_read": "fighter cuts diagonally through the near field",
+      "secondary_read": "the threatened station remains the destination",
+      "depth_roles": "foreground hull proves speed; midground fighter owns action; background station proves consequence",
+      "camera_motivation": "the viewer occupies the dangerous route rather than an overview",
+      "quiet_region": "upper-left black space keeps the action line readable",
+      "action_vector_counterforce": "fighter moves left-to-right against right-to-left enemy pressure",
+      "crop_pressure": "near hull and one wing may leave frame to prove speed",
+      "parallax_occlusion": "foreground hull crosses faster than fighter and station",
+      "exaggeration": "strong near/far perspective with station geometry as protected anchor",
+      "canonical_asset_ids": ["FIGHTER-01", "STATION-01"],
+      "reference_roles": [
+        {"asset_id": "FIGHTER-01", "role": "vehicle", "must_not_control": ["camera", "station"]},
+        {"asset_id": "STATION-01", "role": "scene", "must_not_control": ["fighter identity", "camera_action"]}
+      ]
+    },
+    {
+      "frame_id": "FRAME-S02",
+      "shot_id": "S02",
+      "generation_unit_id": "GU02",
+      "shot_class": "dialogue",
+      "shot_function": "react",
+      "narrative_purpose": "hold the captain's restrained decision",
+      "viewer_task": "notice the delayed gaze before the line",
+      "viewer_position": "shared eye level across the command rail",
+      "dominant_read": "captain's gaze shifts toward the offscreen officer",
+      "secondary_read": "one hand remains fixed on the rail",
+      "depth_roles": "foreground shoulder establishes relation; midground face owns decision; background window keeps context",
+      "camera_motivation": "the viewer is inside the conversation at relational distance",
+      "quiet_region": "dark wall behind the face preserves restraint",
+      "action_vector_counterforce": {
+        "status": "not_applicable",
+        "reason": "the beat is a held dialogue decision with no physical force exchange"
+      },
+      "crop_pressure": {
+        "status": "not_applicable",
+        "reason": "the fixed relationship frame requires both eyeline and rail to remain visible"
+      },
+      "parallax_occlusion": "foreground shoulder creates relational depth without hiding the face",
+      "exaggeration": {
+        "status": "not_applicable",
+        "reason": "the scene is intentionally restrained and uses natural perspective"
+      },
+      "canonical_asset_ids": ["CAPTAIN-01", "BRIDGE-01"],
+      "reference_roles": [
+        {"asset_id": "CAPTAIN-01", "role": "identity", "must_not_control": ["camera", "bridge"]},
+        {"asset_id": "BRIDGE-01", "role": "scene", "must_not_control": ["face", "performance"]}
+      ]
+    }
+  ],
+  "output_spec": {
+    "artifact_id": "JINGZAO-COMPILED-001",
+    "relative_path": "storyboard_specs/JINGZAO-COMPILED-001.json",
+    "sha256": "3333333333333333333333333333333333333333333333333333333333333333",
+    "prompt_manifest_id": "JINGZAO-PROMPTS-001",
+    "prompt_manifest_relative_path": "compiled_prompts/JINGZAO-PROMPTS-001.json",
+    "prompt_manifest_sha256": "4444444444444444444444444444444444444444444444444444444444444444"
+  },
+  "delivery_consumption": {
+    "route_id": "generation_authorization",
+    "adapter": "imagegen",
+    "status": "observed_unverified",
+    "consumed_spec_id": "JINGZAO-COMPILED-001",
+    "consumed_spec_sha256": "3333333333333333333333333333333333333333333333333333333333333333",
+    "generated": false,
+    "host_trace": {
+      "thread_id": "fixture-thread",
+      "prefix_bytes": 128,
+      "prefix_sha256": "5555555555555555555555555555555555555555555555555555555555555555"
+    },
+    "frame_outputs": [
+      {
+        "frame_id": "FRAME-S01",
+        "execution_receipt": {
+          "artifact_id": "IMAGEGEN-RECEIPT-001",
+          "relative_path": "imagegen_receipts/IMAGEGEN-RECEIPT-001.json",
+          "sha256": "6666666666666666666666666666666666666666666666666666666666666666"
+        },
+        "generated_artifact": {
+          "artifact_id": "FRAME-S01-v1",
+          "relative_path": "generated_frames/FRAME-S01-v1.png",
+          "sha256": "7777777777777777777777777777777777777777777777777777777777777777"
+        }
+      },
+      {
+        "frame_id": "FRAME-S02",
+        "execution_receipt": {
+          "artifact_id": "IMAGEGEN-RECEIPT-002",
+          "relative_path": "imagegen_receipts/IMAGEGEN-RECEIPT-002.json",
+          "sha256": "8888888888888888888888888888888888888888888888888888888888888888"
+        },
+        "generated_artifact": {
+          "artifact_id": "FRAME-S02-v1",
+          "relative_path": "generated_frames/FRAME-S02-v1.png",
+          "sha256": "9999999999999999999999999999999999999999999999999999999999999999"
+        }
+      }
+    ]
+  }
+}

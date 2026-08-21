@@ -327,6 +327,49 @@ subskills:
       - docs/film-preproduction/schemas/skill-orchestration.yaml
     next_skill: "root_router"
 
+external_compiler_handoffs:
+  storyboard_frame_to_jingzao_v1:
+    owner: "dircreative"
+    provider: "jingzao-image-forge"
+    reference: "skills/dircreative/references/storyboard-frame-to-jingzao.md"
+    schema: "docs/film-preproduction/schemas/storyboard-frame-to-jingzao.schema.json"
+    validator: "scripts/dircreative_storyboard_frame_handoff.py"
+    inputs:
+      - canonical_shot_and_timecode
+      - frame_tension_contract
+      - canonical_assets_and_states
+      - reference_roles_and_sovereignty
+      - target_image_surface
+    outputs:
+      - jingzao_visual_generation_spec
+      - compiled_frame_prompt
+      - ordered_reference_call_plan
+      - asset_truth_and_director_frame_qa_targets
+    downstream_owner: "image-prompt-compiler"
+    external_side_effect: false
+
+  script_to_seedance_v1:
+    owner: "dircreative"
+    provider: "convert-script-to-seedance"
+    reference: "skills/dircreative/references/script-to-seedance.md"
+    schema: "docs/film-preproduction/schemas/script-to-seedance-handoff.schema.json"
+    inputs:
+      - authoritative_script_scope
+      - canonical_shot_ids_and_timecodes
+      - generation_units_and_handoff_states
+      - entity_ownership
+      - continuity_locks
+      - asset_and_audio_slot_ledger
+      - provider_reference_limits
+      - exact_model_card_and_provider_surface
+    outputs:
+      - seedance_unit_prompts
+      - deterministic_slot_crosswalk
+      - continuity_snapshots
+      - split_or_missing_asset_blockers
+    downstream_owner: "video-model-adapter"
+    external_side_effect: false
+
 external_orchestrators:
   adco:
     caller_skill: "ad-creative-orchestrator"

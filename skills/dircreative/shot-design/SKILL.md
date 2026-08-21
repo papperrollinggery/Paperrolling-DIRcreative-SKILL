@@ -87,6 +87,18 @@ Use `skills/dircreative/assets/visualizations/stage-surface-registry.json#shot-d
 - Camera motion must name a physical start target and end target. Do not write only `slow push`, `camera follows`, or `cinematic movement`.
 - Composition must name foreground, midground, background, and the product/face/readable-text zone.
 - Composition must also name the visual center, subject hierarchy, negative space, movement room, leading lines or occlusion, perspective depth, screen direction, and the narrative purpose of the chosen grammar. Do not mechanically apply rule of thirds, center framing, or symmetry.
+- For every frame intended for storyboard generation, also lock viewer task and
+  viewer position, dominant/secondary read, frozen action phase, action vector
+  and counterforce, foreground/midground/background jobs, crop pressure,
+  parallax/occlusion, exaggeration budget with one protected anchor, and one
+  quiet region. These fields form the `storyboard_frame_to_jingzao_v1` handoff;
+  canonical assets constrain truth but do not flatten camera direction.
+- Apply those fields by `shot_class` and function. Static product, identity,
+  interview, dialogue, observation, or deliberately calm frames may set action
+  vector/counterforce, crop pressure, parallax, or exaggeration to
+  `not_applicable` with a concrete reason. Viewer task/position, dominant read,
+  depth organization, and camera motivation still remain explicit. Never invent
+  motion or resistance merely to fill the contract.
 - When a subject or camera moves, state which composition relationships stay locked and which change at the beat.
 - Shot cards must include conditional render-look cues for lighting, optics, atmosphere, and grade. Each enabled cue needs condition, effect, intensity, preserve, and exit/continuity; unused layers must be marked none by design.
 - Shot cards must give the image-prompt compiler concrete visual evidence for subject, blocking, environment, light, composition, camera, color/material, proportion, and generation intent.
@@ -94,6 +106,10 @@ Use `skills/dircreative/assets/visualizations/stage-surface-registry.json#shot-d
 - Lens choices must have a production reason, not just a focal length.
 - Model notes must say whether the shot is safe as a single video generation or should be split/converted into clean frames.
 - Do not approve generic phrases such as `cinematic close-up`, `warm lighting`, `hero shot`, or `worker drinks` unless the full shot card makes them production-specific.
+- Across a generated storyboard sequence, reject unmotivated repetition of
+  viewer position, subject/frame ratio, camera height, visual center, horizon,
+  attention path, and depth pattern. Do not impose a fixed wide/medium/close
+  quota; repeated grammar is valid only when motivated.
 - Do not write image or video prompts.
 
 ## skill_run_receipt

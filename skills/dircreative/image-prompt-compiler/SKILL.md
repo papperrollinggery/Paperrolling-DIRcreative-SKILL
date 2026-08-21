@@ -35,6 +35,8 @@ description: Compile JSON-first reference image prompts from visual bible, refer
 - `docs/film-preproduction/research/ai-video-prompt-community-lessons.md`
 - `docs/film-preproduction/sources/model-sources.yaml`
 - `docs/film-preproduction/sources/prompt-sources.yaml`
+- `skills/dircreative/references/storyboard-frame-to-jingzao.md` only when the
+  selected Skill Stack scenario is `cinematic_storyboard_frames`
 
 ## Inputs
 
@@ -75,6 +77,13 @@ Use `skills/dircreative/assets/visualizations/stage-surface-registry.json#image-
 ## Rules
 
 - Author prompts as JSON-first configs.
+- For cinematic storyboard or clean narrative frames, DIR may hand frame-level
+  craft ownership to `jingzao-image-forge` through
+  `storyboard_frame_to_jingzao_v1`. Pass the complete shot-tension contract and
+  ordered canonical references; consume the compiled spec/prompt back into the
+  DIR manifest. Do not paraphrase Jingzao's craft rules, claim it was used
+  without an isolated full-body read, or let asset identity sheets choose a
+  neutral catalog composition.
 - Resolve the exact image capability card, version, status, provider surface, source tier, and accessed date before naming generation/edit/reference/output behavior. Reject family aliases, `latest`, stale cards, S4-only evidence, workflow-only cards, and deprecated defaults.
 - Select `operation: generate | edit | retry`. `edit` requires a real input image plus non-overlapping `preserve` and `change` sets; `retry` changes one production variable and records the observed failure.
 - Run the rights gate for every input/reference image, likeness, brand, character, logo, and exact text asset. Unverified/blocked rights force prompt-only and block external upload as well as assisted generation.

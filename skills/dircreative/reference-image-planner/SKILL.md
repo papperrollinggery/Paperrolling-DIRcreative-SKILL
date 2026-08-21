@@ -76,12 +76,37 @@ Use `skills/dircreative/assets/visualizations/stage-surface-registry.json#refere
 - Run the rights gate before proposing any direct image, video, audio, character, element, likeness, voice, brand, character, or music input. Unverified/blocked assets remain planning-only.
 - Before any prompt or generation step for a client-facing film, create a per-shot asset/reference contract. Each shot must name source decision, source status, usage page or shot, planning/direct-input role, and blocker status.
 - If the user says existing browser, Grok, ChatGPT, ImageGen, downloaded, or local images exist, complete browser/local intake before declaring missing assets or writing replacement prompts. If intake tooling is unavailable, record `TOOL_BLOCKED` and the manual intake needed.
+- A supplied or generated storyboard sequence without bound source assets is
+  `planning_only`, even when faces, vehicles, props, or locations look similar.
+  Audit recoverable visible facts, then derive missing identity, production-
+  design, geography/FOV, and critical-prop references before clean frames.
+- Use the `asset_foundation` Skill Stack scenario for that planning pass. Keep
+  character continuity, production design, camera geography, constraint-input,
+  material, and post-generation consistency responsibilities distinct; do not
+  load every provider into one stage.
+- Split human planning boards from model layout references. A narrative frame
+  or labeled board cannot become an identity source, clean frame, or model
+  reference without an explicit promotion receipt, narrower role, and
+  independent QA. Composition evidence never outranks identity or vehicle
+  topology.
+- Resolve the selected provider's current `max_references` before prompt-ready
+  status. If a unit exceeds it, preserve explicit reference sovereignty and
+  merge only assets that already bind the same identity/state contract; never
+  discover the limit at generation time or silently drop a reference.
 - Hero, acting, movement, or expression-critical shots must include a reference video, reference clip, or explicit motion note. Music/video sources must keep source, usage, and lock status so later versions cannot drop them.
 - For assisted generation, lock visual truth in this order: character identity, scene geography/camera FOV, professional storyboard/motion page, then selected clean frames.
 - Character consistency and scene consistency are mandatory. Do not batch-generate multiple boards that independently reinterpret the same character or location.
 - Prefer a minimal V2 pack when drift risk is high: one character identity reference, one scene geography + camera FOV atlas, one professional storyboard/motion page, then optional clean first/end frames.
 - Scene geography boards should be a single atlas when possible: panoramic or 360-degree environment, top-down route map, shot camera positions, FOV wedges, subject path, and vehicle path.
 - Repeated character or scene content must inherit from the locked source asset; repetition must not introduce new face, wardrobe, prop, street, vehicle, or light-source facts.
+- Model irreversible state families explicitly: damage, shield, core, door,
+  helmet, prop, and vehicle states need legal transitions and cannot reset in a
+  later clean frame.
+- A clean frame is not an identity-board beauty shot. It must pass both asset
+  truth and director-frame quality. When `jingzao-image-forge` is available,
+  export the approved shot card, canonical asset roles, camera_action evidence,
+  state, and target surface through `storyboard_frame_to_jingzao_v1`; do not
+  replace that provider with a generic centered prompt.
 - Shot count and image count are dynamic. Do not force three clean frames or one image per shot by default.
 - Before planning frames, choose a reference strategy: `all_reference_sequence`, `hybrid`, `per_shot_i2v`, or `minimal_test`.
 - For fast 15-second work, allow more shots and more clean frames when the edit rhythm needs them.

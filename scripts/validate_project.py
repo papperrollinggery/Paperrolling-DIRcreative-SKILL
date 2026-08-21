@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
 import os
@@ -14,6 +15,8 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
+ALLOW_DEVELOPMENT_INSTALL = False
+INSTALLED_PACKAGE_VALIDATION = False
 sys.dont_write_bytecode = True
 PLACEHOLDER_RE = re.compile(r"TB[D]|TO[D]O|待[定]|占[位]|x[x]x|FIX[ME]")
 THREAD_CONTRACT_TEXT_PATHS = [
@@ -320,6 +323,8 @@ def validate_required_paths() -> None:
         "docs/film-preproduction/schemas/adco-specialist-receipt-v2.schema.json",
         "docs/film-preproduction/schemas/media-forward-execution-v2.schema.json",
         "docs/film-preproduction/schemas/media-visual-review-v1.schema.json",
+        "docs/film-preproduction/schemas/script-to-seedance-handoff.schema.json",
+        "docs/film-preproduction/schemas/storyboard-frame-to-jingzao.schema.json",
         "skills/dircreative/agents/openai.yaml",
         "skills/dircreative/runtime/routing-policy.yaml",
         "skills/dircreative/runtime/visual-skill-policy.json",
@@ -334,12 +339,18 @@ def validate_required_paths() -> None:
         "skills/dircreative/references/prompt-model.md",
         "skills/dircreative/references/generation-delivery.md",
         "skills/dircreative/references/specialist-exchange.md",
+        "skills/dircreative/references/script-to-seedance.md",
+        "skills/dircreative/references/storyboard-frame-to-jingzao.md",
         "skills/dircreative/references/visual-skill-stack.md",
         "tests/fixtures/activation-policy/cases.json",
         "tests/fixtures/activation-policy/valid-adco-v2-handoff.json",
         "tests/fixtures/routing/cases.json",
         "tests/fixtures/skill-stack/cases.json",
         "tests/fixtures/skill-stack/host-catalog.json",
+        "tests/fixtures/script-to-seedance/valid-handoff.json",
+        "tests/fixtures/script-to-seedance/cases.json",
+        "tests/fixtures/storyboard-frame-jingzao/valid-chain.json",
+        "tests/fixtures/storyboard-frame-jingzao/cases.json",
         "tests/fixtures/headless-runtime/cases.json",
         "tests/fixtures/headless-runtime/expected/fast-copy-revision.md",
         "tests/fixtures/headless-runtime/expected/studio-complete-film.md",
@@ -483,6 +494,8 @@ def validate_required_paths() -> None:
         "scripts/dircreative_route.py",
         "scripts/dircreative_context_budget_audit.py",
         "scripts/dircreative_skill_stack.py",
+        "scripts/dircreative_script_to_seedance_handoff.py",
+        "scripts/dircreative_storyboard_frame_handoff.py",
         "scripts/dircreative_run.py",
         "scripts/dircreative_demo.py",
         "scripts/dircreative_readiness_audit.py",
@@ -1541,10 +1554,10 @@ def validate_skill_stack() -> None:
     require(proc.returncode == 0, f"Skill Stack audit failed:\n{proc.stderr}\n{proc.stdout}")
     for marker in [
         "DIRCREATIVE_SKILL_STACK_AUDIT: PASS",
-        '"positive_cases": 44',
-        '"negative_cases": 16',
-        '"scenario_count": 38',
-        '"realistic_smoke_cases": 16',
+        '"positive_cases": 47',
+        '"negative_cases": 21',
+        '"scenario_count": 41',
+        '"realistic_smoke_cases": 19',
         '"two_phase_host_binding": true',
         '"trusted_primary_route_controls": true',
         '"artifact_output_guard_controls": true',
@@ -1556,6 +1569,8 @@ def validate_skill_stack() -> None:
         '"unverified_cost_adapter_blocked": true',
         '"delivery_single_body_reservation": true',
         '"isolated_execution_adapter_budget_bytes": 24576',
+        '"isolated_craft_context_budget_bytes": 131072',
+        '"isolated_validator_context_budget_bytes": 65536',
         '"host_managed_imagegen_path": true',
     ]:
         require(marker in proc.stdout, f"Skill Stack audit missing marker: {marker}")
@@ -1619,6 +1634,43 @@ def validate_visual_asset_plan() -> None:
         '"duplicate_identity_negative_control": true',
     ]:
         require(marker in proc.stdout, f"visual asset plan audit missing evidence: {marker}")
+
+
+def validate_script_to_seedance_handoff() -> None:
+    proc = run(["python3", "scripts/dircreative_script_to_seedance_handoff.py", "self-test"])
+    require(
+        proc.returncode == 0,
+        f"script-to-Seedance handoff audit failed:\n{proc.stderr}\n{proc.stdout}",
+    )
+    for marker in [
+        "DIRCREATIVE_SCRIPT_TO_SEEDANCE_HANDOFF_AUDIT: PASS",
+        '"valid_fixture_passed": true',
+        '"negative_case_count": 30',
+        '"negative_cases_rejected": 30',
+        '"generation_unit_count": 2',
+    ]:
+        require(marker in proc.stdout, f"script-to-Seedance handoff audit missing marker: {marker}")
+
+
+def validate_storyboard_frame_handoff() -> None:
+    proc = run(["python3", "scripts/dircreative_storyboard_frame_handoff.py", "self-test"])
+    require(
+        proc.returncode == 0,
+        f"storyboard-frame handoff audit failed:\n{proc.stderr}\n{proc.stdout}",
+    )
+    for marker in [
+        "DIRCREATIVE_STORYBOARD_FRAME_HANDOFF_AUDIT: PASS",
+        '"valid_fixture_passed": true',
+        '"frame_count": 2',
+        '"reference_read_count": 6',
+        '"negative_case_count": 15',
+        '"negative_cases_rejected": 15',
+        '"delivery_provenance_bound": true',
+        '"generation_claim_allowed": false',
+        '"planned_prompt_manifest_controls": true',
+        '"production_observation_fixture_passed": true',
+    ]:
+        require(marker in proc.stdout, f"storyboard-frame handoff audit missing marker: {marker}")
 
 
 def validate_workspace_hygiene_runtime() -> None:
@@ -5153,6 +5205,25 @@ def validate_release_gate_script() -> None:
         "formal release gate must bind formal installation to the expected tag",
     )
     require(
+        "--allow-development-install"
+        in captured_commands.get("installed skill validation", []),
+        "pre-artifact installed validation must explicitly identify the development install",
+    )
+    require(
+        "--installed-package" in captured_commands.get("installed skill validation", []),
+        "pre-artifact installed validation must use installed-package mode",
+    )
+    require(
+        "--allow-development-install"
+        not in captured_commands.get("release artifact installed validation", []),
+        "formal artifact validation must not relax release metadata requirements",
+    )
+    require(
+        "--installed-package"
+        in captured_commands.get("release artifact installed validation", []),
+        "formal artifact validation must use installed-package mode",
+    )
+    require(
         release_gate.sealed_head_unchanged("a" * 40, reader=lambda: "b" * 40) is False,
         "release gate must reject a final HEAD that differs from the sealed commit",
     )
@@ -5489,6 +5560,100 @@ def validate_chat_surface_audit() -> None:
     require("exposes internal production state before 客户可见预览" in invalid_preview.stdout, "customer preview fixture failed for the wrong reason")
 
 
+def installed_metadata_errors(root: Path, *, allow_development_install: bool) -> list[str]:
+    installed_runtime_layout = (root / "SKILL.md").is_file() and not (
+        root / "skills/dircreative/SKILL.md"
+    ).exists()
+    if not installed_runtime_layout:
+        return []
+    metadata_path = root / "RELEASE-METADATA.json"
+    if not metadata_path.is_file():
+        return [] if allow_development_install else [
+            "formal installed layout requires RELEASE-METADATA.json"
+        ]
+    try:
+        metadata = load_json(metadata_path)
+    except (json.JSONDecodeError, OSError) as exc:
+        return [f"installed release metadata is unreadable: {exc}"]
+    if not isinstance(metadata, dict):
+        return ["installed release metadata must be an object"]
+    try:
+        version = (root / "VERSION").read_text(encoding="utf-8").strip()
+        root_skill_sha256 = hashlib.sha256((root / "SKILL.md").read_bytes()).hexdigest()
+    except OSError as exc:
+        return [f"installed release metadata inputs are unreadable: {exc}"]
+    expected_fields = {
+        "schema_version",
+        "product",
+        "version",
+        "tag",
+        "commit_sha",
+        "commit_timestamp",
+        "root_skill_sha256",
+        "source",
+        "release_status",
+    }
+    errors: list[str] = []
+    if set(metadata) != expected_fields:
+        errors.append("installed release metadata field set mismatch")
+    required_metadata = {
+        "schema_version": "1.1.0",
+        "product": "DIRcreative",
+        "version": version,
+        "tag": f"v{version}",
+        "source": "git archive of exact commit",
+        "root_skill_sha256": root_skill_sha256,
+    }
+    for key, expected in required_metadata.items():
+        if metadata.get(key) != expected:
+            errors.append(f"installed release metadata {key} mismatch")
+    if not isinstance(metadata.get("commit_sha"), str) or re.fullmatch(
+        r"[0-9a-f]{40}", metadata.get("commit_sha", "")
+    ) is None:
+        errors.append("installed release metadata commit_sha is invalid")
+    timestamp = metadata.get("commit_timestamp")
+    try:
+        parsed_timestamp = datetime.fromisoformat(str(timestamp).replace("Z", "+00:00"))
+    except ValueError:
+        parsed_timestamp = None
+    if parsed_timestamp is None or parsed_timestamp.tzinfo is None:
+        errors.append("installed release metadata commit_timestamp is invalid")
+    if metadata.get("release_status") not in {
+        "UNPUBLISHED_LOCAL_CANDIDATE",
+        "CANONICAL_REMOTE_TAG",
+    }:
+        errors.append("installed release metadata release_status is invalid")
+    return errors
+
+
+def validate_installed_metadata() -> None:
+    errors = installed_metadata_errors(
+        ROOT,
+        allow_development_install=ALLOW_DEVELOPMENT_INSTALL,
+    )
+    require(not errors, errors[0] if errors else "installed metadata validation failed")
+    installed_runtime_layout = (ROOT / "SKILL.md").is_file() and not (
+        ROOT / "skills/dircreative/SKILL.md"
+    ).exists()
+    metadata_path = ROOT / "RELEASE-METADATA.json"
+    if installed_runtime_layout and metadata_path.is_file():
+        self_attestation_proc = run(
+            [
+                "python3",
+                "scripts/dircreative_install_parity.py",
+                "--target",
+                str(ROOT),
+                "--source-root",
+                str(ROOT),
+            ]
+        )
+        require(
+            self_attestation_proc.returncode != 0
+            and "an installed copy cannot certify itself" in self_attestation_proc.stdout,
+            "installed layout must keep parity self-attestation fail-closed",
+        )
+
+
 def validate_install_parity_audit() -> None:
     from dircreative_package_layout import (
         HOST_USER_PATH_RE,
@@ -5524,65 +5689,52 @@ def validate_install_parity_audit() -> None:
         PACKAGE_RUNTIME_FILES == [".dircreative/checkpoints/.keep", ".dircreative/runs/.keep"],
         "release package runtime allowlist must contain only empty lifecycle sentinels",
     )
-    installed_runtime_layout = (ROOT / "SKILL.md").is_file() and not (
-        ROOT / "skills/dircreative/SKILL.md"
-    ).exists()
-    if installed_runtime_layout:
-        metadata_path = ROOT / "RELEASE-METADATA.json"
-        require(metadata_path.is_file(), "formal installed layout requires RELEASE-METADATA.json")
-        metadata = load_json(metadata_path)
-        version = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
-        required_metadata = {
+    with tempfile.TemporaryDirectory(prefix="dircreative-metadata-mode-") as temp_dir:
+        installed_root = Path(temp_dir)
+        (installed_root / "SKILL.md").write_text("fixture skill\n", encoding="utf-8")
+        (installed_root / "VERSION").write_text("9.9.9\n", encoding="utf-8")
+        require(
+            installed_metadata_errors(installed_root, allow_development_install=False)
+            == ["formal installed layout requires RELEASE-METADATA.json"],
+            "metadata-free installed layout must fail formal validation",
+        )
+        require(
+            not installed_metadata_errors(installed_root, allow_development_install=True),
+            "metadata-free installed layout must pass only explicit development mode",
+        )
+        valid_metadata = {
             "schema_version": "1.1.0",
             "product": "DIRcreative",
-            "version": version,
-            "tag": f"v{version}",
+            "version": "9.9.9",
+            "tag": "v9.9.9",
+            "commit_sha": "a" * 40,
+            "commit_timestamp": "2026-08-21T00:00:00Z",
+            "root_skill_sha256": hashlib.sha256((installed_root / "SKILL.md").read_bytes()).hexdigest(),
             "source": "git archive of exact commit",
-            "root_skill_sha256": hashlib.sha256((ROOT / "SKILL.md").read_bytes()).hexdigest(),
+            "release_status": "UNPUBLISHED_LOCAL_CANDIDATE",
         }
+        metadata_path = installed_root / "RELEASE-METADATA.json"
+        metadata_path.write_text(json.dumps(valid_metadata) + "\n", encoding="utf-8")
         require(
-            set(metadata)
-            == {
-                "schema_version",
-                "product",
-                "version",
-                "tag",
-                "commit_sha",
-                "commit_timestamp",
-                "root_skill_sha256",
-                "source",
-                "release_status",
-            },
-            "installed release metadata field set mismatch",
+            not installed_metadata_errors(installed_root, allow_development_install=False),
+            "valid formal metadata must pass installed validation",
         )
-        for key, expected in required_metadata.items():
-            require(metadata.get(key) == expected, f"installed release metadata {key} mismatch")
+        invalid_metadata = dict(valid_metadata)
+        invalid_metadata["unexpected"] = True
+        metadata_path.write_text(json.dumps(invalid_metadata) + "\n", encoding="utf-8")
         require(
-            isinstance(metadata.get("commit_sha"), str)
-            and re.fullmatch(r"[0-9a-f]{40}", metadata["commit_sha"]) is not None,
-            "installed release metadata commit_sha is invalid",
+            "installed release metadata field set mismatch"
+            in installed_metadata_errors(installed_root, allow_development_install=True),
+            "development flag must not weaken present formal metadata validation",
         )
+        invalid_metadata = dict(valid_metadata)
+        invalid_metadata["release_status"] = "DEVELOPMENT"
+        metadata_path.write_text(json.dumps(invalid_metadata) + "\n", encoding="utf-8")
         require(
-            metadata.get("release_status")
-            in {"UNPUBLISHED_LOCAL_CANDIDATE", "CANONICAL_REMOTE_TAG"},
-            "installed release metadata release_status is invalid",
+            "installed release metadata release_status is invalid"
+            in installed_metadata_errors(installed_root, allow_development_install=False),
+            "installed metadata must reject unknown release status",
         )
-        self_attestation_proc = run(
-            [
-                "python3",
-                "scripts/dircreative_install_parity.py",
-                "--target",
-                str(ROOT),
-                "--source-root",
-                str(ROOT),
-            ]
-        )
-        require(
-            self_attestation_proc.returncode != 0
-            and "an installed copy cannot certify itself" in self_attestation_proc.stdout,
-            "installed layout must keep parity self-attestation fail-closed",
-        )
-        return
     installer_text = require_path("scripts/install_local_skill.py").read_text(encoding="utf-8")
     installer_terms = [
         "tempfile.mkdtemp",
@@ -6294,6 +6446,28 @@ def validate_prompt_system_fixture() -> None:
 
 
 def main() -> int:
+    global ALLOW_DEVELOPMENT_INSTALL, INSTALLED_PACKAGE_VALIDATION
+    parser = argparse.ArgumentParser(description="Validate the DIRcreative source or installed package.")
+    parser.add_argument(
+        "--allow-development-install",
+        action="store_true",
+        help="Allow only a metadata-free non-formal staging install; formal metadata remains strict.",
+    )
+    parser.add_argument(
+        "--installed-package",
+        action="store_true",
+        help="Validate installed runtime behavior; source-only parity is verified by the caller.",
+    )
+    args = parser.parse_args()
+    installed_runtime_layout = (ROOT / "SKILL.md").is_file() and not (
+        ROOT / "skills/dircreative/SKILL.md"
+    ).exists()
+    if args.allow_development_install and not args.installed_package:
+        parser.error("--allow-development-install requires --installed-package")
+    if args.installed_package and not installed_runtime_layout:
+        parser.error("--installed-package requires an installed runtime layout")
+    ALLOW_DEVELOPMENT_INSTALL = args.allow_development_install
+    INSTALLED_PACKAGE_VALIDATION = args.installed_package
     checks = [
         ("required paths", validate_required_paths),
         ("YAML and JSON parse", validate_yaml_and_json_parse),
@@ -6320,6 +6494,8 @@ def main() -> int:
         ("activation policy", validate_activation_policy),
         ("routing and context budget", validate_context_budget),
         ("dynamic visual Skill Stack", validate_skill_stack),
+        ("script-to-Seedance handoff", validate_script_to_seedance_handoff),
+        ("storyboard-frame Jingzao handoff", validate_storyboard_frame_handoff),
         ("whole-film visual asset plan", validate_visual_asset_plan),
         ("workspace hygiene runtime", validate_workspace_hygiene_runtime),
         ("headless input-to-answer acceptance", validate_headless_acceptance),
@@ -6415,6 +6591,7 @@ def main() -> int:
         ("thread audit", validate_thread_audit),
         ("chat surface contract", validate_chat_surface_contract),
         ("chat surface order audit", validate_chat_surface_audit),
+        ("installed release metadata", validate_installed_metadata),
         ("install parity audit", validate_install_parity_audit),
         ("release distribution contract", validate_release_distribution_contract),
         ("specialized capability behavior audits", validate_specialized_capability_behavior_audits),
@@ -6429,6 +6606,8 @@ def main() -> int:
         ("release gate script", validate_release_gate_script),
         ("no media assets", validate_no_media_assets),
     ]
+    if INSTALLED_PACKAGE_VALIDATION:
+        checks = [item for item in checks if item[0] != "install parity audit"]
     try:
         for name, check in checks:
             check()

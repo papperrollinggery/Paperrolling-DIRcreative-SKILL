@@ -1,0 +1,110 @@
+{
+  "schema_version": "1.0",
+  "cases": [
+    {
+      "case_id": "delivery_spec_hash_mismatch",
+      "mutations": [
+        {"op": "replace", "path": "/delivery_consumption/consumed_spec_sha256", "value": "5555555555555555555555555555555555555555555555555555555555555555"}
+      ],
+      "expected_error": "delivery_spec_provenance_mismatch"
+    },
+    {
+      "case_id": "delivery_spec_id_mismatch",
+      "mutations": [
+        {"op": "replace", "path": "/delivery_consumption/consumed_spec_id", "value": "OTHER-SPEC"}
+      ],
+      "expected_error": "delivery_spec_provenance_mismatch"
+    },
+    {
+      "case_id": "action_frame_uses_na",
+      "mutations": [
+        {"op": "replace", "path": "/frames/0/action_vector_counterforce", "value": {"status": "not_applicable", "reason": "action omitted for convenience"}}
+      ],
+      "expected_error": "action_frame_dynamic_missing"
+    },
+    {
+      "case_id": "static_na_reason_is_generic",
+      "mutations": [
+        {"op": "replace", "path": "/frames/1/action_vector_counterforce", "value": {"status": "not_applicable", "reason": "not applicable"}}
+      ],
+      "expected_error": "dynamic_na_reason_invalid"
+    },
+    {
+      "case_id": "viewer_position_missing",
+      "mutations": [
+        {"op": "remove", "path": "/frames/1/viewer_position"}
+      ],
+      "expected_error": "schema_error"
+    },
+    {
+      "case_id": "reference_role_unknown_asset",
+      "mutations": [
+        {"op": "replace", "path": "/frames/0/reference_roles/1/asset_id", "value": "UNKNOWN-ASSET"}
+      ],
+      "expected_error": "reference_asset_coverage_invalid"
+    },
+    {
+      "case_id": "reference_path_duplicated",
+      "mutations": [
+        {"op": "replace", "path": "/reference_reads/1/relative_path", "value": "references/visual-spec.md"}
+      ],
+      "expected_error": "reference_read_duplicate"
+    },
+    {
+      "case_id": "output_owner_changed",
+      "mutations": [
+        {"op": "replace", "path": "/output_owner", "value": "jingzao-image-forge"}
+      ],
+      "expected_error": "schema_error"
+    },
+    {
+      "case_id": "reference_path_traversal",
+      "mutations": [
+        {"op": "replace", "path": "/reference_reads/0/relative_path", "value": "references/../../outside-secret.md"}
+      ],
+      "expected_error": "reference_path_invalid"
+    },
+    {
+      "case_id": "generated_without_execution_receipt",
+      "mutations": [
+        {"op": "remove", "path": "/delivery_consumption/frame_outputs/0/execution_receipt"}
+      ],
+      "expected_error": "schema_error"
+    },
+    {
+      "case_id": "generated_without_artifact_binding",
+      "mutations": [
+        {"op": "remove", "path": "/delivery_consumption/frame_outputs/0/generated_artifact"}
+      ],
+      "expected_error": "schema_error"
+    },
+    {
+      "case_id": "observed_outputs_status_is_planned",
+      "mutations": [
+        {"op": "replace", "path": "/delivery_consumption/status", "value": "planned"}
+      ],
+      "expected_error": "delivery_observation_status_invalid"
+    },
+    {
+      "case_id": "production_contract_requires_real_artifacts",
+      "mutations": [
+        {"op": "replace", "path": "/fixture_only", "value": false}
+      ],
+      "expected_error": "artifact_root_required"
+    },
+    {
+      "case_id": "generated_frame_coverage_incomplete",
+      "mutations": [
+        {"op": "replace", "path": "/delivery_consumption/frame_outputs/1/frame_id", "value": "FRAME-S01"}
+      ],
+      "expected_error": "output_frame_coverage_invalid"
+    },
+    {
+      "case_id": "handoff_cannot_self_claim_generated",
+      "mutations": [
+        {"op": "replace", "path": "/delivery_consumption/generated", "value": true}
+      ],
+      "expected_error": "schema_error"
+    }
+  ]
+}

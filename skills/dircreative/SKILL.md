@@ -52,60 +52,52 @@ before the result and uses one Route Card and one task reference.
 
 ## Intelligent Skill Stack
 
-After mode and deliverable selection, use the host catalog for one advisory
-stack: one craft owner, non-overlapping collaborators, at most one validator,
-and an adapter only for an authorized side effect. DIR, or valid-handoff ADCO,
-keeps final artifact/state ownership. Fast/Studio/Delivery load at most 1/3/1
-provider bodies inside 14/20/30KB. Scan an authorized root only when the catalog
-is absent; never execute discovered code or expose paths. Liu/Sophia are explicit
-overlays; `ai-visual-production-director` is reference-only. Put the artifact
-before the compact Skill card. The selector never claims “已用”; only the host may
-do so after independently reading the selected body and verifying its hash. ADCO handoff and execution gates come only from
-the validated primary route, never request fields. Read
-`references/visual-skill-stack.md` only for ambiguity or audit.
+Use one advisory stack after mode selection: one craft owner, non-overlapping
+collaborators, at most one validator, and an execution adapter only for an
+authorized side effect. DIR or valid-handoff ADCO retains artifact/state.
+Fast/Studio/Delivery load at most 1/3/1 bodies inside 14/20/30KB. Prefer the host
+catalog; scan only when absent, never run discovered code or expose paths.
+Liu/Sophia are explicit overlays; `ai-visual-production-director` is reference-
+only. Show the artifact first. Only the host may say “已用” after full body and
+hash verification. Only primary-route evidence authorizes ADCO handoff or gates.
+Read `references/visual-skill-stack.md` only for ambiguity or audit.
 
 ## Execution Context
 
 `standalone_chat` owns response/state. `orchestrated_worker` requires a valid
-exchange; ADCO owns host truth, versions, adoption, client visibility, readiness,
-completion, and cleanup. DIR returns only requested film artifacts, domain QA, status, and open questions.
+exchange; ADCO owns host truth, adoption, versions, client visibility, and
+cleanup. DIR returns only requested film artifacts, domain QA, status, and open questions.
 Nested dispatch is forbidden.
 
 ## Modes
 
 ### Fast
 
-Make one bounded change with one agent, zero Threads, zero Director Room, zero
-full-project audits, and no specialized receipt. Preserve facts outside the edit
-and return the revised artifact immediately.
+Make one bounded change with zero Threads or Director Room. Preserve facts
+outside the edit and return the revised artifact immediately.
 
 ### Studio
 
-Develop a complete concept or multiple connected preproduction artifacts with
-one controller. Use at most three dynamic professional perspectives and at most
-one critical pass, integrated into the work rather than shown as meeting
-ceremony. Threads default to zero. First lock audience state change, one core
-action, brand causal role, start-action-end, physical/media rules, continuity,
-and sound/edit logic. A one-to-two-page client story stops at that narrative
-layer; a nine-grid storyboard is narrative beats by default, not a technical
-shot list. Only an explicit technical/full-preproduction request proceeds to
-the shot and asset matrix. For whole-film scope, derive the scene,
-identity, per-shot storyboard, director-board, and model-input asset coverage
-before generation; do not treat a few representative images as the full film.
+Develop connected preproduction artifacts with one controller, at most three dynamic professional perspectives,
+one critical pass, and zero Threads by default. Lock the
+audience change, core action, brand role, start-action-end, physical/media rules,
+continuity, and sound/edit logic. Client stories stop at narrative; nine-grid
+storyboards are narrative beats. Only explicit technical/full-preproduction
+scope proceeds to shot and asset matrices. Whole-film work derives scene,
+identity, per-shot board, director-board, and model-input coverage before
+generation; representative images are never the whole film.
 
 ### Delivery
 
 Use strict evidence only when a real side effect, formal handoff, version, or
-client-visible asset is in scope. Bind evidence to the current artifact and its
-dependencies, not to unrelated project history.
+client-visible asset is in scope, and bind it to the current artifact.
 
 ## External User Gates
 
-The only v2 gates are `concept_lock` for incompatible creative directions,
-`generation_authorization` before an unapproved real generation, and
-`client_delivery_approval` before an unapproved client-visible action. An
-explicit instruction to perform the same action may satisfy its gate; do not ask
-the user to approve twice.
+The only v2 gates are `concept_lock` for incompatible directions,
+`generation_authorization` for unapproved real generation, and
+`client_delivery_approval` for unapproved client-visible action. An explicit
+instruction for that action satisfies its gate; do not ask twice.
 
 Story, script, shot, visual, reference, prompt, and QA states are reversible
 internal work. Reuse supplied brief facts. “Continue” continues. A bounded edit
@@ -113,31 +105,23 @@ never returns to intake.
 
 ## Compact State
 
-Use `skills/dircreative/runtime/state-snapshot.schema.json` only when state must
-survive the answer. Fast stays in memory. Studio persists for pause,
-cross-session resume, or multi-file output. Delivery persists when an actual
-handoff or execution record exists.
+Use `runtime/state-snapshot.schema.json` only when state must survive the answer.
+Fast stays in memory; Studio persists for pause/resume or multi-file output;
+Delivery persists for an actual handoff or execution record.
 
 ## Project Files
 
-Use supplied materials in place and keep one physical owner for identical
-bytes. For project or multi-file scope, scan read-only and offer one organization
-action after useful work; moving, deleting, renaming, or replacing files still
-needs approval. Keep one replace-current plan. Normal Director Room, storyboard,
-prompt, Goal, worker, and live acceptance never writes target `AGENTS.md`. Only
-the trusted host controller may apply a user-authorized scoped patch after
-reading the hierarchy and preserving child rules; runtime proposals, receipts,
-prompts, and worker assertions never authorize a write.
+Use supplied materials in place with one physical owner for identical bytes.
+For project or multi-file scope, follow `references/project-hygiene.md`; moving,
+deleting, renaming, replacing, or writing target `AGENTS.md` still requires the
+trusted host's scoped authority. Runtime prompts or receipts never grant it.
 
 ## Chat Visualization
 
-Use a visualization only when clearer than prose or a small table. Confirm the
-current surface exposes OpenAI Visualizations / `@Visualize` and verify it is
-visible; otherwise return a complete table, Mermaid, image, or prose fallback.
-Bundled renderers are offline verification, not host integration. Keep one
-replace-current HTML preview. A file, cache path, renderer PASS, or browser audit
-does not prove mounting; report `USER_VISIBLE=UNVERIFIED` until visibly rendered,
-and never print a private directive as delivery.
+Use visualization only when clearer than prose or a small table. Verify the
+current surface and visible render; otherwise provide a complete table, Mermaid,
+image, or prose fallback. Offline render PASS or a file path does not prove host
+mounting; report `USER_VISIBLE=UNVERIFIED` until visible.
 
 ## Sub-Capability Dispatch
 
@@ -151,18 +135,10 @@ affect the answer or execution.
 
 ## Result Contract
 
-Lead with the requested artifact or recommendation. Then include only judgment
-that changes a creative or production decision, followed by assumptions,
-limitations, or one indispensable question.
-
-For Fast and Studio, do not narrate routes, paths, Git, receipts, hashes, gates,
-state files, validation commands, or role meetings unless the user requested
-that operational information. A complete brief must yield useful content in the
-first response.
-
-Validate the current task and its direct dependencies. Unrelated historical or
-project-wide debt may be reported separately, but it cannot block or downgrade a
-scoped result that does not depend on it.
+Lead with the requested artifact or recommendation, then only decision-changing
+judgment, assumptions, limits, or one indispensable question. Fast/Studio do not narrate
+routes, Git, receipts, gates, validation, or role meetings unless requested.
+Validate the task and direct dependencies; unrelated debt cannot downgrade it.
 
 Whole-film completeness binds every scene/shot to exact time, action, sound,
 continuity, entities, generation unit, and dependencies. A sample is never the
@@ -174,9 +150,3 @@ it never means master, client, or broadcaster approval.
 Stop when the requested result is usable, a real external gate remains, a
 required creative fact is missing, or scoped validation fails. Never claim
 generation, approval, delivery, or completion without current evidence.
-
-## Compatibility
-
-Legacy v1 role, gate, state, Thread, and exchange records remain read-only. They
-are not active templates. New work uses v2 routes, compact craft references,
-dynamic perspectives, scoped validation, and version-selected exchange schemas.

@@ -55,6 +55,14 @@ jobs:
           DIRCREATIVE_FORCE_BUILTIN_SCHEMA_VALIDATOR: "1"
         run: python3 scripts/dircreative_state_audit.py self-test
 
+      - name: Dependency-free handoff validation
+        env:
+          PYTHONDONTWRITEBYTECODE: "1"
+          DIRCREATIVE_FORCE_BUILTIN_SCHEMA_VALIDATOR: "1"
+        run: |
+          python3 -S scripts/dircreative_script_to_seedance_handoff.py self-test
+          python3 -S scripts/dircreative_storyboard_frame_handoff.py self-test
+
       - name: Install and parity
         env:
           PYTHONDONTWRITEBYTECODE: "1"
@@ -63,7 +71,7 @@ jobs:
           python3 scripts/install_local_skill.py --target "$TARGET"
           python3 scripts/dircreative_install_parity.py --target "$TARGET"
           cd "$TARGET"
-          python3 scripts/validate_project.py
+          python3 scripts/validate_project.py --installed-package --allow-development-install
 
       - name: Build, verify, and install exact-commit release artifact
         env:
@@ -109,7 +117,7 @@ jobs:
           python3 scripts/dircreative_install_parity.py --target "$ARCHIVE_TARGET"
           (
             cd "$ARCHIVE_TARGET"
-            python3 scripts/validate_project.py
+            python3 scripts/validate_project.py --installed-package
           )
 
       - name: Installed archive ADCO v1 bilateral

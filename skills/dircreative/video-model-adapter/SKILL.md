@@ -34,6 +34,9 @@ description: Convert shot list and reference pack into exact-card Sora, Seedance
 - `docs/film-preproduction/schemas/sequence-plan.yaml`
 - `docs/film-preproduction/schemas/longform-reference-pack.yaml`
 - `docs/film-preproduction/sources/model-sources.yaml`
+- `docs/film-preproduction/schemas/script-to-seedance-handoff.schema.json`
+- `skills/dircreative/references/script-to-seedance.md` only when the selected
+  Skill Stack scenario is `script_to_seedance`
 
 ## Inputs
 
@@ -75,6 +78,14 @@ Use `skills/dircreative/assets/visualizations/stage-surface-registry.json#video-
 ## Rules
 
 - Use different prompt strategies per model.
+- When `convert-script-to-seedance` is selected, apply
+  `script_to_seedance_v1`: pass only locked authoritative script, canonical
+  shots/timecodes, generation units, entity ownership, continuity, asset ledger,
+  audio policy, and exact model surface. Consume its unit prompts and slot ledger
+  back into the DIR manifest; do not accept a second creative pass. Validate the
+  machine packet before export. Only available/attached bindings enter prompts;
+  planned audio, human-only boards, over-budget reference sets, illegal state
+  transitions, and mismatched global/local slot numbers fail closed.
 - Resolve `capability_card_id + version + provider_surface` before naming reference modes, duration, native audio, edit, extension, or upload slots. Reject family aliases, `latest`, stale cards, S4-only evidence, workflow-only cards, deprecated defaults, and preview aliases when a stable endpoint is current.
 - Preserve `verified_on`, `accessed_on`, source tier/URLs, status/deprecation, and official-source conflicts in the manifest. If the live execution surface differs from the card or a conflict remains material, stay prompt-only.
 - Run the rights gate before binding image, video, audio, character, element, likeness, voice, brand/character, or music inputs. Unverified/blocked rights prevent generation and external upload.

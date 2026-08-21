@@ -78,7 +78,10 @@ REALISTIC_SMOKE_EXPECTED = {
     "p26_sound_design": ("cinematic-music-sound-design", 1, "ready", None),
     "p42_authorized_generation_adapter": ("dircreative", 1, "ready", None),
     "p44_score_mix_reuses_loaded_body": ("score-and-mix-picture", 1, "ready", None),
-    "n12_candidate_pool_capped": ("dircreative", 0, "ready", None),
+    "p45_asset_foundation": ("production-design-worldbuilding", 1, "needs_followup", None),
+    "p46_script_to_seedance": ("convert-script-to-seedance", 2, "ready", None),
+    "p47_cinematic_storyboard_frames": ("jingzao-image-forge", 1, "ready", None),
+    "n12_candidate_pool_capped": ("creative-anchor-director", 1, "ready", None),
 }
 REALISTIC_BODY_PAD = {
     "creative-anchor-director": 5800,
@@ -92,6 +95,33 @@ REALISTIC_BODY_PAD = {
     "cinematic-music-sound-design": 4000,
     "imagegen": 19000,
     "score-and-mix-picture": 9950,
+    "convert-script-to-seedance": 7680,
+    "production-design-worldbuilding": 4430,
+    "jingzao-image-forge": 28240,
+    "ai-video-prompt-preflight": 23600,
+}
+JINGZAO_REFERENCE_PAD = {
+    "references/visual-spec.md": 29007,
+    "references/prompt-compiler.md": 16154,
+    "references/reference-delivery.md": 6718,
+    "references/styleboard-mode.md": 6429,
+    "references/shot-tension-design.md": 5096,
+    "references/cinematic-shot-design.md": 7767,
+}
+HANDOFF_REQUIRED_CHAINS = {
+    "script_to_seedance_v1": [
+        "authoritative_script",
+        "shots",
+        "generation_units",
+        "bindings",
+        "prompt_units",
+    ],
+    "storyboard_frame_to_jingzao_v1": [
+        "input_spec",
+        "reference_reads",
+        "output_spec",
+        "delivery_consumption",
+    ],
 }
 
 
@@ -459,6 +489,10 @@ def validate_registry(registry: dict[str, Any]) -> list[str]:
             item.get("validators_max"),
         ) != (body_max, collaborators_max, validators_max):
             failures.append(f"{mode} Skill Stack cap drifted")
+    if modes.get("studio", {}).get("isolated_craft_context_bytes_max") != 131072:
+        failures.append("Studio isolated craft context must remain 128 KiB")
+    if modes.get("studio", {}).get("isolated_validator_context_bytes_max") != 65536:
+        failures.append("Studio isolated validator context must remain 64 KiB")
     if modes.get("delivery", {}).get("execution_adapter_context_bytes_max") != 24576:
         failures.append("Delivery isolated execution-adapter budget must remain 24 KiB")
     for overlay in ("liu-creative-workflow", "sophia-research-mode"):
@@ -481,6 +515,73 @@ def validate_registry(registry: dict[str, Any]) -> list[str]:
     fal_media = providers.get("fal-ai-media", {})
     if fal_media.get("may_cost_money") is not True:
         failures.append("external fal adapter lost its possible-cost boundary")
+    jingzao = providers.get("jingzao-image-forge", {})
+    if (
+        jingzao.get("context_cost") != "isolated_craft_contract"
+        or jingzao.get("provider_roles") != ["craft_owner"]
+        or jingzao.get("external_write") is not False
+        or jingzao.get("may_cost_money") is not False
+    ):
+        failures.append("Jingzao must remain a non-executing isolated craft owner")
+    prompt_preflight = providers.get("ai-video-prompt-preflight", {})
+    if prompt_preflight.get("validator_context_cost") != "isolated_validator_contract":
+        failures.append("video prompt preflight must retain isolated validator context")
+    handoff_contracts = registry.get("handoff_contracts")
+    if not isinstance(handoff_contracts, dict):
+        failures.append("handoff_contracts must be an object")
+        handoff_contracts = {}
+    for contract_id, contract in handoff_contracts.items():
+        if not isinstance(contract_id, str) or not ID_RE.fullmatch(contract_id):
+            failures.append(f"invalid handoff contract id: {contract_id!r}")
+            continue
+        if not isinstance(contract, dict):
+            failures.append(f"{contract_id}: handoff contract must be an object")
+            continue
+        if contract.get("source_owner") not in providers or contract.get("target_owner") not in providers:
+            failures.append(f"{contract_id}: handoff contract owner is not a registered provider")
+        if contract.get("authority") != "compile_only":
+            failures.append(f"{contract_id}: handoff contract must remain compile-only")
+        if contract.get("output_owner") != contract.get("source_owner"):
+            failures.append(f"{contract_id}: handoff output ownership must return to source owner")
+        if not isinstance(contract.get("required_inputs"), str) or not contract.get("required_inputs"):
+            failures.append(f"{contract_id}: handoff required inputs are missing")
+        if not isinstance(contract.get("slot_crosswalk"), str) or not contract.get("slot_crosswalk"):
+            failures.append(f"{contract_id}: handoff contract slot crosswalk is missing")
+        reference_pack = contract.get("reference_pack", [])
+        if not isinstance(reference_pack, list) or not all(
+            isinstance(item, str)
+            and item.startswith("references/")
+            and "\\" not in item
+            and ".." not in PurePosixPath(item).parts
+            for item in reference_pack
+        ):
+            failures.append(f"{contract_id}: invalid provider reference pack")
+        output_binding = contract.get("output_binding")
+        if not isinstance(output_binding, dict) or set(output_binding) != {
+            "schema",
+            "validator",
+            "required_chain",
+        }:
+            failures.append(f"{contract_id}: provider handoff output binding is malformed")
+        else:
+            if output_binding.get("required_chain") != HANDOFF_REQUIRED_CHAINS.get(contract_id):
+                failures.append(f"{contract_id}: provider handoff provenance chain drifted")
+            for key in ("schema", "validator"):
+                try:
+                    resolve_runtime_path(output_binding.get(key, ""))
+                except SkillStackError as exc:
+                    failures.append(f"{contract_id}: invalid output binding {key}: {exc}")
+        reference = contract.get("reference")
+        if not isinstance(reference, str):
+            failures.append(f"{contract_id}: handoff contract reference is missing")
+            continue
+        try:
+            contract_path = resolve_runtime_path(reference)
+        except SkillStackError as exc:
+            failures.append(f"{contract_id}: invalid handoff contract reference: {exc}")
+        else:
+            if not contract_path.is_file():
+                failures.append(f"{contract_id}: handoff contract reference is not a file")
     scenarios = registry.get("scenarios")
     if not isinstance(scenarios, list) or len(scenarios) < 30:
         failures.append("visual Skill policy must cover at least 30 high-frequency scenarios")
@@ -507,6 +608,15 @@ def validate_registry(registry: dict[str, Any]) -> list[str]:
         unknown = sorted(set(referenced) - set(providers))
         if unknown:
             failures.append(f"{scenario_id}: unknown providers {unknown}")
+        contract_id = scenario.get("handoff_contract_id")
+        if contract_id is not None and contract_id not in handoff_contracts:
+            failures.append(f"{scenario_id}: unknown handoff contract {contract_id!r}")
+        elif contract_id is not None:
+            target_owner = handoff_contracts[contract_id].get("target_owner")
+            if target_owner not in scenario.get("owner_candidates", []):
+                failures.append(f"{scenario_id}: handoff target is not an owner candidate")
+        if scenario.get("validator_required") is True and not scenario.get("validator_candidates"):
+            failures.append(f"{scenario_id}: required validator has no candidates")
     missing = registry.get("missing_legacy_handoffs")
     if missing != [
         "ai-video-prompt-director",
@@ -1064,6 +1174,50 @@ def select_stack(
         routing,
         include_required=mode == "delivery",
     )
+    handoff_contract_id = scenario.get("handoff_contract_id")
+    handoff_contract: dict[str, Any] | None = None
+    if handoff_contract_id is not None:
+        contract = registry.get("handoff_contracts", {}).get(handoff_contract_id)
+        if not isinstance(contract, dict):
+            raise SkillStackError(f"unknown handoff contract: {handoff_contract_id}")
+        handoff_contract = {
+            "contract_id": handoff_contract_id,
+            "contract_reference": contract["reference"],
+            "source_owner": contract["source_owner"],
+            "target_owner": contract["target_owner"],
+            "authority": contract["authority"],
+            "required_inputs": contract["required_inputs"],
+            "output_owner": contract["output_owner"],
+            "slot_crosswalk": contract["slot_crosswalk"],
+        }
+        if contract.get("reference_pack"):
+            handoff_contract["reference_pack"] = list(contract["reference_pack"])
+        if contract.get("output_binding"):
+            handoff_contract["output_binding"] = contract["output_binding"]
+        external_base_bytes += len(
+            json.dumps(handoff_contract, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+        )
+    handoff_read_requests: list[dict[str, Any]] = []
+    if handoff_contract is not None:
+        output_binding = handoff_contract.get("output_binding", {})
+        requested_paths = [
+            ("contract_reference", handoff_contract.get("contract_reference")),
+            ("output_schema", output_binding.get("schema")),
+            ("output_validator", output_binding.get("validator")),
+        ]
+        for role, relative_path in requested_paths:
+            path = resolve_runtime_path(str(relative_path))
+            payload = path.read_bytes()
+            handoff_read_requests.append(
+                {
+                    "role": role,
+                    "relative_path": str(relative_path),
+                    "sha256": hashlib.sha256(payload).hexdigest(),
+                    "bytes": len(payload),
+                    "context_scope": "isolated_handoff_contract",
+                    "host_action": "independent_full_read_hash_verify_and_apply_before_handoff",
+                }
+            )
     base_bytes, base_files = external_base_bytes, external_base_files
     budget = int(routing["performance_budgets"][mode]["loaded_context_bytes_max"])
     file_budget = int(routing["performance_budgets"][mode]["loaded_context_files_max"])
@@ -1164,6 +1318,7 @@ def select_stack(
     suggestions: list[str] = []
     reason_codes: list[str] = []
     materialization_failures: dict[str, str] = {}
+    reference_request_cache: dict[str, list[dict[str, Any]]] = {}
 
     def materialize(skill_id: str) -> bool:
         if skill_id == "dircreative":
@@ -1186,6 +1341,56 @@ def select_stack(
             return False
         catalog[skill_id] = loaded
         return True
+
+    def provider_reference_requests(skill_id: str) -> list[dict[str, Any]]:
+        if skill_id in reference_request_cache:
+            return reference_request_cache[skill_id]
+        if not handoff_contract or handoff_contract.get("target_owner") != skill_id:
+            reference_request_cache[skill_id] = []
+            return []
+        reference_pack = handoff_contract.get("reference_pack", [])
+        if not reference_pack:
+            reference_request_cache[skill_id] = []
+            return []
+        entry = catalog.get(skill_id)
+        if entry is None or entry.skill_file is None:
+            raise SkillStackError("isolated provider reference root is unavailable")
+        skill_root = entry.skill_file.parent
+        if skill_root.is_symlink():
+            raise SkillStackError("isolated provider reference root must not be a symlink")
+        resolved_root = skill_root.resolve(strict=True)
+        requests: list[dict[str, Any]] = []
+        for relative in reference_pack:
+            parsed = PurePosixPath(relative)
+            if parsed.is_absolute() or any(part in {"", ".", ".."} for part in parsed.parts):
+                raise SkillStackError("isolated provider reference path is invalid")
+            candidate = skill_root.joinpath(*parsed.parts)
+            cursor = skill_root
+            for part in parsed.parts:
+                cursor = cursor / part
+                metadata = cursor.lstat()
+                if stat.S_ISLNK(metadata.st_mode):
+                    raise SkillStackError("isolated provider reference path traverses a symlink")
+            resolved = candidate.resolve(strict=True)
+            if not resolved.is_relative_to(resolved_root):
+                raise SkillStackError("isolated provider reference path escapes provider root")
+            _text, data = _bounded_utf8(
+                resolved,
+                int(registry["discovery_contract"]["skill_body_bytes_max"]),
+                "isolated_provider_reference",
+            )
+            requests.append(
+                {
+                    "skill_id": skill_id,
+                    "relative_path": relative,
+                    "bytes": len(data),
+                    "sha256": digest_bytes(data),
+                    "context_scope": "isolated_craft_contract",
+                    "host_action": "primary_host_read_hash_verify_and_apply_when_provider_routes_here",
+                }
+            )
+        reference_request_cache[skill_id] = requests
+        return requests
 
     def eligible(skill_id: str, role: str) -> bool:
         if skill_id not in candidate_set and skill_id != "dircreative":
@@ -1212,16 +1417,80 @@ def select_stack(
         provider = providers[skill_id]
         entry = catalog.get(skill_id)
         slot = _slot(skill_id, role, provider, entry)
+        if role == "craft_owner" and provider.get("context_cost") == "isolated_craft_contract":
+            slot["context_scope"] = "isolated_craft_contract"
+        if (
+            role == "validator"
+            and scenario.get("validator_required") is True
+            and provider.get("validator_context_cost") == "isolated_validator_contract"
+        ):
+            slot["context_scope"] = "isolated_validator_contract"
         future = [*slots, slot]
         bodies = sum(1 for item in future if item["status"] in {"materialized", "eligible_after_gate"})
+        isolated_craft = [
+            item for item in future if item.get("context_scope") == "isolated_craft_contract"
+        ]
+        isolated_craft_bytes = sum(
+            int(item["body_bytes"]) + _metadata_bytes([item]) for item in isolated_craft
+        )
+        for item in isolated_craft:
+            try:
+                requests = provider_reference_requests(item["skill_id"])
+            except (OSError, SkillStackError) as exc:
+                materialization_failures[item["skill_id"]] = str(exc)
+                return False
+            isolated_craft_bytes += sum(int(request["bytes"]) for request in requests)
+            isolated_craft_bytes += len(
+                json.dumps(requests, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+            )
+        isolated_craft_budget = int(mode_contract.get("isolated_craft_context_bytes_max", 0))
+        isolated_validators = [
+            item for item in future if item.get("context_scope") == "isolated_validator_contract"
+        ]
+        isolated_validator_bytes = sum(
+            int(item["body_bytes"]) + _metadata_bytes([item]) for item in isolated_validators
+        )
+        isolated_validator_budget = int(
+            mode_contract.get("isolated_validator_context_bytes_max", 0)
+        )
         total_bytes = (
             base_bytes
             + candidate_metadata_bytes
-            + sum(int(item["body_bytes"]) for item in future)
-            + _metadata_bytes(future)
+            + sum(
+                int(item["body_bytes"])
+                for item in future
+                if item.get("context_scope")
+                not in {"isolated_craft_contract", "isolated_validator_contract"}
+            )
+            + _metadata_bytes(
+                [
+                    item
+                    for item in future
+                    if item.get("context_scope")
+                    not in {"isolated_craft_contract", "isolated_validator_contract"}
+                ]
+            )
         )
-        total_files = base_files + bodies
-        return bodies <= body_cap and total_bytes <= budget and total_files <= file_budget
+        main_bodies = bodies - len(isolated_craft) - len(isolated_validators)
+        total_files = base_files + main_bodies
+        return (
+            bodies <= body_cap
+            and total_bytes <= budget
+            and total_files <= file_budget
+            and len(isolated_craft) <= 1
+            and len(isolated_validators) <= 1
+            and (
+                not isolated_craft
+                or (bool(isolated_craft_budget) and isolated_craft_bytes <= isolated_craft_budget)
+            )
+            and (
+                not isolated_validators
+                or (
+                    bool(isolated_validator_budget)
+                    and isolated_validator_bytes <= isolated_validator_budget
+                )
+            )
+        )
 
     reserve_for_isolated_adapter = mode == "delivery" and bool(intent.get("real_side_effect")) and any(
         skill_id in candidate_set
@@ -1253,6 +1522,7 @@ def select_stack(
                 break
             if skill_id in catalog:
                 suggestions.append(skill_id)
+
     if owner_id is None:
         if intent.get("disable_dir_fallback"):
             reason_codes.append("no_eligible_craft_owner")
@@ -1272,6 +1542,8 @@ def select_stack(
     elif owner_id == "dircreative":
         base_bytes, base_files = internal_base_bytes, internal_base_files
     owner_slot = _slot(owner_id, "craft_owner", providers[owner_id], catalog.get(owner_id))
+    if providers[owner_id].get("context_cost") == "isolated_craft_contract":
+        owner_slot["context_scope"] = "isolated_craft_contract"
     if owner_id == "dircreative":
         trimmed = False
         while candidate_pool and (
@@ -1333,11 +1605,33 @@ def select_stack(
                 continue
             if eligible(skill_id, "validator") and can_add(skill_id, "validator"):
                 validator = _slot(skill_id, "validator", providers[skill_id], catalog[skill_id])
+                if (
+                    scenario.get("validator_required") is True
+                    and providers[skill_id].get("validator_context_cost")
+                    == "isolated_validator_contract"
+                ):
+                    validator["context_scope"] = "isolated_validator_contract"
                 slots.append(validator)
                 selected_ids.add(skill_id)
                 break
             if skill_id in catalog:
                 suggestions.append(skill_id)
+
+    requested_gaps = [item for item in intent.get("gaps", []) if isinstance(item, str)]
+    selected_capabilities = {
+        capability
+        for item in slots
+        for capability in providers[item["skill_id"]].get("capabilities", [])
+    }
+    covered_gaps = [gap for gap in requested_gaps if gap in selected_capabilities]
+    missing_gaps = [gap for gap in requested_gaps if gap not in selected_capabilities]
+    validation_required_missing = (
+        scenario.get("validator_required") is True and validator is None
+    )
+    if validation_required_missing:
+        reason_codes.append("required_validator_unavailable")
+    if scenario.get("requires_complete_gaps_before_downstream") is True and missing_gaps:
+        reason_codes.append("required_asset_foundation_gaps_missing")
 
     gate: str | None = None
     adapter: dict[str, Any] | None = None
@@ -1422,8 +1716,61 @@ def select_stack(
             )
         )
     )
-    provider_body_bytes = sum(int(item["body_bytes"]) for item in slots)
-    selected_metadata_bytes = _metadata_bytes(slots)
+    reference_read_requests = (
+        provider_reference_requests(owner_id)
+        if owner_slot.get("context_scope") == "isolated_craft_contract"
+        else []
+    )
+    isolated_craft_reference_bytes = sum(
+        int(request["bytes"]) for request in reference_read_requests
+    ) + (
+        len(
+            json.dumps(
+                reference_read_requests,
+                ensure_ascii=False,
+                separators=(",", ":"),
+            ).encode("utf-8")
+        )
+        if reference_read_requests
+        else 0
+    )
+    provider_body_bytes = sum(
+        int(item["body_bytes"])
+        for item in slots
+        if item.get("context_scope")
+        not in {"isolated_craft_contract", "isolated_validator_contract"}
+    )
+    selected_metadata_bytes = _metadata_bytes(
+        [
+            item
+            for item in slots
+            if item.get("context_scope")
+            not in {"isolated_craft_contract", "isolated_validator_contract"}
+        ]
+    )
+    isolated_craft_context_bytes = sum(
+        int(item["body_bytes"]) + _metadata_bytes([item])
+        for item in slots
+        if item.get("context_scope") == "isolated_craft_contract"
+    ) + isolated_craft_reference_bytes
+    isolated_validator_context_bytes = sum(
+        int(item["body_bytes"]) + _metadata_bytes([item])
+        for item in slots
+        if item.get("context_scope") == "isolated_validator_contract"
+    )
+    isolated_handoff_context_bytes = sum(
+        int(item["bytes"]) for item in handoff_read_requests
+    ) + (
+        len(
+            json.dumps(
+                handoff_read_requests,
+                ensure_ascii=False,
+                separators=(",", ":"),
+            ).encode("utf-8")
+        )
+        if handoff_read_requests
+        else 0
+    )
     execution_adapter_context_bytes = (
         int(adapter["body_bytes"]) + _metadata_bytes([adapter])
         if adapter is not None and adapter.get("context_scope") == "isolated_host_tool_contract"
@@ -1432,6 +1779,16 @@ def select_stack(
     total_context_bytes = base_bytes + candidate_metadata_bytes + provider_body_bytes + selected_metadata_bytes
     if total_context_bytes > budget:
         raise SkillStackError("selected stack exceeds total context budget")
+    if isolated_craft_context_bytes > int(mode_contract.get("isolated_craft_context_bytes_max", 0)):
+        raise SkillStackError("selected isolated craft context exceeds its budget")
+    if isolated_validator_context_bytes > int(
+        mode_contract.get("isolated_validator_context_bytes_max", 0)
+    ):
+        raise SkillStackError("selected isolated validator context exceeds its budget")
+    if isolated_handoff_context_bytes > int(
+        mode_contract.get("isolated_handoff_context_bytes_max", 0)
+    ):
+        raise SkillStackError("selected isolated handoff context exceeds its budget")
     if len(loaded_body_ids) > body_cap:
         raise SkillStackError("selected stack exceeds provider body budget")
     if len([item for item in slots if item["role"] == "validator"]) > 1:
@@ -1453,8 +1810,30 @@ def select_stack(
             )
         )
         reason_codes.append("performance_handoff_locked_no_second_creative_pass")
-        provider_body_bytes = sum(int(item["body_bytes"]) for item in slots)
-        selected_metadata_bytes = _metadata_bytes(slots)
+        provider_body_bytes = sum(
+            int(item["body_bytes"])
+            for item in slots
+            if item.get("context_scope")
+            not in {"isolated_craft_contract", "isolated_validator_contract"}
+        )
+        selected_metadata_bytes = _metadata_bytes(
+            [
+                item
+                for item in slots
+                if item.get("context_scope")
+                not in {"isolated_craft_contract", "isolated_validator_contract"}
+            ]
+        )
+        isolated_craft_context_bytes = sum(
+            int(item["body_bytes"]) + _metadata_bytes([item])
+            for item in slots
+            if item.get("context_scope") == "isolated_craft_contract"
+        ) + isolated_craft_reference_bytes
+        isolated_validator_context_bytes = sum(
+            int(item["body_bytes"]) + _metadata_bytes([item])
+            for item in slots
+            if item.get("context_scope") == "isolated_validator_contract"
+        )
         total_context_bytes = base_bytes + candidate_metadata_bytes + provider_body_bytes + selected_metadata_bytes
 
     suggestions = [item for item in dict.fromkeys(suggestions) if item not in loaded_body_ids and item != "dircreative"]
@@ -1462,19 +1841,34 @@ def select_stack(
         "waiting_for_gate"
         if gate is not None
         else "blocked"
-        if intent.get("real_side_effect") and adapter is None
+        if validation_required_missing
+        or (intent.get("real_side_effect") and adapter is None)
+        else "needs_followup"
+        if scenario.get("requires_complete_gaps_before_downstream") is True and missing_gaps
         else "ready"
     )
     media_controls: list[str] = []
     if media == "still":
         media_controls = ["no_timeline", "no_camera_travel", "no_editing", "no_sound"]
+    applied_handoff_contract = (
+        handoff_contract
+        if handoff_contract is not None
+        and owner_id == handoff_contract.get("target_owner")
+        else None
+    )
     return {
         "status": status,
         "scenario_id": scenario_id,
+        "handoff_contract_id": (
+            applied_handoff_contract.get("contract_id") if applied_handoff_contract else None
+        ),
+        "handoff_contract": applied_handoff_contract,
         "mode": mode,
         "route_id": route_id,
         "media": media,
         "candidate_count": len(candidate_pool),
+        "covered_gaps": covered_gaps,
+        "missing_gaps": missing_gaps,
         "fallback_used": owner_id == "dircreative" and "dircreative" not in owner_candidates,
         "craft_owner": slots[0],
         "collaborators": [item for item in slots if item["role"] == "collaborator"],
@@ -1502,6 +1896,8 @@ def select_stack(
             ]
             if item.get("body_sha256")
         ],
+        "reference_read_requests": reference_read_requests,
+        "handoff_read_requests": handoff_read_requests,
         "host_adoption_status": "unverified" if loaded_body_ids else "not_required",
         "host_card_contract": {
             "selector_may_claim_used": False,
@@ -1529,12 +1925,47 @@ def select_stack(
             "execution_adapter_context_budget_bytes": int(
                 mode_contract.get("execution_adapter_context_bytes_max", 0)
             ),
-            "aggregate_accounted_bytes": total_context_bytes + execution_adapter_context_bytes,
+            "isolated_craft_context_bytes": isolated_craft_context_bytes,
+            "isolated_craft_reference_bytes": isolated_craft_reference_bytes,
+            "isolated_craft_reference_count": len(reference_read_requests),
+            "isolated_craft_context_budget_bytes": int(
+                mode_contract.get("isolated_craft_context_bytes_max", 0)
+            ),
+            "isolated_validator_context_bytes": isolated_validator_context_bytes,
+            "isolated_validator_context_budget_bytes": int(
+                mode_contract.get("isolated_validator_context_bytes_max", 0)
+            ),
+            "isolated_handoff_context_bytes": isolated_handoff_context_bytes,
+            "isolated_handoff_reference_count": len(handoff_read_requests),
+            "isolated_handoff_context_budget_bytes": int(
+                mode_contract.get("isolated_handoff_context_bytes_max", 0)
+            ),
+            "aggregate_accounted_bytes": (
+                total_context_bytes
+                + isolated_craft_context_bytes
+                + isolated_validator_context_bytes
+                + isolated_handoff_context_bytes
+                + execution_adapter_context_bytes
+            ),
             "total_bytes": total_context_bytes,
             "budget_bytes": budget,
-            "total_files": base_files + len(loaded_body_ids),
+            "total_files": base_files + len(
+                [
+                    item
+                    for item in slots
+                    if item["status"] in {"materialized", "eligible_after_gate"}
+                    and item.get("context_scope")
+                    not in {"isolated_craft_contract", "isolated_validator_contract"}
+                ]
+            ),
             "budget_files": file_budget,
-            "task_reference_source": "internal_reference" if owner_id == "dircreative" else "external_provider_body",
+            "task_reference_source": (
+                "internal_reference"
+                if owner_id == "dircreative"
+                else "isolated_external_provider_body"
+                if owner_slot.get("context_scope") == "isolated_craft_contract"
+                else "external_provider_body"
+            ),
         },
     }
 
@@ -1612,6 +2043,14 @@ def _write_mock_skill(root: Path, skill_id: str, body_pad: int = 0) -> None:
         f"interface:\n  display_name: {skill_id}\n  short_description: test provider\n",
         encoding="utf-8",
     )
+    if skill_id == "jingzao-image-forge":
+        for relative, realistic_bytes in JINGZAO_REFERENCE_PAD.items():
+            reference = skill_dir / relative
+            reference.parent.mkdir(parents=True, exist_ok=True)
+            target_bytes = realistic_bytes if body_pad else 64
+            prefix = "# Deterministic reference fixture\n"
+            padding = max(0, target_bytes - len(prefix.encode("utf-8")))
+            reference.write_text(prefix + ("x" * padding), encoding="utf-8")
 
 
 def _case_assertions(case: dict[str, Any], receipt: dict[str, Any]) -> list[str]:
@@ -1865,6 +2304,68 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
                     + int(context.get("execution_adapter_context_bytes", 0))
                 ):
                     failures.append("realistic imagegen adapter was not fully and separately budgeted")
+            if case_id == "p47_cinematic_storyboard_frames":
+                owner = receipt.get("craft_owner") or {}
+                context = receipt.get("context") or {}
+                requests = receipt.get("body_read_requests") or []
+                reference_requests = receipt.get("reference_read_requests") or []
+                handoff_requests = receipt.get("handoff_read_requests") or []
+                output_binding = (receipt.get("handoff_contract") or {}).get("output_binding") or {}
+                if (
+                    owner.get("context_scope") != "isolated_craft_contract"
+                    or int(context.get("isolated_craft_context_bytes", 0)) < 99000
+                    or int(context.get("isolated_craft_context_bytes", 0)) > 131072
+                    or int(context.get("isolated_craft_reference_count", 0)) != 6
+                    or int(context.get("isolated_craft_reference_bytes", 0)) < 71000
+                    or int(context.get("total_bytes", 0)) > 20000
+                    or int(context.get("isolated_handoff_context_bytes", 0)) < 30000
+                    or int(context.get("isolated_handoff_context_bytes", 0)) > 65536
+                    or int(context.get("aggregate_accounted_bytes", 0))
+                    != int(context.get("total_bytes", 0))
+                    + int(context.get("isolated_craft_context_bytes", 0))
+                    + int(context.get("isolated_handoff_context_bytes", 0))
+                    or not requests
+                    or requests[0].get("context_scope") != "isolated_craft_contract"
+                    or len(reference_requests) != 6
+                    or len(handoff_requests) != 3
+                    or {item.get("role") for item in handoff_requests}
+                    != {"contract_reference", "output_schema", "output_validator"}
+                    or output_binding.get("validator")
+                    != "scripts/dircreative_storyboard_frame_handoff.py"
+                    or any(
+                        item.get("context_scope") != "isolated_craft_contract"
+                        or not item.get("sha256")
+                        or not item.get("relative_path", "").startswith("references/")
+                        for item in reference_requests
+                    )
+                ):
+                    failures.append("realistic Jingzao owner was not fully isolated and budgeted")
+            if case_id == "p46_script_to_seedance":
+                owner = receipt.get("craft_owner") or {}
+                validator = receipt.get("validator") or {}
+                context = receipt.get("context") or {}
+                handoff_requests = receipt.get("handoff_read_requests") or []
+                output_binding = (receipt.get("handoff_contract") or {}).get("output_binding") or {}
+                if (
+                    owner.get("context_scope") != "isolated_craft_contract"
+                    or validator.get("context_scope") != "isolated_validator_contract"
+                    or int(context.get("isolated_validator_context_bytes", 0)) < 23000
+                    or int(context.get("isolated_validator_context_bytes", 0)) > 65536
+                    or int(context.get("total_bytes", 0)) > 20000
+                    or int(context.get("isolated_handoff_context_bytes", 0)) < 40000
+                    or int(context.get("isolated_handoff_context_bytes", 0)) > 65536
+                    or int(context.get("aggregate_accounted_bytes", 0))
+                    != int(context.get("total_bytes", 0))
+                    + int(context.get("isolated_craft_context_bytes", 0))
+                    + int(context.get("isolated_validator_context_bytes", 0))
+                    + int(context.get("isolated_handoff_context_bytes", 0))
+                    or len(handoff_requests) != 3
+                    or {item.get("role") for item in handoff_requests}
+                    != {"contract_reference", "output_schema", "output_validator"}
+                    or output_binding.get("validator")
+                    != "scripts/dircreative_script_to_seedance_handoff.py"
+                ):
+                    failures.append("realistic Seedance validator was not isolated and budgeted")
         still_case = next(item for item in cases if item["id"] == "p06_key_visual")
         still_receipt = select_stack(
             still_case["intent"],
@@ -2149,6 +2650,8 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
         "unverified_cost_adapter_blocked": True,
         "delivery_single_body_reservation": True,
         "isolated_execution_adapter_budget_bytes": 24576,
+        "isolated_craft_context_budget_bytes": 131072,
+        "isolated_validator_context_budget_bytes": 65536,
         "host_managed_imagegen_path": True,
         "failures": failures,
     }
@@ -2269,6 +2772,12 @@ def main() -> int:
             "p26_sound_design",
             "p42_authorized_generation_adapter",
             "p44_score_mix_reuses_loaded_body",
+            "p45_asset_foundation",
+            "p46_script_to_seedance",
+            "p47_cinematic_storyboard_frames",
+            "n18_asset_foundation_does_not_generate",
+            "n20_jingzao_craft_does_not_bypass_generation_gate",
+            "n21_required_seedance_validator_missing",
             "n12_candidate_pool_capped",
         ]
         selected_ids = args.case_ids or default_ids

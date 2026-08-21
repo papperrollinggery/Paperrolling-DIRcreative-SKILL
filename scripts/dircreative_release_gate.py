@@ -285,7 +285,16 @@ def run_gate(
         Step("visual dogfood pages", ["python3", "scripts/dircreative_visual_dogfood.py"], ROOT),
         Step("install local skill", ["python3", "scripts/install_local_skill.py", "--target", str(target)], ROOT),
         Step("installed parity audit", ["python3", "scripts/dircreative_install_parity.py", "--target", str(target)], ROOT),
-        Step("installed skill validation", ["python3", "scripts/validate_project.py"], target),
+        Step(
+            "installed skill validation",
+            [
+                "python3",
+                "scripts/validate_project.py",
+                "--installed-package",
+                "--allow-development-install",
+            ],
+            target,
+        ),
         Step("installed rough idea status", ["python3", "scripts/dircreative_run.py", "status", "--example", "examples/live-user-sim-noodle"], target),
         Step("installed complete idea status", ["python3", "scripts/dircreative_run.py", "status", "--example", "examples/complete-idea-segmentation-test"], target),
         Step("installed goal-mode simulation status", ["python3", "scripts/dircreative_run.py", "status", "--example", "examples/goal-mode-simulation-test"], target),
@@ -318,7 +327,7 @@ def run_gate(
         ),
         Step(
             "release artifact installed validation",
-            ["python3", "scripts/validate_project.py"],
+            ["python3", "scripts/validate_project.py", "--installed-package"],
             archive_install_target,
             depends_on="release artifact install parity",
         ),

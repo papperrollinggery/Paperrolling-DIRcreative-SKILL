@@ -64,6 +64,24 @@ without a verified tool and cost boundary.
 - Aesthetic direction owns the visual system; material realism owns physical
   response; visual bible/calibration own pre-generation locks; consistency audit
   owns post-generation drift evidence.
+- Asset foundation starts from a minimum visual contract. Character continuity
+  owns identity/costume/critical-prop reuse, production design owns world,
+  location, vehicle, and prop language, master-shot planning owns geography/FOV,
+  and constraint routing assigns each reference one non-conflicting job. Load
+  only the answer-changing seats; later consistency audit is a separate stage.
+- A generated storyboard or nine-image narrative sequence without source
+  bindings is planning-only. Cross-image resemblance does not prove an identity,
+  vehicle, prop, location, or clean direct-input frame.
+- For polished cinematic storyboard images or clean narrative input frames,
+  `jingzao-image-forge` owns frame-level visual direction and prompt/spec
+  compilation through `cinematic_storyboard_frames`. Load its full body in the
+  isolated craft context and let it follow its own styleboard, shot-tension, and
+  narrative-frame references. DIR owns upstream truth and returned state;
+  imagegen remains the separately authorized execution adapter.
+- `convert-script-to-seedance` is a bounded model compiler when selected through
+  `script_to_seedance`. Apply the registered `script_to_seedance_v1` contract;
+  DIR retains upstream truth and consumes the compiled prompt back into its
+  manifest and QA flow.
 - Prompt preflight is before generation, output review is after real evidence,
   and iteration doctor prescribes the next bounded retry.
 - ADCO owns PPT/export/adoption. `codex-ppt` is recommendation-only inside DIR;

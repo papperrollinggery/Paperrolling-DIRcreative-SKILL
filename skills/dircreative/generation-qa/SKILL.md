@@ -92,6 +92,28 @@ Use `skills/dircreative/assets/visualizations/stage-surface-registry.json#qa-can
 - Do not ask for a user lock when self-QA fails. Record `self_qa.status: fail`, failure IDs, and the corrected next action.
 - For Creative Production outputs, treat `render_moodboard_board_widget` as a review surface, not the source of truth. The candidate must be written back to DIRcreative as `generated_candidate`, then QA can pass, fail, or request a one-variable retry.
 - Reject any Creative Production candidate that is marked `user_locked` while QA is pending or failed.
+- Reject narrative frames or human planning boards promoted to identity,
+  vehicle, scene, or literal-frame truth without an explicit promotion receipt
+  and independent QA. Treat model-layout references as position/direction only;
+  they cannot control identity, topology, material, or color.
+- Reject irreversible state resets or illegal transitions across damage, shield,
+  core, helmet, prop, and vehicle families. Adjacent generation units must have
+  exact outgoing/incoming state handoff.
+- Reject prompt binding sets that exceed the verified provider reference limit,
+  attach planned/optional audio, or disagree across global numbering, per-unit
+  local order, and terminal platform slots.
+- For cinematic storyboard and clean narrative frames, score two separate gates:
+  asset truth and director-frame quality. Reject a technically consistent frame
+  that falls back to an unmotivated centered overview, loses viewer position,
+  action vector/counterforce, depth roles, crop pressure, parallax/occlusion,
+  declared exaggeration, or the dominant read.
+- Respect shot-class N/A fields. Static product, identity, interview, dialogue,
+  observation, and calm frames may omit action/counterforce, crop pressure,
+  parallax, or exaggeration when the frame contract gives a concrete reason;
+  missing required fields without that reason still fails.
+- Audit sequence diversity across all selected frames. Repeated subject scale,
+  orbital overview, horizon, camera height, visual center, or attention flow is
+  a failure when it does not serve a deliberate pattern or match cut.
 - Reject any review-only widget, HTML page, local URL, or screenshot that is presented as a locked artifact without a DIRcreative receipt.
 - For longform work, localize failures to one sequence pack whenever possible.
 - Do not silently rewrite upstream locked artifacts; write revision requests.

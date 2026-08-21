@@ -1,0 +1,317 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dircreative.local/schemas/script-to-seedance-handoff.schema.json",
+  "title": "DIRcreative to convert-script-to-seedance handoff",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_id",
+    "authority",
+    "source_owner",
+    "target_owner",
+    "output_owner",
+    "status",
+    "timeline_policy",
+    "provider_limits",
+    "authoritative_script",
+    "entity_ownership",
+    "model_surface",
+    "narrative_nodes",
+    "shots",
+    "generation_units",
+    "continuity_states",
+    "bindings",
+    "prompt_units"
+  ],
+  "properties": {
+    "contract_id": {"const": "script_to_seedance_v1"},
+    "authority": {"const": "compile_only"},
+    "source_owner": {"const": "dircreative"},
+    "target_owner": {"const": "convert-script-to-seedance"},
+    "output_owner": {"const": "dircreative"},
+    "status": {"enum": ["prompt_only", "instructions_only"]},
+    "timeline_policy": {
+      "enum": ["external_timeline_only", "prompt_macro_ranges", "prompt_shot_ranges"]
+    },
+    "provider_limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_references_per_unit", "source_type", "verification_status", "source"],
+      "properties": {
+        "max_references_per_unit": {"type": "integer", "minimum": 1, "maximum": 64},
+        "source_type": {"enum": ["tool_schema", "official_docs", "live_surface"]},
+        "verification_status": {"const": "verified"},
+        "source": {"type": "string", "minLength": 1}
+      }
+    },
+    "authoritative_script": {"$ref": "#/$defs/authoritative_script"},
+    "entity_ownership": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/entity_ownership"}
+    },
+    "model_surface": {"$ref": "#/$defs/model_surface"},
+    "narrative_nodes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/narrative_node"}
+    },
+    "shots": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/shot"}
+    },
+    "generation_units": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/generation_unit"}
+    },
+    "continuity_states": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/continuity_state"}
+    },
+    "bindings": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/binding"}
+    },
+    "prompt_units": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/prompt_unit"}
+    }
+  },
+  "$defs": {
+    "id_array": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "state_map": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {"type": "string", "minLength": 1}
+    },
+    "authoritative_script": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["script_id", "sha256", "dialogue_lines"],
+      "properties": {
+        "script_id": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "dialogue_lines": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["dialogue_line_id", "speaker_entity_id", "text", "shot_ids"],
+            "properties": {
+              "dialogue_line_id": {"type": "string", "minLength": 1},
+              "speaker_entity_id": {"type": "string", "minLength": 1},
+              "text": {"type": "string", "minLength": 1},
+              "shot_ids": {"$ref": "#/$defs/id_array"}
+            }
+          }
+        }
+      }
+    },
+    "entity_ownership": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["entity_id", "owner", "shot_ids", "generation_unit_ids"],
+      "properties": {
+        "entity_id": {"type": "string", "minLength": 1},
+        "owner": {"type": "string", "minLength": 1},
+        "shot_ids": {"$ref": "#/$defs/id_array"},
+        "generation_unit_ids": {"$ref": "#/$defs/id_array"}
+      }
+    },
+    "model_surface": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "capability_card_id",
+        "model_key",
+        "version",
+        "provider_surface",
+        "verification_status"
+      ],
+      "properties": {
+        "capability_card_id": {"type": "string", "minLength": 1},
+        "model_key": {"type": "string", "minLength": 1},
+        "version": {"type": "string", "minLength": 1},
+        "provider_surface": {"type": "string", "minLength": 1},
+        "verification_status": {"const": "verified"}
+      }
+    },
+    "narrative_node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["node_id", "shot_ids", "story_function"],
+      "properties": {
+        "node_id": {"type": "string", "pattern": "^N[0-9]{2,}$"},
+        "shot_ids": {"$ref": "#/$defs/id_array"},
+        "story_function": {"type": "string", "minLength": 1}
+      }
+    },
+    "shot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "shot_id",
+        "node_id",
+        "generation_unit_id",
+        "time_start",
+        "time_end",
+        "scene_anchor",
+        "primary_action",
+        "entity_ids"
+      ],
+      "properties": {
+        "shot_id": {"type": "string", "pattern": "^SH?[0-9]{2,}$"},
+        "node_id": {"type": "string", "pattern": "^N[0-9]{2,}$"},
+        "generation_unit_id": {"type": "string", "pattern": "^GU[0-9]{2,}$"},
+        "time_start": {"type": "string", "pattern": "^[0-9]{2}:[0-5][0-9](?:\\.[0-9]+)?$"},
+        "time_end": {"type": "string", "pattern": "^[0-9]{2}:[0-5][0-9](?:\\.[0-9]+)?$"},
+        "scene_anchor": {"type": "string", "minLength": 1},
+        "primary_action": {"type": "string", "minLength": 1},
+        "entity_ids": {"$ref": "#/$defs/id_array"}
+      }
+    },
+    "generation_unit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "generation_unit_id",
+        "shot_ids",
+        "duration_seconds",
+        "continuity_in",
+        "continuity_out"
+      ],
+      "properties": {
+        "generation_unit_id": {"type": "string", "pattern": "^GU[0-9]{2,}$"},
+        "shot_ids": {"$ref": "#/$defs/id_array"},
+        "duration_seconds": {"type": "number", "exclusiveMinimum": 0, "maximum": 60},
+        "continuity_in": {"$ref": "#/$defs/state_map"},
+        "continuity_out": {"$ref": "#/$defs/state_map"}
+      }
+    },
+    "continuity_state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state_id", "entity_id", "allowed_predecessors", "owner"],
+      "properties": {
+        "state_id": {"type": "string", "minLength": 1},
+        "entity_id": {"type": "string", "minLength": 1},
+        "allowed_predecessors": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "owner": {"type": "string", "minLength": 1}
+      }
+    },
+    "binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "binding_id",
+        "asset_id",
+        "media_type",
+        "source_kind",
+        "status",
+        "rights_status",
+        "user_lock_status",
+        "direct_input_policy",
+        "global_number",
+        "converter_slot",
+        "platform_slot",
+        "role",
+        "must_not_control",
+        "literal_frame_boolean",
+        "attached_to_run",
+        "shot_ids",
+        "unit_ids",
+        "local_order_by_gu"
+      ],
+      "properties": {
+        "binding_id": {"type": "string", "minLength": 1},
+        "asset_id": {"type": "string", "minLength": 1},
+        "media_type": {"enum": ["image", "audio", "video"]},
+        "source_kind": {
+          "enum": [
+            "identity_reference",
+            "scene_anchor",
+            "model_layout_reference",
+            "human_planning_board",
+            "narrative_frame",
+            "clean_frame",
+            "audio_asset",
+            "video_asset"
+          ]
+        },
+        "status": {
+          "enum": ["available", "planned", "optional", "post_dub", "rejected", "planning_only"]
+        },
+        "rights_status": {"enum": ["verified", "conditional", "blocked"]},
+        "user_lock_status": {
+          "enum": ["user_locked", "internal_candidate", "external_imported", "planning_only"]
+        },
+        "approval_receipt_id": {"type": "string", "minLength": 1},
+        "direct_input_policy": {
+          "enum": ["allowed", "conditional", "forbidden", "planning_only"]
+        },
+        "global_number": {"type": "integer", "minimum": 1},
+        "converter_slot": {
+          "type": "string",
+          "pattern": "^【(?:图片|音频|视频)[1-9][0-9]*】$"
+        },
+        "platform_slot": {
+          "type": "string",
+          "pattern": "^@(?:Image|Audio|Video) [1-9][0-9]*$"
+        },
+        "role": {"type": "string", "minLength": 1},
+        "must_not_control": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "literal_frame_boolean": {"type": "boolean"},
+        "attached_to_run": {"type": "boolean"},
+        "shot_ids": {"$ref": "#/$defs/id_array"},
+        "unit_ids": {"$ref": "#/$defs/id_array"},
+        "local_order_by_gu": {
+          "type": "object",
+          "propertyNames": {"pattern": "^GU[0-9]{2,}$"},
+          "additionalProperties": {"type": "integer", "minimum": 1, "maximum": 64}
+        }
+      }
+    },
+    "prompt_unit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "generation_unit_id",
+        "binding_ids",
+        "artifact_id",
+        "status",
+        "prompt_text",
+        "prompt_sha256"
+      ],
+      "properties": {
+        "generation_unit_id": {"type": "string", "pattern": "^GU[0-9]{2,}$"},
+        "binding_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "artifact_id": {"type": "string", "minLength": 1},
+        "status": {"enum": ["prompt_only", "instructions_only"]},
+        "prompt_text": {"type": "string", "minLength": 24},
+        "prompt_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+      }
+    }
+  }
+}

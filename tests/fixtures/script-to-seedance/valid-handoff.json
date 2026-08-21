@@ -1,0 +1,274 @@
+{
+  "contract_id": "script_to_seedance_v1",
+  "authority": "compile_only",
+  "source_owner": "dircreative",
+  "target_owner": "convert-script-to-seedance",
+  "output_owner": "dircreative",
+  "status": "prompt_only",
+  "timeline_policy": "external_timeline_only",
+  "provider_limits": {
+    "max_references_per_unit": 5,
+    "source_type": "tool_schema",
+    "verification_status": "verified",
+    "source": "verified tool schema"
+  },
+  "authoritative_script": {
+    "script_id": "SCRIPT-001",
+    "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "dialogue_lines": [
+      {
+        "dialogue_line_id": "DLG-001",
+        "speaker_entity_id": "pilot",
+        "text": "执行反击。",
+        "shot_ids": ["SH03"]
+      }
+    ]
+  },
+  "entity_ownership": [
+    {
+      "entity_id": "ring",
+      "owner": "dircreative",
+      "shot_ids": ["SH01", "SH02", "SH03", "SH04"],
+      "generation_unit_ids": ["GU01", "GU02"]
+    },
+    {
+      "entity_id": "fighter",
+      "owner": "dircreative",
+      "shot_ids": ["SH03", "SH04"],
+      "generation_unit_ids": ["GU02"]
+    },
+    {
+      "entity_id": "pilot",
+      "owner": "dircreative",
+      "shot_ids": ["SH03", "SH04"],
+      "generation_unit_ids": ["GU02"]
+    }
+  ],
+  "model_surface": {
+    "capability_card_id": "seedance_test_card_v1",
+    "model_key": "seedance",
+    "version": "test-v1",
+    "provider_surface": "fixture surface",
+    "verification_status": "verified"
+  },
+  "narrative_nodes": [
+    {
+      "node_id": "N01",
+      "shot_ids": ["SH01", "SH02"],
+      "story_function": "attack changes the ring state"
+    },
+    {
+      "node_id": "N02",
+      "shot_ids": ["SH03", "SH04"],
+      "story_function": "counteraction changes fighter and ring state"
+    }
+  ],
+  "shots": [
+    {
+      "shot_id": "SH01",
+      "node_id": "N01",
+      "generation_unit_id": "GU01",
+      "time_start": "00:00",
+      "time_end": "00:03",
+      "scene_anchor": "orbit exterior",
+      "primary_action": "enemy enters",
+      "entity_ids": ["ring"]
+    },
+    {
+      "shot_id": "SH02",
+      "node_id": "N01",
+      "generation_unit_id": "GU01",
+      "time_start": "00:03",
+      "time_end": "00:06",
+      "scene_anchor": "orbit exterior",
+      "primary_action": "ring receives one fixed strike",
+      "entity_ids": ["ring"]
+    },
+    {
+      "shot_id": "SH03",
+      "node_id": "N02",
+      "generation_unit_id": "GU02",
+      "time_start": "00:06",
+      "time_end": "00:09",
+      "scene_anchor": "ring flight path",
+      "primary_action": "fighter enters the route",
+      "entity_ids": ["ring", "fighter", "pilot"]
+    },
+    {
+      "shot_id": "SH04",
+      "node_id": "N02",
+      "generation_unit_id": "GU02",
+      "time_start": "00:09",
+      "time_end": "00:12",
+      "scene_anchor": "ring flight path",
+      "primary_action": "fighter completes the counteraction",
+      "entity_ids": ["ring", "fighter", "pilot"]
+    }
+  ],
+  "generation_units": [
+    {
+      "generation_unit_id": "GU01",
+      "shot_ids": ["SH01", "SH02"],
+      "duration_seconds": 6,
+      "continuity_in": {"ring": "RING-D0", "fighter": "FTR-F0"},
+      "continuity_out": {"ring": "RING-D1", "fighter": "FTR-F0"}
+    },
+    {
+      "generation_unit_id": "GU02",
+      "shot_ids": ["SH03", "SH04"],
+      "duration_seconds": 6,
+      "continuity_in": {"ring": "RING-D1", "fighter": "FTR-F0"},
+      "continuity_out": {"ring": "RING-D2", "fighter": "FTR-F1"}
+    }
+  ],
+  "continuity_states": [
+    {"state_id": "RING-D0", "entity_id": "ring", "allowed_predecessors": [], "owner": "character-continuity-bible"},
+    {"state_id": "RING-D1", "entity_id": "ring", "allowed_predecessors": ["RING-D0"], "owner": "character-continuity-bible"},
+    {"state_id": "RING-D2", "entity_id": "ring", "allowed_predecessors": ["RING-D1"], "owner": "character-continuity-bible"},
+    {"state_id": "FTR-F0", "entity_id": "fighter", "allowed_predecessors": [], "owner": "character-continuity-bible"},
+    {"state_id": "FTR-F1", "entity_id": "fighter", "allowed_predecessors": ["FTR-F0"], "owner": "character-continuity-bible"}
+  ],
+  "bindings": [
+    {
+      "binding_id": "B01",
+      "asset_id": "VE-RING-ID-v01",
+      "media_type": "image",
+      "source_kind": "identity_reference",
+      "status": "available",
+      "rights_status": "verified",
+      "user_lock_status": "internal_candidate",
+      "approval_receipt_id": "APPROVAL-B01",
+      "direct_input_policy": "conditional",
+      "global_number": 1,
+      "converter_slot": "【图片1】",
+      "platform_slot": "@Image 1",
+      "role": "ring identity and state family",
+      "must_not_control": ["fighter identity", "shot composition"],
+      "literal_frame_boolean": false,
+      "attached_to_run": true,
+      "shot_ids": ["SH01", "SH02", "SH03", "SH04"],
+      "unit_ids": ["GU01", "GU02"],
+      "local_order_by_gu": {"GU01": 1, "GU02": 1}
+    },
+    {
+      "binding_id": "B02",
+      "asset_id": "CF-GU01-END-v01",
+      "media_type": "image",
+      "source_kind": "clean_frame",
+      "status": "available",
+      "rights_status": "verified",
+      "user_lock_status": "internal_candidate",
+      "approval_receipt_id": "APPROVAL-B02",
+      "direct_input_policy": "allowed",
+      "global_number": 2,
+      "converter_slot": "【图片2】",
+      "platform_slot": "@Image 2",
+      "role": "GU01 clean end frame",
+      "must_not_control": ["later damage state"],
+      "literal_frame_boolean": true,
+      "attached_to_run": true,
+      "shot_ids": ["SH01", "SH02"],
+      "unit_ids": ["GU01"],
+      "local_order_by_gu": {"GU01": 2}
+    },
+    {
+      "binding_id": "B03",
+      "asset_id": "GEO-RING-LAYOUT-v01",
+      "media_type": "image",
+      "source_kind": "model_layout_reference",
+      "status": "available",
+      "rights_status": "verified",
+      "user_lock_status": "internal_candidate",
+      "approval_receipt_id": "APPROVAL-B03",
+      "direct_input_policy": "conditional",
+      "global_number": 3,
+      "converter_slot": "【图片3】",
+      "platform_slot": "@Image 3",
+      "role": "GU02 layout and direction only",
+      "must_not_control": ["identity", "material", "color"],
+      "literal_frame_boolean": false,
+      "attached_to_run": true,
+      "shot_ids": ["SH03", "SH04"],
+      "unit_ids": ["GU02"],
+      "local_order_by_gu": {"GU02": 2}
+    },
+    {
+      "binding_id": "B04",
+      "asset_id": "BOARD-MOTION-v01",
+      "media_type": "image",
+      "source_kind": "human_planning_board",
+      "status": "planning_only",
+      "rights_status": "verified",
+      "user_lock_status": "planning_only",
+      "direct_input_policy": "planning_only",
+      "global_number": 4,
+      "converter_slot": "【图片4】",
+      "platform_slot": "@Image 4",
+      "role": "human shot review",
+      "must_not_control": ["terminal prompt", "literal frame"],
+      "literal_frame_boolean": false,
+      "attached_to_run": false,
+      "shot_ids": ["SH01", "SH02", "SH03", "SH04"],
+      "unit_ids": ["GU01", "GU02"],
+      "local_order_by_gu": {}
+    },
+    {
+      "binding_id": "B05",
+      "asset_id": "NAR-S01",
+      "media_type": "image",
+      "source_kind": "narrative_frame",
+      "status": "planning_only",
+      "rights_status": "verified",
+      "user_lock_status": "planning_only",
+      "direct_input_policy": "planning_only",
+      "global_number": 5,
+      "converter_slot": "【图片5】",
+      "platform_slot": "@Image 5",
+      "role": "narrative beat evidence only",
+      "must_not_control": ["identity", "vehicle topology", "literal frame"],
+      "literal_frame_boolean": false,
+      "attached_to_run": false,
+      "shot_ids": ["SH01", "SH02"],
+      "unit_ids": ["GU01"],
+      "local_order_by_gu": {}
+    },
+    {
+      "binding_id": "B06",
+      "asset_id": "VOICE-CAPTAIN-PLANNED",
+      "media_type": "audio",
+      "source_kind": "audio_asset",
+      "status": "planned",
+      "rights_status": "conditional",
+      "user_lock_status": "internal_candidate",
+      "direct_input_policy": "conditional",
+      "global_number": 1,
+      "converter_slot": "【音频1】",
+      "platform_slot": "@Audio 1",
+      "role": "optional future voice reference",
+      "must_not_control": ["current prompt"],
+      "literal_frame_boolean": false,
+      "attached_to_run": false,
+      "shot_ids": ["SH03"],
+      "unit_ids": ["GU02"],
+      "local_order_by_gu": {}
+    }
+  ],
+  "prompt_units": [
+    {
+      "generation_unit_id": "GU01",
+      "binding_ids": ["B01", "B02"],
+      "artifact_id": "SEEDANCE-GU01-PROMPT-v1",
+      "status": "prompt_only",
+      "prompt_text": "@Image 1 locks ring identity. @Image 2 locks the clean end frame.\n\n\nShow the enemy entering and the ring receiving one fixed strike.",
+      "prompt_sha256": "63fd2311a30044c734f171be3da53e258fb0ade9d5ca25ec2c166f2df95fb4c5"
+    },
+    {
+      "generation_unit_id": "GU02",
+      "binding_ids": ["B01", "B03"],
+      "artifact_id": "SEEDANCE-GU02-PROMPT-v1",
+      "status": "prompt_only",
+      "prompt_text": "@Image 1 locks ring identity. @Image 2 locks route layout only.\n\n\nThe pilot says exactly: 执行反击。 Then the fighter completes the counteraction.",
+      "prompt_sha256": "eb64efa515a7ec9d0cd2cc47fcd50a6969cde627318197e6f108ad63ba6deb6f"
+    }
+  ]
+}

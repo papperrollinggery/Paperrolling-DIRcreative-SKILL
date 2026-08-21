@@ -29,6 +29,11 @@ internal transcript, generic shot list, or asset ledger is not the creative idea
   production worksheet unless the user separately asks for technical production.
 - A nine-grid storyboard is nine narrative beats by default. It does not become
   a technical shot list merely because each beat has an image.
+- When those frames were generated before identity, production-design, scene-
+  geography, or clean-frame assets were locked, classify them as planning-only
+  narrative evidence. Recover their useful visible facts, but derive the asset
+  foundation before treating any repeated face, costume, vehicle, prop, or
+  location as source truth.
 - A frame-content request separates `View`, `Storyline`, actual `SUPER`,
   `UI/data`, and proposal-only brand line. `Storyline` states what the frame
   proves and how it hands meaning to the next frame; camera movement belongs in
@@ -64,6 +69,14 @@ The minimum whole-film coverage is:
 Scene references, individual shot images, and director storyboard pages are
 different deliverables; boards replace neither scene truth nor clean inputs.
 Mark reuse, derive, generate, and assemble explicitly.
+
+Canonical asset truth and director-frame quality are independent gates. Asset
+identity, topology, geography, and state must survive the shot, but they do not
+choose a centered or neutral composition. When polished storyboard or clean
+narrative frames are requested and `jingzao-image-forge` is available, route
+frame direction and prompt/spec compilation through
+`cinematic_storyboard_frames`; image generation remains a later authorized
+Delivery action.
 
 Persist with `runtime/visual-asset-plan.schema.json`, bound inventory and shot
 cards, exact per-shot time/action/sound/continuity/entity truth, dependencies,

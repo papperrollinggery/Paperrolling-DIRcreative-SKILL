@@ -1,0 +1,236 @@
+{
+  "schema_version": "1.0",
+  "cases": [
+    {
+      "case_id": "planned_audio_attached",
+      "mutations": [
+        {"op": "replace", "path": "/bindings/5/attached_to_run", "value": true}
+      ],
+      "expected_error": "binding_nonavailable_attached"
+    },
+    {
+      "case_id": "narrative_frame_promoted_to_literal",
+      "mutations": [
+        {"op": "replace", "path": "/bindings/4/literal_frame_boolean", "value": true}
+      ],
+      "expected_error": "planning_source_promoted"
+    },
+    {
+      "case_id": "reference_budget_exceeded",
+      "mutations": [
+        {"op": "replace", "path": "/provider_limits/max_references_per_unit", "value": 1}
+      ],
+      "expected_error": "provider_reference_budget_exceeded"
+    },
+    {
+      "case_id": "platform_slot_number_mismatch",
+      "mutations": [
+        {"op": "replace", "path": "/bindings/0/platform_slot", "value": "@Image 9"}
+      ],
+      "expected_error": "binding_slot_number_mismatch"
+    },
+    {
+      "case_id": "illegal_state_jump",
+      "mutations": [
+        {"op": "replace", "path": "/generation_units/0/continuity_out/ring", "value": "RING-D2"},
+        {"op": "replace", "path": "/generation_units/1/continuity_in/ring", "value": "RING-D2"}
+      ],
+      "expected_error": "continuity_transition_invalid"
+    },
+    {
+      "case_id": "local_order_missing",
+      "mutations": [
+        {"op": "remove", "path": "/bindings/1/local_order_by_gu/GU01"}
+      ],
+      "expected_error": "prompt_binding_local_order_missing"
+    },
+    {
+      "case_id": "local_order_duplicated",
+      "mutations": [
+        {"op": "replace", "path": "/bindings/1/local_order_by_gu/GU01", "value": 1}
+      ],
+      "expected_error": "prompt_local_order_duplicate"
+    },
+    {
+      "case_id": "narrative_node_omits_shot",
+      "mutations": [
+        {"op": "replace", "path": "/narrative_nodes/1/shot_ids", "value": ["SH03"]}
+      ],
+      "expected_error": "narrative_shot_coverage_invalid"
+    },
+    {
+      "case_id": "timecode_seconds_out_of_range",
+      "mutations": [
+        {"op": "replace", "path": "/shots/0/time_start", "value": "00:60"}
+      ],
+      "expected_error": "schema_error"
+    },
+    {
+      "case_id": "audio_claims_clean_frame_source",
+      "mutations": [
+        {"op": "replace", "path": "/bindings/1/media_type", "value": "audio"},
+        {"op": "replace", "path": "/bindings/1/converter_slot", "value": "【音频2】"},
+        {"op": "replace", "path": "/bindings/1/platform_slot", "value": "@Audio 2"}
+      ],
+      "expected_error": "binding_media_source_kind_mismatch"
+    },
+    {
+      "case_id": "provider_limit_not_verified",
+      "mutations": [
+        {"op": "replace", "path": "/provider_limits/verification_status", "value": "unverified"}
+      ],
+      "expected_error": "schema_error"
+    },
+    {
+      "case_id": "local_order_outside_binding_scope",
+      "mutations": [
+        {"op": "replace", "path": "/bindings/1/local_order_by_gu", "value": {"GU01": 2, "GU02": 3}}
+      ],
+      "expected_error": "binding_local_order_outside_unit_scope"
+    },
+    {
+      "case_id": "asset_id_bound_twice",
+      "mutations": [
+        {"op": "replace", "path": "/bindings/1/asset_id", "value": "VE-RING-ID-v01"}
+      ],
+      "expected_error": "binding_asset_id_duplicate"
+    },
+    {
+      "case_id": "attached_reference_rights_conditional",
+      "mutations": [
+        {"op": "replace", "path": "/bindings/0/rights_status", "value": "conditional"}
+      ],
+      "expected_error": "binding_rights_not_verified"
+    },
+    {
+      "case_id": "entity_owned_by_converter",
+      "mutations": [
+        {"op": "replace", "path": "/entity_ownership/0/owner", "value": "convert-script-to-seedance"}
+      ],
+      "expected_error": "entity_owner_is_compiler"
+    },
+    {
+      "case_id": "referenced_entity_missing_ownership",
+      "mutations": [
+        {"op": "remove", "path": "/entity_ownership/1"}
+      ],
+      "expected_error": "entity_ownership_coverage_invalid"
+    },
+    {
+      "case_id": "entity_ownership_omits_shot",
+      "mutations": [
+        {"op": "replace", "path": "/entity_ownership/0/shot_ids", "value": ["SH01", "SH02", "SH03"]}
+      ],
+      "expected_error": "entity_ownership_shot_coverage_invalid"
+    },
+    {
+      "case_id": "planning_lock_attached",
+      "mutations": [
+        {"op": "replace", "path": "/bindings/0/user_lock_status", "value": "planning_only"}
+      ],
+      "expected_error": "binding_planning_lock_attached"
+    },
+    {
+      "case_id": "internal_candidate_missing_approval",
+      "mutations": [
+        {"op": "remove", "path": "/bindings/0/approval_receipt_id"}
+      ],
+      "expected_error": "binding_candidate_approval_missing"
+    },
+    {
+      "case_id": "model_surface_latest_alias",
+      "mutations": [
+        {"op": "replace", "path": "/model_surface/version", "value": "latest"}
+      ],
+      "expected_error": "model_surface_not_exact"
+    },
+    {
+      "case_id": "model_surface_unverified",
+      "mutations": [
+        {"op": "replace", "path": "/model_surface/verification_status", "value": "unverified"}
+      ],
+      "expected_error": "schema_error"
+    },
+    {
+      "case_id": "planned_audio_has_stale_local_order",
+      "mutations": [
+        {"op": "replace", "path": "/bindings/5/local_order_by_gu", "value": {"GU02": 3}}
+      ],
+      "expected_error": "binding_local_order_prompt_scope_mismatch"
+    },
+    {
+      "case_id": "prompt_payload_missing",
+      "mutations": [
+        {"op": "remove", "path": "/prompt_units/0/prompt_text"}
+      ],
+      "expected_error": "schema_error"
+    },
+    {
+      "case_id": "prompt_payload_hash_mismatch",
+      "mutations": [
+        {"op": "replace", "path": "/prompt_units/0/prompt_sha256", "value": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"}
+      ],
+      "expected_error": "prompt_payload_hash_mismatch"
+    },
+    {
+      "case_id": "prompt_status_mismatch",
+      "mutations": [
+        {"op": "replace", "path": "/prompt_units/0/status", "value": "instructions_only"}
+      ],
+      "expected_error": "prompt_status_mismatch"
+    },
+    {
+      "case_id": "prompt_reference_slot_missing",
+      "mutations": [
+        {"op": "replace", "path": "/prompt_units/0/prompt_text", "value": "@Image 1 locks ring identity.\n\n\nShow the enemy entering and the ring receiving one fixed strike."}
+      ],
+      "expected_error": "prompt_reference_slot_scope_mismatch"
+    },
+    {
+      "case_id": "authoritative_dialogue_missing_from_prompt",
+      "mutations": [
+        {"op": "replace", "path": "/prompt_units/1/prompt_text", "value": "@Image 1 locks ring identity. @Image 2 locks route layout only.\n\n\nThe fighter completes the counteraction without dialogue."}
+      ],
+      "expected_error": "prompt_dialogue_missing"
+    },
+    {
+      "case_id": "prompt_artifact_id_duplicated",
+      "mutations": [
+        {"op": "replace", "path": "/prompt_units/1/artifact_id", "value": "SEEDANCE-GU01-PROMPT-v1"}
+      ],
+      "expected_error": "prompt_artifact_id_duplicate"
+    },
+    {
+      "case_id": "duplicate_text_dialogue_requires_two_occurrences",
+      "mutations": [
+        {
+          "op": "add",
+          "path": "/authoritative_script/dialogue_lines/-",
+          "value": {
+            "dialogue_line_id": "DLG-002",
+            "speaker_entity_id": "pilot",
+            "text": "执行反击。",
+            "shot_ids": ["SH04"]
+          }
+        }
+      ],
+      "expected_error": "prompt_dialogue_count_mismatch"
+    },
+    {
+      "case_id": "dialogue_line_id_duplicated",
+      "mutations": [
+        {
+          "op": "add",
+          "path": "/authoritative_script/dialogue_lines/-",
+          "value": {
+            "dialogue_line_id": "DLG-001",
+            "speaker_entity_id": "pilot",
+            "text": "再次确认。",
+            "shot_ids": ["SH04"]
+          }
+        }
+      ],
+      "expected_error": "dialogue_line_id_duplicate"
+    }
+  ]
+}
