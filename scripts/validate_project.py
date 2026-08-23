@@ -194,10 +194,19 @@ def is_blank(value: Any) -> bool:
     return value is None or value == "" or value == []
 
 
-def require_path(path: str) -> Path:
-    target = ROOT / path
-    if not target.exists() and path.startswith("skills/") and path.endswith("/SKILL.md"):
+def required_path_candidate(root: Path, path: str, *, installed_mode: bool) -> Path:
+    target = root / path
+    if installed_mode and path.startswith("skills/") and path.endswith("/SKILL.md"):
         target = target.with_name("INTERNAL_SKILL.md")
+    return target
+
+
+def require_path(path: str) -> Path:
+    target = required_path_candidate(
+        ROOT,
+        path,
+        installed_mode=INSTALLED_PACKAGE_VALIDATION,
+    )
     require(target.exists(), f"missing required path: {path}")
     return target
 
@@ -2035,12 +2044,25 @@ def validate_skills() -> None:
     }.items():
         skill_path = require_path(f"skills/{skill_id}/SKILL.md")
         text = skill_path.read_text(encoding="utf-8")
-        require(text.startswith("---\n"), f"{skill_id} missing YAML frontmatter")
-        frontmatter = re.match(r"^---\n(.*?)\n---", text, re.DOTALL)
-        require(frontmatter is not None, f"{skill_id} has invalid YAML frontmatter")
-        header = frontmatter.group(1) if frontmatter else ""
-        require(f"name: {skill_id}" in header, f"{skill_id} frontmatter name mismatch")
-        require("description:" in header, f"{skill_id} missing description")
+        expected_entry_name = (
+            "INTERNAL_SKILL.md" if INSTALLED_PACKAGE_VALIDATION else "SKILL.md"
+        )
+        require(
+            skill_path.name == expected_entry_name,
+            f"{skill_id} entrypoint layout does not match validation mode",
+        )
+        if INSTALLED_PACKAGE_VALIDATION:
+            require(
+                not text.startswith("---\n"),
+                f"{skill_id} installed internal entry still exposes YAML frontmatter",
+            )
+        else:
+            require(text.startswith("---\n"), f"{skill_id} missing YAML frontmatter")
+            frontmatter = re.match(r"^---\n(.*?)\n---", text, re.DOTALL)
+            require(frontmatter is not None, f"{skill_id} has invalid YAML frontmatter")
+            header = frontmatter.group(1) if frontmatter else ""
+            require(f"name: {skill_id}" in header, f"{skill_id} frontmatter name mismatch")
+            require("description:" in header, f"{skill_id} missing description")
         require(len(skill_id) <= 64, f"{skill_id} exceeds Skill name limit")
         unfinished_marker = "[" + "TO" + "DO:"
         require(unfinished_marker not in text, f"{skill_id} contains an unfinished placeholder")
@@ -2053,6 +2075,34 @@ def validate_skills() -> None:
         require(
             f"${skill_id}" in openai_text,
             f"{skill_id} default prompt does not name the Skill",
+        )
+    with tempfile.TemporaryDirectory(prefix="dircreative-skill-layout-") as tmp:
+        probe_root = Path(tmp)
+        probe_dir = probe_root / "skills/probe-skill"
+        probe_dir.mkdir(parents=True)
+        internal = probe_dir / "INTERNAL_SKILL.md"
+        internal.write_text("# internal\n", encoding="utf-8")
+        source_candidate = required_path_candidate(
+            probe_root,
+            "skills/probe-skill/SKILL.md",
+            installed_mode=False,
+        )
+        require(
+            source_candidate.name == "SKILL.md" and not source_candidate.exists(),
+            "source validation accepted an INTERNAL_SKILL.md alias",
+        )
+        internal.unlink()
+        public = probe_dir / "SKILL.md"
+        public.write_text("---\nname: probe-skill\n---\n", encoding="utf-8")
+        installed_candidate = required_path_candidate(
+            probe_root,
+            "skills/probe-skill/SKILL.md",
+            installed_mode=True,
+        )
+        require(
+            installed_candidate.name == "INTERNAL_SKILL.md"
+            and not installed_candidate.exists(),
+            "installed validation accepted a public SKILL.md alias",
         )
     for skill_path in CHAT_SURFACE_SKILLS:
         text = require_path(skill_path).read_text(encoding="utf-8")

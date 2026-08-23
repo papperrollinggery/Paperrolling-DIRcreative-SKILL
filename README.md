@@ -22,7 +22,7 @@ DIRcreative 不是“输入一句话、吐出一堆提示词”的黑盒。它�
 
 当前稳定版本为 [`v0.5.0`](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/releases/tag/v0.5.0)，包含 v2 路由、动态专业视角、紧凑状态、拆分模型 Adapter、资产基础/压测/生产账本链路和 Specialist Exchange v2。
 
-发布包内置 DIRcreative 根 Skill、19 个 `skills/dircreative/*` 内部子 Skill，以及 `ai-film-asset-stress-test`、`ai-film-production-ledger` 两个顶层可调用 Skill。Skill Stack 还会发现宿主中已安装的外部专业 provider；这些依赖不会被复制进本仓库，也不能把“宿主可调用”表述成“GitHub 已内置”。ADCO 始终是独立外部编排方。
+源码仓库包含 DIRcreative 根 Skill、19 个 `skills/dircreative/*` 内部子 Skill，以及 `ai-film-asset-stress-test`、`ai-film-production-ledger` 两个 P0 能力入口。正式 DIRcreative 安装包按安全设计只暴露根 `$dircreative`，其余入口会内部化后由 selector 路由；Skill Stack 还会发现宿主中已安装的外部专业 provider。这些依赖不会被复制进本仓库，也不能把“宿主可调用”表述成“GitHub 已内置”。ADCO 始终是独立外部编排方。
 
 ## Why DIRcreative
 
