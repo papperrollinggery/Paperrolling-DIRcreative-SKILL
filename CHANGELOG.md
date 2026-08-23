@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.3 - 2026-08-24
+
+- Makes macOS tagged reproducibility builds use the same annotated-tag restore and `CANONICAL_REMOTE_TAG` release mode as the Linux matrix, restoring byte-identical cross-platform artifacts.
+
 ## 0.5.2 - 2026-08-24
 
 - Completes annotated-tag CI by requiring remote-tag verification when parity-checking a `CANONICAL_REMOTE_TAG` formal install.

@@ -190,23 +190,35 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Restore annotated release tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          git fetch --force origin "refs/tags/${GITHUB_REF_NAME}:refs/tags/${GITHUB_REF_NAME}"
+          test "$(git cat-file -t "refs/tags/${GITHUB_REF_NAME}")" = "tag"
+          EXPECTED_COMMIT="$(git rev-parse "refs/tags/${GITHUB_REF_NAME}^{}")"
+          test "$(git rev-parse HEAD)" = "$EXPECTED_COMMIT"
+          git switch -C main "$EXPECTED_COMMIT"
+
       - name: Build macOS reproducibility candidate
         env:
           PYTHONDONTWRITEBYTECODE: "1"
         run: |
           VERSION="$(cat VERSION)"
           EXPECTED_COMMIT="$(git rev-parse HEAD)"
+          BUILD_ARGS=(--allow-unpublished --expected-commit "$EXPECTED_COMMIT")
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            test "$GITHUB_REF_NAME" = "v$VERSION"
+            BUILD_ARGS=(--require-tag --expected-commit "$EXPECTED_COMMIT")
+          fi
           python3 scripts/dircreative_adco_native_exchange.py --self-test
           python3 scripts/dircreative_media_forward_audit.py --self-test
           umask 022
           python3 scripts/dircreative_build_release.py \
-            --allow-unpublished \
-            --expected-commit "$EXPECTED_COMMIT" \
+            "${BUILD_ARGS[@]}" \
             --output-dir "$RUNNER_TEMP/dist"
           umask 077
           python3 scripts/dircreative_build_release.py \
-            --allow-unpublished \
-            --expected-commit "$EXPECTED_COMMIT" \
+            "${BUILD_ARGS[@]}" \
             --output-dir "$RUNNER_TEMP/dist-umask-077"
           cmp \
             "$RUNNER_TEMP/dist/dircreative-$VERSION.tar.gz" \
