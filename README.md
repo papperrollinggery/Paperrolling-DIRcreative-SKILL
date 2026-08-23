@@ -20,7 +20,9 @@
 
 DIRcreative 不是“输入一句话、吐出一堆提示词”的黑盒。它先判断任务是局部修改、完整开发还是交付审计，再只加载对应合同。局部任务直接交付修改结果；只有真实方向冲突、生成授权或客户交付才停下来询问。
 
-当前已发布稳定版本仍为 [`v0.4.0`](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/releases/tag/v0.4.0)。当前源码是未发布的 `v0.5.0` 候选，另含 v2 路由、动态专业视角、紧凑状态、拆分模型 Adapter 和 Specialist Exchange v2；本地或全局候选安装通过不等于已经发布。
+当前稳定版本为 [`v0.5.0`](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/releases/tag/v0.5.0)，包含 v2 路由、动态专业视角、紧凑状态、拆分模型 Adapter、资产基础/压测/生产账本链路和 Specialist Exchange v2。
+
+发布包内置 DIRcreative 根 Skill、19 个 `skills/dircreative/*` 内部子 Skill，以及 `ai-film-asset-stress-test`、`ai-film-production-ledger` 两个顶层可调用 Skill。Skill Stack 还会发现宿主中已安装的外部专业 provider；这些依赖不会被复制进本仓库，也不能把“宿主可调用”表述成“GitHub 已内置”。ADCO 始终是独立外部编排方。
 
 ## Why DIRcreative
 
@@ -157,8 +159,7 @@ python3 scripts/dircreative_adco_native_exchange.py \
 
 正式安装源是同一 GitHub Release 中的归档和 `SHA256SUMS`，再由该 tag 的精确、
 干净源码执行同进程验证与安装；不能运行归档内的 installer，也不能用 metadata
-自证。下面的新信任链从 `v0.5.0` 起适用；当前已发布的 `v0.4.0` 不满足这条新门，
-在 `v0.5.0` 发布前只能安装明确标记的本地候选，不能称为 released。
+自证。下面的信任链从 `v0.5.0` 起适用；更早版本不满足这条正式安装门。
 
 ```bash
 gh release download v0.5.0 \

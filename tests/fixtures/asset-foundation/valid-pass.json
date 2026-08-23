@@ -1,0 +1,123 @@
+{
+  "contract_id": "asset_foundation_pass_v1",
+  "authority": "staged_validation",
+  "source_owner": "dircreative",
+  "output_owner": "dircreative",
+  "project_id": "PROJECT-001",
+  "pass_id": "ASSET-PASS-001",
+  "status": "complete",
+  "canonical_asset_ids": ["CHAR-ROCO-BASE"],
+  "planning_source_ids": ["BOARD-N01"],
+  "source_assets": [
+    {"asset_id":"CHAR-ROCO-BASE","source_kind":"canonical_asset","role":"canonical","relative_path":"assets/char-roco-base.png","sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
+    {"asset_id":"BOARD-N01","source_kind":"planning_only","role":"planning_only","relative_path":"planning/board-n01.png","sha256":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}
+  ],
+  "target_shot_ids": ["SH01", "SH02"],
+  "stages": [
+    {
+      "stage_id": "identity_state",
+      "sequence": 1,
+      "owner_skill_id": "minimum-visual-bible",
+      "collaborator_skill_ids": ["character-continuity-bible"],
+      "validator_skill_id": null,
+      "input_artifact": {"artifact_id": "ASSET-INTAKE-v1", "relative_path": "foundation/asset-intake-v1.json", "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
+      "previous_output_sha256": null,
+      "output_artifact": {"artifact_id": "IDENTITY-STATE-v1", "relative_path": "foundation/identity-state-v1.json", "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"},
+      "required_gaps": ["character_continuity"],
+      "covered_gaps": ["character_continuity"],
+      "missing_gaps": [],
+      "status": "passed",
+      "promotion_state": "validated_candidate"
+    },
+    {
+      "stage_id": "production_design",
+      "sequence": 2,
+      "owner_skill_id": "production-design-worldbuilding",
+      "collaborator_skill_ids": [],
+      "validator_skill_id": null,
+      "input_artifact": {"artifact_id": "IDENTITY-STATE-v1", "relative_path": "foundation/identity-state-v1.json", "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"},
+      "previous_output_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "output_artifact": {"artifact_id": "PRODUCTION-DESIGN-v1", "relative_path": "foundation/production-design-v1.json", "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"},
+      "required_gaps": ["production_design"],
+      "covered_gaps": ["production_design"],
+      "missing_gaps": [],
+      "status": "passed",
+      "promotion_state": "validated_candidate"
+    },
+    {
+      "stage_id": "camera_geography",
+      "sequence": 3,
+      "owner_skill_id": "master-shot-camera-planning",
+      "collaborator_skill_ids": [],
+      "validator_skill_id": null,
+      "input_artifact": {"artifact_id": "PRODUCTION-DESIGN-v1", "relative_path": "foundation/production-design-v1.json", "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"},
+      "previous_output_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "output_artifact": {"artifact_id": "CAMERA-GEOGRAPHY-v1", "relative_path": "foundation/camera-geography-v1.json", "sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"},
+      "required_gaps": ["camera_geography"],
+      "covered_gaps": ["camera_geography"],
+      "missing_gaps": [],
+      "status": "passed",
+      "promotion_state": "validated_candidate"
+    },
+    {
+      "stage_id": "material_response",
+      "sequence": 4,
+      "owner_skill_id": "ai-material-realism",
+      "collaborator_skill_ids": [],
+      "validator_skill_id": null,
+      "input_artifact": {"artifact_id": "CAMERA-GEOGRAPHY-v1", "relative_path": "foundation/camera-geography-v1.json", "sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"},
+      "previous_output_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "output_artifact": {"artifact_id": "MATERIAL-RESPONSE-v1", "relative_path": "foundation/material-response-v1.json", "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"},
+      "required_gaps": ["material_physics"],
+      "covered_gaps": ["material_physics"],
+      "missing_gaps": [],
+      "status": "passed",
+      "promotion_state": "validated_candidate"
+    },
+    {
+      "stage_id": "constraint_assignment",
+      "sequence": 5,
+      "owner_skill_id": "constraint-input-router",
+      "collaborator_skill_ids": [],
+      "validator_skill_id": null,
+      "input_artifact": {"artifact_id": "MATERIAL-RESPONSE-v1", "relative_path": "foundation/material-response-v1.json", "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"},
+      "previous_output_sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "output_artifact": {"artifact_id": "CONSTRAINT-ASSIGNMENT-v1", "relative_path": "foundation/constraint-assignment-v1.json", "sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"},
+      "required_gaps": ["constraint_input"],
+      "covered_gaps": ["constraint_input"],
+      "missing_gaps": [],
+      "status": "passed",
+      "promotion_state": "validated_candidate"
+    },
+    {
+      "stage_id": "stress_certification",
+      "sequence": 6,
+      "owner_skill_id": "dircreative",
+      "collaborator_skill_ids": [],
+      "validator_skill_id": "ai-film-asset-stress-test",
+      "input_artifact": {"artifact_id": "CONSTRAINT-ASSIGNMENT-v1", "relative_path": "foundation/constraint-assignment-v1.json", "sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"},
+      "previous_output_sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "output_artifact": {"artifact_id": "ASSET-CERTIFICATION-v1", "relative_path": "foundation/asset-certification-v1.json", "sha256": "1111111111111111111111111111111111111111111111111111111111111111"},
+      "required_gaps": ["asset_stress_certification"],
+      "covered_gaps": ["asset_stress_certification"],
+      "missing_gaps": [],
+      "status": "passed",
+      "promotion_state": "validated_candidate"
+    }
+  ],
+  "stress_test_binding": {
+    "stress_test_id": "STRESS-001",
+    "covered_asset_ids": ["CHAR-ROCO-BASE"],
+    "report_relative_path": "stress/stress-001.json",
+    "report_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+    "verdict": "conditional",
+    "validation_status": "passed",
+    "allowed_shot_scope": ["SH01"],
+    "blocked_shot_scope": ["SH02"]
+  },
+  "compile_gate": {
+    "requested_shot_ids": ["SH01"],
+    "status": "allowed",
+    "reason_codes": []
+  }
+}

@@ -1,0 +1,6 @@
+interface:
+  display_name: "AI Film Production Ledger"
+  short_description: "Track immutable prompt, output, review, and retry lineage"
+  default_prompt: "Use $ai-film-production-ledger to append this final generation candidate and preserve its parent attempt and evidence lineage."
+policy:
+  allow_implicit_invocation: true

@@ -1,0 +1,6 @@
+interface:
+  display_name: "AI Film Asset Stress Test"
+  short_description: "Validate recurring film assets before batch generation"
+  default_prompt: "Use $ai-film-asset-stress-test to validate this locked asset and return its allowed and blocked shot scope."
+policy:
+  allow_implicit_invocation: true

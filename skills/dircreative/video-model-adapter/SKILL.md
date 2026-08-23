@@ -86,6 +86,12 @@ Use `skills/dircreative/assets/visualizations/stage-surface-registry.json#video-
   machine packet before export. Only available/attached bindings enter prompts;
   planned audio, human-only boards, over-budget reference sets, illegal state
   transitions, and mismatched global/local slot numbers fail closed.
+  Also attach the validated staged asset-foundation pass and stress-test report;
+  the handoff validator rechecks their real file hashes, stage coverage, verdict,
+  and requested shot scope before any prompt is exportable.
+- After prompt preflight, send only the final generation candidate—not drafts—to
+  `ai-film-production-ledger`. The Ledger records a `planned` attempt until a
+  separate generation authorization and real execution evidence exist.
 - Resolve `capability_card_id + version + provider_surface` before naming reference modes, duration, native audio, edit, extension, or upload slots. Reject family aliases, `latest`, stale cards, S4-only evidence, workflow-only cards, deprecated defaults, and preview aliases when a stable endpoint is current.
 - Preserve `verified_on`, `accessed_on`, source tier/URLs, status/deprecation, and official-source conflicts in the manifest. If the live execution surface differs from the card or a conflict remains material, stay prompt-only.
 - Run the rights gate before binding image, video, audio, character, element, likeness, voice, brand/character, or music inputs. Unverified/blocked rights prevent generation and external upload.

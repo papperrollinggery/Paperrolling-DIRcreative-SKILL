@@ -1,0 +1,88 @@
+{
+  "contract_id": "ai_film_asset_stress_test_v1",
+  "authority": "validation_only",
+  "source_owner": "dircreative",
+  "validator_owner": "ai-film-asset-stress-test",
+  "project_id": "PROJECT-001",
+  "fixture_only": false,
+  "producer_actor_id": "producer-01",
+  "stress_test_id": "STRESS-001",
+  "input_spec_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "assets": [{
+    "asset_id": "CHAR-ROCO-BASE",
+    "asset_kind": "character",
+    "asset_version": "v1",
+    "canonical_relative_path": "canonical/char-roco-base.png",
+    "canonical_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "state_family": "ROCO-APPEARANCE",
+    "state_id": "ROCO-BASE",
+    "descriptor_text": "Fictional adult character, angular face, black field jacket.",
+    "descriptor_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "references": [
+      {
+        "reference_id": "REF-FACE",
+        "relative_path": "references/roco-face.png",
+        "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "rights_status": "verified",
+        "source_kind": "identity_reference",
+        "role": "canonical"
+      },
+      {
+        "reference_id": "REF-BODY",
+        "relative_path": "references/roco-body.png",
+        "sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "rights_status": "verified",
+        "source_kind": "identity_reference",
+        "role": "supporting"
+      }
+    ],
+    "target_model": "seedance",
+    "provider_surface": "fixture-surface-v1",
+    "intended_shot_classes": ["close_up", "full_body", "wide", "group"],
+    "intended_lighting": ["training_hall_hard_toplight"],
+    "required_combinations": ["ROCO+JAX", "right_hand_prop"],
+    "required_case_kinds": ["face_close_up", "full_body", "wide_fov", "front_three_quarter_back", "target_lighting", "group_composition", "occlusion_prop", "state_variant", "handedness", "scale_topology"],
+    "approval_owner": "dircreative"
+  }],
+  "matrix_config": {
+    "configurable": true,
+    "minimum_case_count": 10,
+    "required_case_kinds": [
+      "face_close_up",
+      "full_body",
+      "wide_fov",
+      "front_three_quarter_back",
+      "target_lighting",
+      "group_composition",
+      "occlusion_prop",
+      "state_variant",
+      "handedness",
+      "scale_topology"
+    ]
+  },
+  "test_cases": [
+    {"test_case_id":"TC-FACE","asset_id":"CHAR-ROCO-BASE","case_kind":"face_close_up","state_family":"ROCO-APPEARANCE","shot_scope":["close_up"],"lighting":[],"expected_invariants":["face identity"],"observed_deviations":[],"status":"pass","evidence":[{"evidence_id":"EV-FACE","relative_path":"evidence/tc-face.png","sha256":"1111111111111111111111111111111111111111111111111111111111111111","receipt_source":"external_verified"}],"severity":"none","allowed_shot_scope":["close_up"],"blocked_shot_scope":[]},
+    {"test_case_id":"TC-BODY","asset_id":"CHAR-ROCO-BASE","case_kind":"full_body","state_family":"ROCO-APPEARANCE","shot_scope":["full_body"],"lighting":[],"expected_invariants":["wardrobe silhouette"],"observed_deviations":[],"status":"pass","evidence":[{"evidence_id":"EV-BODY","relative_path":"evidence/tc-body.png","sha256":"2222222222222222222222222222222222222222222222222222222222222222","receipt_source":"external_verified"}],"severity":"none","allowed_shot_scope":["full_body"],"blocked_shot_scope":[]},
+    {"test_case_id":"TC-WIDE","asset_id":"CHAR-ROCO-BASE","case_kind":"wide_fov","state_family":"ROCO-APPEARANCE","shot_scope":["wide"],"lighting":[],"expected_invariants":["recognizable silhouette"],"observed_deviations":[],"status":"pass","evidence":[{"evidence_id":"EV-WIDE","relative_path":"evidence/tc-wide.png","sha256":"3333333333333333333333333333333333333333333333333333333333333333","receipt_source":"external_verified"}],"severity":"none","allowed_shot_scope":["wide"],"blocked_shot_scope":[]},
+    {"test_case_id":"TC-ANGLES","asset_id":"CHAR-ROCO-BASE","case_kind":"front_three_quarter_back","state_family":"ROCO-APPEARANCE","shot_scope":["close_up","full_body"],"lighting":[],"expected_invariants":["front three-quarter back identity"],"observed_deviations":[],"status":"pass","evidence":[{"evidence_id":"EV-ANGLES","relative_path":"evidence/tc-angles.png","sha256":"4444444444444444444444444444444444444444444444444444444444444444","receipt_source":"external_verified"}],"severity":"none","allowed_shot_scope":["close_up","full_body"],"blocked_shot_scope":[]},
+    {"test_case_id":"TC-LIGHT","asset_id":"CHAR-ROCO-BASE","case_kind":"target_lighting","state_family":"ROCO-APPEARANCE","shot_scope":["close_up","full_body","wide"],"lighting":["training_hall_hard_toplight"],"expected_invariants":["identity under target light"],"observed_deviations":[],"status":"pass","evidence":[{"evidence_id":"EV-LIGHT","relative_path":"evidence/tc-light.png","sha256":"5555555555555555555555555555555555555555555555555555555555555555","receipt_source":"external_verified"}],"severity":"none","allowed_shot_scope":["close_up","full_body","wide"],"blocked_shot_scope":[]},
+    {"test_case_id":"TC-GROUP","asset_id":"CHAR-ROCO-BASE","case_kind":"group_composition","state_family":"ROCO-APPEARANCE","shot_scope":["group"],"lighting":["training_hall_hard_toplight"],"combination_ids":["ROCO+JAX"],"expected_invariants":["ROCO remains distinct beside JAX"],"observed_deviations":[],"status":"pass","evidence":[{"evidence_id":"EV-GROUP","relative_path":"evidence/tc-group.png","sha256":"6666666666666666666666666666666666666666666666666666666666666666","receipt_source":"external_verified"}],"severity":"none","allowed_shot_scope":["group"],"blocked_shot_scope":[]},
+    {"test_case_id":"TC-OCCLUSION","asset_id":"CHAR-ROCO-BASE","case_kind":"occlusion_prop","state_family":"ROCO-APPEARANCE","shot_scope":["close_up","full_body"],"lighting":[],"combination_ids":["right_hand_prop"],"expected_invariants":["right hand prop ownership"],"observed_deviations":[],"status":"pass","evidence":[{"evidence_id":"EV-OCCLUSION","relative_path":"evidence/tc-occlusion.png","sha256":"7777777777777777777777777777777777777777777777777777777777777777","receipt_source":"external_verified"}],"severity":"none","allowed_shot_scope":["close_up","full_body"],"blocked_shot_scope":[]},
+    {"test_case_id":"TC-STATE","asset_id":"CHAR-ROCO-BASE","case_kind":"state_variant","state_family":"ROCO-APPEARANCE","shot_scope":["close_up","full_body"],"lighting":[],"expected_invariants":["base state remains separate"],"observed_deviations":[],"status":"pass","evidence":[{"evidence_id":"EV-STATE","relative_path":"evidence/tc-state.png","sha256":"8888888888888888888888888888888888888888888888888888888888888888","receipt_source":"external_verified"}],"severity":"none","allowed_shot_scope":["close_up","full_body"],"blocked_shot_scope":[]},
+    {"test_case_id":"TC-HAND","asset_id":"CHAR-ROCO-BASE","case_kind":"handedness","state_family":"ROCO-APPEARANCE","shot_scope":["close_up","full_body"],"lighting":[],"expected_invariants":["prop remains in right hand"],"observed_deviations":[],"status":"pass","evidence":[{"evidence_id":"EV-HAND","relative_path":"evidence/tc-hand.png","sha256":"9999999999999999999999999999999999999999999999999999999999999999","receipt_source":"external_verified"}],"severity":"none","allowed_shot_scope":["close_up","full_body"],"blocked_shot_scope":[]},
+    {"test_case_id":"TC-SCALE","asset_id":"CHAR-ROCO-BASE","case_kind":"scale_topology","state_family":"ROCO-APPEARANCE","shot_scope":["wide"],"lighting":[],"expected_invariants":["human scale remains stable"],"observed_deviations":[],"status":"pass","evidence":[{"evidence_id":"EV-SCALE","relative_path":"evidence/tc-scale.png","sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","receipt_source":"external_verified"}],"severity":"none","allowed_shot_scope":["wide"],"blocked_shot_scope":[]}
+  ],
+  "verdict": {
+    "status": "conditional",
+    "allowed_shot_scope": ["close_up", "full_body", "wide", "group"],
+    "blocked_shot_scope": ["extreme_underwater"],
+    "reviewer": {
+      "actor_id": "reviewer-01",
+      "review_authority_id": "REVIEW-AUTHORITY-001",
+      "reviewer_type": "independent",
+      "timestamp": "2026-08-24T00:00:00Z",
+      "receipt_source": "independent_review",
+      "receipt_sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    }
+  }
+}

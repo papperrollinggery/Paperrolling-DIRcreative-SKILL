@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.5.0 - Unreleased
+## 0.5.0 - 2026-08-24
 
 - Adds a dynamic whole-film visual asset contract covering every scene, approved shot, director-storyboard page, and scene-coherent video-generation unit; replaces the former small vertical smoke case with a 60-second 16:9 TVC acceptance fixture, 24 frame-aligned formal shots, and 48 required assets.
 - Upgrades the visual plan to v2.2: source-inventory and approved-shot-card binding, continuous frame-aligned timecodes, full per-shot creative truth and per-asset truth hashes, exact storyboard/direct-input dependencies, model-strategy input ranges, canonical dependency-free PNG evidence, role-appropriate delivery aspect checks, full raster decoding, decoder-portable normalized pixel hashes, package-root containment, separate technical receipts, atomically read external visual-review manifests, metadata-resistant duplicate controls, and a stdlib schema fallback. `user_locked` cannot bypass review, and technical stamping cannot grant visual QA. The highest claim is `visual_assets_complete`; finished-master acceptance is intentionally out of scope.
@@ -11,6 +11,8 @@
 - Makes formal installation a same-process exact-source verification and install: artifact/checksum/commit/tag binding, reproducible rebuild, complete archive manifest, same-filesystem staging, post-swap readback, and rollback on mismatch; extracted installers and metadata-only claims cannot authorize a formal install.
 - Seals the pinned C2PA verifier into a private exact-byte snapshot for the whole audit, preventing validation-time pathname replacement from changing the trust root.
 - Seals one commit across media, preflight, build, verification, and final HEAD readback so a long release gate cannot mix evidence from two revisions.
+- Adds a six-stage, byte-bound asset-foundation pass plus the callable `ai-film-asset-stress-test` and `ai-film-production-ledger` Skills. Per-asset stress coverage, combination/evidence isolation, canonical/planning provenance, signed host trust, append-only genesis/attempt lineage, exact asset/prompt/output bytes, review, delivery, and verified billing all fail closed.
+- Gates `script_to_seedance_v1` on project-bound foundation/stress evidence and exact attached asset versions while preserving `jingzao-image-forge` as the cinematic storyboard-frame owner. The Studio selector routes the new validator/ledger without adding a controller or increasing context budgets.
 
 ## 0.4.0 - 2026-07-14
 

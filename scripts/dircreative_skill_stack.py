@@ -38,6 +38,11 @@ ALLOWED_PERSPECTIVES = {
     "model_continuity",
     "validation_only",
 }
+ISOLATED_CONTEXT_SCOPES = {
+    "isolated_craft_contract",
+    "isolated_validator_contract",
+    "isolated_handoff_contract",
+}
 REQUIRED_PROVIDER_FIELDS = {
     "skill_id",
     "source_type",
@@ -78,9 +83,12 @@ REALISTIC_SMOKE_EXPECTED = {
     "p26_sound_design": ("cinematic-music-sound-design", 1, "ready", None),
     "p42_authorized_generation_adapter": ("dircreative", 1, "ready", None),
     "p44_score_mix_reuses_loaded_body": ("score-and-mix-picture", 1, "ready", None),
-    "p45_asset_foundation": ("production-design-worldbuilding", 1, "needs_followup", None),
+    "p45_asset_foundation": ("minimum-visual-bible", 2, "needs_followup", None),
     "p46_script_to_seedance": ("convert-script-to-seedance", 2, "ready", None),
     "p47_cinematic_storyboard_frames": ("jingzao-image-forge", 1, "ready", None),
+    "p48_asset_foundation_production_design_pass": ("production-design-worldbuilding", 1, "needs_followup", None),
+    "p49_asset_stress_validation": ("dircreative", 1, "ready", None),
+    "p50_production_ledger": ("dircreative", 1, "ready", None),
     "n12_candidate_pool_capped": ("creative-anchor-director", 1, "ready", None),
 }
 REALISTIC_BODY_PAD = {
@@ -97,6 +105,10 @@ REALISTIC_BODY_PAD = {
     "score-and-mix-picture": 9950,
     "convert-script-to-seedance": 7680,
     "production-design-worldbuilding": 4430,
+    "minimum-visual-bible": 5000,
+    "character-continuity-bible": 5000,
+    "ai-film-asset-stress-test": 7000,
+    "ai-film-production-ledger": 4000,
     "jingzao-image-forge": 28240,
     "ai-video-prompt-preflight": 23600,
 }
@@ -123,6 +135,14 @@ HANDOFF_REQUIRED_CHAINS = {
         "delivery_consumption",
     ],
 }
+ASSET_FOUNDATION_STAGE_IDS = [
+    "identity_state",
+    "production_design",
+    "camera_geography",
+    "material_response",
+    "constraint_assignment",
+    "stress_certification",
+]
 
 
 class SkillStackError(ValueError):
@@ -526,6 +546,20 @@ def validate_registry(registry: dict[str, Any]) -> list[str]:
     prompt_preflight = providers.get("ai-video-prompt-preflight", {})
     if prompt_preflight.get("validator_context_cost") != "isolated_validator_contract":
         failures.append("video prompt preflight must retain isolated validator context")
+    asset_stress = providers.get("ai-film-asset-stress-test", {})
+    if (
+        asset_stress.get("provider_roles") != ["validator"]
+        or asset_stress.get("validator_context_cost") != "isolated_validator_contract"
+        or asset_stress.get("external_write") is not False
+    ):
+        failures.append("asset stress test must remain a non-executing isolated validator")
+    production_ledger = providers.get("ai-film-production-ledger", {})
+    if (
+        production_ledger.get("provider_roles") != ["collaborator"]
+        or production_ledger.get("external_write") is not False
+        or production_ledger.get("may_cost_money") is not False
+    ):
+        failures.append("production ledger must remain a record-only collaborator")
     handoff_contracts = registry.get("handoff_contracts")
     if not isinstance(handoff_contracts, dict):
         failures.append("handoff_contracts must be an object")
@@ -617,12 +651,40 @@ def validate_registry(registry: dict[str, Any]) -> list[str]:
                 failures.append(f"{scenario_id}: handoff target is not an owner candidate")
         if scenario.get("validator_required") is True and not scenario.get("validator_candidates"):
             failures.append(f"{scenario_id}: required validator has no candidates")
+        staged_passes = scenario.get("staged_passes")
+        if staged_passes is not None:
+            if scenario_id != "asset_foundation" or not isinstance(staged_passes, list):
+                failures.append(f"{scenario_id}: staged passes are only valid for asset foundation")
+                continue
+            pass_ids = [item.get("pass_id") for item in staged_passes if isinstance(item, dict)]
+            if pass_ids != ASSET_FOUNDATION_STAGE_IDS:
+                failures.append("asset foundation staged pass IDs drifted")
+            for item in staged_passes:
+                if not isinstance(item, dict):
+                    failures.append("asset foundation pass entry must be an object")
+                    continue
+                pass_references = [
+                    *item.get("owner_candidates", []),
+                    *item.get("validator_candidates", []),
+                ]
+                for candidates in item.get("collaborator_gaps", {}).values():
+                    pass_references.extend(candidates)
+                unknown_pass = sorted(set(pass_references) - set(providers))
+                if unknown_pass:
+                    failures.append(f"asset foundation {item.get('pass_id')}: unknown providers {unknown_pass}")
+                if len(item.get("validator_candidates", [])) > 1:
+                    failures.append(f"asset foundation {item.get('pass_id')}: more than one validator")
+    script_scenario = next(
+        (item for item in scenarios if isinstance(item, dict) and item.get("scenario_id") == "script_to_seedance"),
+        {},
+    )
+    if script_scenario.get("requires_asset_foundation_gate") is not True:
+        failures.append("script_to_seedance must require the asset foundation gate")
     missing = registry.get("missing_legacy_handoffs")
     if missing != [
         "ai-video-prompt-director",
         "creative-casebook",
         "capsule-engine",
-        "creative-production-ledger",
         "watch",
     ]:
         failures.append("known missing legacy handoffs drifted")
@@ -1155,6 +1217,77 @@ def select_stack(
     if scenario_id not in scenarios:
         raise SkillStackError(f"unknown scenario_id: {scenario_id}")
     scenario = scenarios[scenario_id]
+    intent = dict(intent)
+    staged_passes = scenario.get("staged_passes", [])
+    active_asset_pass: dict[str, Any] | None = None
+    active_asset_pass_id: str | None = None
+    next_asset_pass_id: str | None = None
+    staged_pass_count = len(staged_passes) if isinstance(staged_passes, list) else 0
+    asset_pass_status = str(intent.get("asset_pass_status", "in_progress"))
+    previous_asset_pass_verified = True
+    staged_pass_blocked = False
+    staged_pass_needs_followup = False
+    if staged_pass_count:
+        active_asset_pass_id = str(intent.get("asset_pass_id") or staged_passes[0].get("pass_id"))
+        pass_index = next(
+            (
+                index
+                for index, item in enumerate(staged_passes)
+                if isinstance(item, dict) and item.get("pass_id") == active_asset_pass_id
+            ),
+            None,
+        )
+        if pass_index is None:
+            raise SkillStackError(f"unknown asset pass id: {active_asset_pass_id}")
+        active_asset_pass = staged_passes[pass_index]
+        if pass_index + 1 < staged_pass_count:
+            next_asset_pass_id = str(staged_passes[pass_index + 1].get("pass_id"))
+        if pass_index > 0:
+            previous_asset_pass_verified = (
+                intent.get("previous_asset_pass_status") == "passed"
+                and isinstance(intent.get("previous_stage_output_sha256"), str)
+                and SHA_RE.fullmatch(intent["previous_stage_output_sha256"]) is not None
+            )
+        staged_pass_blocked = asset_pass_status == "failed" or not previous_asset_pass_verified
+        staged_pass_needs_followup = not staged_pass_blocked and (
+            asset_pass_status != "passed" or pass_index < staged_pass_count - 1
+        )
+        scenario = {
+            **scenario,
+            "stage": active_asset_pass.get("stage", scenario["stage"]),
+            "owner_candidates": list(active_asset_pass.get("owner_candidates", [])),
+            "collaborator_gaps": dict(active_asset_pass.get("collaborator_gaps", {})),
+            "validator_candidates": list(active_asset_pass.get("validator_candidates", [])),
+            "validator_required": active_asset_pass.get("validator_required", False),
+        }
+        if not intent.get("gaps"):
+            intent["gaps"] = list(active_asset_pass.get("required_gaps", []))
+
+    asset_foundation_gate_status = "not_required"
+    asset_foundation_gate_blocked = False
+    asset_foundation_gate_reason: str | None = None
+    if scenario.get("requires_asset_foundation_gate") is True:
+        requested_scope = set(intent.get("requested_shot_scope", []))
+        allowed_scope = set(intent.get("asset_allowed_shot_scope", []))
+        blocked_scope = set(intent.get("asset_blocked_shot_scope", []))
+        stress_verdict = intent.get("asset_stress_verdict")
+        if intent.get("asset_foundation_status") != "complete":
+            asset_foundation_gate_reason = "asset_foundation_gate_required"
+        elif stress_verdict not in {"certified", "conditional"}:
+            asset_foundation_gate_reason = "asset_stress_verdict_not_compilable"
+        elif (
+            not requested_scope
+            or not requested_scope.issubset(allowed_scope)
+            or bool(requested_scope & blocked_scope)
+        ):
+            asset_foundation_gate_reason = "asset_scope_not_allowed"
+        asset_foundation_gate_blocked = asset_foundation_gate_reason is not None
+        asset_foundation_gate_status = "blocked" if asset_foundation_gate_blocked else "allowed"
+
+    ledger_candidate_blocked = (
+        scenario_id == "production_ledger"
+        and intent.get("candidate_status") != "final_generation_candidate"
+    )
     mode = intent.get("mode")
     if mode not in {"fast", "studio", "delivery"}:
         raise SkillStackError(f"invalid mode: {mode}")
@@ -1317,6 +1450,14 @@ def select_stack(
     slots: list[dict[str, Any]] = []
     suggestions: list[str] = []
     reason_codes: list[str] = []
+    if staged_pass_blocked:
+        reason_codes.append(
+            "asset_pass_failed" if asset_pass_status == "failed" else "previous_asset_pass_unverified"
+        )
+    if asset_foundation_gate_reason is not None:
+        reason_codes.append(asset_foundation_gate_reason)
+    if ledger_candidate_blocked:
+        reason_codes.append("ledger_candidate_not_final")
     materialization_failures: dict[str, str] = {}
     reference_request_cache: dict[str, list[dict[str, Any]]] = {}
 
@@ -1419,6 +1560,8 @@ def select_stack(
         slot = _slot(skill_id, role, provider, entry)
         if role == "craft_owner" and provider.get("context_cost") == "isolated_craft_contract":
             slot["context_scope"] = "isolated_craft_contract"
+        if role == "collaborator" and provider.get("context_cost") == "isolated_handoff_contract":
+            slot["context_scope"] = "isolated_handoff_contract"
         if (
             role == "validator"
             and scenario.get("validator_required") is True
@@ -1453,25 +1596,30 @@ def select_stack(
         isolated_validator_budget = int(
             mode_contract.get("isolated_validator_context_bytes_max", 0)
         )
+        isolated_handoffs = [
+            item for item in future if item.get("context_scope") == "isolated_handoff_contract"
+        ]
+        isolated_handoff_bytes = sum(
+            int(item["body_bytes"]) + _metadata_bytes([item]) for item in isolated_handoffs
+        )
+        isolated_handoff_budget = int(mode_contract.get("isolated_handoff_context_bytes_max", 0))
         total_bytes = (
             base_bytes
             + candidate_metadata_bytes
             + sum(
                 int(item["body_bytes"])
                 for item in future
-                if item.get("context_scope")
-                not in {"isolated_craft_contract", "isolated_validator_contract"}
+                if item.get("context_scope") not in ISOLATED_CONTEXT_SCOPES
             )
             + _metadata_bytes(
                 [
                     item
                     for item in future
-                    if item.get("context_scope")
-                    not in {"isolated_craft_contract", "isolated_validator_contract"}
+                    if item.get("context_scope") not in ISOLATED_CONTEXT_SCOPES
                 ]
             )
         )
-        main_bodies = bodies - len(isolated_craft) - len(isolated_validators)
+        main_bodies = bodies - len(isolated_craft) - len(isolated_validators) - len(isolated_handoffs)
         total_files = base_files + main_bodies
         return (
             bodies <= body_cap
@@ -1479,6 +1627,7 @@ def select_stack(
             and total_files <= file_budget
             and len(isolated_craft) <= 1
             and len(isolated_validators) <= 1
+            and len(isolated_handoffs) <= 1
             and (
                 not isolated_craft
                 or (bool(isolated_craft_budget) and isolated_craft_bytes <= isolated_craft_budget)
@@ -1489,6 +1638,10 @@ def select_stack(
                     bool(isolated_validator_budget)
                     and isolated_validator_bytes <= isolated_validator_budget
                 )
+            )
+            and (
+                not isolated_handoffs
+                or (bool(isolated_handoff_budget) and isolated_handoff_bytes <= isolated_handoff_budget)
             )
         )
 
@@ -1590,7 +1743,15 @@ def select_stack(
                 reason_codes.append(f"overlapping_capability_skipped:{skill_id}")
                 continue
             if eligible(skill_id, "collaborator") and can_add(skill_id, "collaborator"):
-                slots.append(_slot(skill_id, "collaborator", providers[skill_id], catalog[skill_id]))
+                collaborator_slot = _slot(
+                    skill_id,
+                    "collaborator",
+                    providers[skill_id],
+                    catalog[skill_id],
+                )
+                if providers[skill_id].get("context_cost") == "isolated_handoff_contract":
+                    collaborator_slot["context_scope"] = "isolated_handoff_contract"
+                slots.append(collaborator_slot)
                 selected_ids.add(skill_id)
                 occupied_capabilities.update(providers[skill_id].get("capabilities", []))
                 collaborator_count += 1
@@ -1737,15 +1898,13 @@ def select_stack(
     provider_body_bytes = sum(
         int(item["body_bytes"])
         for item in slots
-        if item.get("context_scope")
-        not in {"isolated_craft_contract", "isolated_validator_contract"}
+        if item.get("context_scope") not in ISOLATED_CONTEXT_SCOPES
     )
     selected_metadata_bytes = _metadata_bytes(
         [
             item
             for item in slots
-            if item.get("context_scope")
-            not in {"isolated_craft_contract", "isolated_validator_contract"}
+            if item.get("context_scope") not in ISOLATED_CONTEXT_SCOPES
         ]
     )
     isolated_craft_context_bytes = sum(
@@ -1759,8 +1918,10 @@ def select_stack(
         if item.get("context_scope") == "isolated_validator_contract"
     )
     isolated_handoff_context_bytes = sum(
-        int(item["bytes"]) for item in handoff_read_requests
-    ) + (
+        int(item["body_bytes"]) + _metadata_bytes([item])
+        for item in slots
+        if item.get("context_scope") == "isolated_handoff_contract"
+    ) + sum(int(item["bytes"]) for item in handoff_read_requests) + (
         len(
             json.dumps(
                 handoff_read_requests,
@@ -1813,15 +1974,13 @@ def select_stack(
         provider_body_bytes = sum(
             int(item["body_bytes"])
             for item in slots
-            if item.get("context_scope")
-            not in {"isolated_craft_contract", "isolated_validator_contract"}
+            if item.get("context_scope") not in ISOLATED_CONTEXT_SCOPES
         )
         selected_metadata_bytes = _metadata_bytes(
             [
                 item
                 for item in slots
-                if item.get("context_scope")
-                not in {"isolated_craft_contract", "isolated_validator_contract"}
+                if item.get("context_scope") not in ISOLATED_CONTEXT_SCOPES
             ]
         )
         isolated_craft_context_bytes = sum(
@@ -1842,9 +2001,13 @@ def select_stack(
         if gate is not None
         else "blocked"
         if validation_required_missing
+        or staged_pass_blocked
+        or asset_foundation_gate_blocked
+        or ledger_candidate_blocked
         or (intent.get("real_side_effect") and adapter is None)
         else "needs_followup"
-        if scenario.get("requires_complete_gaps_before_downstream") is True and missing_gaps
+        if staged_pass_needs_followup
+        or (scenario.get("requires_complete_gaps_before_downstream") is True and missing_gaps)
         else "ready"
     )
     media_controls: list[str] = []
@@ -1859,6 +2022,11 @@ def select_stack(
     return {
         "status": status,
         "scenario_id": scenario_id,
+        "active_asset_pass_id": active_asset_pass_id,
+        "next_asset_pass_id": next_asset_pass_id,
+        "staged_pass_count": staged_pass_count,
+        "asset_pass_status": asset_pass_status if staged_pass_count else None,
+        "asset_foundation_gate_status": asset_foundation_gate_status,
         "handoff_contract_id": (
             applied_handoff_contract.get("contract_id") if applied_handoff_contract else None
         ),
@@ -1954,8 +2122,7 @@ def select_stack(
                     item
                     for item in slots
                     if item["status"] in {"materialized", "eligible_after_gate"}
-                    and item.get("context_scope")
-                    not in {"isolated_craft_contract", "isolated_validator_contract"}
+                    and item.get("context_scope") not in ISOLATED_CONTEXT_SCOPES
                 ]
             ),
             "budget_files": file_budget,

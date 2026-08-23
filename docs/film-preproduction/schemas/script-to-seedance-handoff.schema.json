@@ -10,9 +10,11 @@
     "source_owner",
     "target_owner",
     "output_owner",
+    "project_id",
     "status",
     "timeline_policy",
     "provider_limits",
+    "asset_foundation_gate",
     "authoritative_script",
     "entity_ownership",
     "model_surface",
@@ -29,6 +31,7 @@
     "source_owner": {"const": "dircreative"},
     "target_owner": {"const": "convert-script-to-seedance"},
     "output_owner": {"const": "dircreative"},
+    "project_id": {"type": "string", "minLength": 1},
     "status": {"enum": ["prompt_only", "instructions_only"]},
     "timeline_policy": {
       "enum": ["external_timeline_only", "prompt_macro_ranges", "prompt_shot_ranges"]
@@ -44,6 +47,7 @@
         "source": {"type": "string", "minLength": 1}
       }
     },
+    "asset_foundation_gate": {"$ref": "#/$defs/asset_foundation_gate"},
     "authoritative_script": {"$ref": "#/$defs/authoritative_script"},
     "entity_ownership": {
       "type": "array",
@@ -93,6 +97,38 @@
       "type": "object",
       "minProperties": 1,
       "additionalProperties": {"type": "string", "minLength": 1}
+    },
+    "asset_foundation_gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "project_id",
+        "pass_id",
+        "pass_artifact_sha256",
+        "stress_test_id",
+        "stress_report_sha256",
+        "stress_verdict",
+        "requested_shot_ids",
+        "allowed_shot_ids",
+        "blocked_shot_ids"
+        ,"covered_asset_ids"
+      ],
+      "properties": {
+        "project_id": {"type": "string", "minLength": 1},
+        "pass_id": {"type": "string", "minLength": 1},
+        "pass_artifact_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "stress_test_id": {"type": "string", "minLength": 1},
+        "stress_report_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "stress_verdict": {"enum": ["certified", "conditional", "rejected", "unverified"]},
+        "requested_shot_ids": {"$ref": "#/$defs/id_array"},
+        "allowed_shot_ids": {"$ref": "#/$defs/id_array"},
+        "blocked_shot_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "covered_asset_ids": {"$ref": "#/$defs/id_array"}
+      }
     },
     "authoritative_script": {
       "type": "object",
@@ -216,6 +252,20 @@
     "binding": {
       "type": "object",
       "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "media_type": {"const": "image"},
+              "status": {"const": "available"},
+              "attached_to_run": {"const": true},
+              "direct_input_policy": {"enum": ["allowed", "conditional"]}
+            },
+            "required": ["media_type", "status", "attached_to_run", "direct_input_policy"]
+          },
+          "then": {"required": ["asset_version", "relative_path", "sha256"]}
+        }
+      ],
       "required": [
         "binding_id",
         "asset_id",
@@ -239,6 +289,9 @@
       "properties": {
         "binding_id": {"type": "string", "minLength": 1},
         "asset_id": {"type": "string", "minLength": 1},
+        "asset_version": {"type": "string", "minLength": 1},
+        "relative_path": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
         "media_type": {"enum": ["image", "audio", "video"]},
         "source_kind": {
           "enum": [

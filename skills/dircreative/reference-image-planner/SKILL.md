@@ -84,6 +84,13 @@ Use `skills/dircreative/assets/visualizations/stage-surface-registry.json#refere
   character continuity, production design, camera geography, constraint-input,
   material, and post-generation consistency responsibilities distinct; do not
   load every provider into one stage.
+- Run its stable passes in the order defined by
+  `skills/dircreative/references/asset-foundation-pass.md`. Bind each output hash
+  to the next input; a failed or incomplete pass remains `needs_followup` or
+  blocked and cannot be promoted into Seedance compilation.
+- Before repeated/multi-shot assets become compile inputs, route the final pass
+  through `ai-film-asset-stress-test`. `conditional` must enumerate allowed and
+  blocked shot scope; missing real evidence remains `unverified`.
 - Split human planning boards from model layout references. A narrative frame
   or labeled board cannot become an identity source, clean frame, or model
   reference without an explicit promotion receipt, narrower role, and

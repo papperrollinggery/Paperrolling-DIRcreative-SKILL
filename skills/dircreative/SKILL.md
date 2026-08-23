@@ -86,6 +86,8 @@ storyboards are narrative beats. Only explicit technical/full-preproduction
 scope proceeds to shot and asset matrices. Whole-film work derives scene,
 identity, per-shot board, director-board, and model-input coverage before
 generation; representative images are never the whole film.
+Repeated assets use the staged `asset_foundation` pass; only a hash-bound,
+fully covered pass plus scoped stress verdict may enter Seedance compilation.
 
 ### Delivery
 
@@ -132,6 +134,8 @@ affected downstream material stale, and make the smallest complete change.
 Prompt work keeps Prompt IR model-neutral and applies one model surface at a
 time. Verify volatile model claims from current official evidence only when they
 affect the answer or execution.
+Record only final generation candidates in `ai-film-production-ledger`; runtime
+state remains project truth and the Ledger never executes or approves media.
 
 ## Result Contract
 

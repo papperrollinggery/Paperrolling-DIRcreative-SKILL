@@ -323,9 +323,13 @@ def validate_required_paths() -> None:
         "docs/film-preproduction/schemas/adco-specialist-receipt-v2.schema.json",
         "docs/film-preproduction/schemas/media-forward-execution-v2.schema.json",
         "docs/film-preproduction/schemas/media-visual-review-v1.schema.json",
+        "docs/film-preproduction/schemas/asset-foundation-pass.schema.json",
+        "docs/film-preproduction/schemas/ai-film-asset-stress-test.schema.json",
+        "docs/film-preproduction/schemas/ai-film-production-ledger.schema.json",
         "docs/film-preproduction/schemas/script-to-seedance-handoff.schema.json",
         "docs/film-preproduction/schemas/storyboard-frame-to-jingzao.schema.json",
         "skills/dircreative/agents/openai.yaml",
+        "skills/dircreative/runtime/review-trust-registry.json",
         "skills/dircreative/runtime/routing-policy.yaml",
         "skills/dircreative/runtime/visual-skill-policy.json",
         "skills/dircreative/runtime/state-snapshot.schema.json",
@@ -339,6 +343,7 @@ def validate_required_paths() -> None:
         "skills/dircreative/references/prompt-model.md",
         "skills/dircreative/references/generation-delivery.md",
         "skills/dircreative/references/specialist-exchange.md",
+        "skills/dircreative/references/asset-foundation-pass.md",
         "skills/dircreative/references/script-to-seedance.md",
         "skills/dircreative/references/storyboard-frame-to-jingzao.md",
         "skills/dircreative/references/visual-skill-stack.md",
@@ -347,6 +352,12 @@ def validate_required_paths() -> None:
         "tests/fixtures/routing/cases.json",
         "tests/fixtures/skill-stack/cases.json",
         "tests/fixtures/skill-stack/host-catalog.json",
+        "tests/fixtures/asset-foundation/valid-pass.json",
+        "tests/fixtures/asset-foundation/cases.json",
+        "tests/fixtures/asset-stress-test/valid-report.json",
+        "tests/fixtures/asset-stress-test/cases.json",
+        "tests/fixtures/production-ledger/valid-ledger.json",
+        "tests/fixtures/production-ledger/cases.json",
         "tests/fixtures/script-to-seedance/valid-handoff.json",
         "tests/fixtures/script-to-seedance/cases.json",
         "tests/fixtures/storyboard-frame-jingzao/valid-chain.json",
@@ -494,6 +505,11 @@ def validate_required_paths() -> None:
         "scripts/dircreative_route.py",
         "scripts/dircreative_context_budget_audit.py",
         "scripts/dircreative_skill_stack.py",
+        "scripts/dircreative_review_trust.py",
+        "scripts/dircreative_validation_common.py",
+        "scripts/dircreative_asset_foundation_pass.py",
+        "scripts/ai_film_asset_stress_test.py",
+        "scripts/ai_film_production_ledger.py",
         "scripts/dircreative_script_to_seedance_handoff.py",
         "scripts/dircreative_storyboard_frame_handoff.py",
         "scripts/dircreative_run.py",
@@ -531,6 +547,10 @@ def validate_required_paths() -> None:
         "scripts/dircreative_visual_dogfood.py",
         "scripts/dircreative_isolated_user_sim.py",
         "scripts/install_local_skill.py",
+        "skills/ai-film-asset-stress-test/SKILL.md",
+        "skills/ai-film-asset-stress-test/agents/openai.yaml",
+        "skills/ai-film-production-ledger/SKILL.md",
+        "skills/ai-film-production-ledger/agents/openai.yaml",
         "examples/cyber-courier/23-generation-qa-template.yaml",
         "examples/product-ad-raincoat/01-idea-intake.md",
         "examples/product-ad-raincoat/02-director-room-notes.md",
@@ -1554,10 +1574,11 @@ def validate_skill_stack() -> None:
     require(proc.returncode == 0, f"Skill Stack audit failed:\n{proc.stderr}\n{proc.stdout}")
     for marker in [
         "DIRCREATIVE_SKILL_STACK_AUDIT: PASS",
-        '"positive_cases": 47',
-        '"negative_cases": 21',
-        '"scenario_count": 41',
-        '"realistic_smoke_cases": 19',
+        '"positive_cases": 51',
+        '"negative_cases": 32',
+        '"scenario_count": 43',
+        '"provider_policy_count": 51',
+        '"realistic_smoke_cases": 22',
         '"two_phase_host_binding": true',
         '"trusted_primary_route_controls": true',
         '"artifact_output_guard_controls": true',
@@ -1636,6 +1657,67 @@ def validate_visual_asset_plan() -> None:
         require(marker in proc.stdout, f"visual asset plan audit missing evidence: {marker}")
 
 
+def validate_asset_foundation_pass() -> None:
+    proc = run(["python3", "scripts/dircreative_asset_foundation_pass.py", "self-test"])
+    require(
+        proc.returncode == 0,
+        f"asset foundation pass audit failed:\n{proc.stderr}\n{proc.stdout}",
+    )
+    for marker in [
+        "DIRCREATIVE_ASSET_FOUNDATION_PASS_AUDIT: PASS",
+        '"valid_fixture_passed": true',
+        '"stage_count": 6',
+        '"negative_case_count": 13',
+        '"negative_cases_rejected": 13',
+        '"compile_gate_status": "allowed"',
+    ]:
+        require(marker in proc.stdout, f"asset foundation pass audit missing marker: {marker}")
+
+
+def validate_ai_film_asset_stress_test() -> None:
+    proc = run(["python3", "scripts/ai_film_asset_stress_test.py", "self-test"])
+    require(
+        proc.returncode == 0,
+        f"AI-film asset stress-test audit failed:\n{proc.stderr}\n{proc.stdout}",
+    )
+    for marker in [
+        "AI_FILM_ASSET_STRESS_TEST_AUDIT: PASS",
+        '"valid_fixture_passed": true',
+        '"matrix_case_count": 10',
+        '"negative_case_count": 23',
+        '"negative_cases_rejected": 23',
+        '"media_generation_performed": false',
+    ]:
+        require(marker in proc.stdout, f"asset stress-test audit missing marker: {marker}")
+
+
+def validate_ai_film_production_ledger() -> None:
+    proc = run(["python3", "scripts/ai_film_production_ledger.py", "self-test"])
+    require(
+        proc.returncode == 0,
+        f"AI-film production ledger audit failed:\n{proc.stderr}\n{proc.stdout}",
+    )
+    for marker in [
+        "AI_FILM_PRODUCTION_LEDGER_AUDIT: PASS",
+        '"valid_fixture_passed": true',
+        '"attempt_count": 2',
+        '"negative_case_count": 23',
+        '"negative_cases_rejected": 23',
+        '"previous_or_initial_required": true',
+        '"unconfigured_authority_rejected": true',
+        '"authority_escalation_rejected": true',
+        '"actor_spoof_rejected": true',
+        '"secret_receipt_rejected": true',
+        '"verified_lineage_positive": true',
+        '"verified_cost_positive": true',
+        '"append_only_positive": true',
+        '"append_only_parent_protection": true',
+        '"initial_reset_rejected": true',
+        '"media_generation_performed": false',
+    ]:
+        require(marker in proc.stdout, f"production ledger audit missing marker: {marker}")
+
+
 def validate_script_to_seedance_handoff() -> None:
     proc = run(["python3", "scripts/dircreative_script_to_seedance_handoff.py", "self-test"])
     require(
@@ -1645,9 +1727,10 @@ def validate_script_to_seedance_handoff() -> None:
     for marker in [
         "DIRCREATIVE_SCRIPT_TO_SEEDANCE_HANDOFF_AUDIT: PASS",
         '"valid_fixture_passed": true',
-        '"negative_case_count": 30',
-        '"negative_cases_rejected": 30',
+        '"negative_case_count": 42',
+        '"negative_cases_rejected": 42',
         '"generation_unit_count": 2',
+        '"asset_foundation_gate_validated": true',
     ]:
         require(marker in proc.stdout, f"script-to-Seedance handoff audit missing marker: {marker}")
 
@@ -1936,6 +2019,41 @@ def validate_skills() -> None:
         for heading in ["## Required Knowledge", "## Inputs", "## Outputs", "## Rules", "## skill_run_receipt"]:
             require(heading in text, f"{rel(path)} missing {heading}")
         require("docs/film-preproduction/" in text, f"{rel(path)} does not cite docs/film-preproduction knowledge")
+    for skill_id, required_terms in {
+        "ai-film-asset-stress-test": [
+            "validation_only",
+            "ai-film-asset-stress-test.schema.json",
+            "ai_film_asset_stress_test.py",
+            "unverified",
+        ],
+        "ai-film-production-ledger": [
+            "record_only",
+            "ai-film-production-ledger.schema.json",
+            "ai_film_production_ledger.py",
+            "append-only",
+        ],
+    }.items():
+        skill_path = require_path(f"skills/{skill_id}/SKILL.md")
+        text = skill_path.read_text(encoding="utf-8")
+        require(text.startswith("---\n"), f"{skill_id} missing YAML frontmatter")
+        frontmatter = re.match(r"^---\n(.*?)\n---", text, re.DOTALL)
+        require(frontmatter is not None, f"{skill_id} has invalid YAML frontmatter")
+        header = frontmatter.group(1) if frontmatter else ""
+        require(f"name: {skill_id}" in header, f"{skill_id} frontmatter name mismatch")
+        require("description:" in header, f"{skill_id} missing description")
+        require(len(skill_id) <= 64, f"{skill_id} exceeds Skill name limit")
+        unfinished_marker = "[" + "TO" + "DO:"
+        require(unfinished_marker not in text, f"{skill_id} contains an unfinished placeholder")
+        require(len(text.splitlines()) <= 120, f"{skill_id} entrypoint is not narrow")
+        for term in required_terms:
+            require(term in text, f"{skill_id} missing contract term: {term}")
+        openai_text = require_path(f"skills/{skill_id}/agents/openai.yaml").read_text(
+            encoding="utf-8"
+        )
+        require(
+            f"${skill_id}" in openai_text,
+            f"{skill_id} default prompt does not name the Skill",
+        )
     for skill_path in CHAT_SURFACE_SKILLS:
         text = require_path(skill_path).read_text(encoding="utf-8")
         require("## Chat Surface" in text, f"{skill_path} missing Chat Surface")
@@ -6494,6 +6612,9 @@ def main() -> int:
         ("activation policy", validate_activation_policy),
         ("routing and context budget", validate_context_budget),
         ("dynamic visual Skill Stack", validate_skill_stack),
+        ("staged asset foundation pass", validate_asset_foundation_pass),
+        ("AI-film asset stress test", validate_ai_film_asset_stress_test),
+        ("AI-film production ledger", validate_ai_film_production_ledger),
         ("script-to-Seedance handoff", validate_script_to_seedance_handoff),
         ("storyboard-frame Jingzao handoff", validate_storyboard_frame_handoff),
         ("whole-film visual asset plan", validate_visual_asset_plan),

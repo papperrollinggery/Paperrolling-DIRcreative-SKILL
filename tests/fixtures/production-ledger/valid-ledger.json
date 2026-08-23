@@ -1,0 +1,87 @@
+{
+  "schema_version": "1.0.0",
+  "contract_id": "ai_film_production_ledger_v1",
+  "authority": "record_only",
+  "owner": "ai-film-production-ledger",
+  "project_id": "PROJECT-001",
+  "ledger_id": "LEDGER-PROJECT-001",
+  "genesis_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "status": "open",
+  "attempts": [
+    {
+      "attempt_id": "ATTEMPT-001",
+      "attempt_kind": "initial",
+      "parent_attempt_id": null,
+      "project_id": "PROJECT-001",
+      "scene_id": "SCENE-001",
+      "shot_id": "SH01",
+      "generation_unit_id": "GU01",
+      "asset_bindings": [
+        {"asset_id":"CHAR-ROCO-BASE","version":"v1","relative_path":"assets/char-roco-base-v1.png","sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","source_status":"available","attached":true}
+      ],
+      "prompt_artifact": {
+        "artifact_id": "PROMPT-GU01-v1",
+        "prompt_text": "Use @Image 1. Hold ROCO at frame-left.",
+        "prompt_sha256": "f67e9085d48222abe55536b255ab6a3570bdac8e85cc64ff63250a3e47bf6607"
+      },
+      "model_snapshot": {
+        "model": "seedance",
+        "version": "test-v1",
+        "provider_surface": "fixture-surface",
+        "mode": "image_to_video",
+        "settings": {"duration_seconds": 5, "aspect_ratio": "16:9"}
+      },
+      "authorized_execution_state": "planned",
+      "expected_visible_proof": ["ROCO remains at frame-left"],
+      "primary_delta": "initial candidate",
+      "preserved_successes": [],
+      "output_manifest": [],
+      "review_evidence": [],
+      "edit_timeline_placement": null,
+      "cost_credits": {"status":"unverified","amount":null,"currency":null,"receipt_id":null},
+      "created_at": "2026-08-24T00:00:00Z",
+      "actor": "dircreative",
+      "source_status": "fixture"
+    },
+    {
+      "attempt_id": "ATTEMPT-002",
+      "attempt_kind": "retry",
+      "parent_attempt_id": "ATTEMPT-001",
+      "project_id": "PROJECT-001",
+      "scene_id": "SCENE-001",
+      "shot_id": "SH01",
+      "generation_unit_id": "GU01",
+      "asset_bindings": [
+        {"asset_id":"CHAR-ROCO-BASE","version":"v1","relative_path":"assets/char-roco-base-v1.png","sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","source_status":"available","attached":true}
+      ],
+      "prompt_artifact": {
+        "artifact_id": "PROMPT-GU01-v2",
+        "prompt_text": "Use @Image 1. Hold ROCO at frame-left with a lower camera.",
+        "prompt_sha256": "200c7a9dcc255517aa13a800471e9cc7464e4a3adbc956ce4e729ce73781354c"
+      },
+      "model_snapshot": {
+        "model": "seedance",
+        "version": "test-v1",
+        "provider_surface": "fixture-surface",
+        "mode": "image_to_video",
+        "settings": {"duration_seconds": 5, "aspect_ratio": "16:9"}
+      },
+      "authorized_execution_state": "planned",
+      "expected_visible_proof": ["ROCO remains at frame-left", "camera is lower"],
+      "primary_delta": "camera height only",
+      "preserved_successes": ["identity", "screen direction", "lighting"],
+      "output_manifest": [],
+      "review_evidence": [],
+      "edit_timeline_placement": null,
+      "cost_credits": {"status":"unverified","amount":null,"currency":null,"receipt_id":null},
+      "created_at": "2026-08-24T00:01:00Z",
+      "actor": "dircreative",
+      "source_status": "fixture"
+    }
+  ],
+  "receipt_manifest": [],
+  "state_events": [
+    {"event_id":"EVENT-001","attempt_id":"ATTEMPT-001","state":"planned","evidence_source":"none","evidence_refs":[],"review_verdict":"not_applicable","created_at":"2026-08-24T00:00:00Z","actor":"dircreative"},
+    {"event_id":"EVENT-002","attempt_id":"ATTEMPT-002","state":"planned","evidence_source":"none","evidence_refs":[],"review_verdict":"not_applicable","created_at":"2026-08-24T00:01:00Z","actor":"dircreative"}
+  ]
+}

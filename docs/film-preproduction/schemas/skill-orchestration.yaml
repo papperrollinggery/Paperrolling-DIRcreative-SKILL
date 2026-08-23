@@ -327,6 +327,49 @@ subskills:
       - docs/film-preproduction/schemas/skill-orchestration.yaml
     next_skill: "root_router"
 
+ai_film_p0_capabilities:
+  staged_asset_foundation:
+    owner: "dircreative"
+    reference: "skills/dircreative/references/asset-foundation-pass.md"
+    schema: "docs/film-preproduction/schemas/asset-foundation-pass.schema.json"
+    validator: "scripts/dircreative_asset_foundation_pass.py"
+    pass_ids:
+      - identity_state
+      - production_design
+      - camera_geography
+      - material_response
+      - constraint_assignment
+      - stress_certification
+    completion_boundary: "scope_ready_for_prompt_compilation_only"
+    actual_stage_bytes_required: true
+    exact_stress_asset_coverage_required: true
+
+  asset_stress_test:
+    skill_id: "ai-film-asset-stress-test"
+    role: "validator"
+    authority: "validation_only"
+    schema: "docs/film-preproduction/schemas/ai-film-asset-stress-test.schema.json"
+    validator: "scripts/ai_film_asset_stress_test.py"
+    upstream_owner: "dircreative"
+    detached_review_signature_required_for_completion: true
+    host_public_key_pin_required: true
+    may_generate_media: false
+    may_grant_approval: false
+
+  production_ledger:
+    skill_id: "ai-film-production-ledger"
+    role: "collaborator"
+    authority: "record_only"
+    schema: "docs/film-preproduction/schemas/ai-film-production-ledger.schema.json"
+    validator: "scripts/ai_film_production_ledger.py"
+    upstream_owner: "dircreative"
+    runtime_state_is_project_truth: true
+    receives: "final_generation_candidate_only"
+    append_baseline: "previous_snapshot_or_explicit_initial"
+    verified_states_require_receipt_manifest_bytes: true
+    may_generate_media: false
+    may_grant_approval: false
+
 external_compiler_handoffs:
   storyboard_frame_to_jingzao_v1:
     owner: "dircreative"
@@ -360,6 +403,8 @@ external_compiler_handoffs:
       - entity_ownership
       - continuity_locks
       - asset_and_audio_slot_ledger
+      - validated_asset_foundation_pass
+      - scoped_asset_stress_report
       - provider_reference_limits
       - exact_model_card_and_provider_surface
     outputs:
@@ -367,6 +412,7 @@ external_compiler_handoffs:
       - deterministic_slot_crosswalk
       - continuity_snapshots
       - split_or_missing_asset_blockers
+      - asset_foundation_gate_result
     downstream_owner: "video-model-adapter"
     external_side_effect: false
 

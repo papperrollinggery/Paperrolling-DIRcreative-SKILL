@@ -5,17 +5,17 @@ import argparse
 import copy
 import hashlib
 import json
-import os
 import re
+import tempfile
 from pathlib import Path
 from typing import Any
 
-try:
-    from jsonschema import Draft202012Validator
-except ImportError:  # pragma: no cover - repository validation provides jsonschema
-    Draft202012Validator = None  # type: ignore[assignment]
-
-from dircreative_state_audit import _builtin_schema_errors
+from dircreative_validation_common import (
+    add_error,
+    apply_mutations,
+    load_json,
+    schema_errors as validate_schema,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -45,28 +45,8 @@ SOURCE_KIND_BY_MEDIA = {
 }
 
 
-def load_json(path: Path) -> Any:
-    return json.loads(path.read_text(encoding="utf-8"))
-
-
-def add_error(errors: list[str], code: str, detail: str) -> None:
-    errors.append(f"{code}: {detail}")
-
-
 def schema_errors(document: dict[str, Any]) -> list[str]:
-    schema = load_json(SCHEMA_PATH)
-    if Draft202012Validator is None or os.environ.get("DIRCREATIVE_FORCE_BUILTIN_SCHEMA_VALIDATOR"):
-        return [
-            f"schema_error: {error}"
-            for error in _builtin_schema_errors(document, schema, schema, "$")
-        ]
-    validator = Draft202012Validator(schema)
-    return [
-        "schema_error: "
-        + "/".join(str(item) for item in error.absolute_path)
-        + f": {error.message}"
-        for error in sorted(validator.iter_errors(document), key=lambda item: list(item.absolute_path))
-    ]
+    return validate_schema(document, SCHEMA_PATH)
 
 
 def unique_map(
@@ -92,6 +72,169 @@ def seconds(value: str) -> float:
     if parsed_seconds < 0 or parsed_seconds >= 60:
         raise ValueError("seconds component must be between 00 and 59")
     return int(minutes) * 60 + parsed_seconds
+
+
+def asset_gate_errors(
+    document: dict[str, Any],
+    *,
+    asset_foundation_path: Path | None,
+    asset_stress_path: Path | None,
+    asset_artifact_root: Path | None,
+    asset_review_receipt: Path | None,
+    asset_review_signature: Path | None,
+    asset_trust_registry_path: Path | None,
+) -> list[str]:
+    from ai_film_asset_stress_test import validate as validate_stress_report
+    from dircreative_asset_foundation_pass import validate as validate_foundation_pass
+
+    errors: list[str] = []
+    gate = document.get("asset_foundation_gate", {})
+    verdict = gate.get("stress_verdict")
+    requested = set(gate.get("requested_shot_ids", []))
+    allowed = set(gate.get("allowed_shot_ids", []))
+    blocked = set(gate.get("blocked_shot_ids", []))
+    shot_ids = {
+        str(item.get("shot_id"))
+        for item in document.get("shots", [])
+        if isinstance(item, dict)
+    }
+    required_bound_assets = {
+        str(item.get("asset_id"))
+        for item in document.get("bindings", [])
+        if isinstance(item, dict)
+        and item.get("media_type") == "image"
+        and item.get("status") == "available"
+        and item.get("attached_to_run") is True
+        and item.get("direct_input_policy") in {"allowed", "conditional"}
+    }
+    covered_assets = set(gate.get("covered_asset_ids", []))
+    if not required_bound_assets.issubset(covered_assets):
+        add_error(
+            errors,
+            "asset_binding_stress_coverage_missing",
+            ",".join(sorted(required_bound_assets - covered_assets)),
+        )
+    if verdict not in {"certified", "conditional"}:
+        add_error(errors, "asset_stress_verdict_not_compilable", str(verdict))
+    if requested != shot_ids or not requested.issubset(allowed) or bool(requested & blocked):
+        add_error(errors, "asset_scope_not_allowed", ",".join(sorted(requested)))
+    if asset_foundation_path is None or asset_stress_path is None:
+        add_error(errors, "asset_foundation_evidence_required", str(gate.get("pass_id")))
+        return errors
+    try:
+        foundation_bytes = asset_foundation_path.read_bytes()
+        stress_bytes = asset_stress_path.read_bytes()
+        foundation = json.loads(foundation_bytes.decode("utf-8"))
+        stress = json.loads(stress_bytes.decode("utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+        add_error(errors, "asset_foundation_evidence_unreadable", str(gate.get("pass_id")))
+        return errors
+    if hashlib.sha256(foundation_bytes).hexdigest() != gate.get("pass_artifact_sha256"):
+        add_error(errors, "asset_foundation_file_hash_mismatch", str(asset_foundation_path))
+    if hashlib.sha256(stress_bytes).hexdigest() != gate.get("stress_report_sha256"):
+        add_error(errors, "asset_stress_file_hash_mismatch", str(asset_stress_path))
+
+    foundation_errors = validate_foundation_pass(
+        foundation,
+        artifact_root=asset_artifact_root,
+    )
+    if foundation_errors:
+        add_error(errors, "asset_foundation_pass_invalid", foundation_errors[0])
+    stress_kwargs: dict[str, Any] = {
+        "artifact_root": asset_artifact_root,
+        "review_receipt_path": asset_review_receipt,
+        "review_signature_path": asset_review_signature,
+    }
+    if asset_trust_registry_path is not None:
+        stress_kwargs["_trust_registry_path"] = asset_trust_registry_path
+    stress_errors = validate_stress_report(stress, **stress_kwargs)
+    if stress_errors:
+        add_error(errors, "asset_stress_report_invalid", stress_errors[0])
+
+    stress_binding = foundation.get("stress_test_binding", {}) if isinstance(foundation, dict) else {}
+    compile_gate = foundation.get("compile_gate", {}) if isinstance(foundation, dict) else {}
+    stress_asset_ids = {
+        str(item.get("asset_id"))
+        for item in stress.get("assets", [])
+        if isinstance(item, dict)
+    }
+    foundation_sources = {
+        str(item.get("asset_id")): item
+        for item in foundation.get("source_assets", [])
+        if isinstance(item, dict) and item.get("source_kind") == "canonical_asset"
+    }
+    stress_assets = {
+        str(item.get("asset_id")): item
+        for item in stress.get("assets", [])
+        if isinstance(item, dict)
+    }
+    for binding in document.get("bindings", []):
+        if not isinstance(binding, dict) or str(binding.get("asset_id")) not in required_bound_assets:
+            continue
+        asset_id = str(binding.get("asset_id"))
+        relative = binding.get("relative_path")
+        source = foundation_sources.get(asset_id)
+        stress_asset = stress_assets.get(asset_id)
+        if (
+            not isinstance(relative, str)
+            or not relative
+            or relative.startswith("/")
+            or "\\" in relative
+            or any(part in {"", ".", ".."} for part in relative.split("/"))
+            or not isinstance(binding.get("asset_version"), str)
+            or not isinstance(binding.get("sha256"), str)
+        ):
+            add_error(errors, "binding_asset_artifact_missing", asset_id)
+            continue
+        if asset_artifact_root is None:
+            add_error(errors, "binding_asset_artifact_root_required", asset_id)
+        else:
+            try:
+                root = asset_artifact_root.resolve(strict=True)
+                path = (root / relative).resolve(strict=True)
+                path.relative_to(root)
+            except (FileNotFoundError, RuntimeError, ValueError):
+                add_error(errors, "binding_asset_file_missing", asset_id)
+            else:
+                if hashlib.sha256(path.read_bytes()).hexdigest() != binding.get("sha256"):
+                    add_error(errors, "binding_asset_hash_mismatch", asset_id)
+        if (
+            source is None
+            or stress_asset is None
+            or source.get("relative_path") != relative
+            or source.get("sha256") != binding.get("sha256")
+            or stress_asset.get("canonical_relative_path") != relative
+            or stress_asset.get("canonical_sha256") != binding.get("sha256")
+            or stress_asset.get("asset_version") != binding.get("asset_version")
+        ):
+            add_error(errors, "binding_asset_provenance_mismatch", asset_id)
+    if (
+        document.get("project_id") != gate.get("project_id")
+        or foundation.get("project_id") != gate.get("project_id")
+        or stress.get("project_id") != gate.get("project_id")
+    ):
+        add_error(errors, "asset_project_binding_mismatch", str(gate.get("project_id")))
+    if (
+        foundation.get("pass_id") != gate.get("pass_id")
+        or foundation.get("status") != "complete"
+        or compile_gate.get("status") != "allowed"
+        or set(compile_gate.get("requested_shot_ids", [])) != requested
+        or set(foundation.get("canonical_asset_ids", [])) != covered_assets
+    ):
+        add_error(errors, "asset_foundation_binding_mismatch", str(gate.get("pass_id")))
+    if (
+        stress.get("stress_test_id") != gate.get("stress_test_id")
+        or stress.get("verdict", {}).get("status") != verdict
+        or stress_binding.get("stress_test_id") != gate.get("stress_test_id")
+        or stress_binding.get("report_sha256") != hashlib.sha256(stress_bytes).hexdigest()
+        or stress_binding.get("verdict") != verdict
+        or set(stress_binding.get("allowed_shot_scope", [])) != allowed
+        or set(stress_binding.get("blocked_shot_scope", [])) != blocked
+        or set(stress_binding.get("covered_asset_ids", [])) != covered_assets
+        or stress_asset_ids != covered_assets
+    ):
+        add_error(errors, "asset_stress_binding_mismatch", str(gate.get("stress_test_id")))
+    return errors
 
 
 def semantic_errors(document: dict[str, Any]) -> list[str]:
@@ -435,62 +578,237 @@ def semantic_errors(document: dict[str, Any]) -> list[str]:
     return errors
 
 
-def validate(document: dict[str, Any]) -> list[str]:
+def validate(
+    document: dict[str, Any],
+    *,
+    asset_foundation_path: Path | None = None,
+    asset_stress_path: Path | None = None,
+    asset_artifact_root: Path | None = None,
+    asset_review_receipt: Path | None = None,
+    asset_review_signature: Path | None = None,
+    _asset_trust_registry_path: Path | None = None,
+) -> list[str]:
     structural = schema_errors(document)
     if structural:
         return structural
-    return semantic_errors(document)
-
-
-def pointer_parent(document: Any, pointer: str) -> tuple[Any, str]:
-    parts = [part.replace("~1", "/").replace("~0", "~") for part in pointer.split("/")[1:]]
-    target = document
-    for part in parts[:-1]:
-        target = target[int(part)] if isinstance(target, list) else target[part]
-    return target, parts[-1]
-
-
-def apply_mutations(document: dict[str, Any], mutations: list[dict[str, Any]]) -> dict[str, Any]:
-    result = copy.deepcopy(document)
-    for mutation in mutations:
-        parent, key = pointer_parent(result, mutation["path"])
-        index: int | str = int(key) if isinstance(parent, list) and key != "-" else key
-        if mutation["op"] == "replace":
-            parent[index] = mutation["value"]
-        elif mutation["op"] == "remove":
-            del parent[index]
-        elif mutation["op"] == "add":
-            if isinstance(parent, list):
-                if index == "-":
-                    parent.append(mutation["value"])
-                else:
-                    parent.insert(int(index), mutation["value"])
-            else:
-                parent[index] = mutation["value"]
-        else:
-            raise ValueError(f"unsupported fixture mutation: {mutation['op']}")
-    return result
+    return semantic_errors(document) + asset_gate_errors(
+        document,
+        asset_foundation_path=asset_foundation_path,
+        asset_stress_path=asset_stress_path,
+        asset_artifact_root=asset_artifact_root,
+        asset_review_receipt=asset_review_receipt,
+        asset_review_signature=asset_review_signature,
+        asset_trust_registry_path=_asset_trust_registry_path,
+    )
 
 
 def self_test() -> tuple[list[str], dict[str, Any]]:
-    failures: list[str] = []
-    valid = load_json(VALID_PATH)
-    valid_errors = validate(valid)
-    if valid_errors:
-        failures.append(f"valid fixture rejected: {valid_errors[:3]}")
+    from ai_film_asset_stress_test import materialize_fixture as materialize_stress_fixture
+    from dircreative_asset_foundation_pass import materialize_fixture as materialize_foundation_fixture
 
+    failures: list[str] = []
     cases = load_json(CASES_PATH).get("cases", [])
-    rejected = 0
-    for case in cases:
-        mutated = apply_mutations(valid, case["mutations"])
-        errors = validate(mutated)
-        expected = case["expected_error"]
-        if any(error.startswith(expected + ":") for error in errors):
-            rejected += 1
-        else:
-            failures.append(
-                f"{case['case_id']}: expected {expected}, got {errors[:3]}"
+    with tempfile.TemporaryDirectory(prefix="dircreative-seedance-asset-gate-") as temp_dir:
+        temp_root = Path(temp_dir)
+        artifact_root = temp_root / "asset-evidence"
+        review_root = temp_root / "reviews"
+        trust_root = temp_root / "trust"
+        artifact_root.mkdir()
+        review_root.mkdir()
+        trust_root.mkdir()
+        stress_template = load_json(
+            ROOT / "tests/fixtures/asset-stress-test/valid-report.json"
+        )
+        base_asset = stress_template["assets"][0]
+        base_cases = stress_template["test_cases"]
+        asset_specs = [
+            ("VE-RING-ID-v01", "vehicle", "RING-IDENTITY", "RING-BASE"),
+            ("CF-GU01-END-v01", "state", "RING-CLEAN-FRAME", "GU01-END"),
+            ("GEO-RING-LAYOUT-v01", "scene", "RING-GEOGRAPHY", "RING-GEO-BASE"),
+        ]
+        stress_template["assets"] = []
+        stress_template["test_cases"] = []
+        for asset_index, (asset_id, asset_kind, state_family, state_id) in enumerate(asset_specs, 1):
+            asset = copy.deepcopy(base_asset)
+            asset["asset_id"] = asset_id
+            asset["asset_kind"] = asset_kind
+            asset["asset_version"] = "v1"
+            asset["canonical_relative_path"] = f"canonical/{asset_id}.png"
+            asset["state_family"] = state_family
+            asset["state_id"] = state_id
+            asset["descriptor_text"] = f"Fixture descriptor for {asset_id}."
+            asset["required_combinations"] = []
+            for reference_index, reference in enumerate(asset["references"], 1):
+                reference["reference_id"] = f"REF-{asset_index}-{reference_index}"
+                reference["relative_path"] = f"references/asset-{asset_index}-{reference_index}.png"
+                reference["source_kind"] = "scene_anchor" if asset_kind == "scene" else "vehicle_reference"
+            stress_template["assets"].append(asset)
+            for case_index, base_case in enumerate(base_cases, 1):
+                case = copy.deepcopy(base_case)
+                case["test_case_id"] = f"TC-{asset_index}-{case_index}"
+                case["asset_id"] = asset_id
+                case["state_family"] = state_family
+                case["combination_ids"] = []
+                for evidence in case["evidence"]:
+                    evidence["evidence_id"] = f"EV-{asset_index}-{case_index}"
+                    evidence["relative_path"] = f"evidence/asset-{asset_index}-case-{case_index}.png"
+                stress_template["test_cases"].append(case)
+        stress_template["matrix_config"]["minimum_case_count"] = len(stress_template["test_cases"])
+        stress_template["verdict"]["status"] = "certified"
+        stress_template["verdict"]["allowed_shot_scope"] = list(
+            {
+                shot_class
+                for asset in stress_template["assets"]
+                for shot_class in asset["intended_shot_classes"]
+            }
+        )
+        stress_template["verdict"]["blocked_shot_scope"] = []
+        stress, review_receipt, review_signature, trust_registry_path = materialize_stress_fixture(
+            stress_template,
+            artifact_root,
+            review_root,
+            trust_root,
+        )
+        foundation = load_json(
+            ROOT / "tests/fixtures/asset-foundation/valid-pass.json"
+        )
+        foundation["canonical_asset_ids"] = [item["asset_id"] for item in stress["assets"]]
+        planning_source = next(
+            item
+            for item in foundation["source_assets"]
+            if item["source_kind"] == "planning_only"
+        )
+        foundation["source_assets"] = [
+            {
+                "asset_id": asset_id,
+                "source_kind": "canonical_asset",
+                "role": "canonical",
+                "relative_path": f"canonical/{asset_id}.png",
+                "sha256": "0" * 64,
+            }
+            for asset_id in foundation["canonical_asset_ids"]
+        ] + [planning_source]
+        all_shots = ["SH01", "SH02", "SH03", "SH04"]
+        foundation["target_shot_ids"] = all_shots
+        foundation["stress_test_binding"] = {
+            "stress_test_id": stress["stress_test_id"],
+            "covered_asset_ids": [item["asset_id"] for item in stress["assets"]],
+            "report_relative_path": "stress/stress-report.json",
+            "report_sha256": "0" * 64,
+            "verdict": "certified",
+            "validation_status": "passed",
+            "allowed_shot_scope": all_shots,
+            "blocked_shot_scope": [],
+        }
+        foundation["compile_gate"] = {
+            "requested_shot_ids": all_shots,
+            "status": "allowed",
+            "reason_codes": [],
+        }
+        stress_path = artifact_root / foundation["stress_test_binding"]["report_relative_path"]
+        stress_path.parent.mkdir(parents=True, exist_ok=True)
+        stress_path.write_text(
+            json.dumps(stress, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        foundation = materialize_foundation_fixture(foundation, artifact_root)
+        foundation["stress_test_binding"]["report_sha256"] = hashlib.sha256(
+            stress_path.read_bytes()
+        ).hexdigest()
+        foundation_path = temp_root / "asset-foundation-pass.json"
+        foundation_path.write_text(
+            json.dumps(foundation, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        valid = load_json(VALID_PATH)
+        source_map = {
+            item["asset_id"]: item
+            for item in foundation["source_assets"]
+            if item["source_kind"] == "canonical_asset"
+        }
+        stress_asset_map = {item["asset_id"]: item for item in stress["assets"]}
+        for binding in valid["bindings"]:
+            if binding["asset_id"] not in source_map:
+                continue
+            binding["asset_version"] = stress_asset_map[binding["asset_id"]]["asset_version"]
+            binding["relative_path"] = source_map[binding["asset_id"]]["relative_path"]
+            binding["sha256"] = source_map[binding["asset_id"]]["sha256"]
+        valid["asset_foundation_gate"] = {
+            "project_id": foundation["project_id"],
+            "pass_id": foundation["pass_id"],
+            "pass_artifact_sha256": hashlib.sha256(foundation_path.read_bytes()).hexdigest(),
+            "stress_test_id": stress["stress_test_id"],
+            "stress_report_sha256": hashlib.sha256(stress_path.read_bytes()).hexdigest(),
+            "stress_verdict": "certified",
+            "requested_shot_ids": all_shots,
+            "allowed_shot_ids": all_shots,
+            "blocked_shot_ids": [],
+            "covered_asset_ids": foundation["stress_test_binding"]["covered_asset_ids"],
+        }
+        valid_errors = validate(
+            valid,
+            asset_foundation_path=foundation_path,
+            asset_stress_path=stress_path,
+            asset_artifact_root=artifact_root,
+            asset_review_receipt=review_receipt,
+            asset_review_signature=review_signature,
+            _asset_trust_registry_path=trust_registry_path,
+        )
+        if valid_errors:
+            failures.append(f"valid fixture rejected: {valid_errors[:3]}")
+
+        rejected = 0
+        for case in cases:
+            case_foundation = copy.deepcopy(foundation)
+            case_stress = copy.deepcopy(stress)
+            dependency_mutations = case.get("dependency_mutations", {})
+            if dependency_mutations.get("stress"):
+                case_stress = apply_mutations(case_stress, dependency_mutations["stress"])
+            case_stress_path = artifact_root / "stress" / f"{case['case_id']}-stress.json"
+            case_stress_path.write_text(
+                json.dumps(case_stress, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
             )
+            case_foundation["stress_test_binding"]["report_sha256"] = hashlib.sha256(
+                case_stress_path.read_bytes()
+            ).hexdigest()
+            case_foundation["stress_test_binding"]["report_relative_path"] = str(
+                case_stress_path.relative_to(artifact_root)
+            )
+            if dependency_mutations.get("foundation"):
+                case_foundation = apply_mutations(
+                    case_foundation,
+                    dependency_mutations["foundation"],
+                )
+            case_foundation_path = temp_root / f"{case['case_id']}-foundation.json"
+            case_foundation_path.write_text(
+                json.dumps(case_foundation, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+            case_document = copy.deepcopy(valid)
+            case_document["asset_foundation_gate"]["pass_artifact_sha256"] = hashlib.sha256(
+                case_foundation_path.read_bytes()
+            ).hexdigest()
+            case_document["asset_foundation_gate"]["stress_report_sha256"] = hashlib.sha256(
+                case_stress_path.read_bytes()
+            ).hexdigest()
+            case_document = apply_mutations(case_document, case.get("mutations", []))
+            errors = validate(
+                case_document,
+                asset_foundation_path=case_foundation_path,
+                asset_stress_path=case_stress_path,
+                asset_artifact_root=artifact_root,
+                asset_review_receipt=review_receipt,
+                asset_review_signature=review_signature,
+                _asset_trust_registry_path=trust_registry_path,
+            )
+            expected = case["expected_error"]
+            if any(error.startswith(expected + ":") for error in errors):
+                rejected += 1
+            else:
+                failures.append(
+                    f"{case['case_id']}: expected {expected}, got {errors[:3]}"
+                )
     return failures, {
         "valid_fixture_passed": not valid_errors,
         "negative_case_count": len(cases),
@@ -499,6 +817,9 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
         "shot_count": len(valid.get("shots", [])),
         "generation_unit_count": len(valid.get("generation_units", [])),
         "binding_count": len(valid.get("bindings", [])),
+        "asset_foundation_gate_validated": not any(
+            error.startswith("asset_") for error in valid_errors
+        ),
     }
 
 
@@ -508,6 +829,11 @@ def main() -> int:
     subparsers.add_parser("self-test")
     validate_parser = subparsers.add_parser("validate")
     validate_parser.add_argument("path", type=Path)
+    validate_parser.add_argument("--asset-foundation-pass", type=Path)
+    validate_parser.add_argument("--asset-stress-report", type=Path)
+    validate_parser.add_argument("--asset-artifact-root", type=Path)
+    validate_parser.add_argument("--asset-review-receipt", type=Path)
+    validate_parser.add_argument("--asset-review-signature", type=Path)
     args = parser.parse_args()
 
     if args.command == "self-test":
@@ -517,7 +843,14 @@ def main() -> int:
         return 0 if not failures else 1
 
     document = load_json(args.path)
-    errors = validate(document)
+    errors = validate(
+        document,
+        asset_foundation_path=args.asset_foundation_pass,
+        asset_stress_path=args.asset_stress_report,
+        asset_artifact_root=args.asset_artifact_root,
+        asset_review_receipt=args.asset_review_receipt,
+        asset_review_signature=args.asset_review_signature,
+    )
     print(json.dumps({"path": str(args.path), "errors": errors}, ensure_ascii=False, indent=2))
     return 0 if not errors else 1
 

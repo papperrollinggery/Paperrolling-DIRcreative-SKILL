@@ -1,0 +1,179 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dircreative.local/schemas/ai-film-production-ledger.schema.json",
+  "title": "AI film production lineage ledger",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "contract_id", "authority", "owner", "project_id", "ledger_id", "genesis_sha256", "status", "attempts", "receipt_manifest", "state_events"],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "contract_id": {"const": "ai_film_production_ledger_v1"},
+    "authority": {"const": "record_only"},
+    "owner": {"const": "ai-film-production-ledger"},
+    "project_id": {"$ref": "#/$defs/id"},
+    "ledger_id": {"$ref": "#/$defs/id"},
+    "genesis_sha256": {"$ref": "#/$defs/sha256"},
+    "status": {"enum": ["open", "closed"]},
+    "attempts": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/attempt"}},
+    "receipt_manifest": {"type": "array", "items": {"$ref": "#/$defs/receipt"}},
+    "state_events": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/state_event"}}
+  },
+  "$defs": {
+    "id": {"type": "string", "minLength": 1, "pattern": "^[A-Za-z0-9][A-Za-z0-9._:+-]*$"},
+    "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "id_list": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/id"}},
+    "receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["receipt_id", "authority_id", "purpose", "attempt_id", "subject_sha256", "observed_at", "relative_path", "signature_relative_path", "sha256", "source", "actor"],
+      "properties": {
+        "receipt_id": {"$ref": "#/$defs/id"},
+        "authority_id": {"$ref": "#/$defs/id"},
+        "purpose": {"enum": ["ledger_genesis", "execution", "generation", "review", "delivery", "billing"]},
+        "attempt_id": {"$ref": "#/$defs/id"},
+        "subject_sha256": {"$ref": "#/$defs/sha256"},
+        "observed_at": {"type": "string", "format": "date-time"},
+        "relative_path": {"type": "string", "minLength": 1},
+        "signature_relative_path": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "source": {"enum": ["host_observation", "external_verified", "independent_review", "human_review"]},
+        "actor": {"$ref": "#/$defs/id"}
+      }
+    },
+    "asset_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["asset_id", "version", "relative_path", "sha256", "source_status", "attached"],
+      "properties": {
+        "asset_id": {"$ref": "#/$defs/id"},
+        "version": {"$ref": "#/$defs/id"},
+        "relative_path": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "source_status": {"enum": ["available", "planned", "unavailable", "rejected"]},
+        "attached": {"type": "boolean"}
+      }
+    },
+    "prompt_artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifact_id", "prompt_text", "prompt_sha256"],
+      "properties": {
+        "artifact_id": {"$ref": "#/$defs/id"},
+        "prompt_text": {"type": "string", "minLength": 1},
+        "prompt_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "model_snapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["model", "version", "provider_surface", "mode", "settings"],
+      "properties": {
+        "model": {"$ref": "#/$defs/id"},
+        "version": {"type": "string", "minLength": 1},
+        "provider_surface": {"type": "string", "minLength": 1},
+        "mode": {"$ref": "#/$defs/id"},
+        "settings": {"type": "object", "additionalProperties": true}
+      }
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["output_id", "relative_path", "sha256", "receipt_source", "receipt_id"],
+      "properties": {
+        "output_id": {"$ref": "#/$defs/id"},
+        "relative_path": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "receipt_source": {"enum": ["producer", "host_observation", "external_verified"]}
+        ,"receipt_id": {"$ref": "#/$defs/id"}
+      }
+    },
+    "review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["review_id", "verdict", "sha256", "source", "receipt_id"],
+      "properties": {
+        "review_id": {"$ref": "#/$defs/id"},
+        "verdict": {"enum": ["accept", "reject", "conditional"]},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "source": {"enum": ["producer", "independent_review", "human_review"]},
+        "receipt_id": {"$ref": "#/$defs/id"}
+      }
+    },
+    "cost": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "amount", "currency", "receipt_id"],
+      "properties": {
+        "status": {"enum": ["unverified", "verified"]},
+        "amount": {"type": ["number", "null"], "minimum": 0},
+        "currency": {"type": ["string", "null"]},
+        "receipt_id": {"type": ["string", "null"]}
+      }
+    },
+    "attempt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "attempt_id",
+        "attempt_kind",
+        "parent_attempt_id",
+        "project_id",
+        "scene_id",
+        "shot_id",
+        "generation_unit_id",
+        "asset_bindings",
+        "prompt_artifact",
+        "model_snapshot",
+        "authorized_execution_state",
+        "expected_visible_proof",
+        "primary_delta",
+        "preserved_successes",
+        "output_manifest",
+        "review_evidence",
+        "edit_timeline_placement",
+        "cost_credits",
+        "created_at",
+        "actor",
+        "source_status"
+      ],
+      "properties": {
+        "attempt_id": {"$ref": "#/$defs/id"},
+        "attempt_kind": {"enum": ["initial", "retry"]},
+        "parent_attempt_id": {"type": ["string", "null"]},
+        "project_id": {"$ref": "#/$defs/id"},
+        "scene_id": {"$ref": "#/$defs/id"},
+        "shot_id": {"$ref": "#/$defs/id"},
+        "generation_unit_id": {"$ref": "#/$defs/id"},
+        "asset_bindings": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/asset_binding"}},
+        "prompt_artifact": {"$ref": "#/$defs/prompt_artifact"},
+        "model_snapshot": {"$ref": "#/$defs/model_snapshot"},
+        "authorized_execution_state": {"enum": ["planned", "authorized"]},
+        "expected_visible_proof": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "primary_delta": {"type": "string", "minLength": 1},
+        "preserved_successes": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "output_manifest": {"type": "array", "items": {"$ref": "#/$defs/output"}},
+        "review_evidence": {"type": "array", "items": {"$ref": "#/$defs/review"}},
+        "edit_timeline_placement": {"type": ["string", "null"]},
+        "cost_credits": {"$ref": "#/$defs/cost"},
+        "created_at": {"type": "string", "format": "date-time"},
+        "actor": {"$ref": "#/$defs/id"},
+        "source_status": {"enum": ["fixture", "project", "external_import"]}
+      }
+    },
+    "state_event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["event_id", "attempt_id", "state", "evidence_source", "evidence_refs", "review_verdict", "created_at", "actor"],
+      "properties": {
+        "event_id": {"$ref": "#/$defs/id"},
+        "attempt_id": {"$ref": "#/$defs/id"},
+        "state": {"enum": ["planned", "attached", "executed", "observed_unverified", "generated_verified", "selected", "rejected", "superseded", "delivered"]},
+        "evidence_source": {"enum": ["none", "producer", "host_observation", "external_verified", "independent_review", "human_review"]},
+        "evidence_refs": {"$ref": "#/$defs/id_list"},
+        "review_verdict": {"enum": ["pending", "accept", "reject", "not_applicable"]},
+        "created_at": {"type": "string", "format": "date-time"},
+        "actor": {"$ref": "#/$defs/id"}
+      }
+    }
+  }
+}

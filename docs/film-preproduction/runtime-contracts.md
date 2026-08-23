@@ -153,6 +153,9 @@ PYTHONDONTWRITEBYTECODE=1 python3 scripts/dircreative_headless_acceptance_audit.
 PYTHONDONTWRITEBYTECODE=1 python3 scripts/dircreative_content_first_audit.py
 PYTHONDONTWRITEBYTECODE=1 python3 scripts/dircreative_live_model_eval.py --self-test
 PYTHONDONTWRITEBYTECODE=1 python3 scripts/dircreative_visual_asset_plan.py --self-test
+PYTHONDONTWRITEBYTECODE=1 python3 scripts/dircreative_asset_foundation_pass.py self-test
+PYTHONDONTWRITEBYTECODE=1 python3 scripts/ai_film_asset_stress_test.py self-test
+PYTHONDONTWRITEBYTECODE=1 python3 scripts/ai_film_production_ledger.py self-test
 PYTHONDONTWRITEBYTECODE=1 python3 scripts/validate_project.py
 ```
 
@@ -184,6 +187,27 @@ and a receipt bound to that file's SHA-256. Generated paths must remain relative
 to the plan directory. These
 local receipts are content-bound attestations, not cryptographic signatures or
 client/broadcaster acceptance.
+
+AI-film asset work adds three source-only contracts. The staged asset-foundation
+pass serializes identity/state, production design, camera geography, material
+response, constraint assignment, and stress certification without increasing
+Studio's provider-body or main-context budgets. The stress-test validator binds
+project and asset coverage, descriptor/reference bytes, configurable matrix
+coverage, actual evidence bytes, case-result aggregation, and conditional shot
+scope. A completion verdict additionally requires a detached review signature
+whose authority and public-key SHA-256 already exist in the host-owned review
+trust registry; generic validator CLI input cannot introduce a key. The shipped
+registry is empty and therefore fails closed until host configuration. Each
+authority binds actor, authority kind, allowed purposes, and allowed sources, so
+asset review, media-provider, human-review, and delivery domains cannot authorize
+one another. An arbitrary producer-supplied key is not accepted. Stage artifacts and stress reports resolve beneath one
+artifact root and are verified against their declared hashes. The production
+ledger adds append-only attempt and state-event lineage while runtime state
+remains the project truth. Its CLI requires either an explicit initial baseline
+or a previous snapshot, and any verified output/review/delivery state resolves
+real output and signed receipt-manifest bytes beneath the artifact root. None of these
+contracts executes media or upgrades installation, host adoption, user/client
+approval, generation, or delivery status.
 
 ```bash
 python3 scripts/dircreative_visual_asset_plan.py \

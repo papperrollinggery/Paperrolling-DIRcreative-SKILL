@@ -41,6 +41,9 @@ Pass only current, approved material:
    direct-input policy, user lock, and required shot/unit bindings;
 8. audio policy, provider reference-slot limit, and the selected exact model
    card and provider surface.
+9. the complete `asset_foundation_pass_v1` file and bound
+   `ai_film_asset_stress_test_v1` report, including real file hashes and scoped
+   compile permission.
 
 If the source consists only of a nine-grid or another generated image sequence,
 first classify it as `planning_only`, recover narrative beats, and derive the
@@ -72,6 +75,9 @@ one row containing:
 
 ```text
 source_asset_id: <DIR asset id>
+asset_version: <immutable version>
+relative_path: <project-relative canonical file>
+sha256: <actual canonical bytes>
 converter_slot: 【图片N】 | 【音频N】
 platform_slot: @Image N | @Audio N
 global_number: N
@@ -98,7 +104,8 @@ asset IDs, paths, hashes, QA fields, missing slots, and planning-only assets sta
 out of the pasted prompt.
 
 Only `status: available` plus `attached_to_run: true` may enter a terminal
-prompt. Planned or optional audio remains in the ledger and is never compiled
+prompt. Every such image binding must byte-match the same version/path/hash in
+the canonical foundation provenance and stress-tested asset record. Planned or optional audio remains in the ledger and is never compiled
 as an existing `@Audio` slot. Before export, reject duplicate/mismatched global
 numbers, missing or duplicate per-unit local order, and any unit whose attached
 references exceed the verified provider limit. Resolve overflow by explicit
@@ -123,6 +130,14 @@ scene > model-layout > composition.
 - User-supplied dialogue remains exact. Proposed optional empty shots or
   connective beats must be visibly optional and cannot silently change the
   authoritative script.
+- Before compiling any unit, run the handoff validator with
+  `--asset-foundation-pass`, `--asset-stress-report`, `--asset-artifact-root`,
+  `--asset-review-receipt`, and `--asset-review-signature`. The review authority
+  must already be configured in the host-owned trust registry; CLI input cannot
+  add it. Missing project/asset bindings, host-pinned signatures, stages,
+  unresolved gaps, incomplete
+  stress matrices, unverified verdicts, or requested shots outside the allowed
+  scope fail closed.
 - Each `prompt_unit` carries the actual non-empty terminal `prompt_text`, a
   unique `artifact_id`, the exact packet status, and a SHA-256 over the UTF-8
   prompt bytes. A list of binding IDs without the compiled prompt is not a

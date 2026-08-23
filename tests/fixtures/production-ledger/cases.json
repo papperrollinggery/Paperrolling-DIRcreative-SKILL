@@ -1,0 +1,62 @@
+{
+  "schema_version": "1.0",
+  "cases": [
+    {"case_id":"retry_missing_parent","mutations":[{"op":"replace","path":"/attempts/1/parent_attempt_id","value":null}],"expected_error":"retry_parent_missing"},
+    {"case_id":"retry_missing_delta","mutations":[{"op":"replace","path":"/attempts/1/primary_delta","value":""}],"expected_error":"schema_error"},
+    {"case_id":"retry_missing_preserved_successes","mutations":[{"op":"replace","path":"/attempts/1/preserved_successes","value":[]}],"expected_error":"retry_preserved_successes_missing"},
+    {"case_id":"prompt_hash_mismatch","mutations":[{"op":"replace","path":"/attempts/1/prompt_artifact/prompt_sha256","value":"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"}],"expected_error":"prompt_hash_mismatch"},
+    {"case_id":"planned_asset_attached","mutations":[{"op":"replace","path":"/attempts/1/asset_bindings/0/source_status","value":"planned"}],"expected_error":"asset_binding_not_available"},
+    {"case_id":"generated_without_external_receipt","mutations":[{"op":"replace","path":"/state_events","value":[
+      {"event_id":"E1","attempt_id":"ATTEMPT-001","state":"planned","evidence_source":"none","evidence_refs":[],"review_verdict":"not_applicable","created_at":"2026-08-24T00:00:00Z","actor":"dircreative"},
+      {"event_id":"E2","attempt_id":"ATTEMPT-001","state":"attached","evidence_source":"producer","evidence_refs":["PROMPT-GU01-v1"],"review_verdict":"not_applicable","created_at":"2026-08-24T00:00:01Z","actor":"dircreative"},
+      {"event_id":"E3","attempt_id":"ATTEMPT-001","state":"executed","evidence_source":"producer","evidence_refs":["LOCAL-CALL"],"review_verdict":"not_applicable","created_at":"2026-08-24T00:00:02Z","actor":"dircreative"},
+      {"event_id":"E4","attempt_id":"ATTEMPT-001","state":"generated_verified","evidence_source":"producer","evidence_refs":["LOCAL-RECEIPT"],"review_verdict":"not_applicable","created_at":"2026-08-24T00:00:03Z","actor":"dircreative"},
+      {"event_id":"EVENT-002","attempt_id":"ATTEMPT-002","state":"planned","evidence_source":"none","evidence_refs":[],"review_verdict":"not_applicable","created_at":"2026-08-24T00:01:00Z","actor":"dircreative"}
+    ]}],"expected_error":"generated_without_external_receipt"},
+    {"case_id":"generated_verified_without_output","mutations":[{"op":"replace","path":"/state_events","value":[
+      {"event_id":"E1","attempt_id":"ATTEMPT-001","state":"planned","evidence_source":"none","evidence_refs":[],"review_verdict":"not_applicable","created_at":"2026-08-24T00:00:00Z","actor":"dircreative"},
+      {"event_id":"E2","attempt_id":"ATTEMPT-001","state":"attached","evidence_source":"producer","evidence_refs":["PROMPT-GU01-v1"],"review_verdict":"not_applicable","created_at":"2026-08-24T00:00:01Z","actor":"dircreative"},
+      {"event_id":"E3","attempt_id":"ATTEMPT-001","state":"executed","evidence_source":"host_observation","evidence_refs":["HOST-CALL"],"review_verdict":"not_applicable","created_at":"2026-08-24T00:00:02Z","actor":"dircreative"},
+      {"event_id":"E4","attempt_id":"ATTEMPT-001","state":"generated_verified","evidence_source":"external_verified","evidence_refs":["EXT-RECEIPT"],"review_verdict":"not_applicable","created_at":"2026-08-24T00:00:03Z","actor":"dircreative"},
+      {"event_id":"EVENT-002","attempt_id":"ATTEMPT-002","state":"planned","evidence_source":"none","evidence_refs":[],"review_verdict":"not_applicable","created_at":"2026-08-24T00:01:00Z","actor":"dircreative"}
+    ]}],"expected_error":"generated_output_missing"},
+    {"case_id":"output_hash_reused","mutations":[
+      {"op":"add","path":"/attempts/0/output_manifest/-","value":{"output_id":"OUT-1","relative_path":"outputs/a.png","sha256":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","receipt_source":"host_observation","receipt_id":"RECEIPT-A"}},
+      {"op":"add","path":"/attempts/1/output_manifest/-","value":{"output_id":"OUT-2","relative_path":"outputs/b.png","sha256":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","receipt_source":"host_observation","receipt_id":"RECEIPT-B"}}
+    ],"expected_error":"output_hash_reused"},
+    {"case_id":"selected_without_review","mutations":[{"op":"replace","path":"/state_events","value":[
+      {"event_id":"E1","attempt_id":"ATTEMPT-001","state":"planned","evidence_source":"none","evidence_refs":[],"review_verdict":"not_applicable","created_at":"2026-08-24T00:00:00Z","actor":"dircreative"},
+      {"event_id":"E2","attempt_id":"ATTEMPT-001","state":"attached","evidence_source":"producer","evidence_refs":["PROMPT-GU01-v1"],"review_verdict":"not_applicable","created_at":"2026-08-24T00:00:01Z","actor":"dircreative"},
+      {"event_id":"E3","attempt_id":"ATTEMPT-001","state":"executed","evidence_source":"host_observation","evidence_refs":["HOST-CALL"],"review_verdict":"not_applicable","created_at":"2026-08-24T00:00:02Z","actor":"dircreative"},
+      {"event_id":"E4","attempt_id":"ATTEMPT-001","state":"generated_verified","evidence_source":"external_verified","evidence_refs":["EXT-RECEIPT"],"review_verdict":"not_applicable","created_at":"2026-08-24T00:00:03Z","actor":"dircreative"},
+      {"event_id":"E5","attempt_id":"ATTEMPT-001","state":"selected","evidence_source":"producer","evidence_refs":[],"review_verdict":"pending","created_at":"2026-08-24T00:00:04Z","actor":"dircreative"},
+      {"event_id":"EVENT-002","attempt_id":"ATTEMPT-002","state":"planned","evidence_source":"none","evidence_refs":[],"review_verdict":"not_applicable","created_at":"2026-08-24T00:01:00Z","actor":"dircreative"}
+    ]}],"expected_error":"selected_without_review"},
+    {"case_id":"illegal_state_jump","mutations":[{"op":"replace","path":"/state_events","value":[
+      {"event_id":"E1","attempt_id":"ATTEMPT-001","state":"planned","evidence_source":"none","evidence_refs":[],"review_verdict":"not_applicable","created_at":"2026-08-24T00:00:00Z","actor":"dircreative"},
+      {"event_id":"E2","attempt_id":"ATTEMPT-001","state":"delivered","evidence_source":"external_verified","evidence_refs":["DELIVERY-RECEIPT"],"review_verdict":"accept","created_at":"2026-08-24T00:00:01Z","actor":"dircreative"},
+      {"event_id":"EVENT-002","attempt_id":"ATTEMPT-002","state":"planned","evidence_source":"none","evidence_refs":[],"review_verdict":"not_applicable","created_at":"2026-08-24T00:01:00Z","actor":"dircreative"}
+    ]}],"expected_error":"state_transition_invalid"},
+    {"case_id":"retry_crosses_project","mutations":[{"op":"replace","path":"/attempts/1/project_id","value":"PROJECT-OTHER"}],"expected_error":"retry_scope_mismatch"},
+    {"case_id":"output_path_escape","mutations":[{"op":"add","path":"/attempts/1/output_manifest/-","value":{"output_id":"OUT-ESCAPE","relative_path":"../outside.png","sha256":"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc","receipt_source":"host_observation","receipt_id":"RECEIPT-ESCAPE"}}],"expected_error":"output_path_invalid"},
+    {"case_id":"sensitive_credential_in_ledger","mutations":[{"op":"add","path":"/attempts/1/model_snapshot/settings/api_key","value":"redacted-fixture-value"}],"expected_error":"sensitive_value_forbidden"},
+    {"case_id":"delivered_without_external_receipt","mutations":[{"op":"replace","path":"/state_events","value":[
+      {"event_id":"E1","attempt_id":"ATTEMPT-001","state":"planned","evidence_source":"none","evidence_refs":[],"review_verdict":"not_applicable","created_at":"2026-08-24T00:00:00Z","actor":"dircreative"},
+      {"event_id":"E2","attempt_id":"ATTEMPT-001","state":"attached","evidence_source":"producer","evidence_refs":["PROMPT"],"review_verdict":"not_applicable","created_at":"2026-08-24T00:00:01Z","actor":"dircreative"},
+      {"event_id":"E3","attempt_id":"ATTEMPT-001","state":"executed","evidence_source":"host_observation","evidence_refs":["HOST"],"review_verdict":"not_applicable","created_at":"2026-08-24T00:00:02Z","actor":"dircreative"},
+      {"event_id":"E4","attempt_id":"ATTEMPT-001","state":"generated_verified","evidence_source":"external_verified","evidence_refs":["EXT"],"review_verdict":"not_applicable","created_at":"2026-08-24T00:00:03Z","actor":"dircreative"},
+      {"event_id":"E5","attempt_id":"ATTEMPT-001","state":"selected","evidence_source":"independent_review","evidence_refs":["REVIEW"],"review_verdict":"accept","created_at":"2026-08-24T00:00:04Z","actor":"reviewer"},
+      {"event_id":"E6","attempt_id":"ATTEMPT-001","state":"delivered","evidence_source":"producer","evidence_refs":["LOCAL"],"review_verdict":"accept","created_at":"2026-08-24T00:00:05Z","actor":"dircreative"},
+      {"event_id":"EVENT-002","attempt_id":"ATTEMPT-002","state":"planned","evidence_source":"none","evidence_refs":[],"review_verdict":"not_applicable","created_at":"2026-08-24T00:01:00Z","actor":"dircreative"}
+    ]}],"expected_error":"delivered_without_external_receipt"},
+    {"case_id":"authorization_header_forbidden","mutations":[{"op":"add","path":"/attempts/1/model_snapshot/settings/Authorization","value":"Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c2VyIn0.signature"}],"expected_error":"sensitive_value_forbidden"},
+    {"case_id":"bearer_value_forbidden","mutations":[{"op":"add","path":"/attempts/1/model_snapshot/settings/custom_header","value":"Bearer test-token-material"}],"expected_error":"sensitive_value_forbidden"},
+    {"case_id":"output_id_reused","mutations":[
+      {"op":"add","path":"/attempts/0/output_manifest/-","value":{"output_id":"OUT-DUP","relative_path":"outputs/a.png","sha256":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","receipt_source":"host_observation","receipt_id":"RECEIPT-A"}},
+      {"op":"add","path":"/attempts/1/output_manifest/-","value":{"output_id":"OUT-DUP","relative_path":"outputs/b.png","sha256":"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc","receipt_source":"host_observation","receipt_id":"RECEIPT-B"}}
+    ],"expected_error":"output_id_duplicate"},
+    {"case_id":"session_cookie_forbidden","mutations":[{"op":"add","path":"/attempts/1/model_snapshot/settings/session_cookie","value":"session=abc123"}],"expected_error":"sensitive_value_forbidden"},
+    {"case_id":"asset_binding_hash_forged","mutations":[{"op":"replace","path":"/attempts/1/asset_bindings/0/sha256","value":"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"}],"expected_error":"asset_binding_hash_mismatch"},
+    {"case_id":"verified_cost_without_billing_receipt","mutations":[{"op":"replace","path":"/attempts/1/cost_credits/status","value":"verified"},{"op":"replace","path":"/attempts/1/cost_credits/amount","value":10},{"op":"replace","path":"/attempts/1/cost_credits/currency","value":"credits"}],"expected_error":"verified_cost_receipt_missing"}
+  ]
+}

@@ -69,6 +69,11 @@ without a verified tool and cost boundary.
   location, vehicle, and prop language, master-shot planning owns geography/FOV,
   and constraint routing assigns each reference one non-conflicting job. Load
   only the answer-changing seats; later consistency audit is a separate stage.
+- Asset foundation is a six-pass serial handoff, not one oversized provider
+  stack. Use `identity_state → production_design → camera_geography →
+  material_response → constraint_assignment → stress_certification`, binding
+  each output hash to the next input. `ai-film-asset-stress-test` is the final
+  validator and never redesigns or generates the asset.
 - A generated storyboard or nine-image narrative sequence without source
   bindings is planning-only. Cross-image resemblance does not prove an identity,
   vehicle, prop, location, or clean direct-input frame.
@@ -82,6 +87,10 @@ without a verified tool and cost boundary.
   `script_to_seedance`. Apply the registered `script_to_seedance_v1` contract;
   DIR retains upstream truth and consumes the compiled prompt back into its
   manifest and QA flow.
+- `ai-film-production-ledger` is an isolated record-only collaborator after
+  preflight. It receives only the final generation candidate, preserves
+  append-only attempt/event lineage, and cannot become a story owner, director,
+  generation adapter, or approval authority.
 - Prompt preflight is before generation, output review is after real evidence,
   and iteration doctor prescribes the next bounded retry.
 - ADCO owns PPT/export/adoption. `codex-ppt` is recommendation-only inside DIR;

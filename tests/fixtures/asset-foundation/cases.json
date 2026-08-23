@@ -1,0 +1,65 @@
+{
+  "schema_version": "1.0",
+  "cases": [
+    {
+      "case_id": "missing_stable_stage",
+      "mutations": [{"op": "remove", "path": "/stages/3"}],
+      "expected_error": "stage_set_invalid"
+    },
+    {
+      "case_id": "stage_hash_chain_mismatch",
+      "mutations": [{"op": "replace", "path": "/stages/2/input_artifact/sha256", "value": "9999999999999999999999999999999999999999999999999999999999999999"}],
+      "expected_error": "stage_hash_chain_invalid"
+    },
+    {
+      "case_id": "passed_stage_keeps_missing_gap",
+      "mutations": [{"op": "replace", "path": "/stages/2/missing_gaps", "value": ["camera_geography"]}],
+      "expected_error": "stage_pass_with_gaps"
+    },
+    {
+      "case_id": "failed_stage_promoted_complete",
+      "mutations": [{"op": "replace", "path": "/stages/3/status", "value": "failed"}],
+      "expected_error": "incomplete_stage_promoted"
+    },
+    {
+      "case_id": "planning_board_promoted_to_canonical",
+      "mutations": [{"op": "replace", "path": "/canonical_asset_ids/0", "value": "BOARD-N01"}],
+      "expected_error": "planning_source_promoted"
+    },
+    {
+      "case_id": "unverified_stress_allows_compile",
+      "mutations": [{"op": "replace", "path": "/stress_test_binding/verdict", "value": "unverified"}],
+      "expected_error": "stress_verdict_not_compilable"
+    },
+    {
+      "case_id": "conditional_verdict_missing_scope",
+      "mutations": [{"op": "replace", "path": "/stress_test_binding/allowed_shot_scope", "value": []}],
+      "expected_error": "conditional_scope_missing"
+    },
+    {
+      "case_id": "compile_requests_blocked_shot",
+      "mutations": [{"op": "replace", "path": "/compile_gate/requested_shot_ids", "value": ["SH02"]}],
+      "expected_error": "compile_scope_blocked"
+    },
+    {
+      "case_id": "stress_stage_loses_validator",
+      "mutations": [{"op": "replace", "path": "/stages/5/validator_skill_id", "value": null}],
+      "expected_error": "stage_owner_contract_invalid"
+    },
+    {
+      "case_id": "ready_to_generate_promotion_forbidden",
+      "mutations": [{"op": "replace", "path": "/stages/0/promotion_state", "value": "ready_to_generate"}],
+      "expected_error": "schema_error"
+    },
+    {
+      "case_id": "canonical_assets_not_stress_covered",
+      "mutations": [{"op": "add", "path": "/canonical_asset_ids/-", "value": "LOC-TRAINING-DAY"}],
+      "expected_error": "stress_asset_coverage_incomplete"
+    },
+    {
+      "case_id": "planning_source_aliased_as_canonical",
+      "mutations": [{"op": "replace", "path": "/source_assets/0/relative_path", "value": "planning/board-n01.png"}],
+      "expected_error": "source_asset_alias_role_conflict"
+    }
+  ]
+}

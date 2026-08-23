@@ -231,6 +231,99 @@
         }
       ],
       "expected_error": "dialogue_line_id_duplicate"
+    },
+    {
+      "case_id": "asset_foundation_gate_missing",
+      "mutations": [
+        {"op": "remove", "path": "/asset_foundation_gate"}
+      ],
+      "expected_error": "schema_error"
+    },
+    {
+      "case_id": "asset_foundation_pass_hash_mismatch",
+      "mutations": [
+        {"op": "replace", "path": "/asset_foundation_gate/pass_artifact_sha256", "value": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"}
+      ],
+      "expected_error": "asset_foundation_file_hash_mismatch"
+    },
+    {
+      "case_id": "asset_stress_report_hash_mismatch",
+      "mutations": [
+        {"op": "replace", "path": "/asset_foundation_gate/stress_report_sha256", "value": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"}
+      ],
+      "expected_error": "asset_stress_file_hash_mismatch"
+    },
+    {
+      "case_id": "asset_stress_unverified_compiles",
+      "mutations": [
+        {"op": "replace", "path": "/asset_foundation_gate/stress_verdict", "value": "unverified"}
+      ],
+      "expected_error": "asset_stress_verdict_not_compilable"
+    },
+    {
+      "case_id": "asset_scope_blocked",
+      "mutations": [
+        {"op": "replace", "path": "/asset_foundation_gate/requested_shot_ids", "value": ["SH02"]},
+        {"op": "replace", "path": "/asset_foundation_gate/allowed_shot_ids", "value": ["SH01"]},
+        {"op": "replace", "path": "/asset_foundation_gate/blocked_shot_ids", "value": ["SH02"]}
+      ],
+      "expected_error": "asset_scope_not_allowed"
+    },
+    {
+      "case_id": "asset_stress_matrix_incomplete",
+      "mutations": [],
+      "dependency_mutations": {
+        "stress": [
+          {"op": "replace", "path": "/test_cases/0/status", "value": "not_run"},
+          {"op": "replace", "path": "/test_cases/0/evidence", "value": []}
+        ]
+      },
+      "expected_error": "asset_stress_report_invalid"
+    },
+    {
+      "case_id": "asset_foundation_stage_failed",
+      "mutations": [],
+      "dependency_mutations": {
+        "foundation": [
+          {"op": "replace", "path": "/stages/2/status", "value": "failed"}
+        ]
+      },
+      "expected_error": "asset_foundation_pass_invalid"
+    },
+    {
+      "case_id": "asset_gate_cross_project_reuse",
+      "mutations": [
+        {"op": "replace", "path": "/project_id", "value": "PROJECT-OTHER"}
+      ],
+      "expected_error": "asset_project_binding_mismatch"
+    },
+    {
+      "case_id": "asset_gate_coverage_mismatch",
+      "mutations": [
+        {"op": "replace", "path": "/asset_foundation_gate/covered_asset_ids", "value": ["CHAR-OTHER"]}
+      ],
+      "expected_error": "asset_foundation_binding_mismatch"
+    },
+    {
+      "case_id": "attached_asset_missing_stress_coverage",
+      "mutations": [
+        {"op": "replace", "path": "/asset_foundation_gate/covered_asset_ids", "value": ["VE-RING-ID-v01", "CF-GU01-END-v01"]}
+      ],
+      "expected_error": "asset_binding_stress_coverage_missing"
+    },
+    {
+      "case_id": "attached_asset_bytes_swapped_after_stress",
+      "mutations": [
+        {"op": "replace", "path": "/bindings/0/sha256", "value": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"}
+      ],
+      "expected_error": "binding_asset_hash_mismatch"
+    },
+    {
+      "case_id": "attached_asset_binding_missing_version",
+      "mutations": [
+        {"op": "remove", "path": "/bindings/0/asset_version"}
+      ],
+      "expected_error": "schema_error"
     }
   ]
 }
