@@ -85,6 +85,7 @@ jobs:
           ARCHIVE_TARGET="$RUNNER_TEMP/dircreative-archive-installed"
           EXPECTED_COMMIT="$(git rev-parse HEAD)"
           BUILD_ARGS=(--allow-unpublished --expected-commit "$EXPECTED_COMMIT")
+          PARITY_ARGS=()
           FORMAL_ARGS=(
             --formal-install
             --target "$ARCHIVE_TARGET"
@@ -98,6 +99,7 @@ jobs:
           if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
             test "$GITHUB_REF_NAME" = "v$VERSION"
             BUILD_ARGS=(--require-tag --expected-commit "$EXPECTED_COMMIT")
+            PARITY_ARGS=(--verify-remote-tag)
             FORMAL_ARGS=(
               --formal-install
               --target "$ARCHIVE_TARGET"
@@ -117,7 +119,9 @@ jobs:
             "$RUNNER_TEMP/dist-umask-077/dircreative-$VERSION.tar.gz"
           umask 022
           python3 scripts/install_local_skill.py "${FORMAL_ARGS[@]}"
-          python3 scripts/dircreative_install_parity.py --target "$ARCHIVE_TARGET"
+          python3 scripts/dircreative_install_parity.py \
+            --target "$ARCHIVE_TARGET" \
+            "${PARITY_ARGS[@]}"
           (
             cd "$ARCHIVE_TARGET"
             python3 scripts/validate_project.py --installed-package

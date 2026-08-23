@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.2 - 2026-08-24
+
+- Completes annotated-tag CI by requiring remote-tag verification when parity-checking a `CANONICAL_REMOTE_TAG` formal install.
+
 ## 0.5.1 - 2026-08-24
 
 - Publishes the 0.5 AI-film asset-foundation, stress-test, production-ledger, Seedance, and Jingzao workflow after closing source/installed Skill-entry layout gaps.
