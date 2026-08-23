@@ -957,6 +957,8 @@ def formal_install(
 
 
 def self_test() -> int:
+    current_version = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
+    current_tag = f"v{current_version}"
     unicode_escape_sample = b'if "\\\\u003c/script\\\\u003e" not in hostile_fragment:\n'
     if sanitize_package_bytes("scripts/escape-sample.py", unicode_escape_sample, {}) != unicode_escape_sample:
         raise AssertionError("package sanitizer modified JSON unicode escape evidence")
@@ -1457,7 +1459,7 @@ def self_test() -> int:
                 artifact=fake_artifact,
                 checksums=fake_checksums,
                 expected_commit="a" * 40,
-                expected_tag="v0.5.0",
+                expected_tag=current_tag,
                 reproducible_source=ROOT,
                 verifier=remote_tag_missing,
             )
@@ -1475,11 +1477,11 @@ def self_test() -> int:
                 raise AssertionError("formal installer did not provide verifier-owned extraction")
             if not isinstance(kwargs.get("extract_root_fd"), int):
                 raise AssertionError("formal installer did not pin the verifier extraction root")
-            verifier_root = extract_to / "dircreative-0.5.0"
+            verifier_root = extract_to / f"dircreative-{current_version}"
             shutil.copytree(extracted, verifier_root)
             copied_manifest = strict_tree_manifest(verifier_root)
             return VerifiedRelease(
-                version="0.5.0",
+                version=current_version,
                 commit_sha="a" * 40,
                 artifact_sha256="b" * 64,
                 reproducible_match="true",
@@ -1496,7 +1498,7 @@ def self_test() -> int:
             artifact=fake_artifact,
             checksums=fake_checksums,
             expected_commit="a" * 40,
-            expected_tag="v0.5.0",
+            expected_tag=current_tag,
             reproducible_source=ROOT,
             allow_unpublished=True,
             verifier=verified_unpublished,

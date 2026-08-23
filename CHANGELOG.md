@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.1 - 2026-08-24
+
+- Publishes the 0.5 AI-film asset-foundation, stress-test, production-ledger, Seedance, and Jingzao workflow after closing source/installed Skill-entry layout gaps.
+- Makes annotated-tag CI restore the verified tag commit onto a local `main` branch before the formal release preflight, preserving the exact commit/tag binding without detached-HEAD false failures.
+
 ## 0.5.0 - 2026-08-24
 
 - Adds a dynamic whole-film visual asset contract covering every scene, approved shot, director-storyboard page, and scene-coherent video-generation unit; replaces the former small vertical smoke case with a 60-second 16:9 TVC acceptance fixture, 24 frame-aligned formal shots, and 48 required assets.

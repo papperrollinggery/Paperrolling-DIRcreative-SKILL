@@ -35,6 +35,9 @@ jobs:
         run: |
           git fetch --force origin "refs/tags/${GITHUB_REF_NAME}:refs/tags/${GITHUB_REF_NAME}"
           test "$(git cat-file -t "refs/tags/${GITHUB_REF_NAME}")" = "tag"
+          EXPECTED_COMMIT="$(git rev-parse "refs/tags/${GITHUB_REF_NAME}^{}")"
+          test "$(git rev-parse HEAD)" = "$EXPECTED_COMMIT"
+          git switch -C main "$EXPECTED_COMMIT"
 
       - name: Source validation
         env:
