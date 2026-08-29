@@ -37,6 +37,11 @@ Build a model-neutral intent before adapting the surface:
 6. Prompt revision alone does not require a rights audit, capability receipt,
    file hash, or generation authorization. Those belong only to a real execution
    or formal handoff.
+7. When the target is Seedance 2.5, use `mr-li-seedance-25` as the priority
+   method owner. Add `seedance-25-emotion-prompt` only for explicitly
+   emotion/micro-performance-led work; otherwise avoid the overlapping body.
+   Target intent selects the method, while an exact capability card is still
+   required before stating model limits or authorizing execution.
 
 Never imply that a prompt was run or media exists. State one exact unknown when a
 volatile capability or missing reference materially changes usability.

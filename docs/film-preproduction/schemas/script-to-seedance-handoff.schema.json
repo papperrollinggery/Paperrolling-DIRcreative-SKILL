@@ -296,6 +296,8 @@
         "source_kind": {
           "enum": [
             "identity_reference",
+            "face_identity_reference",
+            "headless_wardrobe_reference",
             "scene_anchor",
             "model_layout_reference",
             "human_planning_board",

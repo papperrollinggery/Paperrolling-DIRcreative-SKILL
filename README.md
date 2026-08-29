@@ -20,7 +20,7 @@
 
 DIRcreative 不是“输入一句话、吐出一堆提示词”的黑盒。它先判断任务是局部修改、完整开发还是交付审计，再只加载对应合同。局部任务直接交付修改结果；只有真实方向冲突、生成授权或客户交付才停下来询问。
 
-当前稳定版本为 [`v0.6.0`](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/releases/tag/v0.6.0)，包含 v2 路由、动态专业视角、紧凑状态、拆分模型 Adapter、资产基础/压测/生产账本链路、Seedance 2.5 精确能力联动和 Specialist Exchange v2。
+当前稳定版本为 [`v0.6.1`](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/releases/tag/v0.6.1)，包含 v2 路由、动态专业视角、紧凑状态、拆分模型 Adapter、资产基础/压测/生产账本链路、Seedance 2.5 方法优先、面部/无头服装资产约束和 Specialist Exchange v2。
 
 源码仓库包含 DIRcreative 根 Skill、19 个 `skills/dircreative/*` 内部子 Skill，以及 `ai-film-asset-stress-test`、`ai-film-production-ledger` 两个 P0 能力入口。正式 DIRcreative 安装包按安全设计只暴露根 `$dircreative`，其余入口会内部化后由 selector 路由；Skill Stack 还会发现宿主中已安装的外部专业 provider。这些依赖不会被复制进本仓库，也不能把“宿主可调用”表述成“GitHub 已内置”。ADCO 始终是独立外部编排方。
 
@@ -162,9 +162,9 @@ python3 scripts/dircreative_adco_native_exchange.py \
 自证。下面的信任链从 `v0.5.0` 起适用；更早版本不满足这条正式安装门。
 
 ```bash
-gh release download v0.6.0 \
+gh release download v0.6.1 \
   --repo papperrollinggery/Paperrolling-DIRcreative-SKILL \
-  --pattern 'dircreative-0.6.0.tar.gz' \
+  --pattern 'dircreative-0.6.1.tar.gz' \
   --pattern 'SHA256SUMS'
 ```
 
@@ -174,7 +174,7 @@ gh release download v0.6.0 \
 ```bash
 set -euo pipefail
 REPO_URL="https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL.git"
-TAG="v0.6.0"
+TAG="v0.6.1"
 EXPECTED_COMMIT="$(
   git ls-remote --exit-code --tags "$REPO_URL" \
     "refs/tags/$TAG" "refs/tags/$TAG^{}" |
@@ -186,7 +186,7 @@ EXPECTED_COMMIT="$(
     }
   '
 )"
-ARTIFACT="$(pwd)/dircreative-0.6.0.tar.gz"
+ARTIFACT="$(pwd)/dircreative-0.6.1.tar.gz"
 CHECKSUMS="$(pwd)/SHA256SUMS"
 VERIFY_ROOT="$(mktemp -d)"
 trap 'rm -rf "$VERIFY_ROOT"' EXIT

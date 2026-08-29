@@ -1,5 +1,5 @@
 {
-  "contract_id": "ai_film_asset_stress_test_v2",
+  "contract_id": "ai_film_asset_stress_test_v1",
   "authority": "validation_only",
   "source_owner": "dircreative",
   "validator_owner": "ai-film-asset-stress-test",
@@ -24,15 +24,15 @@
         "relative_path": "references/roco-face.png",
         "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
         "rights_status": "verified",
-        "source_kind": "face_identity_reference",
+        "source_kind": "identity_reference",
         "role": "canonical"
       },
       {
-        "reference_id": "REF-WARDROBE-HEADLESS",
-        "relative_path": "references/roco-wardrobe-headless.png",
+        "reference_id": "REF-BODY",
+        "relative_path": "references/roco-body.png",
         "sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
         "rights_status": "verified",
-        "source_kind": "headless_wardrobe_reference",
+        "source_kind": "identity_reference",
         "role": "supporting"
       }
     ],
@@ -41,15 +41,14 @@
     "intended_shot_classes": ["close_up", "full_body", "wide", "group"],
     "intended_lighting": ["training_hall_hard_toplight"],
     "required_combinations": ["ROCO+JAX", "right_hand_prop"],
-    "required_case_kinds": ["face_close_up", "headless_wardrobe", "full_body", "wide_fov", "front_three_quarter_back", "target_lighting", "group_composition", "occlusion_prop", "state_variant", "handedness", "scale_topology"],
+    "required_case_kinds": ["face_close_up", "full_body", "wide_fov", "front_three_quarter_back", "target_lighting", "group_composition", "occlusion_prop", "state_variant", "handedness", "scale_topology"],
     "approval_owner": "dircreative"
   }],
   "matrix_config": {
     "configurable": true,
-    "minimum_case_count": 11,
+    "minimum_case_count": 10,
     "required_case_kinds": [
       "face_close_up",
-      "headless_wardrobe",
       "full_body",
       "wide_fov",
       "front_three_quarter_back",
@@ -63,7 +62,6 @@
   },
   "test_cases": [
     {"test_case_id":"TC-FACE","asset_id":"CHAR-ROCO-BASE","case_kind":"face_close_up","state_family":"ROCO-APPEARANCE","shot_scope":["close_up"],"lighting":[],"expected_invariants":["face identity"],"observed_deviations":[],"status":"pass","evidence":[{"evidence_id":"EV-FACE","relative_path":"evidence/tc-face.png","sha256":"1111111111111111111111111111111111111111111111111111111111111111","receipt_source":"external_verified"}],"severity":"none","allowed_shot_scope":["close_up"],"blocked_shot_scope":[]},
-    {"test_case_id":"TC-WARDROBE-HEADLESS","asset_id":"CHAR-ROCO-BASE","case_kind":"headless_wardrobe","state_family":"ROCO-APPEARANCE","shot_scope":["full_body"],"lighting":[],"expected_invariants":["headless wardrobe silhouette","no alternate face source"],"observed_deviations":[],"status":"pass","evidence":[{"evidence_id":"EV-WARDROBE-HEADLESS","relative_path":"evidence/tc-wardrobe-headless.png","sha256":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","receipt_source":"external_verified"}],"severity":"none","allowed_shot_scope":["full_body"],"blocked_shot_scope":[]},
     {"test_case_id":"TC-BODY","asset_id":"CHAR-ROCO-BASE","case_kind":"full_body","state_family":"ROCO-APPEARANCE","shot_scope":["full_body"],"lighting":[],"expected_invariants":["wardrobe silhouette"],"observed_deviations":[],"status":"pass","evidence":[{"evidence_id":"EV-BODY","relative_path":"evidence/tc-body.png","sha256":"2222222222222222222222222222222222222222222222222222222222222222","receipt_source":"external_verified"}],"severity":"none","allowed_shot_scope":["full_body"],"blocked_shot_scope":[]},
     {"test_case_id":"TC-WIDE","asset_id":"CHAR-ROCO-BASE","case_kind":"wide_fov","state_family":"ROCO-APPEARANCE","shot_scope":["wide"],"lighting":[],"expected_invariants":["recognizable silhouette"],"observed_deviations":[],"status":"pass","evidence":[{"evidence_id":"EV-WIDE","relative_path":"evidence/tc-wide.png","sha256":"3333333333333333333333333333333333333333333333333333333333333333","receipt_source":"external_verified"}],"severity":"none","allowed_shot_scope":["wide"],"blocked_shot_scope":[]},
     {"test_case_id":"TC-ANGLES","asset_id":"CHAR-ROCO-BASE","case_kind":"front_three_quarter_back","state_family":"ROCO-APPEARANCE","shot_scope":["close_up","full_body"],"lighting":[],"expected_invariants":["front three-quarter back identity"],"observed_deviations":[],"status":"pass","evidence":[{"evidence_id":"EV-ANGLES","relative_path":"evidence/tc-angles.png","sha256":"4444444444444444444444444444444444444444444444444444444444444444","receipt_source":"external_verified"}],"severity":"none","allowed_shot_scope":["close_up","full_body"],"blocked_shot_scope":[]},

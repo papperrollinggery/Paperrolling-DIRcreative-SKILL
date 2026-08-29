@@ -34,6 +34,8 @@ PLANNING_SOURCES = {"human_planning_board", "narrative_frame"}
 SOURCE_KIND_BY_MEDIA = {
     "image": {
         "identity_reference",
+        "face_identity_reference",
+        "headless_wardrobe_reference",
         "scene_anchor",
         "model_layout_reference",
         "human_planning_board",
@@ -638,12 +640,21 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
             asset["state_id"] = state_id
             asset["descriptor_text"] = f"Fixture descriptor for {asset_id}."
             asset["required_combinations"] = []
+            selected_base_cases = [
+                case
+                for case in base_cases
+                if asset_kind == "character"
+                or case.get("case_kind") not in {"face_close_up", "headless_wardrobe"}
+            ]
+            asset["required_case_kinds"] = [
+                str(case.get("case_kind")) for case in selected_base_cases
+            ]
             for reference_index, reference in enumerate(asset["references"], 1):
                 reference["reference_id"] = f"REF-{asset_index}-{reference_index}"
                 reference["relative_path"] = f"references/asset-{asset_index}-{reference_index}.png"
                 reference["source_kind"] = "scene_anchor" if asset_kind == "scene" else "vehicle_reference"
             stress_template["assets"].append(asset)
-            for case_index, base_case in enumerate(base_cases, 1):
+            for case_index, base_case in enumerate(selected_base_cases, 1):
                 case = copy.deepcopy(base_case)
                 case["test_case_id"] = f"TC-{asset_index}-{case_index}"
                 case["asset_id"] = asset_id
@@ -654,6 +665,9 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
                     evidence["relative_path"] = f"evidence/asset-{asset_index}-case-{case_index}.png"
                 stress_template["test_cases"].append(case)
         stress_template["matrix_config"]["minimum_case_count"] = len(stress_template["test_cases"])
+        stress_template["matrix_config"]["required_case_kinds"] = sorted(
+            {str(case["case_kind"]) for case in stress_template["test_cases"]}
+        )
         stress_template["verdict"]["status"] = "certified"
         stress_template["verdict"]["allowed_shot_scope"] = list(
             {

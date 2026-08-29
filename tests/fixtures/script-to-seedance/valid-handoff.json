@@ -149,7 +149,7 @@
       "relative_path": "canonical/VE-RING-ID-v01.png",
       "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
       "media_type": "image",
-      "source_kind": "identity_reference",
+      "source_kind": "face_identity_reference",
       "status": "available",
       "rights_status": "verified",
       "user_lock_status": "internal_candidate",

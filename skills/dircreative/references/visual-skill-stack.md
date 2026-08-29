@@ -87,12 +87,19 @@ without a verified tool and cost boundary.
   `script_to_seedance`. Apply the registered `script_to_seedance_v1` contract;
   DIR retains upstream truth and consumes the compiled prompt back into its
   manifest and QA flow.
-- For exact Seedance 2.5 script conversion, keep that same compiler and handoff.
-  Add `mr-li-seedance-25` only as the authoring-method collaborator for
+- For a declared Seedance 2.5 target, keep that same compiler and handoff. Apply
+  `mr-li-seedance-25` first as the authoring-method provider for
   authoritative-script fidelity, independently complete segments, duration
   capacity, stable asset numbering, and clean-master repair discipline. It does
   not become a controller, state owner, capability source, or execution adapter;
-  if absent, the retained compiler path still works without claiming its method.
+  the exact capability card is still required before model facts or execution.
+  If absent, the retained compiler path still works without claiming its method.
+- For direct Seedance 2.5 prompt work, `mr-li-seedance-25` is the default craft
+  owner. When the task is explicitly emotion/micro-performance led,
+  `seedance-25-emotion-prompt` becomes the specialist owner after the mr-li
+  method pass. Do not load both for ordinary prompts. Fast mode reserves a
+  bounded 16 KiB isolated method context for the Skill body plus the prompt and
+  duration references; asset construction or delivery review stays in Studio.
 - `ai-film-production-ledger` is an isolated record-only collaborator after
   preflight. It receives only the final generation candidate, preserves
   append-only attempt/event lineage, and cannot become a story owner, director,

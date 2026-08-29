@@ -70,8 +70,8 @@ _ROUTE_CONTEXT_SEAL = object()
 REALISTIC_SMOKE_EXPECTED = {
     "p01_fast_single_concept": ("dircreative", 0, "ready", None),
     "p06_key_visual": ("dircreative", 0, "ready", None),
-    "p17_seedance_direct": ("dircreative", 0, "ready", None),
-    "p39_seedance_performance_handoff": ("dircreative", 0, "ready", None),
+    "p17_seedance_direct": ("mr-li-seedance-25", 1, "ready", None),
+    "p39_seedance_performance_handoff": ("mr-li-seedance-25", 2, "ready", None),
     "p23_mechanical_still": ("mechanical-transformation-design", 1, "ready", None),
     "p24_mechanical_temporal": ("mechanical-transformation-design", 1, "ready", None),
     "p38_full_project_stack": ("creative-anchor-director", 1, "ready", None),
@@ -86,6 +86,9 @@ REALISTIC_SMOKE_EXPECTED = {
     "p45_asset_foundation": ("minimum-visual-bible", 2, "needs_followup", None),
     "p46_script_to_seedance": ("convert-script-to-seedance", 2, "ready", None),
     "p52_script_to_seedance25": ("convert-script-to-seedance", 3, "ready", None),
+    "p53_seedance25_emotion_specialist": ("seedance-25-emotion-prompt", 2, "ready", None),
+    "p54_seedance25_fast_priority": ("mr-li-seedance-25", 1, "ready", None),
+    "p55_script_target_seedance25_from_20_source": ("convert-script-to-seedance", 3, "ready", None),
     "p47_cinematic_storyboard_frames": ("jingzao-image-forge", 1, "ready", None),
     "p48_asset_foundation_production_design_pass": ("production-design-worldbuilding", 1, "needs_followup", None),
     "p49_asset_stress_validation": ("dircreative", 1, "ready", None),
@@ -121,6 +124,10 @@ JINGZAO_REFERENCE_PAD = {
     "references/styleboard-mode.md": 6429,
     "references/shot-tension-design.md": 5096,
     "references/cinematic-shot-design.md": 7767,
+}
+MR_LI_REFERENCE_PAD = {
+    "references/prompt-writing.md": 2863,
+    "references/continuity-and-duration.md": 1917,
 }
 HANDOFF_REQUIRED_CHAINS = {
     "script_to_seedance_v1": [
@@ -319,6 +326,20 @@ def digest_bytes(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
+def valid_reference_pack(value: Any) -> bool:
+    return (
+        isinstance(value, list)
+        and len(value) == len(set(value))
+        and all(
+            isinstance(item, str)
+            and item.startswith("references/")
+            and "\\" not in item
+            and ".." not in PurePosixPath(item).parts
+            for item in value
+        )
+    )
+
+
 def load_json(path: Path) -> Any:
     try:
         return json.loads(path.read_text(encoding="utf-8"))
@@ -513,10 +534,17 @@ def validate_registry(registry: dict[str, Any]) -> list[str]:
             failures.append(f"{mode} Skill Stack cap drifted")
     if modes.get("studio", {}).get("isolated_craft_context_bytes_max") != 131072:
         failures.append("Studio isolated craft context must remain 128 KiB")
+    if modes.get("fast", {}).get("isolated_craft_context_bytes_max") != 16384:
+        failures.append("Fast isolated craft context must remain 16 KiB")
     if modes.get("studio", {}).get("isolated_validator_context_bytes_max") != 65536:
         failures.append("Studio isolated validator context must remain 64 KiB")
+    if modes.get("studio", {}).get("isolated_handoff_context_bytes_max") != 69632:
+        failures.append("Studio isolated handoff context must remain 68 KiB")
     if modes.get("delivery", {}).get("execution_adapter_context_bytes_max") != 24576:
         failures.append("Delivery isolated execution-adapter budget must remain 24 KiB")
+    for skill_id, provider in providers.items():
+        if not valid_reference_pack(provider.get("reference_pack", [])):
+            failures.append(f"{skill_id}: invalid provider reference pack")
     for overlay in ("liu-creative-workflow", "sophia-research-mode"):
         item = providers.get(overlay, {})
         if item.get("explicit_only") is not True or item.get("provider_roles") != ["explicit_overlay"]:
@@ -584,13 +612,7 @@ def validate_registry(registry: dict[str, Any]) -> list[str]:
         if not isinstance(contract.get("slot_crosswalk"), str) or not contract.get("slot_crosswalk"):
             failures.append(f"{contract_id}: handoff contract slot crosswalk is missing")
         reference_pack = contract.get("reference_pack", [])
-        if not isinstance(reference_pack, list) or not all(
-            isinstance(item, str)
-            and item.startswith("references/")
-            and "\\" not in item
-            and ".." not in PurePosixPath(item).parts
-            for item in reference_pack
-        ):
+        if not valid_reference_pack(reference_pack):
             failures.append(f"{contract_id}: invalid provider reference pack")
         output_binding = contract.get("output_binding")
         if not isinstance(output_binding, dict) or set(output_binding) != {
@@ -649,8 +671,9 @@ def validate_registry(registry: dict[str, Any]) -> list[str]:
             failures.append(f"{scenario_id}: unknown handoff contract {contract_id!r}")
         elif contract_id is not None:
             target_owner = handoff_contracts[contract_id].get("target_owner")
-            if target_owner not in scenario.get("owner_candidates", []):
-                failures.append(f"{scenario_id}: handoff target is not an owner candidate")
+            owner_candidates = scenario.get("owner_candidates", [])
+            if not owner_candidates or owner_candidates[0] != target_owner:
+                failures.append(f"{scenario_id}: handoff target is not the first owner candidate")
         if scenario.get("validator_required") is True and not scenario.get("validator_candidates"):
             failures.append(f"{scenario_id}: required validator has no candidates")
         staged_passes = scenario.get("staged_passes")
@@ -1058,6 +1081,17 @@ def _scenario_map(registry: dict[str, Any]) -> dict[str, dict[str, Any]]:
     return {item["scenario_id"]: item for item in registry["scenarios"]}
 
 
+def _normalized_model_token(value: Any) -> str:
+    return re.sub(r"[^a-z0-9]+", "", str(value).casefold())
+
+
+def _targets_seedance25(intent: dict[str, Any]) -> bool:
+    capability_card_id = str(intent.get("capability_card_id", "")).strip()
+    if capability_card_id:
+        return capability_card_id == "seedance_2_5_official_launch"
+    return _normalized_model_token(intent.get("target_model")) == "seedance25"
+
+
 def _eligible(
     skill_id: str,
     role: str,
@@ -1225,11 +1259,27 @@ def select_stack(
         raise SkillStackError(f"unknown scenario_id: {scenario_id}")
     scenario = scenarios[scenario_id]
     intent = dict(intent)
+    capability_card_id = str(intent.get("capability_card_id", "")).strip()
+    target_model = str(intent.get("target_model", "")).strip()
+    if (
+        scenario_id == "seedance25_prompt"
+        and capability_card_id
+        and capability_card_id != "seedance_2_5_official_launch"
+    ):
+        raise SkillStackError("seedance25_prompt_conflicts_with_exact_capability_card")
+    if (
+        scenario_id == "seedance25_prompt"
+        and not capability_card_id
+        and target_model
+        and _normalized_model_token(target_model) != "seedance25"
+    ):
+        raise SkillStackError("seedance25_prompt_conflicts_with_target_model")
     seedance25_gap = "seedance25_authoring_method"
     requested_gaps = [gap for gap in intent.get("gaps", []) if gap != seedance25_gap]
+    seedance25_target = scenario_id == "seedance25_prompt" or _targets_seedance25(intent)
     if (
         scenario_id == "script_to_seedance"
-        and intent.get("capability_card_id") == "seedance_2_5_official_launch"
+        and seedance25_target
     ):
         scenario = {
             **scenario,
@@ -1239,6 +1289,20 @@ def select_stack(
             },
         }
         requested_gaps.append(seedance25_gap)
+    elif scenario_id == "seedance25_prompt" and intent.get("emotion_priority") is True:
+        scenario = {
+            **scenario,
+            "owner_candidates": ["seedance-25-emotion-prompt", "mr-li-seedance-25"],
+            "collaborator_gaps": {
+                **scenario.get("collaborator_gaps", {}),
+                seedance25_gap: ["mr-li-seedance-25"],
+            },
+        }
+        requested_gaps.append(seedance25_gap)
+    if intent.get("performance_contract_locked") and scenario_id == "seedance25_prompt":
+        requested_gaps = [gap for gap in requested_gaps if gap != "performance"]
+    if scenario_id == "seedance25_prompt" and intent.get("needs_validation") is True:
+        scenario = {**scenario, "validator_required": True}
     intent["gaps"] = list(dict.fromkeys(requested_gaps))
     staged_passes = scenario.get("staged_passes", [])
     active_asset_pass: dict[str, Any] | None = None
@@ -1508,10 +1572,10 @@ def select_stack(
     def provider_reference_requests(skill_id: str) -> list[dict[str, Any]]:
         if skill_id in reference_request_cache:
             return reference_request_cache[skill_id]
-        if not handoff_contract or handoff_contract.get("target_owner") != skill_id:
-            reference_request_cache[skill_id] = []
-            return []
-        reference_pack = handoff_contract.get("reference_pack", [])
+        reference_pack = list(providers.get(skill_id, {}).get("reference_pack", []))
+        if handoff_contract and handoff_contract.get("target_owner") == skill_id:
+            reference_pack.extend(handoff_contract.get("reference_pack", []))
+        reference_pack = list(dict.fromkeys(reference_pack))
         if not reference_pack:
             reference_request_cache[skill_id] = []
             return []
@@ -1899,11 +1963,12 @@ def select_stack(
             )
         )
     )
-    reference_read_requests = (
-        provider_reference_requests(owner_id)
-        if owner_slot.get("context_scope") == "isolated_craft_contract"
-        else []
-    )
+    reference_read_requests = [
+        request
+        for item in slots
+        if item.get("context_scope") == "isolated_craft_contract"
+        for request in provider_reference_requests(str(item["skill_id"]))
+    ]
     isolated_craft_reference_bytes = sum(
         int(request["bytes"]) for request in reference_read_requests
     ) + (
@@ -2041,6 +2106,16 @@ def select_stack(
         and owner_id == handoff_contract.get("target_owner")
         else None
     )
+    priority_method_provider = (
+        "mr-li-seedance-25"
+        if seedance25_target
+        and any(item.get("skill_id") == "mr-li-seedance-25" for item in slots)
+        else None
+    )
+    if priority_method_provider and scenario_id == "script_to_seedance":
+        reason_codes.append("seedance25_method_precedes_compile")
+    elif priority_method_provider and intent.get("emotion_priority") is True:
+        reason_codes.append("seedance25_method_precedes_emotion_compile")
     return {
         "status": status,
         "scenario_id": scenario_id,
@@ -2053,6 +2128,7 @@ def select_stack(
             applied_handoff_contract.get("contract_id") if applied_handoff_contract else None
         ),
         "handoff_contract": applied_handoff_contract,
+        "priority_method_provider": priority_method_provider,
         "mode": mode,
         "route_id": route_id,
         "media": media,
@@ -2245,6 +2321,14 @@ def _write_mock_skill(root: Path, skill_id: str, body_pad: int = 0) -> None:
             prefix = "# Deterministic reference fixture\n"
             padding = max(0, target_bytes - len(prefix.encode("utf-8")))
             reference.write_text(prefix + ("x" * padding), encoding="utf-8")
+    if skill_id == "mr-li-seedance-25":
+        for relative, realistic_bytes in MR_LI_REFERENCE_PAD.items():
+            reference = skill_dir / relative
+            reference.parent.mkdir(parents=True, exist_ok=True)
+            target_bytes = realistic_bytes if body_pad else 64
+            prefix = "# Deterministic reference fixture\n"
+            padding = max(0, target_bytes - len(prefix.encode("utf-8")))
+            reference.write_text(prefix + ("x" * padding), encoding="utf-8")
 
 
 def _case_assertions(case: dict[str, Any], receipt: dict[str, Any]) -> list[str]:
@@ -2284,6 +2368,16 @@ def _case_assertions(case: dict[str, Any], receipt: dict[str, Any]) -> list[str]
 def self_test() -> tuple[list[str], dict[str, Any]]:
     failures = validate_registry(load_registry())
     registry = load_registry()
+    misrouted_registry = json.loads(json.dumps(registry))
+    for scenario in misrouted_registry.get("scenarios", []):
+        if scenario.get("scenario_id") == "script_to_seedance":
+            scenario["owner_candidates"] = ["mr-li-seedance-25", "convert-script-to-seedance"]
+            break
+    if not any(
+        "handoff target is not the first owner candidate" in failure
+        for failure in validate_registry(misrouted_registry)
+    ):
+        failures.append("handoff contract target did not remain the first owner candidate")
     routing = load_routing()
     cases_payload = load_json(CASES_PATH)
     cases = cases_payload.get("cases", []) if isinstance(cases_payload, dict) else []
@@ -2469,14 +2563,18 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
         case_map = {item["id"]: item for item in cases}
         for case_id, expected in REALISTIC_SMOKE_EXPECTED.items():
             case = case_map[case_id]
-            receipt = select_stack(
-                case["intent"],
-                registry,
-                routing,
-                dict(realistic_catalog),
-                route_context=_fixture_route_context(case),
-                body_loader=realistic_loader,
-            )
+            try:
+                receipt = select_stack(
+                    case["intent"],
+                    registry,
+                    routing,
+                    dict(realistic_catalog),
+                    route_context=_fixture_route_context(case),
+                    body_loader=realistic_loader,
+                )
+            except SkillStackError as exc:
+                failures.append(f"{case_id}: realistic selection failed: {exc}")
+                continue
             actual = (
                 receipt["craft_owner"]["skill_id"],
                 receipt["loaded_body_count"],
@@ -2513,7 +2611,7 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
                     or int(context.get("isolated_craft_reference_bytes", 0)) < 71000
                     or int(context.get("total_bytes", 0)) > 20000
                     or int(context.get("isolated_handoff_context_bytes", 0)) < 30000
-                    or int(context.get("isolated_handoff_context_bytes", 0)) > 65536
+                    or int(context.get("isolated_handoff_context_bytes", 0)) > 69632
                     or int(context.get("aggregate_accounted_bytes", 0))
                     != int(context.get("total_bytes", 0))
                     + int(context.get("isolated_craft_context_bytes", 0))
@@ -2547,7 +2645,7 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
                     or int(context.get("isolated_validator_context_bytes", 0)) > 65536
                     or int(context.get("total_bytes", 0)) > 20000
                     or int(context.get("isolated_handoff_context_bytes", 0)) < 40000
-                    or int(context.get("isolated_handoff_context_bytes", 0)) > 65536
+                    or int(context.get("isolated_handoff_context_bytes", 0)) > 69632
                     or int(context.get("aggregate_accounted_bytes", 0))
                     != int(context.get("total_bytes", 0))
                     + int(context.get("isolated_craft_context_bytes", 0))
@@ -2560,6 +2658,22 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
                     != "scripts/dircreative_script_to_seedance_handoff.py"
                 ):
                     failures.append("realistic Seedance validator was not isolated and budgeted")
+            if case_id == "p54_seedance25_fast_priority":
+                context = receipt.get("context") or {}
+                reference_requests = receipt.get("reference_read_requests") or []
+                if (
+                    int(context.get("isolated_craft_context_bytes", 0)) < 10000
+                    or int(context.get("isolated_craft_context_bytes", 0)) > 16384
+                    or int(context.get("isolated_craft_reference_count", 0)) != 2
+                    or int(context.get("isolated_craft_reference_bytes", 0)) < 5000
+                    or int(context.get("aggregate_accounted_bytes", 0))
+                    != int(context.get("total_bytes", 0))
+                    + int(context.get("isolated_craft_context_bytes", 0))
+                    or {item.get("relative_path") for item in reference_requests}
+                    != set(MR_LI_REFERENCE_PAD)
+                    or any(not item.get("sha256") for item in reference_requests)
+                ):
+                    failures.append("realistic Fast Seedance method references were not isolated and budgeted")
         still_case = next(item for item in cases if item["id"] == "p06_key_visual")
         still_receipt = select_stack(
             still_case["intent"],

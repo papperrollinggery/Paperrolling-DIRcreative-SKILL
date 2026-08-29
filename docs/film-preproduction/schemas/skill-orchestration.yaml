@@ -348,7 +348,9 @@ ai_film_p0_capabilities:
     skill_id: "ai-film-asset-stress-test"
     role: "validator"
     authority: "validation_only"
-    schema: "docs/film-preproduction/schemas/ai-film-asset-stress-test.schema.json"
+    supported_contracts:
+      ai_film_asset_stress_test_v1: "docs/film-preproduction/schemas/ai-film-asset-stress-test.schema.json"
+      ai_film_asset_stress_test_v2: "docs/film-preproduction/schemas/ai-film-asset-stress-test-v2.schema.json"
     validator: "scripts/ai_film_asset_stress_test.py"
     upstream_owner: "dircreative"
     detached_review_signature_required_for_completion: true
@@ -394,8 +396,8 @@ external_compiler_handoffs:
   script_to_seedance_v1:
     owner: "dircreative"
     provider: "convert-script-to-seedance"
-    exact_card_method_collaborators:
-      seedance_2_5_official_launch: "mr-li-seedance-25"
+    target_method_priority:
+      seedance_2_5: "mr-li-seedance-25"
     reference: "skills/dircreative/references/script-to-seedance.md"
     schema: "docs/film-preproduction/schemas/script-to-seedance-handoff.schema.json"
     inputs:

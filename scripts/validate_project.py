@@ -334,6 +334,7 @@ def validate_required_paths() -> None:
         "docs/film-preproduction/schemas/media-visual-review-v1.schema.json",
         "docs/film-preproduction/schemas/asset-foundation-pass.schema.json",
         "docs/film-preproduction/schemas/ai-film-asset-stress-test.schema.json",
+        "docs/film-preproduction/schemas/ai-film-asset-stress-test-v2.schema.json",
         "docs/film-preproduction/schemas/ai-film-production-ledger.schema.json",
         "docs/film-preproduction/schemas/script-to-seedance-handoff.schema.json",
         "docs/film-preproduction/schemas/storyboard-frame-to-jingzao.schema.json",
@@ -364,6 +365,7 @@ def validate_required_paths() -> None:
         "tests/fixtures/asset-foundation/valid-pass.json",
         "tests/fixtures/asset-foundation/cases.json",
         "tests/fixtures/asset-stress-test/valid-report.json",
+        "tests/fixtures/asset-stress-test/valid-report-v1.json",
         "tests/fixtures/asset-stress-test/cases.json",
         "tests/fixtures/production-ledger/valid-ledger.json",
         "tests/fixtures/production-ledger/cases.json",
@@ -1583,11 +1585,11 @@ def validate_skill_stack() -> None:
     require(proc.returncode == 0, f"Skill Stack audit failed:\n{proc.stderr}\n{proc.stdout}")
     for marker in [
         "DIRCREATIVE_SKILL_STACK_AUDIT: PASS",
-        '"positive_cases": 52',
-        '"negative_cases": 35',
+        '"positive_cases": 55',
+        '"negative_cases": 39',
         '"scenario_count": 43',
         '"provider_policy_count": 52',
-        '"realistic_smoke_cases": 23',
+        '"realistic_smoke_cases": 26',
         '"two_phase_host_binding": true',
         '"trusted_primary_route_controls": true',
         '"artifact_output_guard_controls": true',
@@ -1692,9 +1694,10 @@ def validate_ai_film_asset_stress_test() -> None:
     for marker in [
         "AI_FILM_ASSET_STRESS_TEST_AUDIT: PASS",
         '"valid_fixture_passed": true',
-        '"matrix_case_count": 10',
-        '"negative_case_count": 23',
-        '"negative_cases_rejected": 23',
+        '"valid_v1_fixture_passed": true',
+        '"matrix_case_count": 11',
+        '"negative_case_count": 33',
+        '"negative_cases_rejected": 33',
         '"media_generation_performed": false',
     ]:
         require(marker in proc.stdout, f"asset stress-test audit missing marker: {marker}")
