@@ -12,6 +12,58 @@
     "expected": "explicit @ slots"
   },
   {
+    "case_id": "seedance_2_0_rejects_ten_image_references",
+    "kind": "compile",
+    "base": "valid/minimal-character-scene-10s.json",
+    "adapter": "seedance",
+    "capability_card_id": "seedance_2_0_official_launch",
+    "duration_sec": 10,
+    "minimum_reference_count": 10,
+    "attached_reference_count": 10,
+    "platform_slot_type": "Image",
+    "audio_route": "native",
+    "expected": "image reference count is unsupported by capability card: 10 > 9"
+  },
+  {
+    "case_id": "seedance_2_0_rejects_sixteen_seconds",
+    "kind": "compile",
+    "base": "valid/minimal-character-scene-10s.json",
+    "adapter": "seedance",
+    "capability_card_id": "seedance_2_0_official_launch",
+    "duration_sec": 16,
+    "declared_generation_unit_sec": 30,
+    "attached_reference_count": 2,
+    "platform_slots": ["@Image 1", "@Image 2"],
+    "audio_route": "native",
+    "expected": "generation unit duration is unsupported by capability card"
+  },
+  {
+    "case_id": "seedance_2_5_rejects_thirty_one_seconds",
+    "kind": "compile",
+    "base": "valid/minimal-character-scene-10s.json",
+    "adapter": "seedance",
+    "capability_card_id": "seedance_2_5_official_launch",
+    "duration_sec": 31,
+    "declared_generation_unit_sec": 30,
+    "attached_reference_count": 2,
+    "platform_slots": ["@Image 1", "@Image 2"],
+    "audio_route": "native",
+    "expected": "generation unit duration is unsupported by capability card"
+  },
+  {
+    "case_id": "seedance_2_5_rejects_thirty_one_image_references",
+    "kind": "compile",
+    "base": "valid/minimal-character-scene-10s.json",
+    "adapter": "seedance",
+    "capability_card_id": "seedance_2_5_official_launch",
+    "duration_sec": 30,
+    "minimum_reference_count": 31,
+    "attached_reference_count": 31,
+    "platform_slot_type": "Image",
+    "audio_route": "native",
+    "expected": "image reference count is unsupported by capability card: 31 > 30"
+  },
+  {
     "case_id": "kling_rejects_reference_overflow",
     "kind": "compile",
     "base": "valid/multi-character-assets-15s.json",

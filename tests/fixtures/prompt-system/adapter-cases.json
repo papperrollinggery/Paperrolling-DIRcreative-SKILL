@@ -12,6 +12,18 @@
     "forbidden_text": ["Attached reference image", "QA AND RETRY"]
   },
   {
+    "case_id": "seedance_2_5_30_second_surface",
+    "base": "valid/minimal-character-scene-10s.json",
+    "adapter": "seedance",
+    "capability_card_id": "seedance_2_5_official_launch",
+    "duration_sec": 30,
+    "attached_reference_count": 2,
+    "platform_slots": ["@Image 1", "@Image 2"],
+    "audio_route": "native",
+    "expected_text": "@Image 1 is identity",
+    "forbidden_text": ["Attached reference image", "QA AND RETRY"]
+  },
+  {
     "case_id": "sora_first_frame_surface",
     "base": "valid/minimal-character-scene-10s.json",
     "adapter": "sora",

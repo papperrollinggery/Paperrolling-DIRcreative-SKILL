@@ -23,6 +23,15 @@ Persist and validate the machine packet with
   manifest and remains responsible for Prompt IR validation, exact capability
   card resolution, direct-input policy, rights, QA, retry, and status.
 
+When the exact card is `seedance_2_5_official_launch` and the installed body is
+available, load `mr-li-seedance-25` as a bounded method collaborator. Apply its
+authoritative-text, independent-segment, real-capacity, stable-numbering, and
+clean-master repair rules, but keep every model fact sourced from the exact
+official capability card. Do not copy its project-specific examples into the
+prompt or let it replace this handoff, DIR ownership, the asset gate, or prompt
+preflight. Missing collaborator adoption preserves the legacy converter path
+and must be reported rather than fabricated.
+
 ## Required input packet
 
 Pass only current, approved material:
@@ -127,6 +136,10 @@ scene > model-layout > composition.
 - When the requested performance exceeds the selected route, return a split
   recommendation tied to a natural shot/unit boundary; never squeeze the whole
   assembly into one executable prompt.
+- For Seedance 2.5, 30 seconds is an exact-card ceiling, not a target. End at a
+  natural action, dialogue, discovery, or dramatic boundary and never fill the
+  remaining capacity with unsourced acting, reactions, props, geography, or
+  decorative empty shots.
 - User-supplied dialogue remains exact. Proposed optional empty shots or
   connective beats must be visibly optional and cannot silently change the
   authoritative script.

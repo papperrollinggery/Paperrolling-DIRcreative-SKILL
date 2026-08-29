@@ -297,6 +297,7 @@ def validate_registry() -> tuple[dict[str, dict[str, Any]], dict[str, Any], str]
         "sora_2_openai_videos_api",
         "sora_2_pro_openai_videos_api",
         "seedance_2_0_official_launch",
+        "seedance_2_5_official_launch",
         "kling_video_3_0_official_guide",
         "kling_legacy_i2v_5_10_official_guide",
         "runway_gen_4_5_web",
@@ -335,6 +336,19 @@ def validate_known_capabilities(cards: dict[str, dict[str, Any]]) -> str:
         (seedance.get("access_mode"), seedance.get("execution_mode"), seedance.get("execution_verification_status"))
         == ("documented_product", "manual_export", "unverified"),
         "Seedance launch card must stay documented-product/manual-export and execution-unverified",
+    )
+
+    seedance25 = cards["seedance_2_5_official_launch"]
+    require(seedance25["reference_modes"].get("maximum_image_references") == 30, "Seedance 2.5 image cap drifted")
+    require(seedance25["reference_modes"].get("maximum_video_references") == 10, "Seedance 2.5 video cap drifted")
+    require(seedance25["reference_modes"].get("maximum_audio_references") == 10, "Seedance 2.5 audio cap drifted")
+    require(seedance25["duration"].get("maximum_sec") == 30, "Seedance 2.5 duration cap drifted")
+    require(seedance25["duration"].get("kind") == "upper_bound", "Seedance 2.5 duration evidence must remain upper-bound only")
+    require(seedance25["extension"].get("maximum_extensions") == 2, "Seedance 2.5 extension cap drifted")
+    require(
+        (seedance25.get("access_mode"), seedance25.get("execution_mode"), seedance25.get("execution_verification_status"))
+        == ("documented_product", "manual_export", "unverified"),
+        "Seedance 2.5 launch card must remain documented-product/manual-export and execution-unverified",
     )
 
     kling = cards["kling_video_3_0_official_guide"]

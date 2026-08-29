@@ -87,6 +87,12 @@ without a verified tool and cost boundary.
   `script_to_seedance`. Apply the registered `script_to_seedance_v1` contract;
   DIR retains upstream truth and consumes the compiled prompt back into its
   manifest and QA flow.
+- For exact Seedance 2.5 script conversion, keep that same compiler and handoff.
+  Add `mr-li-seedance-25` only as the authoring-method collaborator for
+  authoritative-script fidelity, independently complete segments, duration
+  capacity, stable asset numbering, and clean-master repair discipline. It does
+  not become a controller, state owner, capability source, or execution adapter;
+  if absent, the retained compiler path still works without claiming its method.
 - `ai-film-production-ledger` is an isolated record-only collaborator after
   preflight. It receives only the final generation candidate, preserves
   append-only attempt/event lineage, and cannot become a story owner, director,

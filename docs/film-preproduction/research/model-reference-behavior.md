@@ -74,6 +74,7 @@ The machine-readable facts are in `model-sources.yaml`; this table is a routing 
 | `gpt_image_2_openai_api` | one or more image references for edit/composition; multi-turn editing | image edit is not video first-frame binding |
 | `sora_2_openai_videos_api` / Pro | image is first frame; reusable non-human character route | character, first-frame, edit, and extension constraints differ |
 | `seedance_2_0_official_launch` | named image/video/audio/storyboard references | all counts and modes are Seedance 2.0-only |
+| `seedance_2_5_official_launch` | up to 30 image, 10 video, and 10 audio references | 30 seconds is a ceiling; bind every role and verify the execution surface |
 | `kling_video_3_0_official_guide` | start/end frames plus elements and multi-shot roles | 3.0 must not inherit legacy 5/10 rules |
 | `kling_legacy_i2v_5_10_official_guide` | legacy first-image motion workflow | legacy only; never default Kling |
 | `runway_gen_4_5_web` | text/image generation | generation is separate from Aleph edit |
@@ -87,6 +88,11 @@ The machine-readable facts are in `model-sources.yaml`; this table is a routing 
 ## Seedance Reference Planning
 
 For Seedance 2.0, bind every `@image`, `@video`, and `@audio` role explicitly. A storyboard may guide shot order, camera, and visual copy only with an inline anti-misread clause. The published reference upper limits are locked to the 2.0 card and cannot be reused for another version.
+
+For Seedance 2.5, keep the same explicit role binding but use only its exact
+30/10/10 limits. Treat 30 seconds as an upper bound, preserve natural dramatic
+boundaries, and keep the route prompt-only until the named product/API surface
+is actually verified.
 
 If results drift, remove competing roles before adding prose.
 
@@ -184,11 +190,12 @@ Reference export fails when:
 - official source conflicts are hidden,
 - audio reference or native audio is assumed from another card.
 
-## Sources — Accessed 2026-07-10
+## Sources — Accessed through 2026-08-29
 
 - Machine-readable registry: `docs/film-preproduction/sources/model-sources.yaml`
 - OpenAI image/video guides: https://developers.openai.com/api/docs/guides/image-generation and https://developers.openai.com/api/docs/guides/video-generation
 - Seedance 2.0: https://seed.bytedance.com/en/blog/seedance-2-0-official-launch
+- Seedance 2.5: https://seed.bytedance.com/en/blog/one-take-creation-flexible-referencing-introducing-seedance-2-5 and https://seed.bytedance.com/en/seedance2_5
 - Kling VIDEO 3.0: https://app.klingai.com/cn/quickstart/klingai-video-3-model-user-guide
 - Runway Gen-4.5 / Aleph 2.0 / API inputs: https://help.runwayml.com/hc/en-us/articles/46974685288467-Creating-with-Gen-4-5, https://help.runwayml.com/hc/en-us/articles/52150503729171-Aleph-2-0-Prompting-Guide, https://docs.dev.runwayml.com/assets/inputs/
 - Google Vertex stable Veo and API sources: https://docs.cloud.google.com/vertex-ai/generative-ai/docs/models/veo/3-1-generate, https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/veo-video-generation, https://docs.cloud.google.com/vertex-ai/generative-ai/docs/release-notes

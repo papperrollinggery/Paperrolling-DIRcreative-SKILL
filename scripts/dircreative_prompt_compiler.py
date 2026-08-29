@@ -260,6 +260,22 @@ def semantic_errors(payload: dict[str, Any], *, verify_project_files: bool = Tru
                     errors.append(f"capability {field} does not match resolved card")
             if selected.get("status") != "current":
                 errors.append("capability card is not current")
+            if selected.get("model_key") == "seedance":
+                reference_modes = selected.get("reference_modes", {})
+                for media_label, field_name in (
+                    ("Image", "maximum_image_references"),
+                    ("Video", "maximum_video_references"),
+                    ("Audio", "maximum_audio_references"),
+                ):
+                    limit = reference_modes.get(field_name)
+                    count = sum(
+                        str(item.get("platform_slot", "")).startswith(f"@{media_label} ")
+                        for item in attached
+                    )
+                    if isinstance(limit, int) and count > limit:
+                        errors.append(
+                            f"{media_label.lower()} reference count is unsupported by capability card: {count} > {limit}"
+                        )
             duration_contract = selected.get("duration", {})
             for start, end, unit in unit_times:
                 duration = end - start
@@ -270,6 +286,10 @@ def semantic_errors(payload: dict[str, Any], *, verify_project_files: bool = Tru
                     minimum = float(duration_contract.get("minimum_sec", 0))
                     maximum = float(duration_contract.get("maximum_sec", 0))
                     if duration < minimum - 0.001 or duration > maximum + 0.001:
+                        errors.append(f"generation unit duration is unsupported by capability card: {unit['unit_id']}")
+                elif kind == "upper_bound":
+                    maximum = float(duration_contract.get("maximum_sec", 0))
+                    if duration > maximum + 0.001:
                         errors.append(f"generation unit duration is unsupported by capability card: {unit['unit_id']}")
                 elif kind == "version_scoped":
                     supported_range = duration_contract.get("researched_range_sec", [])

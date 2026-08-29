@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.0 - 2026-08-29
+
+- Adds an independently sourced Seedance 2.5 capability card with a 30-second upper bound, typed 30-image/10-video/10-audio limits, native audio-video intent, editing/extension evidence, and fail-closed manual execution status while retaining the complete Seedance 2.0 card.
+- Integrates the globally discoverable `mr-li-seedance-25` Skill as a bounded method collaborator only for exact Seedance 2.5 `script_to_seedance_v1` work; DIRcreative, the existing converter, asset-foundation gate, prompt validator, and legacy fallback ownership remain unchanged.
+- Makes the Seedance adapter accept the union of known exact-card surfaces while the prompt compiler enforces version-specific duration and typed reference limits, with 2.0/2.5 positive and negative regression coverage.
+
 ## 0.5.3 - 2026-08-24
 
 - Makes macOS tagged reproducibility builds use the same annotated-tag restore and `CANONICAL_REMOTE_TAG` release mode as the Linux matrix, restoring byte-identical cross-platform artifacts.
