@@ -27,15 +27,37 @@ real source samples
 -> VOICE PROFILE
 -> DIR professional judgment
 -> de-AI fidelity refinement
+-> contextual human-language pass when triggered
 -> humanizer / humanizer-zh diagnostic review
 -> manual craft review and copy_execution reconciliation
 ```
 
 The `VOICE PROFILE` is built from real approved samples, not a list of desired adjectives. DIR professional judgment then decides the audience effect, channel fit, factual boundary, tradeoff, and approved claims. `de-AI-writing` removes machine-organized residue without changing meaning or adding facts.
 
+Use `shuorenhua` through `human_language_revision` only when the user explicitly
+asks for natural human language or when a fidelity-clean draft still reads like
+a template. It is the contextual craft owner for that pass, not an additional
+rewrite stacked automatically after `de-AI-writing`. `humanizer-zh` remains a
+diagnostic reviewer.
+
 The `humanizer` and `humanizer-zh` rules are the last diagnostic gate. They may identify an AI-trace cluster for manual review, but a word-list hit cannot prove AI authorship and cannot fail copy by itself. Keep intentional voice, quotations, technical terms, and approved claims when resolving a trace.
 
 The diagnostic is not the professional craft verdict. Record a manual review of rhythm, abstraction, and evidence alignment even when no word-list pattern is present. The detected clusters, manual-craft review, and `copy_execution` statuses must agree; a cluster remains review-only, while an independently recorded evidence or craft defect can require revision.
+
+## Authored and genre voice protection
+
+“Humanized” means plausible for the actual author, narrator, character, client
+or production role. It does not mean casual, plain or contemporary by default.
+Protect names, coined terms, mythic or historical register, character idiolect,
+deliberate metaphor, poetic compression, silence, repetition and line breaks
+when source evidence shows they are intentional.
+
+For novels and screenplays, distinguish narration, action description,
+dialogue, VO and PPT explanation before editing. A Shanhaijing-like mythic text
+may need unfamiliar compounds and a compressed poetic cadence; clean the
+lecture voice around those choices without converting them into ordinary chat.
+For storyboard descriptions, the target is natural production language: short,
+visual and stageable, while exact SUPER and source claims remain untouched.
 
 Before drafting, separate `facts`, `source_evidence`, and `inferences`. Audience-facing factual or performance claims must reference approved claim IDs and their evidence. An unapproved claim remains blocked even when the sentence sounds natural.
 

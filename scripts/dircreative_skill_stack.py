@@ -89,6 +89,7 @@ REALISTIC_SMOKE_EXPECTED = {
     "p53_seedance25_emotion_specialist": ("seedance-25-emotion-prompt", 2, "ready", None),
     "p54_seedance25_fast_priority": ("mr-li-seedance-25", 1, "ready", None),
     "p55_script_target_seedance25_from_20_source": ("convert-script-to-seedance", 3, "ready", None),
+    "p56_contextual_human_language": ("shuorenhua", 2, "ready", None),
     "p47_cinematic_storyboard_frames": ("jingzao-image-forge", 1, "ready", None),
     "p48_asset_foundation_production_design_pass": ("production-design-worldbuilding", 1, "needs_followup", None),
     "p49_asset_stress_validation": ("dircreative", 1, "ready", None),
@@ -116,6 +117,8 @@ REALISTIC_BODY_PAD = {
     "ai-film-production-ledger": 4000,
     "jingzao-image-forge": 28240,
     "ai-video-prompt-preflight": 23600,
+    "shuorenhua": 20670,
+    "humanizer-zh": 18898,
 }
 JINGZAO_REFERENCE_PAD = {
     "references/visual-spec.md": 29007,
@@ -128,6 +131,12 @@ JINGZAO_REFERENCE_PAD = {
 MR_LI_REFERENCE_PAD = {
     "references/prompt-writing.md": 2863,
     "references/continuity-and-duration.md": 1917,
+}
+SHUORENHUA_REFERENCE_PAD = {
+    "references/protected-spans.md": 4399,
+    "references/positive-style.md": 6881,
+    "references/operation-manual.md": 15687,
+    "references/structures.md": 7418,
 }
 HANDOFF_REQUIRED_CHAINS = {
     "script_to_seedance_v1": [
@@ -545,6 +554,15 @@ def validate_registry(registry: dict[str, Any]) -> list[str]:
     for skill_id, provider in providers.items():
         if not valid_reference_pack(provider.get("reference_pack", [])):
             failures.append(f"{skill_id}: invalid provider reference pack")
+        application_contract = provider.get("application_contract")
+        if application_contract is not None and (
+            not isinstance(application_contract, dict)
+            or application_contract.get("authority") != "diagnostic_only"
+            or application_contract.get("output_mode") != "findings_only"
+            or application_contract.get("may_rewrite") is not False
+            or provider.get("provider_roles") != ["validator"]
+        ):
+            failures.append(f"{skill_id}: invalid diagnostic-only application contract")
     for overlay in ("liu-creative-workflow", "sophia-research-mode"):
         item = providers.get(overlay, {})
         if item.get("explicit_only") is not True or item.get("provider_roles") != ["explicit_overlay"]:
@@ -762,7 +780,7 @@ def _parse_frontmatter(text: str, max_bytes: int) -> tuple[dict[str, str], int]:
         value = raw.strip()
         if key not in {"name", "description"}:
             index += 1
-            if key == "metadata" and not value:
+            if not value:
                 while index < len(lines) and (
                     not lines[index].strip() or lines[index][:1].isspace()
                 ):
@@ -800,11 +818,22 @@ def _frontmatter_probe(
     if metadata.st_size > body_limit:
         raise SkillStackError("skill_body_too_large")
     with path.open("rb") as handle:
-        data = handle.read(frontmatter_limit + 16)
-    if b"\x00" in data:
+        probe = handle.read(frontmatter_limit + 16)
+    if b"\x00" in probe:
         raise SkillStackError("skill_body_binary")
+    normalized_probe = probe.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+    if not normalized_probe.startswith(b"---\n"):
+        raise SkillStackError("frontmatter_missing")
+    boundary = normalized_probe.find(
+        b"\n---\n",
+        4,
+        min(len(normalized_probe), frontmatter_limit + 6),
+    )
+    if boundary < 0:
+        raise SkillStackError("frontmatter_unbounded_or_too_large")
+    frontmatter_probe = normalized_probe[: boundary + 5]
     try:
-        text = data.decode("utf-8")
+        text = frontmatter_probe.decode("utf-8")
     except UnicodeDecodeError as exc:
         raise SkillStackError("skill_body_not_utf8") from exc
     frontmatter, front_bytes = _parse_frontmatter(text, frontmatter_limit)
@@ -1165,7 +1194,7 @@ def _slot(skill_id: str, role: str, provider: dict[str, Any], entry: CatalogEntr
     assert entry is not None
     if not entry.body_loaded or entry.body_sha256 is None:
         raise SkillStackError(f"provider body was not read: {skill_id}")
-    return {
+    slot = {
         "skill_id": skill_id,
         "role": role,
         "perspective": provider["perspective"],
@@ -1173,6 +1202,10 @@ def _slot(skill_id: str, role: str, provider: dict[str, Any], entry: CatalogEntr
         "body_bytes": entry.body_bytes,
         "body_sha256": entry.body_sha256,
     }
+    application_contract = provider.get("application_contract")
+    if isinstance(application_contract, dict):
+        slot["application_contract"] = dict(application_contract)
+    return slot
 
 
 def _metadata_bytes(slots: Iterable[dict[str, Any]]) -> int:
@@ -1184,6 +1217,11 @@ def _metadata_bytes(slots: Iterable[dict[str, Any]]) -> int:
             "status": item["status"],
             "body_bytes": item["body_bytes"],
             "body_sha256": item["body_sha256"],
+            **(
+                {"application_contract": item["application_contract"]}
+                if isinstance(item.get("application_contract"), dict)
+                else {}
+            ),
         }
         for item in slots
     ]
@@ -1650,8 +1688,12 @@ def select_stack(
             slot["context_scope"] = "isolated_handoff_contract"
         if (
             role == "validator"
-            and scenario.get("validator_required") is True
             and provider.get("validator_context_cost") == "isolated_validator_contract"
+            and (
+                scenario.get("validator_required") is True
+                or provider.get("application_contract", {}).get("authority")
+                == "diagnostic_only"
+            )
         ):
             slot["context_scope"] = "isolated_validator_contract"
         future = [*slots, slot]
@@ -1853,9 +1895,15 @@ def select_stack(
             if eligible(skill_id, "validator") and can_add(skill_id, "validator"):
                 validator = _slot(skill_id, "validator", providers[skill_id], catalog[skill_id])
                 if (
-                    scenario.get("validator_required") is True
-                    and providers[skill_id].get("validator_context_cost")
+                    providers[skill_id].get("validator_context_cost")
                     == "isolated_validator_contract"
+                    and (
+                        scenario.get("validator_required") is True
+                        or providers[skill_id]
+                        .get("application_contract", {})
+                        .get("authority")
+                        == "diagnostic_only"
+                    )
                 ):
                     validator["context_scope"] = "isolated_validator_contract"
                 slots.append(validator)
@@ -2149,7 +2197,17 @@ def select_stack(
                 "body_sha256": item["body_sha256"],
                 "body_bytes": item["body_bytes"],
                 "context_scope": item.get("context_scope", "main_skill_stack"),
-                "host_action": "primary_host_independent_full_read_hash_verify_and_apply_before_card",
+                "host_action": (
+                    "primary_host_diagnose_only_no_rewrite_hash_verify_before_card"
+                    if item.get("application_contract", {}).get("authority")
+                    == "diagnostic_only"
+                    else "primary_host_independent_full_read_hash_verify_and_apply_before_card"
+                ),
+                **(
+                    {"application_contract": item["application_contract"]}
+                    if isinstance(item.get("application_contract"), dict)
+                    else {}
+                ),
             }
             for item in [
                 *slots,
@@ -2329,6 +2387,14 @@ def _write_mock_skill(root: Path, skill_id: str, body_pad: int = 0) -> None:
             prefix = "# Deterministic reference fixture\n"
             padding = max(0, target_bytes - len(prefix.encode("utf-8")))
             reference.write_text(prefix + ("x" * padding), encoding="utf-8")
+    if skill_id == "shuorenhua":
+        for relative, realistic_bytes in SHUORENHUA_REFERENCE_PAD.items():
+            reference = skill_dir / relative
+            reference.parent.mkdir(parents=True, exist_ok=True)
+            target_bytes = realistic_bytes if body_pad else 64
+            prefix = "# Deterministic human-language reference fixture\n"
+            padding = max(0, target_bytes - len(prefix.encode("utf-8")))
+            reference.write_text(prefix + ("x" * padding), encoding="utf-8")
 
 
 def _case_assertions(case: dict[str, Any], receipt: dict[str, Any]) -> list[str]:
@@ -2397,6 +2463,36 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
         failures.append("frontmatter-only host catalog falsely claimed provider bodies were loaded")
     with tempfile.TemporaryDirectory(prefix="dircreative-skill-stack-") as temp:
         temp_root = Path(temp)
+        nested_frontmatter_skill = temp_root / "nested-frontmatter-skill.md"
+        nested_frontmatter_skill.write_text(
+            "---\n"
+            "name: nested-frontmatter-skill\n"
+            "description: |\n"
+            "  合法中文多行说明，用于验证 UTF-8 边界。\n"
+            "allowed-tools:\n"
+            "  - Read\n"
+            "  - Edit\n"
+            "metadata:\n"
+            "  trigger: 自然语言审阅\n"
+            "---\n\n"
+            + ("中文正文" * 2000),
+            encoding="utf-8",
+        )
+        try:
+            nested_frontmatter, _front_bytes, _body_bytes = _frontmatter_probe(
+                nested_frontmatter_skill,
+                frontmatter_limit=int(
+                    registry["discovery_contract"]["frontmatter_bytes_max"]
+                ),
+                body_limit=int(registry["discovery_contract"]["skill_body_bytes_max"]),
+            )
+        except SkillStackError as exc:
+            failures.append(f"nested UTF-8 frontmatter rejected: {exc}")
+        else:
+            if nested_frontmatter.get("name") != "nested-frontmatter-skill":
+                failures.append("nested UTF-8 frontmatter changed Skill identity")
+            if "UTF-8" not in nested_frontmatter.get("description", ""):
+                failures.append("nested UTF-8 frontmatter lost multiline description")
         installed_layout = temp_root / "installed-layout"
         installed_route = installed_layout / "routes/fast-task.md"
         installed_route.parent.mkdir(parents=True)
@@ -2583,6 +2679,43 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
             )
             if actual != expected:
                 failures.append(f"{case_id}: realistic expected {expected!r}, got {actual!r}")
+            if case_id == "p56_contextual_human_language":
+                owner = receipt.get("craft_owner") or {}
+                validator = receipt.get("validator") or {}
+                context = receipt.get("context") or {}
+                reference_requests = receipt.get("reference_read_requests") or []
+                validator_request = next(
+                    (
+                        item
+                        for item in receipt.get("body_read_requests", [])
+                        if item.get("skill_id") == "humanizer-zh"
+                    ),
+                    {},
+                )
+                if (
+                    owner.get("context_scope") != "isolated_craft_contract"
+                    or validator.get("context_scope")
+                    != "isolated_validator_contract"
+                    or validator.get("application_contract")
+                    != {
+                        "authority": "diagnostic_only",
+                        "output_mode": "findings_only",
+                        "may_rewrite": False,
+                    }
+                    or int(context.get("isolated_craft_context_bytes", 0)) < 54000
+                    or int(context.get("isolated_validator_context_bytes", 0)) < 18000
+                    or int(context.get("isolated_craft_reference_count", 0)) != 4
+                    or int(context.get("isolated_craft_reference_bytes", 0)) < 34000
+                    or len(reference_requests) != 4
+                    or validator_request.get("application_contract")
+                    != validator.get("application_contract")
+                    or "diagnose_only_no_rewrite"
+                    not in str(validator_request.get("host_action", ""))
+                    or int(context.get("total_bytes", 0)) > 20000
+                ):
+                    failures.append(
+                        "realistic human-language owner/diagnostic contexts were not isolated"
+                    )
             if case_id == "p42_authorized_generation_adapter":
                 adapter = receipt.get("execution_adapter") or {}
                 context = receipt.get("context") or {}

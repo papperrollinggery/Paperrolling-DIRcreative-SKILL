@@ -132,6 +132,12 @@ Use the selected task reference as craft guidance, not as a checklist to expose.
 Do not enter adjacent stages speculatively. Preserve locked facts, mark only
 affected downstream material stale, and make the smallest complete change.
 
+Audience-facing story, script, PPT, README and report prose uses a source-derived
+voice before delivery. Preserve names, coined terms, character diction, genre
+register and intentional poetic rhythm. Route explicit “说人话 / 去 AI 味 /
+自然一点” requests, or drafts that still read like a template, through
+`human_language_revision`; natural language is not casual-language flattening.
+
 Prompt work keeps Prompt IR model-neutral and applies one model surface at a
 time. Verify volatile model claims from current official evidence only when they
 affect the answer or execution.

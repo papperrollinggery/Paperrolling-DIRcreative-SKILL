@@ -116,3 +116,11 @@ Offer alternatives only for materially incompatible strategy; only then use
 generic language with observable choices, verify supplied/post-produced facts,
 and make the ending resolve the opening. Technical completeness cannot rescue a
 weak or misleading direction.
+
+All audience-facing treatment, screenplay, storyboard description, PPT, README
+and report copy receives the authored-voice pass in `copy-script.md` before
+delivery. A source-derived `VOICE PROFILE` protects project vocabulary,
+character voices and genre cadence. Use `de-AI-writing` for bounded fidelity
+cleanup; route explicit natural-language requests or residual template prose to
+`human_language_revision`. Do not apply the pass to IDs, timecodes, literal
+SUPER, exact claims, technical fields or paste-ready model syntax.

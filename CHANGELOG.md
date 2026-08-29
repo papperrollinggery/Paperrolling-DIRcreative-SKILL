@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.7.1 - Unreleased
+
+- Adds a bounded `human_language_revision` route: explicit “说人话 / 去 AI 味 / 自然一点” requests select `shuorenhua`, with `humanizer-zh` as diagnostic-only validation and DIRcreative fallback when the optional provider is absent.
+- Makes source-derived authored voice a default requirement for audience-facing story, screenplay, storyboard-description, PPT, README and report copy while protecting facts, literal SUPER, names, coined terms, character diction and genre register.
+- Preserves mythic, historical, literary and period language instead of flattening every natural-language pass into casual modern Chinese; `de-AI-writing` remains the ordinary bounded fidelity cleanup rather than a stacked second owner.
+- Records the cross-project behavior study that exposed the routing gap without copying RTBC or Shanhaijing wording into the Skill.
+
 ## 0.7.0 - 2026-08-30
 
 - Replaces the split face/wardrobe default for new recurring clothed humans with a unified headed character master sheet generated coherently in one pass: one large three-quarter portrait plus matched full-body front, left profile, right profile, and back views in one physical image.

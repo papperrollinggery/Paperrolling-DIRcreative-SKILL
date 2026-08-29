@@ -1,7 +1,35 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
-from dircreative_validation_harness import Check, add_check, read, require_terms
+from dircreative_validation_harness import (
+    Check,
+    add_check,
+    load_json_file,
+    read,
+    require_terms,
+)
+
+
+def validate_human_language_cases() -> None:
+    payload = load_json_file("tests/fixtures/human-language/cases.json")
+    cases = payload.get("cases", []) if isinstance(payload, dict) else []
+    if not cases:
+        raise AssertionError("human-language cases are missing")
+    for case in cases:
+        case_id = str(case.get("case_id"))
+        source = str(case.get("source_text", ""))
+        candidate = str(case.get("candidate_text", ""))
+        if not source or not candidate or source == candidate:
+            raise AssertionError(f"{case_id}: source/candidate fixture is invalid")
+        for span in case.get("protected_spans", []):
+            if source.count(span) == 0 or candidate.count(span) != source.count(span):
+                raise AssertionError(f"{case_id}: protected span drifted: {span}")
+        for fragment in case.get("forbidden_fragments", []):
+            if fragment in candidate:
+                raise AssertionError(f"{case_id}: AI-trace fragment remained: {fragment}")
+        for marker in case.get("authored_voice_markers", []):
+            if marker not in candidate:
+                raise AssertionError(f"{case_id}: authored voice marker was flattened: {marker}")
 
 
 def main() -> int:
@@ -41,8 +69,12 @@ def main() -> int:
             read("skills/dircreative/routes/fast-task.md"),
             read("skills/dircreative/routes/studio-development.md"),
             read("skills/dircreative/routes/delivery-audit.md"),
+            read("skills/dircreative/references/copy-script.md"),
+            read("skills/dircreative/references/film-development.md"),
+            read("skills/dircreative/references/visual-skill-stack.md"),
             read("docs/film-preproduction/chat-co-creation-interface.md"),
             read(professional_voice_doc),
+            read("docs/film-preproduction/research/human-language-routing-2026-08-30.md"),
         ]
     )
 
@@ -172,6 +204,8 @@ def main() -> int:
                 "Humanized Copy Requirements",
                 "humanizer",
                 "humanizer-zh",
+                "shuorenhua",
+                "human_language_revision",
                 "user-visible output standard",
                 "Chinese creative directions",
                 "Chinese production plans",
@@ -198,6 +232,10 @@ def main() -> int:
                 "cinematic",
                 "masterpiece",
                 "concrete camera, blocking, lighting, material, story, product, or model-risk information",
+                "Authored and genre voice protection",
+                "coined terms",
+                "mythic or historical register",
+                "does not mean casual, plain or contemporary by default",
             ],
             professional_voice_doc,
         ),
@@ -214,6 +252,9 @@ def main() -> int:
                 "professional-agent-voice-standard.md",
                 "humanizer check",
                 "humanizer / humanizer-zh diagnostic review",
+                "natural language is not casual-language flattening",
+                "not stacked rewrites from both owners",
+                "storyboard artist would naturally say",
                 "Frontstage Copy Hygiene",
                 "Every visible gate must follow `docs/film-preproduction/professional-agent-voice-standard.md` and run a humanizer pass",
                 "The point is not to sound friendlier",
@@ -222,6 +263,12 @@ def main() -> int:
             ],
             "humanized copy wiring evidence",
         ),
+    )
+    add_check(
+        checks,
+        "human-language fixtures preserve authored voice and literal copy",
+        "tests/fixtures/human-language/cases.json",
+        validate_human_language_cases,
     )
 
     print("DIRcreative Quality Audit")

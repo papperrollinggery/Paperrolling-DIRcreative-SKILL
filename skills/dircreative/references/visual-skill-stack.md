@@ -110,6 +110,11 @@ without a verified tool and cost boundary.
   headed and headless together, or create another controller.
 - Prompt preflight is before generation, output review is after real evidence,
   and iteration doctor prescribes the next bounded retry.
+- Audience-facing text keeps one language owner. `de-AI-writing` is the bounded
+  meaning-preserving fallback; explicit “说人话 / 去 AI 味 / 自然一点” or residual
+  template prose selects `shuorenhua` through `human_language_revision`.
+  `humanizer-zh` may diagnose remaining AI-trace patterns but cannot flatten a
+  source-derived literary, character, historical or brand voice.
 - ADCO owns PPT/export/adoption. `codex-ppt` is recommendation-only inside DIR;
   it cannot become an ADCO-worker adapter or introduce nested slide dispatch.
 
