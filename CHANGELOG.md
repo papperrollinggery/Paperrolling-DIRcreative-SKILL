@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.2 - 2026-08-29
+
+- Fixes the formal release gate so archive-install parity independently verifies the canonical annotated remote tag instead of rejecting valid `CANONICAL_REMOTE_TAG` metadata after installation.
+
 ## 0.6.1 - 2026-08-29
 
 - Makes `mr-li-seedance-25` the default method owner for direct Seedance 2.5 prompts, applies it before emotion-specialist or deterministic conversion passes, recognizes declared 2.5 targets before exact capability resolution, and keeps exact 2.0 cards authoritative against alias conflicts.
