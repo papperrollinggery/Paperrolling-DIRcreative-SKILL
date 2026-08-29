@@ -89,11 +89,11 @@ Use `skills/dircreative/assets/visualizations/stage-surface-registry.json#video-
   Also attach the validated staged asset-foundation pass and stress-test report;
   the handoff validator rechecks their real file hashes, stage coverage, verdict,
   and requested shot scope before any prompt is exportable.
-- When that handoff resolves `seedance_2_5_official_launch`, retain the same
-  compiler/validator chain and add `mr-li-seedance-25` only as a method
-  collaborator. Its selected body improves faithful segmentation, independent
+- When the target is Seedance 2.5, retain the same compiler/validator chain and
+  apply `mr-li-seedance-25` first as the method collaborator. Its selected body
+  improves faithful segmentation, independent
   bindings, real duration capacity, stable asset versions, and clean-master
-  repairs; they never authorize model capability or media execution.
+  repairs; target intent alone never authorizes model capability or execution.
 - After prompt preflight, send only the final generation candidate—not drafts—to
   `ai-film-production-ledger`. The Ledger records a `planned` attempt until a
   separate generation authorization and real execution evidence exist.

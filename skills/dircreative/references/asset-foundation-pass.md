@@ -25,6 +25,15 @@ Do not load all owners into one Studio context. A failed, missing, or incomplete
 pass keeps later work blocked. Planning boards remain planning-only and never
 become identity, topology, geography, or clean-frame truth.
 
+For a recurring clothed human, the `identity_state` output separates reference
+responsibilities inside the character board: one high-resolution face identity
+source, plus headless front/back wardrobe silhouettes. Do not embed another
+readable face in a body or wardrobe source. State variants such as wet, injured,
+bloodied, or changed wardrobe remain separate versioned state assets. The stress
+matrix must test the face source, headless wardrobe source, combined full-body
+result, target lighting, group composition, and applicable state variants before
+promotion.
+
 ## Seedance gate
 
 Seedance compilation requires the complete pass file plus the bound stress-test

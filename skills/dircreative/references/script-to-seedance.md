@@ -23,14 +23,12 @@ Persist and validate the machine packet with
   manifest and remains responsible for Prompt IR validation, exact capability
   card resolution, direct-input policy, rights, QA, retry, and status.
 
-When the exact card is `seedance_2_5_official_launch` and the installed body is
-available, load `mr-li-seedance-25` as a bounded method collaborator. Apply its
-authoritative-text, independent-segment, real-capacity, stable-numbering, and
-clean-master repair rules, but keep every model fact sourced from the exact
-official capability card. Do not copy its project-specific examples into the
-prompt or let it replace this handoff, DIR ownership, the asset gate, or prompt
-preflight. Missing collaborator adoption preserves the legacy converter path
-and must be reported rather than fabricated.
+For a Seedance 2.5 target, apply `mr-li-seedance-25` first for authoritative
+text, independent segments, real capacity, stable numbering, and clean-master
+repair. Target intent selects this method only; exact card/version/surface is
+still required for model facts, export, or execution. The collaborator cannot
+replace this handoff, DIR ownership, asset gate, or preflight. If absent, retain
+the converter path and report that its method was not adopted.
 
 ## Required input packet
 
@@ -50,9 +48,10 @@ Pass only current, approved material:
    direct-input policy, user lock, and required shot/unit bindings;
 8. audio policy, provider reference-slot limit, and the selected exact model
    card and provider surface.
-9. the complete `asset_foundation_pass_v1` file and bound
-   `ai_film_asset_stress_test_v1` report, including real file hashes and scoped
-   compile permission.
+9. the complete `asset_foundation_pass_v1` file and bound asset stress report,
+   including real file hashes and scoped compile permission. Legacy v1 reports
+   remain valid; recurring human assets use `ai_film_asset_stress_test_v2` for
+   explicit face/headless-wardrobe certification.
 
 If the source consists only of a nine-grid or another generated image sequence,
 first classify it as `planning_only`, recover narrative beats, and derive the

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.1 - 2026-08-29
+
+- Makes `mr-li-seedance-25` the default method owner for direct Seedance 2.5 prompts, applies it before emotion-specialist or deterministic conversion passes, recognizes declared 2.5 targets before exact capability resolution, and keeps exact 2.0 cards authoritative against alias conflicts.
+- Consolidates overlapping Seedance responsibilities inside the DIR matrix without merging external Skills: emotion work retains its specialist owner, `convert-script-to-seedance` retains the compile-only handoff, and preflight remains independently selected.
+- Adds explicit face-identity and headless-wardrobe reference roles plus an eleven-case character stress matrix, preventing multiple readable face sources while retaining versioned appearance-state, full-body, lighting, group, handedness, and scale checks.
+- Maps the reviewed HELL GRIND workflow to existing asset-foundation, stress-test, GEO, prompt, ledger, and edit surfaces without adding another controller.
+
 ## 0.6.0 - 2026-08-29
 
 - Adds an independently sourced Seedance 2.5 capability card with a 30-second upper bound, typed 30-image/10-video/10-audio limits, native audio-video intent, editing/extension evidence, and fail-closed manual execution status while retaining the complete Seedance 2.0 card.

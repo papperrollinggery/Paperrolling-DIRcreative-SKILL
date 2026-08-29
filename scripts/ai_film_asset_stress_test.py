@@ -25,8 +25,14 @@ from dircreative_validation_common import (
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SCHEMA_PATH = ROOT / "docs/film-preproduction/schemas/ai-film-asset-stress-test.schema.json"
+SCHEMA_PATHS = {
+    "ai_film_asset_stress_test_v1": ROOT
+    / "docs/film-preproduction/schemas/ai-film-asset-stress-test.schema.json",
+    "ai_film_asset_stress_test_v2": ROOT
+    / "docs/film-preproduction/schemas/ai-film-asset-stress-test-v2.schema.json",
+}
 VALID_PATH = ROOT / "tests/fixtures/asset-stress-test/valid-report.json"
+VALID_V1_PATH = ROOT / "tests/fixtures/asset-stress-test/valid-report-v1.json"
 CASES_PATH = ROOT / "tests/fixtures/asset-stress-test/cases.json"
 COMPLETION_VERDICTS = {"certified", "conditional"}
 PNG_FIXTURE_BYTES = base64.b64decode(
@@ -41,7 +47,10 @@ def review_subject_sha256(document: dict[str, Any]) -> str:
 
 
 def schema_errors(document: dict[str, Any]) -> list[str]:
-    return validate_schema(document, SCHEMA_PATH)
+    schema_path = SCHEMA_PATHS.get(str(document.get("contract_id")))
+    if schema_path is None:
+        return ["schema_error: unsupported asset stress-test contract_id"]
+    return validate_schema(document, schema_path)
 
 
 def contained_file(root: Path, relative: Any) -> Path | None:
@@ -151,6 +160,7 @@ def semantic_errors(
     trust_registry_path: Path,
 ) -> list[str]:
     errors: list[str] = []
+    strict_character_roles = document.get("contract_id") == "ai_film_asset_stress_test_v2"
     assets = [item for item in document.get("assets", []) if isinstance(item, dict)]
     asset_ids = [str(item.get("asset_id")) for item in assets]
     if len(asset_ids) != len(set(asset_ids)):
@@ -163,7 +173,90 @@ def semantic_errors(
         descriptor = str(asset.get("descriptor_text", ""))
         if hashlib.sha256(descriptor.encode("utf-8")).hexdigest() != asset.get("descriptor_sha256"):
             add_error(errors, "descriptor_hash_mismatch", str(asset.get("asset_id")))
-        references.extend(item for item in asset.get("references", []) if isinstance(item, dict))
+        asset_references = [
+            item for item in asset.get("references", []) if isinstance(item, dict)
+        ]
+        references.extend(asset_references)
+        face_references = [
+            item
+            for item in asset_references
+            if item.get("source_kind") == "face_identity_reference"
+        ]
+        wardrobe_references = [
+            item
+            for item in asset_references
+            if item.get("source_kind") == "headless_wardrobe_reference"
+        ]
+        legacy_identity_references = [
+            item
+            for item in asset_references
+            if item.get("source_kind") == "identity_reference"
+        ]
+        required_case_kinds = set(asset.get("required_case_kinds", []))
+        if strict_character_roles:
+            asset_kind = asset.get("asset_kind")
+            human_state = asset_kind == "state" and bool(
+                face_references
+                or wardrobe_references
+                or legacy_identity_references
+                or required_case_kinds & {"face_close_up", "headless_wardrobe"}
+            )
+            strict_human_asset = asset_kind == "character" or human_state
+            if len(face_references) > 1:
+                add_error(errors, "multiple_face_identity_sources", str(asset.get("asset_id")))
+            if face_references and legacy_identity_references:
+                add_error(
+                    errors,
+                    "ambiguous_identity_reference_forbidden",
+                    str(asset.get("asset_id")),
+                )
+            if any(reference.get("role") != "canonical" for reference in face_references):
+                add_error(
+                    errors,
+                    "face_identity_reference_not_canonical",
+                    str(asset.get("asset_id")),
+                )
+            if strict_human_asset:
+                if legacy_identity_references:
+                    add_error(
+                        errors,
+                        "legacy_identity_reference_forbidden",
+                        str(asset.get("asset_id")),
+                    )
+                if len(face_references) != 1:
+                    add_error(errors, "face_identity_reference_required", str(asset.get("asset_id")))
+                if not wardrobe_references:
+                    add_error(
+                        errors,
+                        "headless_wardrobe_reference_required",
+                        str(asset.get("asset_id")),
+                    )
+                for case_kind in ("face_close_up", "headless_wardrobe"):
+                    if case_kind not in required_case_kinds:
+                        add_error(
+                            errors,
+                            "character_required_case_missing",
+                            f"{asset.get('asset_id')}:{case_kind}",
+                        )
+            if asset_kind == "wardrobe":
+                if face_references:
+                    add_error(
+                        errors,
+                        "wardrobe_face_reference_forbidden",
+                        str(asset.get("asset_id")),
+                    )
+                if legacy_identity_references:
+                    add_error(
+                        errors,
+                        "wardrobe_identity_reference_forbidden",
+                        str(asset.get("asset_id")),
+                    )
+                if not wardrobe_references:
+                    add_error(
+                        errors,
+                        "headless_wardrobe_reference_required",
+                        str(asset.get("asset_id")),
+                    )
     reference_ids = [str(item.get("reference_id")) for item in references]
     if len(reference_ids) != len(set(reference_ids)):
         add_error(errors, "reference_id_duplicate", str(reference_ids))
@@ -218,6 +311,29 @@ def semantic_errors(
             add_error(errors, "test_case_asset_unresolved", str(item.get("test_case_id")))
         elif item.get("state_family") != asset.get("state_family"):
             add_error(errors, "test_case_state_family_mismatch", str(item.get("test_case_id")))
+        elif strict_character_roles and item.get("case_kind") == "face_close_up" and asset.get("asset_kind") not in {
+            "character",
+            "state",
+        }:
+            add_error(errors, "face_case_asset_kind_invalid", str(item.get("test_case_id")))
+        elif strict_character_roles and item.get("case_kind") == "headless_wardrobe" and asset.get("asset_kind") not in {
+            "character",
+            "wardrobe",
+            "state",
+        }:
+            add_error(
+                errors,
+                "headless_wardrobe_case_asset_kind_invalid",
+                str(item.get("test_case_id")),
+            )
+        if strict_character_roles and item.get("case_kind") == "headless_wardrobe":
+            invariants = " ".join(str(value).casefold() for value in item.get("expected_invariants", []))
+            if "headless" not in invariants or "face" not in invariants:
+                add_error(
+                    errors,
+                    "headless_wardrobe_invariant_missing",
+                    str(item.get("test_case_id")),
+                )
         if item.get("status") == "pass" and (
             item.get("severity") != "none"
             or bool(item.get("observed_deviations"))
@@ -589,6 +705,27 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
         )
         if valid_errors:
             failures.append(f"valid fixture rejected: {valid_errors[:3]}")
+        v1_artifact_root = temp_root / "v1-artifacts"
+        v1_review_root = temp_root / "v1-reviews"
+        v1_trust_root = temp_root / "v1-trust"
+        v1_artifact_root.mkdir()
+        v1_review_root.mkdir()
+        v1_trust_root.mkdir()
+        v1, v1_receipt, v1_signature, v1_registry = materialize_fixture(
+            load_json(VALID_V1_PATH),
+            v1_artifact_root,
+            v1_review_root,
+            v1_trust_root,
+        )
+        v1_errors = validate(
+            v1,
+            artifact_root=v1_artifact_root,
+            review_receipt_path=v1_receipt,
+            review_signature_path=v1_signature,
+            _trust_registry_path=v1_registry,
+        )
+        if v1_errors:
+            failures.append(f"valid v1 fixture rejected: {v1_errors[:3]}")
         rejected = 0
         for case in cases:
             mutated = apply_mutations(valid, case["mutations"])
@@ -725,6 +862,7 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
             failures.append(f"sensitive signed review receipt accepted: {secret_errors[:3]}")
     return failures, {
         "valid_fixture_passed": not valid_errors,
+        "valid_v1_fixture_passed": not v1_errors,
         "matrix_case_count": len(valid.get("test_cases", [])),
         "negative_case_count": len(cases) + len(trust_cases) + 3,
         "negative_cases_rejected": rejected,

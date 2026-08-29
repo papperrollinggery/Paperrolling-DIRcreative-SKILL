@@ -56,7 +56,9 @@ platform. A social vertical format is not TVC evidence.
 
 The minimum whole-film coverage is:
 
-- one `character_identity_reference` per recurring identity/state family;
+- one `character_identity_reference` per recurring identity/state family; for
+  clothed humans this is a composite contract with exactly one face identity
+  source and separate headless front/back wardrobe sources, not multiple faces;
 - one `product_identity_board` per hero product and only necessary
   `prop_continuity_board` records;
 - one `scene_geography_camera_fov_reference` per distinct location/state;
