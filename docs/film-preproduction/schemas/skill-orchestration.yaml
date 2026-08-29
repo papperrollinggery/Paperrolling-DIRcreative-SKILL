@@ -351,6 +351,7 @@ ai_film_p0_capabilities:
     supported_contracts:
       ai_film_asset_stress_test_v1: "docs/film-preproduction/schemas/ai-film-asset-stress-test.schema.json"
       ai_film_asset_stress_test_v2: "docs/film-preproduction/schemas/ai-film-asset-stress-test-v2.schema.json"
+      ai_film_asset_stress_test_v3: "docs/film-preproduction/schemas/ai-film-asset-stress-test-v3.schema.json"
     validator: "scripts/ai_film_asset_stress_test.py"
     upstream_owner: "dircreative"
     detached_review_signature_required_for_completion: true

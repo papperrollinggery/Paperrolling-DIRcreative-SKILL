@@ -264,6 +264,28 @@
             "required": ["media_type", "status", "attached_to_run", "direct_input_policy"]
           },
           "then": {"required": ["asset_version", "relative_path", "sha256"]}
+        },
+        {
+          "if": {
+            "properties": {"source_kind": {"const": "character_detail_sheet"}},
+            "required": ["source_kind"]
+          },
+          "then": {"required": ["reference_id"]}
+        },
+        {
+          "if": {
+            "properties": {"source_kind": {"const": "exact_graphic_reference"}},
+            "required": ["source_kind"]
+          },
+          "then": {
+            "properties": {
+              "status": {"const": "planning_only"},
+              "user_lock_status": {"const": "planning_only"},
+              "direct_input_policy": {"const": "planning_only"},
+              "attached_to_run": {"const": false},
+              "literal_frame_boolean": {"const": false}
+            }
+          }
         }
       ],
       "required": [
@@ -289,6 +311,7 @@
       "properties": {
         "binding_id": {"type": "string", "minLength": 1},
         "asset_id": {"type": "string", "minLength": 1},
+        "reference_id": {"type": "string", "minLength": 1},
         "asset_version": {"type": "string", "minLength": 1},
         "relative_path": {"type": "string", "minLength": 1},
         "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
@@ -298,6 +321,11 @@
             "identity_reference",
             "face_identity_reference",
             "headless_wardrobe_reference",
+            "character_master_sheet",
+            "character_state_sheet",
+            "character_headless_sheet",
+            "character_detail_sheet",
+            "exact_graphic_reference",
             "scene_anchor",
             "model_layout_reference",
             "human_planning_board",

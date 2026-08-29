@@ -84,6 +84,13 @@ Use `skills/dircreative/assets/visualizations/stage-surface-registry.json#refere
   character continuity, production design, camera geography, constraint-input,
   material, and post-generation consistency responsibilities distinct; do not
   load every provider into one stage.
+- New recurring clothed-human work routes to the v3 contract in
+  `skills/dircreative/references/character-master-sheet.md`. Separate identity
+  and wardrobe/body files are allowed as hash-bound `planning_only` generation
+  provenance, but the planner must produce one unified master and must never
+  submit those inputs as co-active downstream identity references. This planner
+  records roles and shot need; the canonical reference owns layout, headless and
+  conditional-detail rules.
 - Run its stable passes in the order defined by
   `skills/dircreative/references/asset-foundation-pass.md`. Bind each output hash
   to the next input; a failed or incomplete pass remains `needs_followup` or

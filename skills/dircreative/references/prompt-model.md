@@ -42,6 +42,12 @@ Build a model-neutral intent before adapting the surface:
    emotion/micro-performance-led work; otherwise avoid the overlapping body.
    Target intent selects the method, while an exact capability card is still
    required before stating model limits or authorizing execution.
+8. For a recurring clothed human, bind one active unified character master per
+   generation unit. Default to the headed master; use a user-requested or
+   evidence-triggered headless-safe derivative instead, never alongside it. Add
+   a detail sheet only when the visible shot needs one of its named callouts.
+   Use `character-master-sheet.md` as the single layout, provenance and visual-
+   review owner; this prompt layer only binds the selected active asset.
 
 Never imply that a prompt was run or media exists. State one exact unknown when a
 volatile capability or missing reference materially changes usability.

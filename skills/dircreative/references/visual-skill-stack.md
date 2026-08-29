@@ -104,6 +104,10 @@ without a verified tool and cost boundary.
   preflight. It receives only the final generation candidate, preserves
   append-only attempt/event lineage, and cannot become a story owner, director,
   generation adapter, or approval authority.
+- Recurring clothed-human asset construction routes to the single canonical
+  contract in `character-master-sheet.md`; this stack only selects that bounded
+  owner and the later validator. It does not restate layout thresholds, activate
+  headed and headless together, or create another controller.
 - Prompt preflight is before generation, output review is after real evidence,
   and iteration doctor prescribes the next bounded retry.
 - ADCO owns PPT/export/adoption. `codex-ppt` is recommendation-only inside DIR;

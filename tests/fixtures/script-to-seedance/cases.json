@@ -96,6 +96,28 @@
       "expected_error": "binding_asset_id_duplicate"
     },
     {
+      "case_id": "exact_graphic_cannot_attach_directly",
+      "mutations": [
+        {"op": "replace", "path": "/bindings/0/source_kind", "value": "exact_graphic_reference"}
+      ],
+      "expected_error": "schema_error"
+    },
+    {
+      "case_id": "detail_binding_requires_reference_id",
+      "mutations": [
+        {"op": "replace", "path": "/bindings/0/source_kind", "value": "character_detail_sheet"}
+      ],
+      "expected_error": "schema_error"
+    },
+    {
+      "case_id": "detail_reference_must_exist_in_stress_report",
+      "mutations": [
+        {"op": "replace", "path": "/bindings/0/source_kind", "value": "character_detail_sheet"},
+        {"op": "add", "path": "/bindings/0/reference_id", "value": "REF-MISSING-DETAIL"}
+      ],
+      "expected_error": "binding_reference_provenance_mismatch"
+    },
+    {
       "case_id": "attached_reference_rights_conditional",
       "mutations": [
         {"op": "replace", "path": "/bindings/0/rights_status", "value": "conditional"}
