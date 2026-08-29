@@ -757,6 +757,32 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
         if valid_errors:
             failures.append(f"valid fixture rejected: {valid_errors[:3]}")
 
+        valid25 = copy.deepcopy(valid)
+        valid25["model_surface"] = {
+            "capability_card_id": "seedance_2_5_official_launch",
+            "model_key": "seedance",
+            "version": "2.5",
+            "provider_surface": "Seedance 2.5 launch product surfaces described by ByteDance Seed",
+            "verification_status": "verified",
+        }
+        valid25["provider_limits"] = {
+            "max_references_per_unit": 50,
+            "source_type": "official_docs",
+            "verification_status": "verified",
+            "source": "https://seed.bytedance.com/en/blog/one-take-creation-flexible-referencing-introducing-seedance-2-5",
+        }
+        valid25_errors = validate(
+            valid25,
+            asset_foundation_path=foundation_path,
+            asset_stress_path=stress_path,
+            asset_artifact_root=artifact_root,
+            asset_review_receipt=review_receipt,
+            asset_review_signature=review_signature,
+            _asset_trust_registry_path=trust_registry_path,
+        )
+        if valid25_errors:
+            failures.append(f"valid Seedance 2.5 fixture rejected: {valid25_errors[:3]}")
+
         rejected = 0
         for case in cases:
             case_foundation = copy.deepcopy(foundation)
@@ -811,6 +837,7 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
                 )
     return failures, {
         "valid_fixture_passed": not valid_errors,
+        "valid_seedance25_fixture_passed": not valid25_errors,
         "negative_case_count": len(cases),
         "negative_cases_rejected": rejected,
         "node_count": len(valid.get("narrative_nodes", [])),

@@ -85,6 +85,7 @@ REALISTIC_SMOKE_EXPECTED = {
     "p44_score_mix_reuses_loaded_body": ("score-and-mix-picture", 1, "ready", None),
     "p45_asset_foundation": ("minimum-visual-bible", 2, "needs_followup", None),
     "p46_script_to_seedance": ("convert-script-to-seedance", 2, "ready", None),
+    "p52_script_to_seedance25": ("convert-script-to-seedance", 3, "ready", None),
     "p47_cinematic_storyboard_frames": ("jingzao-image-forge", 1, "ready", None),
     "p48_asset_foundation_production_design_pass": ("production-design-worldbuilding", 1, "needs_followup", None),
     "p49_asset_stress_validation": ("dircreative", 1, "ready", None),
@@ -104,6 +105,7 @@ REALISTIC_BODY_PAD = {
     "imagegen": 19000,
     "score-and-mix-picture": 9950,
     "convert-script-to-seedance": 7680,
+    "mr-li-seedance-25": 5355,
     "production-design-worldbuilding": 4430,
     "minimum-visual-bible": 5000,
     "character-continuity-bible": 5000,
@@ -737,6 +739,11 @@ def _parse_frontmatter(text: str, max_bytes: int) -> tuple[dict[str, str], int]:
         value = raw.strip()
         if key not in {"name", "description"}:
             index += 1
+            if key == "metadata" and not value:
+                while index < len(lines) and (
+                    not lines[index].strip() or lines[index][:1].isspace()
+                ):
+                    index += 1
             continue
         if value in {">", "|", ">-", "|-"}:
             chunks: list[str] = []
@@ -1218,6 +1225,21 @@ def select_stack(
         raise SkillStackError(f"unknown scenario_id: {scenario_id}")
     scenario = scenarios[scenario_id]
     intent = dict(intent)
+    seedance25_gap = "seedance25_authoring_method"
+    requested_gaps = [gap for gap in intent.get("gaps", []) if gap != seedance25_gap]
+    if (
+        scenario_id == "script_to_seedance"
+        and intent.get("capability_card_id") == "seedance_2_5_official_launch"
+    ):
+        scenario = {
+            **scenario,
+            "collaborator_gaps": {
+                **scenario.get("collaborator_gaps", {}),
+                seedance25_gap: ["mr-li-seedance-25"],
+            },
+        }
+        requested_gaps.append(seedance25_gap)
+    intent["gaps"] = list(dict.fromkeys(requested_gaps))
     staged_passes = scenario.get("staged_passes", [])
     active_asset_pass: dict[str, Any] | None = None
     active_asset_pass_id: str | None = None
@@ -2200,8 +2222,13 @@ def render_artifact_then_card(
 def _write_mock_skill(root: Path, skill_id: str, body_pad: int = 0) -> None:
     skill_dir = root / skill_id.replace(":", "__")
     skill_dir.mkdir(parents=True)
+    nested_metadata = (
+        '\nmetadata:\n  version: "1.5.0"\n  display-version-name: "Seedance 2.5 method"'
+        if skill_id == "mr-li-seedance-25"
+        else ""
+    )
     body = (
-        f"---\nname: {skill_id}\ndescription: Deterministic test provider.\n---\n\n# Test\n"
+        f"---\nname: {skill_id}\ndescription: Deterministic test provider.{nested_metadata}\n---\n\n# Test\n"
     ) + ("x" * body_pad)
     (skill_dir / "SKILL.md").write_text(body, encoding="utf-8")
     agents = skill_dir / "agents"

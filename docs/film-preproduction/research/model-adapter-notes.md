@@ -123,6 +123,19 @@ Adapter behavior:
 - Verify the actual UI/API route before promising an edit or continuation run.
 - Keep multi-subject, text, and audio-distortion risks visible.
 
+## Seedance 2.5 — `seedance_2_5_official_launch`
+
+The official launch surfaces document a 30-second upper bound, up to 30 image,
+10 video, and 10 audio references, native audio-video generation, timestamp
+control, editing, and two extensions. These facts never overwrite the retained
+2.0 card. Keep export `manual_export` and execution `unverified` until the exact
+current product or API surface is read back.
+
+For script conversion, preserve `script_to_seedance_v1`. The reviewed v1.5.0
+method snapshot is recorded in `prompt-sources.yaml`; at runtime,
+`mr-li-seedance-25` contributes only its selected body bound by actual bytes and
+SHA-256. It does not own model facts, state, validation, execution, or approval.
+
 ## Kling VIDEO 3.0 — `kling_video_3_0_official_guide`
 
 Verified version-scoped behavior:
@@ -267,13 +280,14 @@ Do not show or animate the board, panels, layout, labels, tables, arrows, shot-c
 - If sources conflict, record both and fail closed when the exact route cannot be established.
 - S4 community/GitHub material may trigger research but never authorize a route.
 
-## Sources — Accessed 2026-07-10
+## Sources — Accessed through 2026-08-29
 
 - OpenAI image generation: https://developers.openai.com/api/docs/guides/image-generation
 - OpenAI video generation: https://developers.openai.com/api/docs/guides/video-generation
 - OpenAI Sora 2 prompting: https://developers.openai.com/cookbook/examples/sora/sora2_prompting_guide
 - Seedance 2.0 official launch: https://seed.bytedance.com/en/blog/seedance-2-0-official-launch
 - Seedance 2.0 paper: https://arxiv.org/abs/2604.14148
+- Seedance 2.5 official launch and model page: https://seed.bytedance.com/en/blog/one-take-creation-flexible-referencing-introducing-seedance-2-5 and https://seed.bytedance.com/en/seedance2_5
 - Kling VIDEO 3.0 guide: https://app.klingai.com/cn/quickstart/klingai-video-3-model-user-guide
 - Kling legacy image-to-video guide: https://kling.ai/quickstart/image-to-video-guide
 - Runway Gen-4.5: https://help.runwayml.com/hc/en-us/articles/46974685288467-Creating-with-Gen-4-5

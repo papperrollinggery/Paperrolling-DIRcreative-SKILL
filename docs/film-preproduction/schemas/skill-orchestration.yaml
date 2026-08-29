@@ -394,6 +394,8 @@ external_compiler_handoffs:
   script_to_seedance_v1:
     owner: "dircreative"
     provider: "convert-script-to-seedance"
+    exact_card_method_collaborators:
+      seedance_2_5_official_launch: "mr-li-seedance-25"
     reference: "skills/dircreative/references/script-to-seedance.md"
     schema: "docs/film-preproduction/schemas/script-to-seedance-handoff.schema.json"
     inputs:

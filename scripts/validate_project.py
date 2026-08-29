@@ -1583,11 +1583,11 @@ def validate_skill_stack() -> None:
     require(proc.returncode == 0, f"Skill Stack audit failed:\n{proc.stderr}\n{proc.stdout}")
     for marker in [
         "DIRCREATIVE_SKILL_STACK_AUDIT: PASS",
-        '"positive_cases": 51',
-        '"negative_cases": 32',
+        '"positive_cases": 52',
+        '"negative_cases": 35',
         '"scenario_count": 43',
-        '"provider_policy_count": 51',
-        '"realistic_smoke_cases": 22',
+        '"provider_policy_count": 52',
+        '"realistic_smoke_cases": 23',
         '"two_phase_host_binding": true',
         '"trusted_primary_route_controls": true',
         '"artifact_output_guard_controls": true',

@@ -1,7 +1,7 @@
 source_registry:
   version: "2.0.0"
-  verified_date: "2026-07-10"
-  accessed_on: "2026-07-10"
+  verified_date: "2026-08-29"
+  accessed_on: "2026-08-29"
   purpose: "Track version-scoped prompt mechanisms without treating prompt examples as model capability evidence."
   authority_rule: "Prompt sources may shape wording; only model capability cards may authorize model behavior."
   refresh_policy:
@@ -140,6 +140,38 @@ sources:
       - "Keep numeric reference limits scoped to Seedance 2.0."
     active_pattern_ids: []
     reuse_policy: "Version-scoped to Seedance 2.0; never carry limits into a family alias or later version."
+
+  - source_key: seedance_2_5_official_prompt_examples
+    version: "2.5"
+    status: current_version_scoped
+    source_type: version_scoped_official_launch_guide
+    evidence_level: S3
+    url: "https://seed.bytedance.com/en/blog/one-take-creation-flexible-referencing-introducing-seedance-2-5"
+    last_verified: "2026-08-29"
+    accessed_on: "2026-08-29"
+    extracted_mechanisms:
+      - "Use timestamp ranges to control subject action, camera path, transitions, and pacing inside one generation."
+      - "Bind @Image, @Video, and @Audio references by an explicit production role."
+      - "Treat 30 seconds as a maximum, not a requirement to overfill a dramatic unit."
+      - "Keep numeric reference limits scoped to the exact Seedance 2.5 launch card."
+    active_pattern_ids: []
+    reuse_policy: "Version-scoped to Seedance 2.5; capability and execution claims still require the exact model card and current product surface."
+
+  - source_key: mr_li_seedance_25_skill_1_5_0
+    version: "1.5.0"
+    status: active_internal_pattern
+    source_type: user_supplied_pattern
+    evidence_level: USER
+    url: ""
+    last_verified: "2026-08-29"
+    accessed_on: "2026-08-29"
+    extracted_mechanisms:
+      - "Lock the user's current authoritative script and keep each submitted segment independently complete."
+      - "Do not invent unsourced acting, props, geography, causal results, or next-segment content."
+      - "Preserve stable asset numbering and versions; repair from the original or earliest clean master instead of repeated generative edits."
+      - "Run duration, continuity, binding, dialogue, sound, and delivery checks before returning prompt text."
+    active_pattern_ids: []
+    reuse_policy: "Use as a user-supplied authoring method only; never treat it as evidence of Seedance model capability, provider access, or successful generation."
 
   - source_key: kling_video_3_0_prompting
     version: "3.0"

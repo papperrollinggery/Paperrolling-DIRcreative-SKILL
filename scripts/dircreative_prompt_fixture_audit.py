@@ -145,10 +145,17 @@ def prepare_adapter_payload(case: dict[str, Any], cards: dict[str, dict[str, Any
     payload["generation_plan"]["selected_adapter"] = case["adapter"]
     target_duration = float(case["duration_sec"])
     payload["output"]["target_duration_sec"] = target_duration
-    payload["output"]["generation_unit_sec"] = target_duration
+    payload["output"]["generation_unit_sec"] = float(
+        case.get("declared_generation_unit_sec", target_duration)
+    )
     payload["generation_plan"]["units"][-1]["time_end"] = f"{target_duration:.2f}"
     payload["shot_blocks"][-1]["time_end"] = f"{target_duration:.2f}"
-    platform_slots = case.get("platform_slots", [])
+    platform_slot_type = case.get("platform_slot_type")
+    platform_slots = (
+        [f"@{platform_slot_type} {index}" for index in range(1, len(payload["references"]) + 1)]
+        if platform_slot_type
+        else case.get("platform_slots", [])
+    )
     for index, reference in enumerate(payload["references"]):
         reference["attached_to_run"] = index < case["attached_reference_count"]
         reference["required_for_shot"] = reference["attached_to_run"]

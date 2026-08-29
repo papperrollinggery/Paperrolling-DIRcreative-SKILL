@@ -1,7 +1,7 @@
 source_registry:
   version: "2.0.0"
-  verified_date: "2026-07-11"
-  accessed_on: "2026-07-11"
+  verified_date: "2026-08-29"
+  accessed_on: "2026-08-29"
   purpose: "Versioned capability cards for image, video, editing, and canvas routes used by DIRcreative."
   resolution_rule: "Select by capability_card_id + version + provider_surface; model-family aliases are never sufficient."
   refresh_policy:
@@ -409,6 +409,90 @@ models:
       - "ByteDance publishes a new Seedance version, API surface, or changed reference limit."
     adapter_impact:
       - "Create a new card instead of mutating 2.0 facts into an alias."
+
+  - model_key: seedance
+    capability_card_id: seedance_2_5_official_launch
+    display_name: "Seedance 2.5"
+    provider: bytedance_seed
+    provider_surface: "Seedance 2.5 launch product surfaces described by ByteDance Seed"
+    version: "2.5"
+    status: current
+    access_mode: documented_product
+    execution_mode: manual_export
+    execution_verification_status: unverified
+    verified_on: "2026-08-29"
+    accessed_on: "2026-08-29"
+    last_verified: "2026-08-29"
+    source_type: "version_scoped_official_launch_guide"
+    primary_url: "https://seed.bytedance.com/en/blog/one-take-creation-flexible-referencing-introducing-seedance-2-5"
+    secondary_url: "https://seed.bytedance.com/en/seedance2_5"
+    source:
+      primary:
+        tier: S3
+        type: version_scoped_official_launch_guide
+        url: "https://seed.bytedance.com/en/blog/one-take-creation-flexible-referencing-introducing-seedance-2-5"
+        accessed_on: "2026-08-29"
+        claim_scope: "Seedance 2.5 named launch product surfaces only"
+      supporting:
+        - tier: S3
+          type: official_product_announcement
+          url: "https://seed.bytedance.com/en/seedance2_5"
+          accessed_on: "2026-08-29"
+          claim_scope: "Seedance 2.5 model overview and named launch capabilities"
+    evidence_level: S3
+    official_or_primary_facts:
+      - "Seedance 2.5 supports single-pass audio-video generation up to 30 seconds on the documented launch product surfaces."
+      - "The launch guide documents up to 30 image, 10 video, and 10 audio references in one generation."
+      - "The model page documents up to two video extensions."
+      - "The launch guide documents timestamp-directed generation and targeted audio-video editing."
+      - "At launch, Jimeng AI and Doubao Pro were named product surfaces; BytePlus ModelArk API access was announced as coming soon."
+    reference_modes:
+      text_reference: supported
+      image_reference: supported
+      video_reference: supported
+      audio_reference: supported
+      storyboard_reference: conditional_with_explicit_role_binding
+      maximum_image_references: 30
+      maximum_video_references: 10
+      maximum_audio_references: 10
+      maximum_total_references: 50
+      limit_scope: "Seedance 2.5 named launch product surfaces only"
+    audio_route:
+      native_audio_supported: true
+      generation_audio_route: native_synced
+      audio_reference_supported: true
+    duration:
+      kind: upper_bound
+      maximum_sec: 30
+      minimum_sec_unverified: true
+    edit:
+      supported: true
+      timestamp_control: true
+      preserve_change_required: true
+      endpoint_or_ui_must_be_verified_at_execution: true
+    extension:
+      supported: true
+      maximum_extensions: 2
+      endpoint_or_ui_must_be_verified_at_execution: true
+    rights:
+      gate: required
+      provider_restrictions_must_be_verified_at_execution: true
+      generation_allowed_when_unverified: false
+    failure_modes:
+      - version_scoped_limits_inherited_by_another_version
+      - dense_board_animated_literally
+      - competing_reference_roles
+      - complex_motion_physics_instability
+      - multi_subject_interaction_instability
+      - launch_surface_or_api_availability_drift
+    inferred_adapter_behavior:
+      - "Bind every reference by role and keep human planning boards out of literal frame slots."
+      - "Use natural dramatic boundaries instead of filling the full 30-second ceiling."
+      - "Verify the actual product or API surface before promising execution, editing, or extension."
+    refresh_trigger:
+      - "ByteDance changes Seedance 2.5 product surfaces, API availability, duration, reference limits, editing, or extension behavior."
+    adapter_impact:
+      - "Resolve 2.5 independently from the retained Seedance 2.0 card and enforce typed reference limits from this exact card."
 
   - model_key: kling
     capability_card_id: kling_video_3_0_official_guide
