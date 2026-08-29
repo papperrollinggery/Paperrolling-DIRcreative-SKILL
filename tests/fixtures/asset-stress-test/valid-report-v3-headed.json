@@ -1,0 +1,143 @@
+{
+  "contract_id": "ai_film_asset_stress_test_v3",
+  "authority": "validation_only",
+  "source_owner": "dircreative",
+  "validator_owner": "ai-film-asset-stress-test",
+  "project_id": "PROJECT-V3",
+  "fixture_only": false,
+  "producer_actor_id": "producer-01",
+  "stress_test_id": "STRESS-V3-HEADED",
+  "input_spec_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "assets": [{
+    "asset_id": "CHAR-ROCO-V3",
+    "asset_kind": "character",
+    "asset_version": "v3",
+    "canonical_relative_path": "canonical/char-roco-v3-headed.png",
+    "canonical_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "state_family": "ROCO-APPEARANCE",
+    "state_id": "ROCO-BASE",
+    "descriptor_text": "Fictional adult character with one headed master sheet, stable body proportions, asymmetric cuff and exact chest emblem.",
+    "descriptor_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "references": [
+      {
+        "reference_id": "REF-HEADED-MASTER",
+        "relative_path": "references/roco-headed-master.png",
+        "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "rights_status": "verified",
+        "source_kind": "character_master_sheet",
+        "role": "canonical",
+        "view_roles": ["portrait_three_quarter", "full_body_front", "full_body_left_profile", "full_body_right_profile", "full_body_back"],
+        "derived_from_reference_id": null,
+        "covered_detail_ids": []
+      },
+      {
+        "reference_id": "REF-DETAIL-SHEET",
+        "relative_path": "references/roco-detail-sheet.png",
+        "sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "rights_status": "verified",
+        "source_kind": "character_detail_sheet",
+        "role": "supporting",
+        "view_roles": ["detail_close_up"],
+        "derived_from_reference_id": "REF-HEADED-MASTER",
+        "covered_detail_ids": ["RIGHT-CUFF", "LEFT-CHEST-EMBLEM"]
+      },
+      {
+        "reference_id": "REF-EXACT-EMBLEM",
+        "relative_path": "references/roco-exact-emblem.png",
+        "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+        "rights_status": "verified",
+        "source_kind": "exact_graphic_reference",
+        "role": "supporting",
+        "view_roles": [],
+        "derived_from_reference_id": null,
+        "covered_detail_ids": []
+      },
+      {
+        "reference_id": "REF-IDENTITY-GENERATION-INPUT",
+        "relative_path": "references/roco-identity-generation-input.png",
+        "sha256": "1313131313131313131313131313131313131313131313131313131313131313",
+        "rights_status": "verified",
+        "source_kind": "character_identity_generation_input",
+        "role": "planning_only",
+        "view_roles": [],
+        "derived_from_reference_id": null,
+        "covered_detail_ids": []
+      },
+      {
+        "reference_id": "REF-WARDROBE-BODY-GENERATION-INPUT",
+        "relative_path": "references/roco-wardrobe-body-generation-input.png",
+        "sha256": "1414141414141414141414141414141414141414141414141414141414141414",
+        "rights_status": "verified",
+        "source_kind": "character_wardrobe_body_generation_input",
+        "role": "planning_only",
+        "view_roles": [],
+        "derived_from_reference_id": null,
+        "covered_detail_ids": []
+      }
+    ],
+    "character_sheet_contract": {
+      "mode": "headed_master",
+      "generation_method": "unified_generation",
+      "generation_input_reference_ids": ["REF-IDENTITY-GENERATION-INPUT", "REF-WARDROBE-BODY-GENERATION-INPUT"],
+      "active_reference_id": "REF-HEADED-MASTER",
+      "source_master_reference_id": "REF-HEADED-MASTER",
+      "approved_source_master_sha256": null,
+      "portrait_views": ["three_quarter"],
+      "portrait_framing": "face_close_up",
+      "portrait_panel_priority": "dominant",
+      "sheet_layout": "dominant_portrait_plus_horizontal_turnaround",
+      "full_body_arrangement": "single_horizontal_row",
+      "portrait_height_ratio_floor": 0.75,
+      "full_body_height_ratio_floor": 0.75,
+      "layout_review_method": "external_visual_review",
+      "full_body_views": ["front", "left_profile", "right_profile", "back"],
+      "body_head_policy": "headed",
+      "detail_reference_id": "REF-DETAIL-SHEET",
+      "detail_requirements": [
+        {"detail_id":"RIGHT-CUFF","detail_kind":"accessory","placement":"right","source_policy":"visual_description","source_reference_id":null},
+        {"detail_id":"LEFT-CHEST-EMBLEM","detail_kind":"emblem","placement":"front","source_policy":"exact_graphic","source_reference_id":"REF-EXACT-EMBLEM"}
+      ]
+    },
+    "target_model": "seedance",
+    "provider_surface": "fixture-surface-v3",
+    "intended_shot_classes": ["close_up", "full_body", "wide", "group"],
+    "intended_lighting": ["training_hall_hard_toplight"],
+    "required_combinations": ["ROCO+JAX", "right_hand_prop"],
+    "required_case_kinds": ["face_close_up", "full_body", "wide_fov", "front_three_quarter_back", "target_lighting", "group_composition", "occlusion_prop", "state_variant", "handedness", "scale_topology", "character_sheet_views", "character_sheet_readable_scale", "character_sheet_body_consistency", "character_sheet_detail_callouts"],
+    "approval_owner": "dircreative"
+  }],
+  "matrix_config": {
+    "configurable": true,
+    "minimum_case_count": 14,
+    "required_case_kinds": ["face_close_up", "full_body", "wide_fov", "front_three_quarter_back", "target_lighting", "group_composition", "occlusion_prop", "state_variant", "handedness", "scale_topology", "character_sheet_views", "character_sheet_readable_scale", "character_sheet_body_consistency", "character_sheet_detail_callouts"]
+  },
+  "test_cases": [
+    {"test_case_id":"TC-FACE","asset_id":"CHAR-ROCO-V3","case_kind":"face_close_up","state_family":"ROCO-APPEARANCE","shot_scope":["close_up"],"lighting":[],"expected_invariants":["dominant three-quarter face close-up identity"],"observed_deviations":[],"status":"pass","evidence":[{"evidence_id":"EV-FACE","relative_path":"evidence/tc-face.png","sha256":"1111111111111111111111111111111111111111111111111111111111111111","receipt_source":"external_verified"}],"severity":"none","allowed_shot_scope":["close_up"],"blocked_shot_scope":[]},
+    {"test_case_id":"TC-BODY","asset_id":"CHAR-ROCO-V3","case_kind":"full_body","state_family":"ROCO-APPEARANCE","shot_scope":["full_body"],"lighting":[],"expected_invariants":["stable body and outfit"],"observed_deviations":[],"status":"pass","evidence":[{"evidence_id":"EV-BODY","relative_path":"evidence/tc-body.png","sha256":"2222222222222222222222222222222222222222222222222222222222222222","receipt_source":"external_verified"}],"severity":"none","allowed_shot_scope":["full_body"],"blocked_shot_scope":[]},
+    {"test_case_id":"TC-WIDE","asset_id":"CHAR-ROCO-V3","case_kind":"wide_fov","state_family":"ROCO-APPEARANCE","shot_scope":["wide"],"lighting":[],"expected_invariants":["recognizable silhouette"],"observed_deviations":[],"status":"pass","evidence":[{"evidence_id":"EV-WIDE","relative_path":"evidence/tc-wide.png","sha256":"3333333333333333333333333333333333333333333333333333333333333333","receipt_source":"external_verified"}],"severity":"none","allowed_shot_scope":["wide"],"blocked_shot_scope":[]},
+    {"test_case_id":"TC-ANGLES","asset_id":"CHAR-ROCO-V3","case_kind":"front_three_quarter_back","state_family":"ROCO-APPEARANCE","shot_scope":["close_up","full_body"],"lighting":[],"expected_invariants":["identity across angles"],"observed_deviations":[],"status":"pass","evidence":[{"evidence_id":"EV-ANGLES","relative_path":"evidence/tc-angles.png","sha256":"4444444444444444444444444444444444444444444444444444444444444444","receipt_source":"external_verified"}],"severity":"none","allowed_shot_scope":["close_up","full_body"],"blocked_shot_scope":[]},
+    {"test_case_id":"TC-LIGHT","asset_id":"CHAR-ROCO-V3","case_kind":"target_lighting","state_family":"ROCO-APPEARANCE","shot_scope":["close_up","full_body","wide"],"lighting":["training_hall_hard_toplight"],"expected_invariants":["identity under target light"],"observed_deviations":[],"status":"pass","evidence":[{"evidence_id":"EV-LIGHT","relative_path":"evidence/tc-light.png","sha256":"5555555555555555555555555555555555555555555555555555555555555555","receipt_source":"external_verified"}],"severity":"none","allowed_shot_scope":["close_up","full_body","wide"],"blocked_shot_scope":[]},
+    {"test_case_id":"TC-GROUP","asset_id":"CHAR-ROCO-V3","case_kind":"group_composition","state_family":"ROCO-APPEARANCE","shot_scope":["group"],"lighting":["training_hall_hard_toplight"],"combination_ids":["ROCO+JAX"],"expected_invariants":["ROCO remains distinct beside JAX"],"observed_deviations":[],"status":"pass","evidence":[{"evidence_id":"EV-GROUP","relative_path":"evidence/tc-group.png","sha256":"6666666666666666666666666666666666666666666666666666666666666666","receipt_source":"external_verified"}],"severity":"none","allowed_shot_scope":["group"],"blocked_shot_scope":[]},
+    {"test_case_id":"TC-OCCLUSION","asset_id":"CHAR-ROCO-V3","case_kind":"occlusion_prop","state_family":"ROCO-APPEARANCE","shot_scope":["close_up","full_body"],"lighting":[],"combination_ids":["right_hand_prop"],"expected_invariants":["right hand prop ownership"],"observed_deviations":[],"status":"pass","evidence":[{"evidence_id":"EV-OCCLUSION","relative_path":"evidence/tc-occlusion.png","sha256":"7777777777777777777777777777777777777777777777777777777777777777","receipt_source":"external_verified"}],"severity":"none","allowed_shot_scope":["close_up","full_body"],"blocked_shot_scope":[]},
+    {"test_case_id":"TC-STATE","asset_id":"CHAR-ROCO-V3","case_kind":"state_variant","state_family":"ROCO-APPEARANCE","shot_scope":["close_up","full_body"],"lighting":[],"expected_invariants":["base state remains separate"],"observed_deviations":[],"status":"pass","evidence":[{"evidence_id":"EV-STATE","relative_path":"evidence/tc-state.png","sha256":"8888888888888888888888888888888888888888888888888888888888888888","receipt_source":"external_verified"}],"severity":"none","allowed_shot_scope":["close_up","full_body"],"blocked_shot_scope":[]},
+    {"test_case_id":"TC-HAND","asset_id":"CHAR-ROCO-V3","case_kind":"handedness","state_family":"ROCO-APPEARANCE","shot_scope":["close_up","full_body"],"lighting":[],"expected_invariants":["prop remains in right hand"],"observed_deviations":[],"status":"pass","evidence":[{"evidence_id":"EV-HAND","relative_path":"evidence/tc-hand.png","sha256":"9999999999999999999999999999999999999999999999999999999999999999","receipt_source":"external_verified"}],"severity":"none","allowed_shot_scope":["close_up","full_body"],"blocked_shot_scope":[]},
+    {"test_case_id":"TC-SCALE","asset_id":"CHAR-ROCO-V3","case_kind":"scale_topology","state_family":"ROCO-APPEARANCE","shot_scope":["wide"],"lighting":[],"expected_invariants":["human scale remains stable"],"observed_deviations":[],"status":"pass","evidence":[{"evidence_id":"EV-SCALE","relative_path":"evidence/tc-scale.png","sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","receipt_source":"external_verified"}],"severity":"none","allowed_shot_scope":["wide"],"blocked_shot_scope":[]},
+    {"test_case_id":"TC-SHEET-VIEWS","asset_id":"CHAR-ROCO-V3","case_kind":"character_sheet_views","state_family":"ROCO-APPEARANCE","shot_scope":["close_up","full_body"],"lighting":[],"expected_invariants":["one sheet contains portrait front left right back coverage"],"observed_deviations":[],"status":"pass","evidence":[{"evidence_id":"EV-SHEET-VIEWS","relative_path":"evidence/tc-sheet-views.png","sha256":"abababababababababababababababababababababababababababababababab","receipt_source":"external_verified"}],"severity":"none","allowed_shot_scope":["close_up","full_body"],"blocked_shot_scope":[]},
+    {"test_case_id":"TC-SHEET-READABLE-SCALE","asset_id":"CHAR-ROCO-V3","case_kind":"character_sheet_readable_scale","state_family":"ROCO-APPEARANCE","shot_scope":["close_up","full_body"],"lighting":[],"expected_invariants":["single horizontal row with dominant face and every full body at least 75% of canvas height"],"observed_deviations":[],"status":"pass","evidence":[{"evidence_id":"EV-SHEET-READABLE-SCALE","relative_path":"evidence/tc-sheet-readable-scale.png","sha256":"cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd","receipt_source":"external_verified"}],"severity":"none","allowed_shot_scope":["close_up","full_body"],"blocked_shot_scope":[]},
+    {"test_case_id":"TC-SHEET-BODY","asset_id":"CHAR-ROCO-V3","case_kind":"character_sheet_body_consistency","state_family":"ROCO-APPEARANCE","shot_scope":["full_body"],"lighting":[],"expected_invariants":["same body proportions across front left right back"],"observed_deviations":[],"status":"pass","evidence":[{"evidence_id":"EV-SHEET-BODY","relative_path":"evidence/tc-sheet-body.png","sha256":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","receipt_source":"external_verified"}],"severity":"none","allowed_shot_scope":["full_body"],"blocked_shot_scope":[]},
+    {"test_case_id":"TC-SHEET-DETAIL","asset_id":"CHAR-ROCO-V3","case_kind":"character_sheet_detail_callouts","state_family":"ROCO-APPEARANCE","shot_scope":["close_up","full_body"],"lighting":[],"expected_invariants":["right cuff and exact left chest emblem callouts"],"observed_deviations":[],"status":"pass","evidence":[{"evidence_id":"EV-SHEET-DETAIL","relative_path":"evidence/tc-sheet-detail.png","sha256":"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc","receipt_source":"external_verified"}],"severity":"none","allowed_shot_scope":["close_up","full_body"],"blocked_shot_scope":[]}
+  ],
+  "verdict": {
+    "status": "conditional",
+    "allowed_shot_scope": ["close_up", "full_body", "wide", "group"],
+    "blocked_shot_scope": ["extreme_underwater"],
+    "reviewer": {
+      "actor_id": "reviewer-01",
+      "review_authority_id": "REVIEW-AUTHORITY-001",
+      "reviewer_type": "independent",
+      "timestamp": "2026-08-29T00:00:00Z",
+      "receipt_source": "independent_review",
+      "receipt_sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+    }
+  }
+}

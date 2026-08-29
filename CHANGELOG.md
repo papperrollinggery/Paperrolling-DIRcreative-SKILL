@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.7.0 - 2026-08-30
+
+- Replaces the split face/wardrobe default for new recurring clothed humans with a unified headed character master sheet generated coherently in one pass: one large three-quarter portrait plus matched full-body front, left profile, right profile, and back views in one physical image.
+- Requires a single wide horizontal turnaround row, a declared 75% saved-canvas height floor, and signed external visual review; the validator checks policy/evidence binding but does not claim automatic pixel measurement.
+- Adds an explicit `headless_safe` derivative mode that preserves the approved master body and wardrobe, retains one readable portrait, and makes all four full-body views headless; headed and headless masters cannot be active together.
+- Adds conditional character detail sheets for left/right asymmetry, accessories, logos/emblems/text, closures, pockets, hardware, lining, directional materials, and macro-shot needs. Exact graphics require verified source bytes rather than generated approximations.
+- Lets Seedance bind one active canonical character sheet plus a shot-needed supporting detail reference from the same stress report, while exact-graphic sources remain planning-only and cannot attach directly.
+- Introduces `ai_film_asset_stress_test_v3` with headed/headless/state-derivative validation, mutually exclusive full-source or identity-plus-wardrobe generation provenance, approved-master hash binding, horizontal-layout and external readable-scale review contracts, headless hand/wrist/rear-collar preservation, detail-callout coverage, exact-graphic source binding, 14/16-case matrices, and 50 negative regression cases while preserving v1/v2 verification.
+- Adds a focused DIR character-master-sheet workflow and updates reference planning, asset foundation, Seedance handoff, and prompt binding without creating another controller or modifying external provider Skills.
+
 ## 0.6.2 - 2026-08-29
 
 - Fixes the formal release gate so archive-install parity independently verifies the canonical annotated remote tag instead of rejecting valid `CANONICAL_REMOTE_TAG` metadata after installation.

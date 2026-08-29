@@ -49,9 +49,9 @@ Pass only current, approved material:
 8. audio policy, provider reference-slot limit, and the selected exact model
    card and provider surface.
 9. the complete `asset_foundation_pass_v1` file and bound asset stress report,
-   including real file hashes and scoped compile permission. Legacy v1 reports
-   remain valid; recurring human assets use `ai_film_asset_stress_test_v2` for
-   explicit face/headless-wardrobe certification.
+   including real file hashes and scoped compile permission. Legacy v1/v2
+   reports remain valid; v3 character sheets follow the single contract in
+   `character-master-sheet.md` before this handoff consumes their active hash.
 
 If the source consists only of a nine-grid or another generated image sequence,
 first classify it as `planning_only`, recover narrative beats, and derive the
@@ -78,11 +78,15 @@ border-free, QA-passed asset.
 
 ## Deterministic slot crosswalk
 
-Do not renumber or compress existing slots. Every attached reference must have
-one row containing:
+Do not renumber or compress existing slots. Every recurring character has one
+active master sheet per generation unit: headed by default, or its headless-safe
+derivative when explicitly selected. Do not attach both as equal identity
+references. Add a detail sheet only when the shot can resolve one of its named
+callouts. Every attached reference must have one row containing:
 
 ```text
 source_asset_id: <DIR asset id>
+reference_id: <null for active canonical asset; stress-report reference ID for a supporting detail>
 asset_version: <immutable version>
 relative_path: <project-relative canonical file>
 sha256: <actual canonical bytes>
@@ -113,7 +117,12 @@ out of the pasted prompt.
 
 Only `status: available` plus `attached_to_run: true` may enter a terminal
 prompt. Every such image binding must byte-match the same version/path/hash in
-the canonical foundation provenance and stress-tested asset record. Planned or optional audio remains in the ledger and is never compiled
+the canonical foundation provenance and stress-tested asset record. One
+character asset may therefore have one canonical active binding plus a
+shot-needed `character_detail_sheet` binding whose `reference_id`, path, hash,
+role and detail contract match the same stress report. Exact-graphic references
+remain planning-only proof for deterministic detail construction and can never
+be attached directly to Seedance. Planned or optional audio remains in the ledger and is never compiled
 as an existing `@Audio` slot. Before export, reject duplicate/mismatched global
 numbers, missing or duplicate per-unit local order, and any unit whose attached
 references exceed the verified provider limit. Resolve overflow by explicit

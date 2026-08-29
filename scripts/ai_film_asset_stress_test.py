@@ -30,10 +30,14 @@ SCHEMA_PATHS = {
     / "docs/film-preproduction/schemas/ai-film-asset-stress-test.schema.json",
     "ai_film_asset_stress_test_v2": ROOT
     / "docs/film-preproduction/schemas/ai-film-asset-stress-test-v2.schema.json",
+    "ai_film_asset_stress_test_v3": ROOT
+    / "docs/film-preproduction/schemas/ai-film-asset-stress-test-v3.schema.json",
 }
 VALID_PATH = ROOT / "tests/fixtures/asset-stress-test/valid-report.json"
 VALID_V1_PATH = ROOT / "tests/fixtures/asset-stress-test/valid-report-v1.json"
+VALID_V3_PATH = ROOT / "tests/fixtures/asset-stress-test/valid-report-v3-headed.json"
 CASES_PATH = ROOT / "tests/fixtures/asset-stress-test/cases.json"
+V3_CASES_PATH = ROOT / "tests/fixtures/asset-stress-test/v3-cases.json"
 COMPLETION_VERDICTS = {"certified", "conditional"}
 PNG_FIXTURE_BYTES = base64.b64decode(
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII="
@@ -151,6 +155,346 @@ def verify_review_signature(
         add_error(errors, "review_signature_invalid", str(receipt_path))
 
 
+V3_FULL_BODY_VIEWS = {"front", "left_profile", "right_profile", "back"}
+V3_HEADED_VIEW_ROLES = {
+    "portrait_three_quarter",
+    "full_body_front",
+    "full_body_left_profile",
+    "full_body_right_profile",
+    "full_body_back",
+}
+V3_HEADLESS_VIEW_ROLES = {
+    "portrait_three_quarter",
+    "headless_full_body_front",
+    "headless_full_body_left_profile",
+    "headless_full_body_right_profile",
+    "headless_full_body_back",
+}
+V3_EXACT_GRAPHIC_KINDS = {"logo", "emblem", "text"}
+V3_GENERATION_INPUT_KINDS = {
+    "character_full_generation_input",
+    "character_identity_generation_input",
+    "character_wardrobe_body_generation_input",
+}
+V3_CHARACTER_SIGNAL_KINDS = V3_GENERATION_INPUT_KINDS | {
+    "character_master_sheet",
+    "character_state_sheet",
+    "character_headless_sheet",
+    "character_detail_sheet",
+}
+V3_ALLOWED_HEADED_VIEW_ROLES = V3_HEADED_VIEW_ROLES | {
+    "portrait_front",
+    "portrait_left_profile",
+    "portrait_right_profile",
+}
+
+
+def validate_v3_character_sheet(
+    asset: dict[str, Any],
+    asset_references: list[dict[str, Any]],
+    errors: list[str],
+) -> None:
+    asset_id = str(asset.get("asset_id"))
+    reference_map = {
+        str(reference.get("reference_id")): reference for reference in asset_references
+    }
+    contract = asset.get("character_sheet_contract")
+    if not isinstance(contract, dict):
+        add_error(errors, "character_sheet_contract_required", asset_id)
+        return
+
+    mode = contract.get("mode")
+    generation_input_ids = [
+        str(reference_id)
+        for reference_id in contract.get("generation_input_reference_ids", [])
+    ]
+    generation_input_references = [
+        reference
+        for reference in asset_references
+        if reference.get("source_kind") in V3_GENERATION_INPUT_KINDS
+    ]
+    if any(
+        reference.get("role") != "planning_only"
+        for reference in generation_input_references
+    ):
+        add_error(errors, "character_generation_input_role_invalid", asset_id)
+    if any(
+        reference.get("rights_status") != "verified"
+        for reference in generation_input_references
+    ):
+        add_error(errors, "character_generation_input_rights_invalid", asset_id)
+
+    full_body_view_order = contract.get("full_body_views", [])
+    full_body_views = set(full_body_view_order)
+    if full_body_views != V3_FULL_BODY_VIEWS:
+        add_error(errors, "character_sheet_full_body_views_invalid", asset_id)
+    if (
+        len(full_body_view_order) != 4
+        or full_body_view_order[0] != "front"
+        or full_body_view_order[-1] != "back"
+        or set(full_body_view_order[1:3]) != {"left_profile", "right_profile"}
+    ):
+        add_error(errors, "character_sheet_view_order_invalid", asset_id)
+    if "three_quarter" not in set(contract.get("portrait_views", [])):
+        add_error(errors, "character_sheet_three_quarter_portrait_required", asset_id)
+    if contract.get("portrait_framing") != "face_close_up":
+        add_error(errors, "character_sheet_face_close_up_required", asset_id)
+    if contract.get("portrait_panel_priority") != "dominant":
+        add_error(errors, "character_sheet_dominant_portrait_required", asset_id)
+
+    source_master_id = str(contract.get("source_master_reference_id"))
+    active_reference_id = str(contract.get("active_reference_id"))
+    source_master = reference_map.get(source_master_id)
+    active_reference = reference_map.get(active_reference_id)
+    master_references = [
+        reference
+        for reference in asset_references
+        if reference.get("source_kind") == "character_master_sheet"
+    ]
+    if len(master_references) != 1 or source_master not in master_references:
+        add_error(errors, "character_master_sheet_required", asset_id)
+        source_master = None
+    if active_reference is None:
+        add_error(errors, "character_sheet_active_reference_unresolved", asset_id)
+    elif active_reference.get("sha256") != asset.get("canonical_sha256"):
+        add_error(errors, "character_sheet_canonical_hash_mismatch", asset_id)
+    if active_reference is not None and active_reference.get("rights_status") != "verified":
+        add_error(errors, "character_active_reference_rights_invalid", asset_id)
+
+    if source_master is not None:
+        if source_master.get("rights_status") != "verified":
+            add_error(errors, "character_master_rights_invalid", asset_id)
+        source_master_views = set(source_master.get("view_roles", []))
+        missing_master_views = V3_HEADED_VIEW_ROLES - source_master_views
+        if missing_master_views:
+            add_error(
+                errors,
+                "character_master_sheet_views_missing",
+                f"{asset_id}:{','.join(sorted(missing_master_views))}",
+            )
+        if not source_master_views.issubset(V3_ALLOWED_HEADED_VIEW_ROLES):
+            add_error(errors, "character_master_sheet_view_roles_invalid", asset_id)
+
+    body_head_policy = contract.get("body_head_policy")
+    if mode == "headed_master":
+        generation_reference_ids = {
+            str(reference.get("reference_id"))
+            for reference in generation_input_references
+        }
+        if set(generation_input_ids) != generation_reference_ids:
+            add_error(errors, "character_generation_input_set_mismatch", asset_id)
+        generation_kinds = {
+            str(reference.get("source_kind"))
+            for reference in generation_input_references
+        }
+        full_input_mode = (
+            len(generation_input_references) == 1
+            and generation_kinds == {"character_full_generation_input"}
+        )
+        paired_input_mode = (
+            len(generation_input_references) == 2
+            and generation_kinds
+            == {
+                "character_identity_generation_input",
+                "character_wardrobe_body_generation_input",
+            }
+        )
+        if not (full_input_mode or paired_input_mode):
+            add_error(errors, "character_generation_input_mode_invalid", asset_id)
+        if source_master_id in generation_input_ids:
+            add_error(errors, "headed_master_cannot_self_generate", asset_id)
+        if contract.get("approved_source_master_sha256") is not None:
+            add_error(errors, "headed_master_approval_hash_forbidden", asset_id)
+        if contract.get("generation_method") != "unified_generation":
+            add_error(errors, "headed_master_generation_method_invalid", asset_id)
+        if body_head_policy != "headed":
+            add_error(errors, "headed_master_policy_mismatch", asset_id)
+        if active_reference_id != source_master_id:
+            add_error(errors, "headed_master_must_be_active", asset_id)
+        if source_master is not None and source_master.get("role") != "canonical":
+            add_error(errors, "headed_master_not_canonical", asset_id)
+        if any(
+            reference.get("source_kind") == "character_headless_sheet"
+            for reference in asset_references
+        ):
+            add_error(errors, "headed_asset_contains_competing_headless_sheet", asset_id)
+    elif mode == "headed_state":
+        if generation_input_ids != [source_master_id]:
+            add_error(errors, "headed_state_generation_inputs_invalid", asset_id)
+        if generation_input_references:
+            add_error(errors, "headed_state_historical_generation_inputs_forbidden", asset_id)
+        if contract.get("generation_method") != "derived_generation":
+            add_error(errors, "headed_state_generation_method_invalid", asset_id)
+        if body_head_policy != "headed":
+            add_error(errors, "headed_state_policy_mismatch", asset_id)
+        if source_master is not None and source_master.get("role") != "supporting":
+            add_error(errors, "headed_state_source_master_must_be_supporting", asset_id)
+        state_references = [
+            reference
+            for reference in asset_references
+            if reference.get("source_kind") == "character_state_sheet"
+        ]
+        if len(state_references) != 1:
+            add_error(errors, "headed_state_sheet_count_invalid", asset_id)
+        if (
+            active_reference is None
+            or active_reference.get("source_kind") != "character_state_sheet"
+            or active_reference.get("role") != "canonical"
+            or active_reference.get("derived_from_reference_id") != source_master_id
+        ):
+            add_error(errors, "headed_state_derivation_invalid", asset_id)
+        elif not V3_HEADED_VIEW_ROLES.issubset(
+            set(active_reference.get("view_roles", []))
+        ):
+            add_error(errors, "headed_state_sheet_views_missing", asset_id)
+        if (
+            source_master is not None
+            and contract.get("approved_source_master_sha256")
+            != source_master.get("sha256")
+        ):
+            add_error(errors, "headed_state_approved_master_hash_mismatch", asset_id)
+        if any(
+            reference.get("source_kind") == "character_headless_sheet"
+            for reference in asset_references
+        ):
+            add_error(errors, "headed_state_contains_competing_headless_sheet", asset_id)
+    elif mode == "headless_safe":
+        if generation_input_ids != [source_master_id]:
+            add_error(errors, "headless_generation_inputs_invalid", asset_id)
+        if generation_input_references:
+            add_error(errors, "headless_historical_generation_inputs_forbidden", asset_id)
+        if contract.get("generation_method") != "derived_generation":
+            add_error(errors, "headless_generation_method_invalid", asset_id)
+        headless_references = [
+            reference
+            for reference in asset_references
+            if reference.get("source_kind") == "character_headless_sheet"
+        ]
+        if len(headless_references) != 1:
+            add_error(errors, "headless_sheet_count_invalid", asset_id)
+        if body_head_policy != "headless":
+            add_error(errors, "headless_safe_policy_mismatch", asset_id)
+        if source_master is not None and source_master.get("role") != "supporting":
+            add_error(errors, "headless_source_master_must_be_supporting", asset_id)
+        if (
+            source_master is not None
+            and contract.get("approved_source_master_sha256")
+            != source_master.get("sha256")
+        ):
+            add_error(errors, "headless_approved_master_hash_mismatch", asset_id)
+        if (
+            active_reference is None
+            or active_reference.get("source_kind") != "character_headless_sheet"
+            or active_reference.get("role") != "canonical"
+        ):
+            add_error(errors, "headless_sheet_must_be_active_canonical", asset_id)
+        elif active_reference.get("derived_from_reference_id") != source_master_id:
+            add_error(errors, "headless_sheet_derivation_invalid", asset_id)
+        if active_reference is not None:
+            active_headless_views = set(active_reference.get("view_roles", []))
+            if active_headless_views != V3_HEADLESS_VIEW_ROLES:
+                missing_views = V3_HEADLESS_VIEW_ROLES - active_headless_views
+                extra_views = active_headless_views - V3_HEADLESS_VIEW_ROLES
+                add_error(
+                    errors,
+                    "headless_sheet_view_roles_invalid",
+                    f"{asset_id}:missing={','.join(sorted(missing_views))};extra={','.join(sorted(extra_views))}",
+                )
+
+    detail_requirements = [
+        requirement
+        for requirement in contract.get("detail_requirements", [])
+        if isinstance(requirement, dict)
+    ]
+    detail_ids = [str(requirement.get("detail_id")) for requirement in detail_requirements]
+    if len(detail_ids) != len(set(detail_ids)):
+        add_error(errors, "character_detail_id_duplicate", asset_id)
+    detail_reference_id = contract.get("detail_reference_id")
+    detail_references = [
+        reference
+        for reference in asset_references
+        if reference.get("source_kind") == "character_detail_sheet"
+    ]
+    detail_reference = (
+        reference_map.get(str(detail_reference_id))
+        if detail_reference_id is not None
+        else None
+    )
+    if detail_requirements and (detail_reference is None or len(detail_references) != 1):
+        add_error(errors, "character_detail_sheet_required", asset_id)
+    if not detail_requirements and detail_references:
+        add_error(errors, "character_detail_sheet_without_requirements", asset_id)
+    detail_derivation_source_id = (
+        active_reference_id if mode == "headed_state" else source_master_id
+    )
+    if detail_reference is not None:
+        if (
+            detail_reference.get("source_kind") != "character_detail_sheet"
+            or detail_reference.get("role") != "supporting"
+            or detail_reference.get("derived_from_reference_id")
+            != detail_derivation_source_id
+        ):
+            add_error(errors, "character_detail_sheet_binding_invalid", asset_id)
+        if set(detail_reference.get("view_roles", [])) != {"detail_close_up"}:
+            add_error(errors, "character_detail_sheet_view_roles_invalid", asset_id)
+        missing_details = set(detail_ids) - set(
+            detail_reference.get("covered_detail_ids", [])
+        )
+        if missing_details:
+            add_error(
+                errors,
+                "character_detail_callout_missing",
+                f"{asset_id}:{','.join(sorted(missing_details))}",
+            )
+
+    for requirement in detail_requirements:
+        detail_id = str(requirement.get("detail_id"))
+        source_policy = requirement.get("source_policy")
+        source_reference_id = requirement.get("source_reference_id")
+        exact_graphic_required = requirement.get("detail_kind") in V3_EXACT_GRAPHIC_KINDS
+        if exact_graphic_required and source_policy != "exact_graphic":
+            add_error(errors, "exact_graphic_source_required", f"{asset_id}:{detail_id}")
+            continue
+        if source_policy == "exact_graphic":
+            source_reference = (
+                reference_map.get(str(source_reference_id))
+                if source_reference_id is not None
+                else None
+            )
+            if (
+                source_reference is None
+                or source_reference.get("source_kind") != "exact_graphic_reference"
+                or source_reference.get("rights_status") != "verified"
+            ):
+                add_error(
+                    errors,
+                    "exact_graphic_reference_invalid",
+                    f"{asset_id}:{detail_id}",
+                )
+        elif source_reference_id is not None:
+            add_error(
+                errors,
+                "visual_detail_source_reference_forbidden",
+                f"{asset_id}:{detail_id}",
+            )
+
+    required_case_kinds = set(asset.get("required_case_kinds", []))
+    sheet_cases = {
+        "character_sheet_views",
+        "character_sheet_readable_scale",
+        "character_sheet_body_consistency",
+    }
+    if not sheet_cases.issubset(required_case_kinds):
+        add_error(errors, "character_sheet_required_case_missing", asset_id)
+    if detail_requirements and "character_sheet_detail_callouts" not in required_case_kinds:
+        add_error(errors, "character_detail_required_case_missing", asset_id)
+    if mode == "headless_safe" and not {
+        "headless_wardrobe",
+        "headless_sheet_single_face",
+    }.issubset(required_case_kinds):
+        add_error(errors, "headless_sheet_required_case_missing", asset_id)
+
+
 def semantic_errors(
     document: dict[str, Any],
     *,
@@ -160,7 +504,9 @@ def semantic_errors(
     trust_registry_path: Path,
 ) -> list[str]:
     errors: list[str] = []
-    strict_character_roles = document.get("contract_id") == "ai_film_asset_stress_test_v2"
+    contract_id = document.get("contract_id")
+    strict_character_roles = contract_id == "ai_film_asset_stress_test_v2"
+    unified_character_sheets = contract_id == "ai_film_asset_stress_test_v3"
     assets = [item for item in document.get("assets", []) if isinstance(item, dict)]
     asset_ids = [str(item.get("asset_id")) for item in assets]
     if len(asset_ids) != len(set(asset_ids)):
@@ -193,6 +539,26 @@ def semantic_errors(
             if item.get("source_kind") == "identity_reference"
         ]
         required_case_kinds = set(asset.get("required_case_kinds", []))
+        v3_sheet_kinds = V3_CHARACTER_SIGNAL_KINDS
+        v3_character_signal = isinstance(
+            asset.get("character_sheet_contract"), dict
+        ) or any(
+            reference.get("source_kind") in v3_sheet_kinds
+            for reference in asset_references
+        )
+        v3_character_state = asset.get("asset_kind") == "state" and (
+            v3_character_signal
+        )
+        if (
+            unified_character_sheets
+            and v3_character_signal
+            and asset.get("asset_kind") not in {"character", "state"}
+        ):
+            add_error(errors, "character_sheet_asset_kind_invalid", str(asset.get("asset_id")))
+        if unified_character_sheets and (
+            asset.get("asset_kind") == "character" or v3_character_state
+        ):
+            validate_v3_character_sheet(asset, asset_references, errors)
         if strict_character_roles:
             asset_kind = asset.get("asset_kind")
             human_state = asset_kind == "state" and bool(
@@ -257,6 +623,28 @@ def semantic_errors(
                         "headless_wardrobe_reference_required",
                         str(asset.get("asset_id")),
                     )
+    if unified_character_sheets:
+        state_family_master_hashes: dict[str, str] = {}
+        for asset in assets:
+            contract = asset.get("character_sheet_contract")
+            if not isinstance(contract, dict):
+                continue
+            reference_map = {
+                str(reference.get("reference_id")): reference
+                for reference in asset.get("references", [])
+                if isinstance(reference, dict)
+            }
+            source_master = reference_map.get(
+                str(contract.get("source_master_reference_id"))
+            )
+            if source_master is None:
+                continue
+            state_family = str(asset.get("state_family"))
+            master_hash = str(source_master.get("sha256"))
+            prior_hash = state_family_master_hashes.get(state_family)
+            if prior_hash is not None and prior_hash != master_hash:
+                add_error(errors, "state_family_master_sheet_drift", state_family)
+            state_family_master_hashes[state_family] = master_hash
     reference_ids = [str(item.get("reference_id")) for item in references]
     if len(reference_ids) != len(set(reference_ids)):
         add_error(errors, "reference_id_duplicate", str(reference_ids))
@@ -326,12 +714,50 @@ def semantic_errors(
                 "headless_wardrobe_case_asset_kind_invalid",
                 str(item.get("test_case_id")),
             )
+        elif unified_character_sheets and item.get("case_kind") in {
+            "character_sheet_views",
+            "character_sheet_readable_scale",
+            "character_sheet_body_consistency",
+            "character_sheet_detail_callouts",
+            "headless_sheet_single_face",
+        } and asset.get("asset_kind") not in {"character", "state"}:
+            add_error(
+                errors,
+                "character_sheet_case_asset_kind_invalid",
+                str(item.get("test_case_id")),
+            )
         if strict_character_roles and item.get("case_kind") == "headless_wardrobe":
             invariants = " ".join(str(value).casefold() for value in item.get("expected_invariants", []))
             if "headless" not in invariants or "face" not in invariants:
                 add_error(
                     errors,
                     "headless_wardrobe_invariant_missing",
+                    str(item.get("test_case_id")),
+                )
+        if unified_character_sheets and item.get("case_kind") == "headless_sheet_single_face":
+            invariants = " ".join(
+                str(value).casefold() for value in item.get("expected_invariants", [])
+            )
+            if "one readable face" not in invariants or "headless" not in invariants:
+                add_error(
+                    errors,
+                    "headless_sheet_single_face_invariant_missing",
+                    str(item.get("test_case_id")),
+                )
+        if unified_character_sheets and item.get("case_kind") == "headless_wardrobe":
+            invariants = " ".join(
+                str(value).casefold() for value in item.get("expected_invariants", [])
+            )
+            if not all(term in invariants for term in ("headless", "wrists", "hands")):
+                add_error(
+                    errors,
+                    "headless_wardrobe_anatomy_invariant_missing",
+                    str(item.get("test_case_id")),
+                )
+            if "rear collar" not in invariants or "back neckline" not in invariants:
+                add_error(
+                    errors,
+                    "headless_wardrobe_collar_invariant_missing",
                     str(item.get("test_case_id")),
                 )
         if item.get("status") == "pass" and (
@@ -593,11 +1019,35 @@ def materialize_fixture(
         canonical_path.parent.mkdir(parents=True, exist_ok=True)
         canonical_path.write_bytes(PNG_FIXTURE_BYTES + asset["asset_id"].encode("utf-8"))
         asset["canonical_sha256"] = hashlib.sha256(canonical_path.read_bytes()).hexdigest()
+        active_reference_id = (
+            asset.get("character_sheet_contract", {}).get("active_reference_id")
+            if isinstance(asset.get("character_sheet_contract"), dict)
+            else None
+        )
         for reference in asset["references"]:
             path = artifact_root / reference["relative_path"]
             path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_bytes(PNG_FIXTURE_BYTES + reference["reference_id"].encode("utf-8"))
+            if reference.get("reference_id") == active_reference_id:
+                path.write_bytes(canonical_path.read_bytes())
+            else:
+                path.write_bytes(
+                    PNG_FIXTURE_BYTES + reference["reference_id"].encode("utf-8")
+                )
             reference["sha256"] = hashlib.sha256(path.read_bytes()).hexdigest()
+        contract = asset.get("character_sheet_contract")
+        if isinstance(contract, dict) and contract.get("mode") in {
+            "headed_state",
+            "headless_safe",
+        }:
+            reference_map = {
+                str(reference.get("reference_id")): reference
+                for reference in asset["references"]
+            }
+            source_master = reference_map.get(
+                str(contract.get("source_master_reference_id"))
+            )
+            if source_master is not None:
+                contract["approved_source_master_sha256"] = source_master["sha256"]
         asset["descriptor_sha256"] = hashlib.sha256(
             asset["descriptor_text"].encode("utf-8")
         ).hexdigest()
@@ -682,6 +1132,8 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
     failures: list[str] = []
     template = load_json(VALID_PATH)
     cases = load_json(CASES_PATH).get("cases", [])
+    v3_payload = load_json(V3_CASES_PATH)
+    v3_cases = v3_payload.get("cases", [])
     with tempfile.TemporaryDirectory(prefix="dircreative-asset-stress-") as temp_dir:
         temp_root = Path(temp_dir)
         artifact_root = temp_root / "artifacts"
@@ -726,6 +1178,123 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
         )
         if v1_errors:
             failures.append(f"valid v1 fixture rejected: {v1_errors[:3]}")
+        v3_artifact_root = temp_root / "v3-artifacts"
+        v3_review_root = temp_root / "v3-reviews"
+        v3_trust_root = temp_root / "v3-trust"
+        v3_artifact_root.mkdir()
+        v3_review_root.mkdir()
+        v3_trust_root.mkdir()
+        v3_headed, v3_receipt, v3_signature, v3_registry = materialize_fixture(
+            load_json(VALID_V3_PATH),
+            v3_artifact_root,
+            v3_review_root,
+            v3_trust_root,
+        )
+        v3_headed_errors = validate(
+            v3_headed,
+            artifact_root=v3_artifact_root,
+            review_receipt_path=v3_receipt,
+            review_signature_path=v3_signature,
+            _trust_registry_path=v3_registry,
+        )
+        if v3_headed_errors:
+            failures.append(f"valid v3 headed fixture rejected: {v3_headed_errors[:3]}")
+        v3_full_input_artifact_root = temp_root / "v3-full-input-artifacts"
+        v3_full_input_review_root = temp_root / "v3-full-input-reviews"
+        v3_full_input_trust_root = temp_root / "v3-full-input-trust"
+        v3_full_input_artifact_root.mkdir()
+        v3_full_input_review_root.mkdir()
+        v3_full_input_trust_root.mkdir()
+        v3_full_input_template = load_json(VALID_V3_PATH)
+        v3_full_input_template["stress_test_id"] = "STRESS-V3-FULL-INPUT"
+        full_input_reference = v3_full_input_template["assets"][0]["references"][3]
+        full_input_reference["reference_id"] = "REF-FULL-GENERATION-INPUT"
+        full_input_reference["relative_path"] = "references/roco-full-generation-input.png"
+        full_input_reference["source_kind"] = "character_full_generation_input"
+        del v3_full_input_template["assets"][0]["references"][4]
+        v3_full_input_template["assets"][0]["character_sheet_contract"][
+            "generation_input_reference_ids"
+        ] = ["REF-FULL-GENERATION-INPUT"]
+        (
+            v3_full_input,
+            v3_full_input_receipt,
+            v3_full_input_signature,
+            v3_full_input_registry,
+        ) = materialize_fixture(
+            v3_full_input_template,
+            v3_full_input_artifact_root,
+            v3_full_input_review_root,
+            v3_full_input_trust_root,
+        )
+        v3_full_input_errors = validate(
+            v3_full_input,
+            artifact_root=v3_full_input_artifact_root,
+            review_receipt_path=v3_full_input_receipt,
+            review_signature_path=v3_full_input_signature,
+            _trust_registry_path=v3_full_input_registry,
+        )
+        if v3_full_input_errors:
+            failures.append(
+                f"valid v3 full-input fixture rejected: {v3_full_input_errors[:3]}"
+            )
+        v3_headless_artifact_root = temp_root / "v3-headless-artifacts"
+        v3_headless_review_root = temp_root / "v3-headless-reviews"
+        v3_headless_trust_root = temp_root / "v3-headless-trust"
+        v3_headless_artifact_root.mkdir()
+        v3_headless_review_root.mkdir()
+        v3_headless_trust_root.mkdir()
+        v3_headless_template = apply_mutations(
+            load_json(VALID_V3_PATH),
+            v3_payload.get("headless_valid_mutations", []),
+        )
+        v3_headless, v3_headless_receipt, v3_headless_signature, v3_headless_registry = (
+            materialize_fixture(
+                v3_headless_template,
+                v3_headless_artifact_root,
+                v3_headless_review_root,
+                v3_headless_trust_root,
+            )
+        )
+        v3_headless_errors = validate(
+            v3_headless,
+            artifact_root=v3_headless_artifact_root,
+            review_receipt_path=v3_headless_receipt,
+            review_signature_path=v3_headless_signature,
+            _trust_registry_path=v3_headless_registry,
+        )
+        if v3_headless_errors:
+            failures.append(
+                f"valid v3 headless fixture rejected: {v3_headless_errors[:3]}"
+            )
+        v3_state_artifact_root = temp_root / "v3-state-artifacts"
+        v3_state_review_root = temp_root / "v3-state-reviews"
+        v3_state_trust_root = temp_root / "v3-state-trust"
+        v3_state_artifact_root.mkdir()
+        v3_state_review_root.mkdir()
+        v3_state_trust_root.mkdir()
+        v3_state_template = apply_mutations(
+            load_json(VALID_V3_PATH),
+            v3_payload.get("state_valid_mutations", []),
+        )
+        v3_state, v3_state_receipt, v3_state_signature, v3_state_registry = (
+            materialize_fixture(
+                v3_state_template,
+                v3_state_artifact_root,
+                v3_state_review_root,
+                v3_state_trust_root,
+            )
+        )
+        v3_state_errors = validate(
+            v3_state,
+            artifact_root=v3_state_artifact_root,
+            review_receipt_path=v3_state_receipt,
+            review_signature_path=v3_state_signature,
+            _trust_registry_path=v3_state_registry,
+        )
+        if v3_state_errors:
+            failures.append(
+                f"valid v3 headed-state fixture rejected: {v3_state_errors[:3]}"
+            )
         rejected = 0
         for case in cases:
             mutated = apply_mutations(valid, case["mutations"])
@@ -741,6 +1310,103 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
                 rejected += 1
             else:
                 failures.append(f"{case['case_id']}: expected {expected}, got {errors[:3]}")
+        v3_rejected = 0
+        for case in v3_cases:
+            if case.get("base") == "headless":
+                base_document = v3_headless
+                base_artifact_root = v3_headless_artifact_root
+                base_receipt = v3_headless_receipt
+                base_signature = v3_headless_signature
+                base_registry = v3_headless_registry
+            elif case.get("base") == "state":
+                base_document = v3_state
+                base_artifact_root = v3_state_artifact_root
+                base_receipt = v3_state_receipt
+                base_signature = v3_state_signature
+                base_registry = v3_state_registry
+            else:
+                base_document = v3_headed
+                base_artifact_root = v3_artifact_root
+                base_receipt = v3_receipt
+                base_signature = v3_signature
+                base_registry = v3_registry
+            mutated = apply_mutations(base_document, case["mutations"])
+            errors = validate(
+                mutated,
+                artifact_root=base_artifact_root,
+                review_receipt_path=base_receipt,
+                review_signature_path=base_signature,
+                _trust_registry_path=base_registry,
+            )
+            expected = case["expected_error"]
+            if any(error.startswith(expected + ":") for error in errors):
+                v3_rejected += 1
+            else:
+                failures.append(
+                    f"{case['case_id']}: expected {expected}, got {errors[:3]}"
+                )
+        state_drift = copy.deepcopy(v3_headed)
+        drift_asset = copy.deepcopy(state_drift["assets"][0])
+        drift_asset["asset_id"] = "CHAR-ROCO-V3-WET"
+        drift_asset["asset_version"] = "v3-wet"
+        drift_asset["state_id"] = "ROCO-WET"
+        drift_asset["canonical_relative_path"] = "canonical/char-roco-v3-wet.png"
+        drift_asset["canonical_sha256"] = "f" * 64
+        reference_id_map: dict[str, str] = {}
+        for reference in drift_asset["references"]:
+            old_id = str(reference["reference_id"])
+            new_id = old_id + "-WET"
+            reference_id_map[old_id] = new_id
+            reference["reference_id"] = new_id
+            reference["relative_path"] = "references/wet-" + Path(
+                str(reference["relative_path"])
+            ).name
+            reference["sha256"] = "f" * 64
+        drift_contract = drift_asset["character_sheet_contract"]
+        drift_contract["generation_input_reference_ids"] = [
+            reference_id_map[str(reference_id)]
+            for reference_id in drift_contract["generation_input_reference_ids"]
+        ]
+        drift_contract["active_reference_id"] = reference_id_map[
+            str(drift_contract["active_reference_id"])
+        ]
+        drift_contract["source_master_reference_id"] = reference_id_map[
+            str(drift_contract["source_master_reference_id"])
+        ]
+        if drift_contract.get("detail_reference_id") is not None:
+            drift_contract["detail_reference_id"] = reference_id_map[
+                str(drift_contract["detail_reference_id"])
+            ]
+        for requirement in drift_contract.get("detail_requirements", []):
+            source_reference_id = requirement.get("source_reference_id")
+            if source_reference_id is not None:
+                requirement["source_reference_id"] = reference_id_map[
+                    str(source_reference_id)
+                ]
+        for reference in drift_asset["references"]:
+            derived_from = reference.get("derived_from_reference_id")
+            if derived_from is not None:
+                reference["derived_from_reference_id"] = reference_id_map[
+                    str(derived_from)
+                ]
+        state_drift["assets"].append(drift_asset)
+        state_drift["input_spec_sha256"] = canonical_sha256(state_drift["assets"])
+        state_drift_errors = validate(
+            state_drift,
+            artifact_root=v3_artifact_root,
+            review_receipt_path=v3_receipt,
+            review_signature_path=v3_signature,
+            _trust_registry_path=v3_registry,
+        )
+        if any(
+            error.startswith("state_family_master_sheet_drift:")
+            for error in state_drift_errors
+        ):
+            v3_rejected += 1
+        else:
+            failures.append(
+                "state_family_master_sheet_drift: expected state family source drift rejection"
+            )
         trust_cases = [
             (
                 "missing_host_pinned_signature",
@@ -863,9 +1529,17 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
     return failures, {
         "valid_fixture_passed": not valid_errors,
         "valid_v1_fixture_passed": not v1_errors,
+        "valid_v3_headed_fixture_passed": not v3_headed_errors,
+        "valid_v3_full_input_fixture_passed": not v3_full_input_errors,
+        "valid_v3_headless_fixture_passed": not v3_headless_errors,
+        "valid_v3_headed_state_fixture_passed": not v3_state_errors,
         "matrix_case_count": len(valid.get("test_cases", [])),
+        "v3_headed_matrix_case_count": len(v3_headed.get("test_cases", [])),
+        "v3_headless_matrix_case_count": len(v3_headless.get("test_cases", [])),
         "negative_case_count": len(cases) + len(trust_cases) + 3,
         "negative_cases_rejected": rejected,
+        "v3_negative_case_count": len(v3_cases) + 1,
+        "v3_negative_cases_rejected": v3_rejected,
         "verdict": valid.get("verdict", {}).get("status"),
         "media_generation_performed": False,
     }

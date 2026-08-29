@@ -10,7 +10,7 @@ cost, or provider execution.
 | Source mechanism | DIR surface | Status |
 | --- | --- | --- |
 | Assets before formal shots | staged `asset_foundation` | implemented |
-| One face close-up plus headless front/back wardrobe | identity-state reference roles plus asset stress matrix | implemented in v0.6.1 |
+| One face close-up plus headless front/back wardrobe | retained as the v2 compatibility baseline; v3 adds one headed default master, left/right profiles, derived headless mode and conditional detail callouts | expanded in v0.7.0 |
 | Separate wet/injured/bloodied/wardrobe states | state families and versioned canonical assets | implemented |
 | Repeated pose/light/group tests before lock | `ai-film-asset-stress-test` | implemented |
 | One responsibility per reference | `constraint_assignment`, slot bindings, anti-misread rules | implemented |
@@ -23,12 +23,11 @@ cost, or provider execution.
 
 ## Character asset invariant
 
-For recurring clothed humans, one character board may package multiple views,
-but it has one and only one readable face identity source. Front/back wardrobe
-views are headless and control silhouette, construction, layers, footwear, and
-equipment without contributing another face. Stress evidence must separately
-cover face identity, headless wardrobe integrity, combined full-body output,
-lighting, group composition, and applicable state variants.
+For new recurring clothed-human work, one headed master image is the default
+identity/body/wardrobe output. Separate approved identity and wardrobe/body
+inputs remain generation-only provenance. The full operational rule is owned by
+`skills/dircreative/references/character-master-sheet.md`; this research map does
+not duplicate its layout, scale, headless, detail or visual-review thresholds.
 
 ## Matrix boundary
 

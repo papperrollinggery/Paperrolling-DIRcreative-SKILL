@@ -1,0 +1,312 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dircreative.local/schemas/ai-film-asset-stress-test-v3.schema.json",
+  "title": "AI film asset stress-test report v3 unified character sheets",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_id",
+    "authority",
+    "source_owner",
+    "validator_owner",
+    "project_id",
+    "fixture_only",
+    "producer_actor_id",
+    "stress_test_id",
+    "input_spec_sha256",
+    "assets",
+    "matrix_config",
+    "test_cases",
+    "verdict"
+  ],
+  "properties": {
+    "contract_id": {"const": "ai_film_asset_stress_test_v3"},
+    "authority": {"const": "validation_only"},
+    "source_owner": {"const": "dircreative"},
+    "validator_owner": {"const": "ai-film-asset-stress-test"},
+    "project_id": {"$ref": "#/$defs/id"},
+    "fixture_only": {"type": "boolean"},
+    "producer_actor_id": {"$ref": "#/$defs/id"},
+    "stress_test_id": {"$ref": "#/$defs/id"},
+    "input_spec_sha256": {"$ref": "#/$defs/sha256"},
+    "assets": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/asset"}},
+    "matrix_config": {"$ref": "#/$defs/matrix"},
+    "test_cases": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/test_case"}},
+    "verdict": {"$ref": "#/$defs/verdict"}
+  },
+  "$defs": {
+    "id": {"type": "string", "minLength": 1, "pattern": "^[A-Za-z0-9][A-Za-z0-9._:+-]*$"},
+    "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "id_list": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/id"}},
+    "nullable_id": {"anyOf": [{"$ref": "#/$defs/id"}, {"type": "null"}]},
+    "safe_path": {"type": "string", "minLength": 1, "pattern": "^[A-Za-z0-9._/-]+$"},
+    "view_role": {
+      "enum": [
+        "portrait_three_quarter",
+        "portrait_front",
+        "portrait_left_profile",
+        "portrait_right_profile",
+        "full_body_front",
+        "full_body_left_profile",
+        "full_body_right_profile",
+        "full_body_back",
+        "headless_full_body_front",
+        "headless_full_body_left_profile",
+        "headless_full_body_right_profile",
+        "headless_full_body_back",
+        "detail_close_up"
+      ]
+    },
+    "reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reference_id", "relative_path", "sha256", "rights_status", "source_kind", "role"],
+      "properties": {
+        "reference_id": {"$ref": "#/$defs/id"},
+        "relative_path": {"$ref": "#/$defs/safe_path"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "rights_status": {"enum": ["verified", "conditional", "blocked"]},
+        "source_kind": {
+          "enum": [
+            "character_full_generation_input",
+            "character_identity_generation_input",
+            "character_wardrobe_body_generation_input",
+            "character_master_sheet",
+            "character_state_sheet",
+            "character_headless_sheet",
+            "character_detail_sheet",
+            "exact_graphic_reference",
+            "scene_anchor",
+            "prop_reference",
+            "vehicle_reference",
+            "planning_only"
+          ]
+        },
+        "role": {"enum": ["canonical", "supporting", "planning_only"]},
+        "view_roles": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/view_role"}},
+        "derived_from_reference_id": {"$ref": "#/$defs/nullable_id"},
+        "covered_detail_ids": {"$ref": "#/$defs/id_list"}
+      }
+    },
+    "detail_requirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["detail_id", "detail_kind", "placement", "source_policy", "source_reference_id"],
+      "properties": {
+        "detail_id": {"$ref": "#/$defs/id"},
+        "detail_kind": {"enum": ["accessory", "logo", "emblem", "text", "closure", "pocket", "hardware", "material", "lining", "other"]},
+        "placement": {"enum": ["left", "right", "front", "back", "interior", "all"]},
+        "source_policy": {"enum": ["visual_description", "exact_graphic"]},
+        "source_reference_id": {"$ref": "#/$defs/nullable_id"}
+      }
+    },
+    "character_sheet_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "generation_method",
+        "generation_input_reference_ids",
+        "active_reference_id",
+        "source_master_reference_id",
+        "approved_source_master_sha256",
+        "portrait_views",
+        "portrait_framing",
+        "portrait_panel_priority",
+        "sheet_layout",
+        "full_body_arrangement",
+        "portrait_height_ratio_floor",
+        "full_body_height_ratio_floor",
+        "layout_review_method",
+        "full_body_views",
+        "body_head_policy",
+        "detail_reference_id",
+        "detail_requirements"
+      ],
+      "properties": {
+        "mode": {"enum": ["headed_master", "headed_state", "headless_safe"]},
+        "generation_method": {"enum": ["unified_generation", "derived_generation"]},
+        "generation_input_reference_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/id"}
+        },
+        "active_reference_id": {"$ref": "#/$defs/id"},
+        "source_master_reference_id": {"$ref": "#/$defs/id"},
+        "approved_source_master_sha256": {
+          "anyOf": [
+            {"$ref": "#/$defs/sha256"},
+            {"type": "null"}
+          ]
+        },
+        "portrait_views": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"enum": ["three_quarter", "front", "left_profile", "right_profile"]}
+        },
+        "portrait_framing": {"const": "face_close_up"},
+        "portrait_panel_priority": {"const": "dominant"},
+        "sheet_layout": {"const": "dominant_portrait_plus_horizontal_turnaround"},
+        "full_body_arrangement": {"const": "single_horizontal_row"},
+        "portrait_height_ratio_floor": {"const": 0.75},
+        "full_body_height_ratio_floor": {"const": 0.75},
+        "layout_review_method": {"const": "external_visual_review"},
+        "full_body_views": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "uniqueItems": true,
+          "items": {"enum": ["front", "left_profile", "right_profile", "back"]}
+        },
+        "body_head_policy": {"enum": ["headed", "headless"]},
+        "detail_reference_id": {"$ref": "#/$defs/nullable_id"},
+        "detail_requirements": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/detail_requirement"}}
+      }
+    },
+    "asset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "asset_id",
+        "asset_kind",
+        "asset_version",
+        "canonical_relative_path",
+        "canonical_sha256",
+        "state_family",
+        "state_id",
+        "descriptor_text",
+        "descriptor_sha256",
+        "references",
+        "target_model",
+        "provider_surface",
+        "intended_shot_classes",
+        "intended_lighting",
+        "required_combinations",
+        "required_case_kinds",
+        "approval_owner"
+      ],
+      "properties": {
+        "asset_id": {"$ref": "#/$defs/id"},
+        "asset_kind": {"enum": ["character", "wardrobe", "prop", "vehicle", "scene", "state"]},
+        "asset_version": {"$ref": "#/$defs/id"},
+        "canonical_relative_path": {"$ref": "#/$defs/safe_path"},
+        "canonical_sha256": {"$ref": "#/$defs/sha256"},
+        "state_family": {"$ref": "#/$defs/id"},
+        "state_id": {"$ref": "#/$defs/id"},
+        "descriptor_text": {"type": "string", "minLength": 1},
+        "descriptor_sha256": {"$ref": "#/$defs/sha256"},
+        "references": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/reference"}},
+        "character_sheet_contract": {"$ref": "#/$defs/character_sheet_contract"},
+        "target_model": {"$ref": "#/$defs/id"},
+        "provider_surface": {"type": "string", "minLength": 1},
+        "intended_shot_classes": {"$ref": "#/$defs/id_list"},
+        "intended_lighting": {"$ref": "#/$defs/id_list"},
+        "required_combinations": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "required_case_kinds": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/case_kind"}},
+        "approval_owner": {"$ref": "#/$defs/id"}
+      }
+    },
+    "matrix": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["configurable", "minimum_case_count", "required_case_kinds"],
+      "properties": {
+        "configurable": {"const": true},
+        "minimum_case_count": {"type": "integer", "minimum": 1, "maximum": 64},
+        "required_case_kinds": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/case_kind"}}
+      }
+    },
+    "case_kind": {
+      "enum": [
+        "face_close_up",
+        "headless_wardrobe",
+        "full_body",
+        "wide_fov",
+        "front_three_quarter_back",
+        "target_lighting",
+        "group_composition",
+        "occlusion_prop",
+        "state_variant",
+        "handedness",
+        "scale_topology",
+        "character_sheet_views",
+        "character_sheet_readable_scale",
+        "character_sheet_body_consistency",
+        "character_sheet_detail_callouts",
+        "headless_sheet_single_face"
+      ]
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["evidence_id", "relative_path", "sha256", "receipt_source"],
+      "properties": {
+        "evidence_id": {"$ref": "#/$defs/id"},
+        "relative_path": {"$ref": "#/$defs/safe_path"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "receipt_source": {"enum": ["producer", "host_observation", "external_verified"]}
+      }
+    },
+    "test_case": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "test_case_id",
+        "asset_id",
+        "case_kind",
+        "state_family",
+        "shot_scope",
+        "lighting",
+        "expected_invariants",
+        "observed_deviations",
+        "status",
+        "evidence",
+        "severity",
+        "allowed_shot_scope",
+        "blocked_shot_scope"
+      ],
+      "properties": {
+        "test_case_id": {"$ref": "#/$defs/id"},
+        "asset_id": {"$ref": "#/$defs/id"},
+        "case_kind": {"$ref": "#/$defs/case_kind"},
+        "state_family": {"$ref": "#/$defs/id"},
+        "shot_scope": {"$ref": "#/$defs/id_list"},
+        "lighting": {"$ref": "#/$defs/id_list"},
+        "combination_ids": {"$ref": "#/$defs/id_list"},
+        "expected_invariants": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "observed_deviations": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "status": {"enum": ["pass", "fail", "not_run"]},
+        "evidence": {"type": "array", "items": {"$ref": "#/$defs/evidence"}},
+        "severity": {"enum": ["none", "low", "medium", "high", "critical"]},
+        "allowed_shot_scope": {"$ref": "#/$defs/id_list"},
+        "blocked_shot_scope": {"$ref": "#/$defs/id_list"}
+      }
+    },
+    "reviewer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["actor_id", "review_authority_id", "reviewer_type", "timestamp", "receipt_source", "receipt_sha256"],
+      "properties": {
+        "actor_id": {"$ref": "#/$defs/id"},
+        "review_authority_id": {"$ref": "#/$defs/id"},
+        "reviewer_type": {"enum": ["producer", "independent", "human"]},
+        "timestamp": {"type": "string", "format": "date-time"},
+        "receipt_source": {"enum": ["producer", "independent_review", "human_review"]},
+        "receipt_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "verdict": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "allowed_shot_scope", "blocked_shot_scope", "reviewer"],
+      "properties": {
+        "status": {"enum": ["certified", "conditional", "rejected", "unverified"]},
+        "allowed_shot_scope": {"$ref": "#/$defs/id_list"},
+        "blocked_shot_scope": {"$ref": "#/$defs/id_list"},
+        "reviewer": {"$ref": "#/$defs/reviewer"}
+      }
+    }
+  }
+}

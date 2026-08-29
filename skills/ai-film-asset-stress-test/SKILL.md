@@ -24,7 +24,8 @@ before the asset enters repeated shots, group compositions, or batch generation.
 Read and validate the packet with:
 
 - legacy v1: `docs/film-preproduction/schemas/ai-film-asset-stress-test.schema.json`
-- strict character v2: `docs/film-preproduction/schemas/ai-film-asset-stress-test-v2.schema.json`
+- split face/headless compatibility v2: `docs/film-preproduction/schemas/ai-film-asset-stress-test-v2.schema.json`
+- unified character-sheet v3: `docs/film-preproduction/schemas/ai-film-asset-stress-test-v3.schema.json`
 - `python3 scripts/ai_film_asset_stress_test.py validate <report> --artifact-root <root> --review-receipt <receipt> --review-signature <sig>`
 
 The packet binds one or more asset/state descriptors, exact references and
@@ -43,17 +44,20 @@ producer-written JSON is not a trust root.
 ## Matrix policy
 
 Choose cases from actual risk. High-risk characters normally cover face close-up,
-headless wardrobe, full body, wide/FOV, front/three-quarter/back, target lighting,
-group composition, occlusion/prop interaction, state variants, handedness, and
-scale/topology. A recurring clothed human should expose exactly one canonical
-face source and a separate headless wardrobe source, so a small secondary face
-cannot compete with the face close-up. This is a default risk profile, not a
-universal fixed attempt count. New recurring human-character certification uses
-v2. Existing v1 reports remain verifiable under the legacy schema but do not
-gain the v2 face/headless claim. Migration is explicit: relabel the single
-canonical face and headless wardrobe references, add both required cases and
-fresh evidence, change the contract ID to v2, then obtain a new detached review
-signature. Never auto-promote a v1 report.
+full body, wide/FOV, target lighting, group composition, occlusion/prop
+interaction, state variants, handedness and scale/topology. New recurring
+clothed-human certification uses v3. Its headed default binds one physical master
+sheet and follows the single owner contract in
+`skills/dircreative/references/character-master-sheet.md`. This validator checks
+schema, hashes, source/derivation roles, required cases, evidence and signed
+review binding. It does not measure subject pixels or prove final exact-graphic
+composite fidelity; those are external visual-review findings. This is a risk
+profile, not a universal fixed attempt count.
+
+Existing v1 and v2 reports remain verifiable under their original schemas but do
+not gain v3 unified-sheet guarantees. Migration requires a new physical master,
+view and derivation metadata, required v3 cases, fresh evidence and a new detached
+review signature. Never auto-promote an older report.
 
 Each reference has one primary role. Planning boards cannot become canonical
 identity, topology, geography, or clean-frame truth.

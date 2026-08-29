@@ -26,6 +26,7 @@ creative work:
 | one shot or a few storyboard frames | Fast / `shot_optimization` or `storyboard_review` | `routes/fast-task.md` | `references/shot-storyboard.md` |
 | bounded model prompt change | Fast / `prompt_revision` | `routes/fast-task.md` | `references/prompt-model.md` |
 | other bounded revision | Fast / `bounded_revision` | `routes/fast-task.md` | none |
+| recurring character, costume master sheet, headless derivative, or garment detail board | Studio / `film_development` | `routes/studio-development.md` | `references/character-master-sheet.md` |
 | complete or multi-output film work, including its visual asset plan | Studio / `film_development` | `routes/studio-development.md` | `references/film-development.md` |
 | real generation or client delivery | Delivery / `generation_authorization` or `client_delivery` | `routes/delivery-audit.md` | `references/generation-delivery.md` |
 | fully validated ADCO handoff | Delivery / `adco_specialist_exchange` | `routes/delivery-audit.md` | `references/specialist-exchange.md` plus the descriptor schema |
