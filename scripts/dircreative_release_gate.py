@@ -256,6 +256,14 @@ def run_gate(
     ]
     if args.allow_unpublished:
         formal_install_cmd.append("--allow-unpublished")
+    archive_parity_cmd = [
+        "python3",
+        "scripts/dircreative_install_parity.py",
+        "--target",
+        str(archive_install_target),
+    ]
+    if require_tag:
+        archive_parity_cmd.append("--verify-remote-tag")
 
     steps = [
         Step("exact commit release preflight", preflight_cmd, ROOT),
@@ -316,12 +324,7 @@ def run_gate(
         ),
         Step(
             "release artifact install parity",
-            [
-                "python3",
-                "scripts/dircreative_install_parity.py",
-                "--target",
-                str(archive_install_target),
-            ],
+            archive_parity_cmd,
             ROOT,
             depends_on="verified formal artifact install",
         ),

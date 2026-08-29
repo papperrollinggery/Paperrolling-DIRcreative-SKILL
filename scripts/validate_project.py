@@ -5376,6 +5376,11 @@ def validate_release_gate_script() -> None:
         "formal release gate must bind formal installation to the expected tag",
     )
     require(
+        "--verify-remote-tag"
+        in captured_commands.get("release artifact install parity", []),
+        "formal release gate parity must independently verify the canonical remote tag",
+    )
+    require(
         "--allow-development-install"
         in captured_commands.get("installed skill validation", []),
         "pre-artifact installed validation must explicitly identify the development install",
@@ -5383,6 +5388,44 @@ def validate_release_gate_script() -> None:
     require(
         "--installed-package" in captured_commands.get("installed skill validation", []),
         "pre-artifact installed validation must use installed-package mode",
+    )
+
+    unpublished_commands: dict[str, list[str]] = {}
+
+    def capture_unpublished_step(step: Any) -> tuple[bool, str]:
+        unpublished_commands[step.label] = step.cmd
+        return True, ""
+
+    release_gate.run_step = capture_unpublished_step
+    try:
+        with tempfile.TemporaryDirectory(prefix="dircreative-unpublished-release-gate-") as raw:
+            unpublished_args = SimpleNamespace(
+                output_dir="dist-test",
+                require_tag=False,
+                allow_unpublished=True,
+                adco_repo=None,
+                media_forward_receipt=None,
+                media_review_receipt=None,
+                media_host_event_log=None,
+                media_review_host_event_log=None,
+                require_media_forward=False,
+                media_c2patool=None,
+            )
+            with contextlib.redirect_stdout(io.StringIO()):
+                unpublished_result = release_gate.run_gate(
+                    unpublished_args,
+                    Path(raw) / "source-stage",
+                    Path(raw) / "scratch",
+                    sealed_commit="a" * 40,
+                    head_reader=lambda: "a" * 40,
+                )
+    finally:
+        release_gate.run_step = original_run_step
+    require(unpublished_result == 0, "unpublished release gate capture must complete")
+    require(
+        "--verify-remote-tag"
+        not in unpublished_commands.get("release artifact install parity", []),
+        "unpublished release gate parity must not require a canonical remote tag",
     )
     require(
         "--allow-development-install"
