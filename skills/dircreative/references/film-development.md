@@ -1,26 +1,21 @@
 # Film Development Craft
 
-Use this card for a complete concept or connected story, script, shot, visual,
-sound, and prompt plan. The first answer must contain a recommended creative
-direction and the usable artifacts the user requested.
+Use for connected story, script, shot, visual, sound and prompt work. Deliver
+the requested creative result first.
 
 ## Build the film, not a meeting
 
-Lock supplied audience, objective, proposition, duration, format, mandatory
-moments, claims, identities, assets, and exclusions; do not re-ask. Build one
-strong direction around audience tension, opposing pressure, brand causal role,
-turn, consequence, and a visible ending. Fit hook-escalation-turn-proof-resolution
-to real duration; generation-unit limits are production constraints.
+Lock supplied constraints without reasking. Build one direction around audience
+tension, opposing pressure, brand causal role, turn, consequence and visible
+ending. Fit the real duration; generation-unit limits are production constraints.
 
-Every beat needs an observable start, one decisive action, and a changed end
-that motivates the next. Use spatially readable performance, motivated camera,
-structural sound, continuity locks, and a clear split between live action,
-boards, clean model inputs, model-safe units, and post. A bridge requires causal
-or matched action, object, sound, gaze, or geometry. Keep the protagonist.
+Each beat needs an observable start, decisive action and changed end motivating
+the next. Keep readable performance, camera, sound and continuity. Distinguish
+live action, boards, clean inputs, generation units and post. Bridges require
+causal or matched action, object, sound, gaze or geometry. Keep the protagonist.
 
-Before any production matrix, give the client one precise idea, brand role,
-beginning-turn-proof-ending story, visual/sound system, and credible route. An
-internal transcript, generic shot list, or asset ledger is not the creative idea.
+Before production matrices, give the client a clear idea, causal story,
+visual/sound system and feasible route. A transcript or ledger is not the idea.
 
 ## Keep deliverable layers separate
 
@@ -72,13 +67,18 @@ Scene references, individual shot images, and director storyboard pages are
 different deliverables; boards replace neither scene truth nor clean inputs.
 Mark reuse, derive, generate, and assemble explicitly.
 
-Canonical asset truth and director-frame quality are independent gates. Asset
-identity, topology, geography, and state must survive the shot, but they do not
-choose a centered or neutral composition. When polished storyboard or clean
-narrative frames are requested and `jingzao-image-forge` is available, route
-frame direction and prompt/spec compilation through
-`cinematic_storyboard_frames`; image generation remains a later authorized
-Delivery action.
+For explicit detailed/full preproduction, a per-shot frame is only a
+representative. At the coverage stage use `storyboard-coverage.md`: derive the
+plan ledger, action panels and necessary reverse/reaction coverage before
+production. Require its design/assets checks in addition to legacy coverage;
+`visual_assets_complete` alone does not certify action-panel completeness.
+
+Reselect craft per stage. Use installed `jingzao-image-forge` through
+`cinematic_storyboard_frames` only when frame direction, reference control or
+prompt compilation adds value. `downstream_use` is required: `rough_planning`
+stays ungated; `clean_model_input` and `full_preproduction` require the asset
+gate. Story, dialogue and ledger work need no Jingzao. Preserve asset truth and
+keep generation behind Delivery authorization.
 
 Persist with `runtime/visual-asset-plan.schema.json`, bound inventory and shot
 cards, exact per-shot time/action/sound/continuity/entity truth, dependencies,

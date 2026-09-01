@@ -2,7 +2,7 @@
 
 Status: active handoff
 
-Current phase: none, all planned phases complete
+Document scope: historical source milestone; it does not report the live user Goal
 
 Repository: `Paperrolling-DIRcreative-SKILL`
 
@@ -10,7 +10,21 @@ Repository: `Paperrolling-DIRcreative-SKILL`
 
 Make the repo safe for Goal-mode and gstack-driven continuation.
 
-The planned execution goal is complete through WYSIWYG workbench planning, the Phase J model-safe reference pack policy, and the Phase K longform/capability-aware workflow. Future workers should run validation, inspect the completion audit evidence, and only start new work after a new phase or user decision is added.
+## 2026-09-01 source-maintenance insert
+
+The explicit S07 maintenance scope adds a risk-bound scene/support truth gate to
+the existing storyboard-to-Jingzao handoff. It does not open a new creative
+phase, generate S07 media, or claim the current user Goal complete. Goal-mode workers must
+preserve blocked/failed parent status, bind real scene and prop attachments, and
+keep structural validation separate from pixel review and real user acceptance.
+
+Repository inspection found no `GOSU` runtime, configuration, command, schema,
+or tracked artifact. Do not invent one or treat the term as a second control
+plane. If `GOSU` refers to an external host feature, its status remains
+unverified here; this repository's durable surface continues to be native Goal
+mode plus the documented handoff and audit commands below.
+
+The historical milestone recorded by this document was complete through WYSIWYG workbench planning, the Phase J model-safe reference pack policy, and the Phase K longform/capability-aware workflow. Current workers must read the live Goal and current validation evidence before deciding whether newer work is complete.
 
 ## Read First
 

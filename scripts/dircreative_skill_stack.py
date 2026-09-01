@@ -547,8 +547,8 @@ def validate_registry(registry: dict[str, Any]) -> list[str]:
         failures.append("Fast isolated craft context must remain 16 KiB")
     if modes.get("studio", {}).get("isolated_validator_context_bytes_max") != 65536:
         failures.append("Studio isolated validator context must remain 64 KiB")
-    if modes.get("studio", {}).get("isolated_handoff_context_bytes_max") != 69632:
-        failures.append("Studio isolated handoff context must remain 68 KiB")
+    if modes.get("studio", {}).get("isolated_handoff_context_bytes_max") != 86016:
+        failures.append("Studio isolated handoff context must remain 84 KiB")
     if modes.get("delivery", {}).get("execution_adapter_context_bytes_max") != 24576:
         failures.append("Delivery isolated execution-adapter budget must remain 24 KiB")
     for skill_id, provider in providers.items():
@@ -1297,6 +1297,16 @@ def select_stack(
         raise SkillStackError(f"unknown scenario_id: {scenario_id}")
     scenario = scenarios[scenario_id]
     intent = dict(intent)
+    if scenario_id == "cinematic_storyboard_frames":
+        downstream_use = intent.get("downstream_use")
+        if (
+            not isinstance(downstream_use, str)
+            or downstream_use
+            not in {"rough_planning", "clean_model_input", "full_preproduction"}
+        ):
+            raise SkillStackError("invalid cinematic_storyboard_frames downstream_use")
+        if downstream_use in {"clean_model_input", "full_preproduction"}:
+            scenario = {**scenario, "requires_asset_foundation_gate": True}
     capability_card_id = str(intent.get("capability_card_id", "")).strip()
     target_model = str(intent.get("target_model", "")).strip()
     if (
@@ -2744,7 +2754,7 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
                     or int(context.get("isolated_craft_reference_bytes", 0)) < 71000
                     or int(context.get("total_bytes", 0)) > 20000
                     or int(context.get("isolated_handoff_context_bytes", 0)) < 30000
-                    or int(context.get("isolated_handoff_context_bytes", 0)) > 69632
+                    or int(context.get("isolated_handoff_context_bytes", 0)) > 86016
                     or int(context.get("aggregate_accounted_bytes", 0))
                     != int(context.get("total_bytes", 0))
                     + int(context.get("isolated_craft_context_bytes", 0))
@@ -2778,7 +2788,7 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
                     or int(context.get("isolated_validator_context_bytes", 0)) > 65536
                     or int(context.get("total_bytes", 0)) > 20000
                     or int(context.get("isolated_handoff_context_bytes", 0)) < 40000
-                    or int(context.get("isolated_handoff_context_bytes", 0)) > 69632
+                    or int(context.get("isolated_handoff_context_bytes", 0)) > 86016
                     or int(context.get("aggregate_accounted_bytes", 0))
                     != int(context.get("total_bytes", 0))
                     + int(context.get("isolated_craft_context_bytes", 0))

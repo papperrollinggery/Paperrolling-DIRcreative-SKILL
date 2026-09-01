@@ -60,6 +60,24 @@ Once authorized:
   representative assets and approve, reject, or retry them yourself. Continue
   without asking for test-only confirmation; test evidence is never client or
   production approval.
+- Every direct image-tool candidate reaching `selected` binds a validated
+  coverage panel/requirement hash in `execution_risk_binding`. Verified `low` or
+  `medium` keeps the lightweight path; verified `high` additionally requires
+  `execution_input_manifest`: exact prompt hash, ordered
+  attachments, and structured scene/support revision bound to the handoff truth
+  artifact/hash. The ledger reopens the validated packet and requires the actual
+  prompt text/hash and normalized ordered inputs to equal its target frame entry.
+  A production (`fixture_only:false`) packet also requires the explicit trusted
+  `--handoff-provider-root`; the ledger forwards it into nested handoff
+  validation rather than downgrading the packet to fixture mode.
+  Required support binds unique subject and anchor inputs.
+  Missing/false upstream risk, scene
+  input, or ready parent blocks selection. Selection also needs a signed
+  semantic truth review bound to output/truth hashes: scene pass, visible
+  support, no forbidden background/ground contamination, and current parent
+  states. A generic `accept` is insufficient. Legacy low-risk candidates remain
+  compatible after their risk source is hash-bound; they need no scene/support
+  manifest, spatial layout, or semantic truth review.
 - Only for a formal release or global-install forward test, keep the execution
   evidence separate from visual judgment: bind the exact candidate, invocation,
   prompt, ordered references, tool observation, and outputs to a bounded prefix

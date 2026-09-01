@@ -111,6 +111,7 @@ V2_HOST_TRACE_FIELDS = {
     "evidence_level",
     "cryptographically_signed",
 }
+GENERATION_HOST_TRACE_FIELDS = {"thread_id", "prefix_bytes", "prefix_sha256"}
 V2_HOST_FIELDS = {
     "actor_id",
     "task_id",
@@ -525,7 +526,7 @@ def trace_descriptor_failures(
     digest = descriptor.get("prefix_sha256")
     if not isinstance(digest, str) or not SHA256_RE.fullmatch(digest):
         failures.append(f"{label}.prefix_sha256 is invalid")
-    if (
+    if expected_fields != GENERATION_HOST_TRACE_FIELDS and (
         descriptor.get("evidence_level") != "unsigned_host_trace"
         or descriptor.get("cryptographically_signed") is not False
     ):
@@ -534,6 +535,8 @@ def trace_descriptor_failures(
         ("invocation_event_id", "candidate_observation_event_id")
         if expected_fields == V2_HOST_TRACE_FIELDS
         else ("review_request_event_id",)
+        if expected_fields == REVIEW_HOST_TRACE_FIELDS
+        else ()
     )
     for field in identifier_fields:
         value = descriptor.get(field)
@@ -563,13 +566,14 @@ def parse_host_trace_prefix(
     *,
     label: str,
 ) -> tuple[dict[str, Any], list[str]]:
-    failures = trace_descriptor_failures(
-        descriptor,
-        expected_fields=(
-            V2_HOST_TRACE_FIELDS if label == "execution host trace" else REVIEW_HOST_TRACE_FIELDS
-        ),
-        label=label,
+    expected_fields = (
+        V2_HOST_TRACE_FIELDS
+        if label == "execution host trace"
+        else GENERATION_HOST_TRACE_FIELDS
+        if label == "generation host trace"
+        else REVIEW_HOST_TRACE_FIELDS
     )
+    failures = trace_descriptor_failures(descriptor, expected_fields=expected_fields, label=label)
     if failures:
         return {}, failures
     expanded = path.expanduser()

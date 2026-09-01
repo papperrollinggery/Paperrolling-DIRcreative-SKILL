@@ -32,7 +32,7 @@
       "validators_max": 1,
       "isolated_craft_context_bytes_max": 131072,
       "isolated_validator_context_bytes_max": 65536,
-      "isolated_handoff_context_bytes_max": 69632,
+      "isolated_handoff_context_bytes_max": 86016,
       "skill_card_lines_max": 5
     },
     "delivery": {

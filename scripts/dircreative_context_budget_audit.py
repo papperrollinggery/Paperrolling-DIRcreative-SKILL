@@ -156,7 +156,15 @@ def audit() -> tuple[list[str], dict[str, Any]]:
     routes = policy.get("routes", {})
     route_context_metrics: dict[str, dict[str, Any]] = {}
     budgets = policy.get("performance_budgets", {})
-    for route_id, config in routes.items():
+    # Full preproduction replaces the general film craft reference at coverage
+    # time. Audit that real stage too; it must not escape the ordinary budget.
+    measured_contexts = dict(routes)
+    measured_contexts["film_development:storyboard_coverage"] = {
+        **routes["film_development"],
+        "required_files": ["skills/dircreative/references/storyboard-coverage.md"],
+        "optional_files": [],
+    }
+    for route_id, config in measured_contexts.items():
         if config.get("route_card") != route_cards.get(config.get("mode")):
             failures.append(f"{route_id}: route card does not match mode")
         required = config.get("required_files", [])

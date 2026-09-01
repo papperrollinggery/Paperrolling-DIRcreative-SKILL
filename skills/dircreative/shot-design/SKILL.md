@@ -74,10 +74,11 @@ Use `skills/dircreative/assets/visualizations/stage-surface-registry.json#shot-d
 
 - One main action per shot.
 - Explain shot count and rhythm with professional reasoning before asking for approval.
-- For one-minute client films, distinguish `12 customer story sections` from the real shot/rhythm plan. Do not approve 12 shots as a complete 60-second shot list unless the user explicitly accepts a slower format; default to roughly 30+ shots or rhythm points.
+- Distinguish `12 customer story sections` from the real shot/rhythm plan. Derive shot and panel counts from information, action and editing coverage, not a universal per-minute quota. Legacy client-contract count checks are a separate compatibility constraint, not the creative standard.
 - Every shot needs timecode, duration, story beat, narrative purpose, shot type, shot size, angle, lens, lens reason, camera support, camera motion, focus, composition, subject action, structured blocking, scene layers, continuity locks, audio fields, transitions, and model notes.
 - For client-facing storyboard/PPT work, every shot also needs seconds, camera position, emotional function, props/characters, asset source, vertical composition consideration, and reference motion or reference video for hero/expression-critical moments.
 - The downstream professional storyboard/motion page must have one cell per approved shot and include shot image region, detailed frame description, shot size, focal length, camera position, camera movement, subject blocking, sound, transition, and model risk.
+- That cell is an index/representative, not a limit of one action drawing per shot. Detailed/full preproduction adds a `storyboard-coverage` sidecar with ordered action panels and declared reverse/eyeline pairs. A hard cut changes shot ID; successive action phases may share it. See `skills/dircreative/references/storyboard-coverage.md` at that stage.
 - Storyboard page writing must read like a director explaining the film: story purpose first, camera language second, material/source or confirmation point last. Do not make the page feel like a production table.
 - PPT storyboard pages may show 3-6 images per page, but the image regions must stay large, non-distorted, crop-safe, and readable. Captions belong under images and must carry story, camera, and source meaning.
 - The downstream professional storyboard/motion page must use the visible shot-card template. Do not approve thin cell text that lacks narrative purpose, lens/support/movement, blocking/path, continuity, sound/edit, and model risk.

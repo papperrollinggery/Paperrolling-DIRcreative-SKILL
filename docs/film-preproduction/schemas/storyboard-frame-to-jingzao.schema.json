@@ -62,7 +62,10 @@
         "sha256": {"$ref": "#/$defs/sha256"},
         "prompt_manifest_id": {"type": "string", "minLength": 1},
         "prompt_manifest_relative_path": {"$ref": "#/$defs/safe_relative_path"},
-        "prompt_manifest_sha256": {"$ref": "#/$defs/sha256"}
+        "prompt_manifest_sha256": {"$ref": "#/$defs/sha256"},
+        "prompt_authority_review_relative_path": {"$ref": "#/$defs/safe_relative_path"},
+        "prompt_authority_review_sha256": {"$ref": "#/$defs/sha256"},
+        "prompt_authority_review_signature_relative_path": {"$ref": "#/$defs/safe_relative_path"}
       }
     },
     "delivery_consumption": {
@@ -114,6 +117,8 @@
       "uniqueItems": true,
       "items": {"type": "string", "minLength": 1}
     },
+    "id_list": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "attachment_binding": {"type": "object", "additionalProperties": false, "required": ["relative_path", "sha256"], "properties": {"relative_path": {"$ref": "#/$defs/safe_relative_path"}, "sha256": {"$ref": "#/$defs/sha256"}}},
     "artifact_binding": {
       "type": "object",
       "additionalProperties": false,
@@ -202,7 +207,61 @@
           "type": "array",
           "uniqueItems": true,
           "items": {"type": "string", "minLength": 1}
+        },
+        "attachment": {"$ref": "#/$defs/attachment_binding"}
+      }
+    },
+    "truth_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["risk", "status", "scene_asset_id", "required_attachment_ids", "support", "parent_frame_ids", "constraint_input"],
+      "properties": {
+        "risk": {"enum": ["low", "medium", "high"]},
+        "status": {"enum": ["ready", "blocked", "failed"]},
+        "scene_asset_id": {"type": "string", "minLength": 1},
+        "required_attachment_ids": {"$ref": "#/$defs/id_array"},
+        "parent_frame_ids": {"$ref": "#/$defs/id_list"},
+        "support": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "subject_asset_id", "anchor_asset_id", "relationship", "visibility"],
+          "properties": {
+            "status": {"enum": ["required", "not_required"]},
+            "subject_asset_id": {"type": ["string", "null"], "minLength": 1},
+            "anchor_asset_id": {"type": ["string", "null"], "minLength": 1},
+            "relationship": {"type": "string", "minLength": 1},
+            "visibility": {"enum": ["explicit_in_frame", "not_visible", "not_required"]}
+          }
+        },
+        "constraint_input": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "asset_id"],
+          "properties": {
+            "mode": {"enum": ["none", "scene_reference", "spatial_mockup", "depth_layout", "multi_view"]},
+            "asset_id": {"type": ["string", "null"], "minLength": 1}
+          }
         }
+      }
+    },
+    "panel_context": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "coverage_file",
+        "coverage_sha256",
+        "panel_id",
+        "phase",
+        "at_seconds",
+        "state"
+      ],
+      "properties": {
+        "coverage_file": {"$ref": "#/$defs/safe_relative_path"},
+        "coverage_sha256": {"$ref": "#/$defs/sha256"},
+        "panel_id": {"type": "string", "minLength": 1},
+        "phase": {"type": "string", "minLength": 1},
+        "at_seconds": {"type": "number"},
+        "state": {"type": "string", "minLength": 1}
       }
     },
     "frame": {
@@ -259,6 +318,8 @@
         "parallax_occlusion": {"$ref": "#/$defs/dynamic_field"},
         "exaggeration": {"$ref": "#/$defs/dynamic_field"},
         "canonical_asset_ids": {"$ref": "#/$defs/id_array"},
+        "panel_context": {"$ref": "#/$defs/panel_context"},
+        "truth_contract": {"$ref": "#/$defs/truth_contract"},
         "reference_roles": {
           "type": "array",
           "minItems": 1,

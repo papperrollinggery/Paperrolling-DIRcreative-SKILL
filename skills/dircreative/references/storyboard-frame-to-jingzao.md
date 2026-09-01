@@ -7,13 +7,19 @@ handoff to `jingzao-image-forge`, not a copy of its craft rules into DIRcreative
 Persist and validate the chain with
 `docs/film-preproduction/schemas/storyboard-frame-to-jingzao.schema.json` and
 `python3 scripts/dircreative_storyboard_frame_handoff.py validate <receipt>`.
-Fixture packets may be checked without external roots. A generated production
+Legacy fixtures without `panel_context` need no external roots; panel fixtures
+need `--artifact-root` to resolve their design. A generated production
 packet must also pass `--artifact-root <project-output-root> --provider-root
 <jingzao-skill-root> --host-event-log <absolute Codex host JSONL>` so the
 validator can resolve every file, recompute every hash, and match each image to
 a completed host generation event. The log must resolve beneath the current
 host's `~/.codex/sessions` tree and outside the writable artifact root; an
 arbitrary producer-written JSONL is not accepted as host evidence.
+For production packets the resolved provider root must be disjoint from the
+artifact root and exactly match an installed `jingzao-image-forge` directory in
+`~/.codex/skills`, `~/.agents/skills`, or `~/.skillshub`. Symlink overlap and
+unregistered provider copies fail closed; ordinary CLI callers cannot extend
+the trusted catalog.
 
 ## Ownership and execution
 
@@ -59,6 +65,38 @@ canonical identity/state assets and reference sovereignty
 camera_action or composition references with must_not_control
 locked medium, aspect, palette, material, light, and target surface
 ```
+
+For detailed action-panel work, add the optional frame `panel_context`:
+`coverage_file`, its byte `coverage_sha256`, `panel_id`, `phase`, `at_seconds`,
+and `state`. Bind an immutable design sidecar; `frame_id` equals `panel_id`,
+while `shot_id` stays the real technical shot. Dispatch multiple panels of one
+shot as separate packets: the existing one-frame-per-shot packet rule remains.
+The validator checks the source design and exact panel state, not merely a
+matching display name. Returned prompts/images retain that same frame ID.
+This optional binding does not promote planning panels to clean model inputs
+or change legacy visual-completion and host-evidence requirements.
+
+## Scene/support truth gate
+
+High-risk panels require `truth_contract` binding scene/attachments, support,
+parents, and constraints. Identity/prop/style references cannot own background,
+ground, geography, or support. A bound spatial `layout` may own geometry and
+support, but must disclaim identity, material, texture, and final style. Prompt
+rows bind ordered inputs plus exact `reference_authority`; exactly one scene role
+must match `scene_asset_id`. Before execution, a detached trusted reviewer signs
+the exact prompt/authority/truth/coverage hashes and a no-conflict verdict;
+missing, failed, or drifted review blocks. Observed runs use the sealed request.
+Pixel review remains separate.
+
+If the installed Jingzao provides a production-manifest compiler, inspect its
+actual contract before using it. Map DIR `panel_id` to provider frame `id` and
+retain canonical `shot_id`; pass one complete image specification per frame.
+Keep coverage metadata out of model-facing prose. Consume each returned frame
+envelope through the existing spec/prompt/evidence chain, not a prose slice of
+a combined board. Provider coverage checks do not replace DIR's story-derived
+requirements: a provider's valid video-only row cannot waive a DIR-required
+contact/state image. An unavailable compiler falls back to individual validated
+Jingzao specs; never execute another task's unreleased worktree as the default.
 
 A missing asset may block identity correctness; it must not cause the camera to
 fall back to a centered asset showcase. Conversely, a strong composition

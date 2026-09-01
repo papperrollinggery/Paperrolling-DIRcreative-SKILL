@@ -26,6 +26,7 @@ creative work:
 | one shot or a few storyboard frames | Fast / `shot_optimization` or `storyboard_review` | `routes/fast-task.md` | `references/shot-storyboard.md` |
 | bounded model prompt change | Fast / `prompt_revision` | `routes/fast-task.md` | `references/prompt-model.md` |
 | other bounded revision | Fast / `bounded_revision` | `routes/fast-task.md` | none |
+| analyze or distill a reference video / local clip into AI filmmaking methods | Studio / `video_distillation` | `routes/studio-development.md` | `references/video-distillation.md` |
 | recurring character, costume master sheet, headless derivative, or garment detail board | Studio / `film_development` | `routes/studio-development.md` | `references/character-master-sheet.md` |
 | complete or multi-output film work, including its visual asset plan | Studio / `film_development` | `routes/studio-development.md` | `references/film-development.md` |
 | real generation or client delivery | Delivery / `generation_authorization` or `client_delivery` | `routes/delivery-audit.md` | `references/generation-delivery.md` |
@@ -53,7 +54,8 @@ before the result and uses one Route Card and one task reference.
 
 ## Intelligent Skill Stack
 
-Use one advisory stack after mode selection: one craft owner, non-overlapping
+Select by the current deliverable stage; reselect when that stage changes.
+Use one advisory stack: one craft owner, non-overlapping
 collaborators, at most one validator, and an execution adapter only for an
 authorized side effect. DIR or valid-handoff ADCO retains artifact/state.
 Fast/Studio/Delivery load at most 1/3/1 bodies inside 14/20/30KB. Prefer the host

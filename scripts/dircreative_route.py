@@ -244,6 +244,7 @@ def classify_route(
     if maintenance_target and maintenance_action:
         return "source_maintenance", ["repository_maintenance", "skill_runtime_forbidden"]
 
+
     if has(
         actionable,
         r"客户交付|客户可见|正式交付|发给客户|发送客户|client[- ]visible|"
@@ -260,6 +261,17 @@ def classify_route(
     ):
         return "generation_authorization", ["real_generation_requires_authorization"]
 
+    # Study the media itself; prompt-only criticism stays on the existing route.
+    study_action = explicit_action_match(
+        actionable, r"拆解|蒸馏|拉片|深度分析|分析|distill|analy[sz]e|break\s+down"
+    )
+    study_media = has(text, r"视频|参考片|成片|video|clip|reference\s+film|\.(?:mp4|mov|mkv|webm|m4v|avi)\b|https?://(?:v\.douyin\.com|www\.douyin\.com/video/|(?:www\.)?youtube\.com/watch|youtu\.be/|(?:www\.)?vimeo\.com/|(?:www\.)?tiktok\.com/)")
+    text_artifact_only = has(actionable, r"提示词|脚本|文案|台词|分镜|prompt|script|copy|storyboard") and not has(
+        text, r"蒸馏|拉片|参考片|成片|https?://|\.(?:mp4|mov|mkv|webm|m4v|avi)\b"
+    )
+    if study_action and study_media and not text_artifact_only:
+        return "video_distillation", ["reference_media_study", "evidence_before_inference"]
+
     if has(
         actionable,
         r"方向(?:互不兼容|不可兼容|冲突)|不可兼容(?:的)?(?:创意)?方向|incompatible (?:creative )?directions?|material concept conflict",
@@ -271,7 +283,7 @@ def classify_route(
         r"第三句|一句|一段|单镜头|这个镜头|一个镜头|少量分镜|局部分镜|局部|"
         r"one sentence|one paragraph|single shot|this shot|few storyboards|bounded",
     )
-    revision = has(actionable, r"修改|优化|调整|润色|改写|评审|补充|改(?:得|成|为)|revise|rewrite|polish|adjust|review|improve")
+    revision = has(actionable, r"修改|优化|调整|润色|改写|评审|补充|分析|改(?:得|成|为)|revise|rewrite|polish|adjust|review|improve|analy[sz]e")
     complete = has(actionable, r"完整|全套|多产物|概念\s*\+|故事\s*\+|脚本\s*\+\s*分镜|full|complete|multi[- ]artifact")
     broad_scope = has(
         actionable,
@@ -303,6 +315,8 @@ def classify_deliverable_layer(request: str, route: str) -> tuple[str | None, bo
         return None, False
     if route == "adco_specialist_exchange":
         return "bounded_specialist_output", False
+    if route == "video_distillation":
+        return "reference_analysis", False
     if route != "film_development":
         return "bounded_output", False
 

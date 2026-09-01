@@ -6,7 +6,8 @@ revised shot card or the highest-impact findings, not a process preamble.
 ## Review order
 
 1. Narrative purpose: what changes in this shot, and why must the audience see it?
-2. Visible action: one dominant action or readable beat per shot/generation unit.
+2. Visible action: one readable causal task per shot; a generation unit may join
+   connected shots/phases within the selected model's tested capacity.
 3. Camera logic: size, angle, lens intent, support, and a movement with a physical
    start target and end target.
 4. Blocking: subject start, path, end, eyeline, screen direction, and axis when
@@ -34,6 +35,11 @@ For a review, rank only material problems, explain their audience or production
 impact, and provide a concrete replacement. Do not turn a few frames into a full
 project gate. Do not invent missing wardrobe, product, location, or source facts;
 mark the exact unknown that changes the shot.
+
+A scene reference is not a storyboard. A shot may need several action panels;
+a hard-cut reverse angle is a different shot. For explicit detailed/full
+preproduction, use the panel-coverage stage described in `storyboard-coverage.md`.
+Keep planned panels separate from actual PNGs and from clean model-input roles.
 
 ## Narrative frames and transition proof
 

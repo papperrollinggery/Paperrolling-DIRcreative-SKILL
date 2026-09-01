@@ -1670,7 +1670,10 @@ def main() -> int:
     print(f"installed DIRcreative skill package: {target}")
     print("verify with:")
     print(f"  cd {target}")
-    print("  python3 scripts/validate_project.py")
+    validation_flags = "--installed-package"
+    if not args.formal_install:
+        validation_flags += " --allow-development-install"
+    print(f"  python3 scripts/validate_project.py {validation_flags}")
     return 0
 
 

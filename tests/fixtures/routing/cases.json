@@ -66,5 +66,21 @@
     ,{"id": "english_client_refused_generation_keeps_gate", "input": "$dircreative the client refused generation; generate now.", "mode": "delivery", "route": "generation_authorization", "external_user_gate": "generation_authorization", "action": "stop_for_external_gate"}
     ,{"id": "english_client_has_not_approved_delivery_keeps_gate", "input": "$dircreative the client hasn't approved delivery; send to the client now.", "mode": "delivery", "route": "client_delivery", "external_user_gate": "client_delivery_approval", "action": "stop_for_external_gate"}
     ,{"id": "english_client_refused_delivery_keeps_gate", "input": "$dircreative the client refused delivery; send to the client now.", "mode": "delivery", "route": "client_delivery", "external_user_gate": "client_delivery_approval", "action": "stop_for_external_gate"}
+    ,{"id": "distill_link", "input": "$dircreative 拆解这个视频 https://example.org/reference.mp4，给我 AI 制作报告", "route": "video_distillation", "mode": "studio", "deliverable_layer": "reference_analysis", "shot_matrix_allowed": false, "external_user_gate": null}
+    ,{"id": "distill_local", "input": "$dircreative 深度分析 /tmp/reference.mov 的导演、配色和声音", "route": "video_distillation", "mode": "studio"}
+    ,{"id": "distill_english", "input": "$dircreative analyze this reference video and distill its filmmaking workflow", "route": "video_distillation", "mode": "studio"}
+    ,{"id": "distill_not_prompt", "input": "$dircreative 分析并修改这个视频提示词", "route": "prompt_revision", "mode": "fast"}
+    ,{"id": "distill_maintenance", "input": "维护 DIRcreative 源码仓库，新增视频蒸馏模式", "route": "source_maintenance", "mode": "fast", "action": "stop_skill_runtime"}
+    ,{"id": "distill_negated", "input": "$dircreative 不要分析视频，只修改脚本第三句", "route": "copy_revision", "mode": "fast"}
+    ,{"id":"distill_douyin_url","input":"$dircreative 拆解 https://v.douyin.com/example/，做 AI 制作报告","mode":"studio","route":"video_distillation"}
+    ,{"id":"distill_webm","input":"$dircreative 分析 /tmp/reference.webm","mode":"studio","route":"video_distillation"}
+    ,{"id":"distill_generation_gate","input":"$dircreative 拆解参考视频，之后需要真实生成","mode":"delivery","route":"generation_authorization","external_user_gate":"generation_authorization","action":"stop_for_external_gate"}
+    ,{"id":"distill_delivery_gate","input":"$dircreative 拆解参考视频，整理为客户可见交付","mode":"delivery","route":"client_delivery","external_user_gate":"client_delivery_approval","action":"stop_for_external_gate"}
+    ,{"id":"distill_authorized_delivery","input":"$dircreative 拆解参考视频，然后现在发给客户","mode":"delivery","route":"client_delivery","external_user_gate":null}
+
+    ,{"id":"video_script_analysis_not_study","input":"$dircreative 分析一下我们的广告视频脚本","mode":"fast","route":"copy_revision"}
+    ,{"id":"video_copy_analysis_not_study","input":"$dircreative 分析这个视频的文案第三句","mode":"fast","route":"copy_revision"}
+    ,{"id":"nonvideo_url_not_study","input":"$dircreative 分析 https://example.org/about","mode":"fast","route":"bounded_revision"}
+
   ]
 }

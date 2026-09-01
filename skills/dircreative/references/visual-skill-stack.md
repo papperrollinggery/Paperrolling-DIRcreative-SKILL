@@ -110,6 +110,15 @@ without a verified tool and cost boundary.
   headed and headless together, or create another controller.
 - Prompt preflight is before generation, output review is after real evidence,
   and iteration doctor prescribes the next bounded retry.
+- When explicitly requested or a specific gap warrants it, the optional
+  `higgsfield-acting`, `higgsfield-cinedance`, and `lira-image-prompts` references
+  can inform performance, timed camera/action writing, and local-edit reasoning
+  respectively. Read the available entry's local adaptation rules first. They
+  are bounded method references, not additional controllers or replacements for
+  Jingzao, the locked acting contract, or the exact-version Seedance compiler.
+  Do not import vendor model rankings, fixed word counts, automatic mirroring,
+  universal hard-cut/first-frame rules, or pixel-identity guarantees. Keep only
+  a demonstrated benefit; absent or unneeded references remain unused.
 - Audience-facing text keeps one language owner. `de-AI-writing` is the bounded
   meaning-preserving fallback; explicit “说人话 / 去 AI 味 / 自然一点” or residual
   template prose selects `shuorenhua` through `human_language_revision`.

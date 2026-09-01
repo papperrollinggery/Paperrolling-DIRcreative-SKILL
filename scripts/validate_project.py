@@ -1593,8 +1593,8 @@ def validate_skill_stack() -> None:
     require(proc.returncode == 0, f"Skill Stack audit failed:\n{proc.stderr}\n{proc.stdout}")
     for marker in [
         "DIRCREATIVE_SKILL_STACK_AUDIT: PASS",
-        '"positive_cases": 56',
-        '"negative_cases": 42',
+        '"positive_cases": 58',
+        '"negative_cases": 46',
         '"scenario_count": 44',
         '"provider_policy_count": 54',
         '"realistic_smoke_cases": 27',
@@ -6517,6 +6517,18 @@ def validate_release_distribution_contract() -> None:
 
 
 def validate_specialized_capability_behavior_audits() -> None:
+    require_path("scripts/dircreative_storyboard_coverage.py")
+    proc = run(["python3", "-m", "unittest", "discover", "-s", "tests", "-p", "test_storyboard_coverage.py", "-v"])
+    require(proc.returncode == 0, f"storyboard coverage tests failed:\n{proc.stderr}\n{proc.stdout}")
+    proc = run(["python3", "-m", "unittest", "discover", "-s", "tests", "-p", "test_panel_jingzao_binding.py", "-v"])
+    require(proc.returncode == 0, f"panel Jingzao binding tests failed:\n{proc.stderr}\n{proc.stdout}")
+    require_path("scripts/dircreative_video_distill.py")
+    require_path("tests/test_video_distill.py")
+    if shutil.which("ffmpeg") and shutil.which("ffprobe"):
+        proc = run(["python3", "-m", "unittest", "discover", "-s", "tests", "-p", "test_video_distill.py", "-v"])
+        require(proc.returncode == 0, f"video distillation media tests failed:\n{proc.stderr}\n{proc.stdout}")
+    else:
+        print("VIDEO_DISTILL_MEDIA_TESTS: SKIPPED (optional ffmpeg/ffprobe unavailable)")
     audits = [
         ("director harness", "scripts/dircreative_director_harness_audit.py", "DIRECTOR_HARNESS_AUDIT: PASS"),
         ("creative copy deck", "scripts/dircreative_creative_copy_deck_audit.py", "CREATIVE_COPY_DECK_AUDIT: PASS"),
