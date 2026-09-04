@@ -58,7 +58,7 @@ The minimum whole-film coverage is:
   `prop_continuity_board` records;
 - one `scene_geography_camera_fov_reference` per distinct location/state;
 - one individual `storyboard_frame` for every approved shot;
-- `professional_storyboard_motion_map` cells covering every shot exactly once,
+- a deterministically assembled `professional_storyboard_motion_map` whose cells cover every shot exactly once,
   with purpose, time, camera, blocking, continuity, sound/edit, and model risk;
 - each unit's required clean first/key/end frame;
 - a style board only when existing locks do not establish look/material truth.
@@ -73,13 +73,11 @@ plan ledger, action panels and necessary reverse/reaction coverage before
 production. Require its design/assets checks in addition to legacy coverage;
 `visual_assets_complete` alone does not certify action-panel completeness.
 
-Reselect craft per stage. Use installed `jingzao-image-forge` through
-`cinematic_storyboard_frames` only when frame direction, reference control or
-prompt compilation adds value. `downstream_use` is required: `rough_planning`
-stays ungated; `clean_model_input` and `full_preproduction` require the asset
-gate. Story, dialogue and ledger work need no Jingzao. Preserve asset truth and
-keep generation behind Delivery authorization.
-
+Reselect craft per stage. `pre_video_assets` makes required images but defers
+video; planned rows stay incomplete. Use the character contract for recurring
+identities. Select Jingzao only for complex spec/reference/edit or formal frame
+work; simple images stay direct. `rough_planning` stays ungated; clean/full
+preproduction needs the asset gate and scoped Delivery authorization.
 Persist with `runtime/visual-asset-plan.schema.json`, bound inventory and shot
 cards, exact per-shot time/action/sound/continuity/entity truth, dependencies,
 and inherited hashes. Valid coverage allows `plan_complete`, not generation.

@@ -509,7 +509,7 @@ def main() -> int:
 
     add_check(
         checks,
-        "example tree contains no real media assets",
+        "repository example-fixture hygiene excludes live media; this is not a project asset-completion claim",
         "examples/**/* media scan",
         lambda: (_ for _ in ()).throw(
             AssertionError(

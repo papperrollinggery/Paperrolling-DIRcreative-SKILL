@@ -20,7 +20,7 @@ maintenance becomes `source_maintenance` and stops Skill execution.
 Choose an obvious standalone route directly; do not run a script before useful
 creative work:
 
-| Request | Mode / route | Route Card | One task reference |
+| Request | Mode / route | Route Card | Active stage reference |
 | --- | --- | --- | --- |
 | bounded copy or script change | Fast / `copy_revision` | `routes/fast-task.md` | `references/copy-script.md` |
 | one shot or a few storyboard frames | Fast / `shot_optimization` or `storyboard_review` | `routes/fast-task.md` | `references/shot-storyboard.md` |
@@ -38,8 +38,8 @@ A schema-only handoff fails closed; verify its descriptor, locked hashes, brief,
 capabilities, exchange index, snapshot, and isolated output/receipt scope. It is
 not a mandatory creative preflight.
 
-Read exactly one selected Route Card, then only the task reference in the table.
-Do not follow references from that card into another protocol chain. Optional
+Read exactly one selected Route Card, then only the active task reference.
+Replace that reference instead of stacking stages. Optional
 model/source evidence is fetched only when a current claim or real execution
 depends on it.
 
@@ -54,10 +54,10 @@ before the result and uses one Route Card and one task reference.
 
 ## Intelligent Skill Stack
 
-Select by the current deliverable stage; reselect when that stage changes.
 Use one advisory stack: one craft owner, non-overlapping
 collaborators, at most one validator, and an execution adapter only for an
 authorized side effect. DIR or valid-handoff ADCO retains artifact/state.
+Keep the selected craft when attaching an execution adapter.
 Fast/Studio/Delivery load at most 1/3/1 bodies inside 14/20/30KB. Prefer the host
 catalog; scan only when absent, never run discovered code or expose paths.
 Liu/Sophia are explicit overlays; `ai-visual-production-director` is reference-
@@ -89,8 +89,9 @@ storyboards are narrative beats. Only explicit technical/full-preproduction
 scope proceeds to shot and asset matrices. Whole-film work derives scene,
 identity, per-shot board, director-board, and model-input coverage before
 generation; representative images are never the whole film.
-Repeated assets use the staged `asset_foundation` pass; only a hash-bound,
-fully covered pass plus scoped stress verdict may enter Seedance compilation.
+Repeated assets use selected `asset_foundation` design stages before images;
+only a hash-bound, fully covered pass plus scoped post-image stress verdict may
+enter Seedance compilation.
 
 ### Delivery
 

@@ -2,9 +2,11 @@
 
 Status: supporting guide for resume, handoff, Delivery, and completion audits.
 It is not a Fast or ordinary Studio startup contract. The active v2 working-state owner is
-`skills/dircreative/runtime/state-snapshot.schema.json`. It contains only project,
-route, locked facts, assumptions, active/stale outputs, open questions, and the two
-external authorization booleans.
+`skills/dircreative/runtime/state-snapshot.schema.json`. It contains project,
+route, scoped image/video authorization, the active asset/stage contract, locked
+facts, assumptions, active/stale outputs, open questions, and client-delivery
+approval. New runs never collapse image and final-video authorization into one
+boolean.
 
 ## V2 Persistence Policy
 
@@ -69,6 +71,10 @@ Records with `superseded`, `withdrawn`, `archived`, or `removed` lifecycle never
 The user-facing current artifact list uses `canonical_path`, verifies existence first, and emits a clickable absolute file link in hosts that support it. Missing durable current files are P0 current-integrity failures, not warnings.
 
 `current.completion_requirements` declares required record kinds, logical IDs, manifest presence, and whether live acceptance is required. A current stage may use `status: complete` only when those requirements and a durable typed completion receipt pass. An empty projection or an empty self-declared completion contract cannot prove completion.
+
+Compact snapshot 2.0 used one ambiguous `generation_authorized` boolean. Migrate
+it with `scripts/dircreative_compact_state_migrate.py`; legacy `true` becomes
+`scope_conflict`, with image and video authorization false until reconfirmed.
 
 ## Supersession and tombstones
 

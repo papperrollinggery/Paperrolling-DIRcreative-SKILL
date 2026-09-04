@@ -755,6 +755,91 @@ def read_regular_file_once(path: Path, *, max_bytes: int, label: str) -> bytes:
         return sealed.read()
 
 
+def read_relative_regular_file_once(
+    root: Path,
+    relative: str,
+    *,
+    max_bytes: int,
+    label: str,
+    race_hook: Callable[[str, str], None] | None = None,
+) -> bytes:
+    """Read one project-relative file while pinning the complete directory chain."""
+    relative_path = PurePosixPath(relative)
+    if (
+        not relative
+        or relative_path.is_absolute()
+        or "\\" in relative
+        or any(part in {"", ".", ".."} for part in relative_path.parts)
+    ):
+        raise ValueError(f"{label} path must be a safe relative path")
+    child_fds: list[int] = []
+    child_links: list[tuple[int, str, tuple[int, int, int, int, int, int, int]]] = []
+    try:
+        with open_pinned_directory(root.resolve(strict=True)) as pinned:
+            parent_fd = pinned.fd
+            for component in relative_path.parts[:-1]:
+                before = os.stat(component, dir_fd=parent_fd, follow_symlinks=False)
+                if not stat.S_ISDIR(before.st_mode):
+                    raise ValueError(f"{label} parent is not a real directory")
+                descriptor = os.open(component, directory_open_flags(), dir_fd=parent_fd)
+                opened = os.fstat(descriptor)
+                after = os.stat(component, dir_fd=parent_fd, follow_symlinks=False)
+                if (
+                    stable_entry_identity(before) != stable_entry_identity(opened)
+                    or stable_entry_identity(after) != stable_entry_identity(opened)
+                ):
+                    os.close(descriptor)
+                    raise ValueError(f"{label} parent changed while opening")
+                child_fds.append(descriptor)
+                child_links.append((parent_fd, component, stable_entry_identity(opened)))
+                parent_fd = descriptor
+            if race_hook is not None:
+                race_hook("before_file_open", relative_path.as_posix())
+            filename = relative_path.parts[-1]
+            before = os.stat(filename, dir_fd=parent_fd, follow_symlinks=False)
+            if not stat.S_ISREG(before.st_mode) or before.st_nlink != 1:
+                raise ValueError(f"{label} must be a single-link regular file")
+            if before.st_size > max_bytes:
+                raise ValueError(f"{label} exceeds size limit ({max_bytes})")
+            descriptor = os.open(filename, regular_file_open_flags(), dir_fd=parent_fd)
+            try:
+                opened = os.fstat(descriptor)
+                if stable_entry_identity(before) != stable_entry_identity(opened):
+                    raise ValueError(f"{label} changed while opening")
+                chunks: list[bytes] = []
+                total = 0
+                while True:
+                    chunk = os.read(descriptor, min(64 * 1024, max_bytes + 1 - total))
+                    if not chunk:
+                        break
+                    chunks.append(chunk)
+                    total += len(chunk)
+                    if total > max_bytes:
+                        raise ValueError(f"{label} exceeds size limit ({max_bytes})")
+                after = os.fstat(descriptor)
+            finally:
+                os.close(descriptor)
+            linked_after = os.stat(filename, dir_fd=parent_fd, follow_symlinks=False)
+            if (
+                stable_entry_identity(opened) != stable_entry_identity(after)
+                or stable_entry_identity(after) != stable_entry_identity(linked_after)
+                or total != after.st_size
+            ):
+                raise ValueError(f"{label} changed while being read")
+            for ancestor_fd, component, identity in child_links:
+                linked = os.stat(component, dir_fd=ancestor_fd, follow_symlinks=False)
+                if not stat.S_ISDIR(linked.st_mode) or stable_entry_identity(linked) != identity:
+                    raise ValueError(f"{label} parent chain changed while being read")
+            pinned.revalidate(label=label)
+            return b"".join(chunks)
+    finally:
+        for descriptor in reversed(child_fds):
+            try:
+                os.close(descriptor)
+            except OSError:
+                pass
+
+
 def validated_members(
     tar: tarfile.TarFile,
     expected_version: str | None,

@@ -23,14 +23,22 @@ Persist and validate the machine packet with
   manifest and remains responsible for Prompt IR validation, exact capability
   card resolution, direct-input policy, rights, QA, retry, and status.
 
-For a Seedance 2.5 target, apply the installed `mr-li-seedance-25` 1.8.2 method
+For a Seedance 2.5 target, apply the installed `mr-li-seedance-25` 1.9.0 method
 first: confirm the project visual baseline, identify speaking-role voice inputs,
 estimate real performance capacity, bind assets/audio once per requested scope,
 and preserve its heading-free natural-paragraph format. The method body and its
 selected references use isolated method context when paired with this compiler.
+The handoff records `applied_unverified`; only the host's matching Skill Stack
+body/reference readback may promote the method to applied for that run.
+Keep project and one-off segment limits separate; run capacity preflight before
+writing and again after; cut on speaker changes without forcing one sentence per
+shot; bind only current-segment assets and do not freeze changing held/damaged
+states; return one natural generation unit plus its exact next source beat.
 Target intent alone never establishes model facts; the exact card/version/surface,
 DIR ownership, asset gate, handoff validator and preflight remain authoritative.
 If the provider is absent, retain the converter and report non-adoption.
+Encode that branch as `method_application.status: not_applied` with the observed
+version and reason; never forge a 1.9.0 application block to satisfy the schema.
 
 ## Required input packet
 

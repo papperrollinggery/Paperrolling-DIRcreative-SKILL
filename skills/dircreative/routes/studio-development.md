@@ -41,10 +41,12 @@ connected preproduction output set.
    explicit continuous start-end timecode; do not hide the timeline in prose.
 6. Use `concept_lock` only when incompatible directions would create materially
    different films. Do not manufacture alternatives or conflict.
-7. Validate only the current outputs and their direct dependencies. Label a
-   representative sample as incomplete for whole-film coverage.
+7. Validate current outputs and dependencies. Label a representative sample as
+   incomplete for whole-film coverage; `pre_video_assets` requires
+   `dircreative_pre_video_assets_gate.py` before return.
 8. Persist compact state only for a pause, cross-session resume, or multi-file
-   output that genuinely needs it.
+   output that genuinely needs it. Delegation must pass the consistency-only
+   `dircreative_request_scope_contract.py`; it grants no authorization.
 9. For existing projects, inspect supplied materials in place. Do not copy a
    source, reference, preview, or old immutable delivery merely to register it.
    Put regenerable QA in a replace-current cache and make one organization offer

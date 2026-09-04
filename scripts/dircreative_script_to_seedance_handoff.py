@@ -5,8 +5,11 @@ import argparse
 import hashlib
 import json
 import re
+import subprocess
 from pathlib import Path
 from typing import Any
+
+from dircreative_verify_release import read_regular_file_once, read_relative_regular_file_once
 
 from dircreative_validation_common import (
     add_error,
@@ -20,6 +23,9 @@ ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_PATH = ROOT / "docs/film-preproduction/schemas/script-to-seedance-handoff.schema.json"
 VALID_PATH = ROOT / "tests/fixtures/script-to-seedance/valid-handoff.json"
 CASES_PATH = ROOT / "tests/fixtures/script-to-seedance/cases.json"
+MODEL_SOURCES_PATH = ROOT / "docs/film-preproduction/sources/model-sources.yaml"
+MAX_AUTHORITATIVE_SCRIPT_BYTES = 8 * 1024 * 1024
+MAX_HANDOFF_BYTES = 8 * 1024 * 1024
 CONVERTER_SLOT_RE = re.compile(r"^【(图片|音频|视频)([1-9][0-9]*)】$")
 PLATFORM_SLOT_RE = re.compile(r"^@(Image|Audio|Video) ([1-9][0-9]*)$")
 PROMPT_PLATFORM_SLOT_RE = re.compile(r"@(Image|Audio|Video)\s+([1-9][0-9]*)")
@@ -77,6 +83,178 @@ def seconds(value: str) -> float:
     if parsed_seconds < 0 or parsed_seconds >= 60:
         raise ValueError("seconds component must be between 00 and 59")
     return int(minutes) * 60 + parsed_seconds
+
+
+def trusted_model_cards() -> dict[str, dict[str, Any]]:
+    ruby = (
+        "require 'yaml'; require 'json'; "
+        "data = YAML.safe_load(File.read(ARGV[0]), permitted_classes: [], aliases: false); "
+        "puts JSON.generate(data)"
+    )
+    proc = subprocess.run(
+        ["ruby", "-e", ruby, str(MODEL_SOURCES_PATH)],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    if proc.returncode != 0:
+        raise ValueError("model sources parse failed")
+    data = json.loads(proc.stdout)
+    models = data.get("models", [])
+    if not isinstance(models, list):
+        raise ValueError("model sources missing models")
+    return {
+        str(card["capability_card_id"]): card
+        for card in models
+        if isinstance(card, dict) and isinstance(card.get("capability_card_id"), str)
+    }
+
+
+def reference_limits(card: dict[str, Any]) -> dict[str, int] | None:
+    reference_modes = card.get("reference_modes")
+    if not isinstance(reference_modes, dict):
+        return None
+    typed = {
+        "max_image_references_per_unit": reference_modes.get("maximum_image_references"),
+        "max_video_references_per_unit": reference_modes.get("maximum_video_references"),
+        "max_audio_references_per_unit": reference_modes.get("maximum_audio_references"),
+    }
+    if not all(isinstance(value, int) and value >= 0 for value in typed.values()):
+        return None
+    total = reference_modes.get("maximum_total_references")
+    if not isinstance(total, int) or total <= 0:
+        total = sum(int(value) for value in typed.values())
+    return {"max_references_per_unit": total, **typed}
+
+
+def model_source_errors(document: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    try:
+        cards = trusted_model_cards()
+    except (OSError, ValueError, json.JSONDecodeError):
+        add_error(errors, "model_sources_unreadable", str(MODEL_SOURCES_PATH))
+        return errors
+
+    model_surface = document.get("model_surface", {})
+    card_id = model_surface.get("capability_card_id")
+    card = cards.get(card_id) if isinstance(card_id, str) else None
+    if card is None:
+        add_error(errors, "model_surface_capability_card_untrusted", str(card_id))
+        return errors
+
+    for field in ("model_key", "version", "provider_surface", "status"):
+        if model_surface.get(field) != card.get(field):
+            add_error(errors, "model_surface_registry_mismatch", field)
+
+    limits = document.get("provider_limits", {})
+    trusted_limits = reference_limits(card)
+    expected_values = {
+        **(trusted_limits or {}),
+        "source_type": card.get("source_type"),
+        "source": card.get("primary_url"),
+    }
+    if trusted_limits is None:
+        add_error(errors, "provider_limits_registry_missing", str(card_id))
+    for field, expected in expected_values.items():
+        if expected is None or limits.get(field) != expected:
+            add_error(errors, "provider_limits_registry_mismatch", field)
+    return errors
+
+
+def authoritative_script_errors(
+    document: dict[str, Any],
+    *,
+    project_root: Path | None,
+) -> list[str]:
+    errors: list[str] = []
+    script = document.get("authoritative_script", {})
+    relative_path = script.get("source_relative_path")
+    if project_root is None:
+        add_error(errors, "authoritative_script_root_required", str(script.get("script_id")))
+        return errors
+    if (
+        not isinstance(relative_path, str)
+        or not relative_path
+        or relative_path.startswith("/")
+        or "\\" in relative_path
+        or any(part in {"", ".", ".."} for part in relative_path.split("/"))
+    ):
+        add_error(errors, "authoritative_script_path_invalid", str(relative_path))
+        return errors
+    try:
+        root = project_root.resolve(strict=True)
+        source_path = root.joinpath(*relative_path.split("/"))
+    except (FileNotFoundError, OSError, RuntimeError, ValueError):
+        add_error(errors, "authoritative_script_file_invalid", str(relative_path))
+        return errors
+    try:
+        source_bytes = read_relative_regular_file_once(
+            root,
+            relative_path,
+            max_bytes=MAX_AUTHORITATIVE_SCRIPT_BYTES,
+            label="authoritative script",
+        )
+        actual_sha256 = hashlib.sha256(source_bytes).hexdigest()
+    except (OSError, ValueError):
+        add_error(errors, "authoritative_script_file_invalid", str(relative_path))
+        return errors
+    if actual_sha256 != script.get("sha256"):
+        add_error(errors, "authoritative_script_hash_mismatch", str(script.get("script_id")))
+    try:
+        source_text = source_bytes.decode("utf-8")
+    except UnicodeDecodeError:
+        add_error(errors, "authoritative_script_text_invalid", str(script.get("script_id")))
+        return errors
+    source_locators: set[tuple[int, str]] = set()
+    for line in script.get("dialogue_lines", []):
+        if not isinstance(line, dict) or not isinstance(line.get("text"), str):
+            continue
+        line_id = str(line.get("dialogue_line_id"))
+        if line["text"] not in source_text:
+            add_error(errors, "authoritative_dialogue_not_in_source", line_id)
+        line_number = line.get("source_line_number")
+        if not isinstance(line_number, int) or not 1 <= line_number <= len(source_text.splitlines()):
+            add_error(errors, "authoritative_dialogue_source_line_invalid", line_id)
+            continue
+        source_line = source_text.splitlines()[line_number - 1]
+        locator = (line_number, str(line.get("source_line_sha256")))
+        if locator in source_locators:
+            add_error(errors, "authoritative_dialogue_source_locator_duplicate", line_id)
+        source_locators.add(locator)
+        if source_line != line["text"]:
+            add_error(errors, "authoritative_dialogue_source_line_mismatch", line_id)
+        if line.get("source_line_sha256") != hashlib.sha256(source_line.encode("utf-8")).hexdigest():
+            add_error(errors, "authoritative_dialogue_source_line_hash_mismatch", line_id)
+    return errors
+
+
+def reference_budget_errors(
+    binding_ids: list[Any],
+    binding_map: dict[str, dict[str, Any]],
+    limits: dict[str, Any],
+    unit_id: Any,
+) -> list[str]:
+    errors: list[str] = []
+    total_limit = limits.get("max_references_per_unit")
+    if isinstance(total_limit, int) and len(binding_ids) > total_limit:
+        add_error(errors, "provider_reference_budget_exceeded", str(unit_id))
+    counts = {"image": 0, "video": 0, "audio": 0}
+    for binding_id in binding_ids:
+        binding = binding_map.get(binding_id) if isinstance(binding_id, str) else None
+        media_type = binding.get("media_type") if isinstance(binding, dict) else None
+        if media_type in counts:
+            counts[media_type] += 1
+    for media_type, count in counts.items():
+        limit = limits.get(f"max_{media_type}_references_per_unit")
+        if isinstance(limit, int) and count > limit:
+            add_error(
+                errors,
+                f"provider_{media_type}_reference_budget_exceeded",
+                str(unit_id),
+            )
+    return errors
 
 
 def asset_gate_errors(
@@ -559,7 +737,7 @@ def semantic_errors(document: dict[str, Any]) -> list[str]:
             if not isinstance(order, int):
                 add_error(errors, "binding_local_order_invalid", f"{binding_id}->{unit_id}")
 
-    max_references = int(document.get("provider_limits", {}).get("max_references_per_unit", 0))
+    provider_limits = document.get("provider_limits", {})
     used_units_by_binding: dict[str, set[str]] = {binding_id: set() for binding_id in binding_map}
     for prompt_unit in prompt_units:
         unit_id = prompt_unit.get("generation_unit_id")
@@ -574,8 +752,7 @@ def semantic_errors(document: dict[str, Any]) -> list[str]:
             add_error(errors, "prompt_paragraph_separator_missing", str(unit_id))
         if unit_id not in unit_map:
             add_error(errors, "prompt_generation_unit_unresolved", str(unit_id))
-        if len(binding_ids) > max_references:
-            add_error(errors, "provider_reference_budget_exceeded", str(unit_id))
+        errors.extend(reference_budget_errors(binding_ids, binding_map, provider_limits, unit_id))
         local_orders: list[int] = []
         for binding_id in binding_ids:
             if isinstance(binding_id, str) and isinstance(unit_id, str):
@@ -669,9 +846,142 @@ def semantic_errors(document: dict[str, Any]) -> list[str]:
     return errors
 
 
+def method_application_errors(document: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    method = document.get("method_application", {})
+    version = document.get("model_surface", {}).get("version")
+    if version == "2.5":
+        if method.get("status") == "applied_unverified":
+            if (
+                method.get("provider_skill_id") != "mr-li-seedance-25"
+                or method.get("metadata_version") != "1.9.0"
+                or method.get("observed_metadata_version") != "1.9.0"
+                or method.get("authority") != "isolated_method_only"
+                or method.get("non_adoption_reason") is not None
+            ):
+                add_error(errors, "seedance25_method_application_invalid", "v1.9.0 receipt mismatch")
+                return errors
+        elif method.get("status") == "not_applied":
+            if (
+                method.get("authority") != "converter_fallback"
+                or method.get("non_adoption_reason") is None
+            ):
+                errors.append("seedance25_method_non_adoption_invalid")
+                return errors
+        else:
+            add_error(errors, "seedance25_method_application_invalid", "status missing or invalid")
+            return errors
+    if version != "2.5" and method:
+        errors.append("seedance25_method_application_not_allowed_for_other_version")
+        return errors
+    project_limit = method.get("project_default_segment_max_seconds")
+    current_limit = method.get("current_segment_max_seconds")
+    if version == "2.5" and (
+        not isinstance(project_limit, (int, float))
+        or not isinstance(current_limit, (int, float))
+        or project_limit > 30
+        or current_limit > 30
+    ):
+        errors.append("seedance25_method_segment_limit_invalid")
+    if method.get("current_limit_scope") == "project_default" and current_limit != project_limit:
+        errors.append("segment_limit_scope_mismatch")
+    units = {
+        str(item.get("generation_unit_id")): item
+        for item in document.get("generation_units", [])
+        if isinstance(item, dict)
+    }
+    capacity = method.get("capacity_preflight", [])
+    capacity_map = {
+        str(item.get("generation_unit_id")): item
+        for item in capacity
+        if isinstance(item, dict)
+    }
+    if set(capacity_map) != set(units) or len(capacity_map) != len(capacity):
+        errors.append("capacity_preflight_unit_coverage_invalid")
+    dialogue_by_unit: dict[str, int] = {unit_id: 0 for unit_id in units}
+    speakers_by_shot: dict[str, set[str]] = {}
+    shot_to_unit = {
+        str(shot.get("shot_id")): str(shot.get("generation_unit_id"))
+        for shot in document.get("shots", [])
+        if isinstance(shot, dict)
+    }
+    for line in document.get("authoritative_script", {}).get("dialogue_lines", []):
+        if not isinstance(line, dict):
+            continue
+        speaker = str(line.get("speaker_entity_id"))
+        text = str(line.get("text", ""))
+        line_unit_ids: set[str] = set()
+        for shot_id in line.get("shot_ids", []):
+            speakers_by_shot.setdefault(str(shot_id), set()).add(speaker)
+            unit_id = shot_to_unit.get(str(shot_id))
+            if unit_id in dialogue_by_unit:
+                line_unit_ids.add(unit_id)
+        for unit_id in line_unit_ids:
+            dialogue_by_unit[unit_id] += len(text)
+    if any(len(speakers) > 1 for speakers in speakers_by_shot.values()):
+        add_error(errors, "dialogue_speaker_change_requires_new_shot", "one shot has multiple speakers")
+    for unit_id, unit in units.items():
+        entry = capacity_map.get(unit_id, {})
+        if entry.get("dialogue_characters") != dialogue_by_unit[unit_id]:
+            errors.append(f"capacity_dialogue_count_mismatch:{unit_id}")
+        declared_scene_type = entry.get("scene_type")
+        if dialogue_by_unit[unit_id] == 0 and declared_scene_type != "action":
+            errors.append(f"capacity_scene_type_mismatch:{unit_id}")
+        if dialogue_by_unit[unit_id] > 0 and declared_scene_type not in {"dialogue", "mixed"}:
+            errors.append(f"capacity_scene_type_mismatch:{unit_id}")
+        ordered_unit_ids = list(units)
+        unit_index = ordered_unit_ids.index(unit_id)
+        expected_next = (
+            units[ordered_unit_ids[unit_index + 1]]["shot_ids"][0]
+            if unit_index + 1 < len(ordered_unit_ids)
+            else None
+        )
+        expected_claim = "segment_only" if expected_next is not None else "scene_complete"
+        if (
+            entry.get("next_source_start") != expected_next
+            or entry.get("scene_completion_claim") != expected_claim
+        ):
+            errors.append(f"capacity_next_source_or_completion_mismatch:{unit_id}")
+        for field in ("estimated_seconds", "draft_review_seconds"):
+            value = entry.get(field)
+            if (
+                not isinstance(value, (int, float))
+                or isinstance(value, bool)
+                or not isinstance(current_limit, (int, float))
+                or value < unit.get("duration_seconds", 0)
+                or value > current_limit
+            ):
+                errors.append(f"capacity_limit_exceeded:{unit_id}:{field}")
+        if isinstance(current_limit, (int, float)) and unit.get("duration_seconds", 0) > current_limit:
+            errors.append(f"generation_unit_exceeds_method_limit:{unit_id}")
+    forbidden_surface_markers = (
+        "【全局画面与声音】",
+        "【素材绑定】",
+        "【镜头1】",
+        "为后期片名留白",
+        "适合叠加字幕",
+    )
+    packaging_heading_re = re.compile(
+        r"(?im)^\s*(?:#{1,6}\s*)?(?:work\s*title|director|作品名|导演|片名|章节名)\s*(?:[:：]|[—–-])"
+    )
+    generic_heading_re = re.compile(
+        r"(?im)^\s*(?:#{1,6}\s+\S.*|[【\[][^\n】\]]{2,48}[】\]]\s*)$"
+    )
+    for prompt in document.get("prompt_units", []):
+        text = str(prompt.get("prompt_text", ""))
+        if (
+            any(marker in text for marker in forbidden_surface_markers)
+            or packaging_heading_re.search(text)
+            or generic_heading_re.search(text)
+        ):
+            errors.append(f"formal_prompt_surface_not_clean:{prompt.get('generation_unit_id')}")
+    return list(dict.fromkeys(errors))
+
+
 def validate(
     document: dict[str, Any],
     *,
+    project_root: Path | None = None,
     asset_foundation_path: Path | None = None,
     asset_stress_path: Path | None = None,
     asset_artifact_root: Path | None = None,
@@ -682,7 +992,11 @@ def validate(
     structural = schema_errors(document)
     if structural:
         return structural
-    return semantic_errors(document) + asset_gate_errors(
+    source_root = project_root
+    return model_source_errors(document) + authoritative_script_errors(
+        document,
+        project_root=source_root,
+    ) + semantic_errors(document) + method_application_errors(document) + asset_gate_errors(
         document,
         asset_foundation_path=asset_foundation_path,
         asset_stress_path=asset_stress_path,
@@ -708,6 +1022,7 @@ def main() -> int:
     subparsers.add_parser("self-test")
     validate_parser = subparsers.add_parser("validate")
     validate_parser.add_argument("path", type=Path)
+    validate_parser.add_argument("--project-root", type=Path)
     validate_parser.add_argument("--asset-foundation-pass", type=Path)
     validate_parser.add_argument("--asset-stress-report", type=Path)
     validate_parser.add_argument("--asset-artifact-root", type=Path)
@@ -721,9 +1036,26 @@ def main() -> int:
         print(f"DIRCREATIVE_SCRIPT_TO_SEEDANCE_HANDOFF_AUDIT: {'PASS' if not failures else 'FAIL'}")
         return 0 if not failures else 1
 
-    document = load_json(args.path)
+    try:
+        raw_document = read_regular_file_once(
+            args.path,
+            max_bytes=MAX_HANDOFF_BYTES,
+            label="handoff",
+        )
+        document = json.loads(raw_document.decode("utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
+        error_code = "handoff_too_large" if "exceeds size limit" in str(exc) else "handoff_input_invalid"
+        print(
+            json.dumps(
+                {"path": str(args.path), "errors": [error_code]},
+                ensure_ascii=False,
+                indent=2,
+            )
+        )
+        return 1
     errors = validate(
         document,
+        project_root=args.project_root,
         asset_foundation_path=args.asset_foundation_pass,
         asset_stress_path=args.asset_stress_report,
         asset_artifact_root=args.asset_artifact_root,

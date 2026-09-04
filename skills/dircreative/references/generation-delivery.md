@@ -48,14 +48,25 @@ one question that names the exact missing authorization or input.
 
 Once authorized:
 
-- Call an available compatible media tool now. A prompt, plan, preview, or
+- First validate the canonical visual-plan JSON; CSV/Markdown never replaces it.
+  Every image call needs a saved exact packet accepted by
+  `dircreative_asset_execution_gate.py --execution-task-id <host task id>`.
+  Standalone images use `asset_only` scope and `still` delivery: null time/rate
+  fields, empty timelines, and no whole-film completion claim.
+- Call an available compatible media tool now after the role-specific asset
+  execution gate passes. A prompt, plan, preview, or
   “ready” state is not a generated result. If no compatible tool is available,
   return `TOOL_BLOCKED` or a clearly labeled external handoff.
-- For a new image sequence without locked identity, generate the identity reference first.
+- For a new image sequence without locked identity, generate and review the identity reference first.
   Select the first required identity asset from the matrix, lock or reject it,
   then continue one dependency layer and one shot at a time while inheriting
   character, product, prop, scene, and look truth. Inspect the saved file, not
   only the chat preview, and retry one failed variable at a time.
+- Dependency unlock needs the full visual manifest plus either host-registry
+  signature or a separate Codex task's sealed request, image view and host claim;
+  reviewer labels and self-hashes are insufficient.
+- A headed character master needs the `character-master-sheet.md` Vision sidecar;
+  prose review alone cannot unlock another asset.
 - In an explicitly delegated test or smoke evaluation, choose the smallest
   representative assets and approve, reject, or retry them yourself. Continue
   without asking for test-only confirmation; test evidence is never client or
@@ -78,15 +89,9 @@ Once authorized:
   states. A generic `accept` is insufficient. Legacy low-risk candidates remain
   compatible after their risk source is hash-bound; they need no scene/support
   manifest, spatial layout, or semantic truth review.
-- Only for a formal release or global-install forward test, keep the execution
-  evidence separate from visual judgment: bind the exact candidate, invocation,
-  prompt, ordered references, tool observation, and outputs to a bounded prefix
-  of the host's raw event log. The invocation must be an exact sealed user request,
-  not a receipt-only string. Then give a different task a sealed request containing
-  only raw references, outputs, and rubric; bind one actual image-view event per
-  output plus the review claim. Label this evidence `unsigned_host_trace` and label
-  visual conclusions as reviewer judgment. Do not add this receipt work to normal
-  creative generation.
+- Formal release/global-install forward tests additionally bind the exact request,
+  prompt, references and outputs to a bounded host-log prefix, then use a separate
+  image-view task. `unsigned_host_trace` is execution evidence, never visual approval.
 
 `visual_assets_complete` is allowed only when every required matrix row has a
 fully decodable canonical PNG inside the evidence root; scene, style, per-shot

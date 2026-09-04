@@ -136,6 +136,16 @@ Use `skills/dircreative/assets/visualizations/stage-surface-registry.json#image-
 - The visible text inside each storyboard cell must follow this structure: `S03 00:18-00:24 | Narrative purpose: ... | Lens/support/movement: ... | Blocking/path: ... | Continuity: ... | Sound/edit: ... | Model risk: ...`.
 - When adapting external/community prompt examples, keep only the reusable structure. Do not copy a Reddit, X, or prompt-library recipe into an image prompt unless it has been converted into DIRcreative source truth, material role, prompt contract, targeted negative constraints, and falsifiable success criteria.
 - Record `visual_output_mode`, `execution_capabilities`, and `asset_output` for every image.
+- Use `scripts/dircreative_prompt_compiler.py` as the executable compiler; the
+  media gate only revalidates its content-addressed output and never rewrites it.
+- For `storyboard_frame` and clean-frame roles, the accepted prompt is the exact
+  prompt read back from a production `storyboard_frame_to_jingzao_v1` manifest,
+  bound to the installed Jingzao Skill and the active shot truth. A locally
+  reconstructed DIR helper prompt is invalid. Assemble the professional
+  storyboard/motion page deterministically from approved individual frames and
+  shot-card text with `scripts/dircreative_storyboard_page_assembler.py`; never
+  ask imagegen to redraw that overview page. Write the PNG and assembly receipt
+  into the project, then bind and visually review them through the normal plan.
 - Include selected pattern IDs, exact labels, art-directed layout policy, material truth, consistency locks, and surface integrity guard.
 - Treat `surface_integrity_guard_v1` fixed wording as an optional internal QA macro, never a required Image2/GPT Image suffix. Default it off; activate it only for an observed matching failure or recorded A/B eval, preserve the control prompt, and never use its word `transparent` as evidence of alpha-background support.
 - Retry prompts must change one variable at a time: subject/product identity, primary action, camera/framing, look/material/light, reference binding, or output control. Record the failure ID and smallest upstream artifact being corrected.
@@ -146,8 +156,11 @@ Use `skills/dircreative/assets/visualizations/stage-surface-registry.json#image-
 - When Creative Production is used, `render_moodboard_board_widget` is the review surface and is not the source of truth. Write the candidate, QA status, and user lock state back into `.dircreative/runs/` or the relevant manifest.
 - A Creative Production candidate starts as `generated_candidate`; do not mark it `user_locked` until self-QA passes and the real user locks it.
 - Do not compile locked image generation tasks from `simulated_fixture` decisions in a live run.
-- Do not generate images.
-- Validate Prompt IR v1.1 before compiling. Treat `prompt-ir.yaml` as an authoring template, not as the executable schema.
+- In `prompt_only` and `external_generation`, do not call image tools. In an
+  authorized `assisted_generation` handoff, return the validated prompt and
+  packet to the Delivery executor; this compiler still does not perform the
+  media call itself.
+- Validate Prompt IR v1.1 before compiling DIR-owned prompts. Treat `prompt-ir.yaml` as an authoring template, not as the executable schema; Jingzao-owned frame prompts use their validated production handoff and prompt manifest instead.
 - Keep source locators, hashes, entity IDs, capability evidence, QA, retry, and post-production metadata inside Prompt IR/manifests. The image model receives only attached reference roles, observable visual instructions, preserve/change boundaries, and targeted current constraints.
 
 ## Prompt IR and look closure

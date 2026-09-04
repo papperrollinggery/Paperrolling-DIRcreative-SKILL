@@ -9,6 +9,8 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
+from dircreative_verify_release import read_relative_regular_file_once
+
 from dircreative_validation_common import (
     add_error,
     apply_mutations,
@@ -166,7 +168,46 @@ def schema_errors(document: dict[str, Any]) -> list[str]:
     return validate_schema(document, SCHEMA_PATH)
 
 
+def source_provenance_errors(document: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    planning = set(document.get("planning_source_ids", []))
+    canonical = set(document.get("canonical_asset_ids", []))
+    if planning & canonical:
+        add_error(errors, "planning_source_promoted", ",".join(sorted(planning & canonical)))
+    source_assets = [item for item in document.get("source_assets", []) if isinstance(item, dict)]
+    source_ids = [str(item.get("asset_id")) for item in source_assets]
+    if len(source_ids) != len(set(source_ids)):
+        add_error(errors, "source_asset_id_duplicate", str(source_ids))
+    canonical_records = {
+        str(item.get("asset_id"))
+        for item in source_assets
+        if item.get("source_kind") == "canonical_asset" and item.get("role") == "canonical"
+    }
+    planning_records = {
+        str(item.get("asset_id"))
+        for item in source_assets
+        if item.get("source_kind") == "planning_only" and item.get("role") == "planning_only"
+    }
+    if canonical_records != canonical or planning_records != planning:
+        add_error(errors, "source_asset_role_mismatch", str(document.get("pass_id")))
+    provenance_by_path: dict[str, tuple[Any, Any]] = {}
+    provenance_by_hash: dict[str, tuple[Any, Any]] = {}
+    for source in source_assets:
+        role = (source.get("source_kind"), source.get("role"))
+        for identity, role_map in (
+            (str(source.get("relative_path")), provenance_by_path),
+            (str(source.get("sha256")), provenance_by_hash),
+        ):
+            prior = role_map.get(identity)
+            if prior is not None and prior != role:
+                add_error(errors, "source_asset_alias_role_conflict", str(source.get("asset_id")))
+            role_map[identity] = role
+    return errors
+
+
 def semantic_errors(document: dict[str, Any], *, artifact_root: Path | None) -> list[str]:
+    if document.get("planned_asset_ids") or document.get("stress_test_binding") is None:
+        return ["asset_design_not_certified_for_video"]
     errors: list[str] = []
     stages = [item for item in document.get("stages", []) if isinstance(item, dict)]
     actual_stage_ids = [str(item.get("stage_id")) for item in stages]
@@ -253,44 +294,11 @@ def semantic_errors(document: dict[str, Any], *, artifact_root: Path | None) -> 
     if complete and not all_passed:
         add_error(errors, "incomplete_stage_promoted", str(document.get("pass_id")))
 
-    planning = set(document.get("planning_source_ids", []))
+    errors.extend(source_provenance_errors(document))
     canonical = set(document.get("canonical_asset_ids", []))
-    if planning & canonical:
-        add_error(errors, "planning_source_promoted", ",".join(sorted(planning & canonical)))
-    source_assets = [item for item in document.get("source_assets", []) if isinstance(item, dict)]
-    source_ids = [str(item.get("asset_id")) for item in source_assets]
-    if len(source_ids) != len(set(source_ids)):
-        add_error(errors, "source_asset_id_duplicate", str(source_ids))
-    canonical_records = {
-        str(item.get("asset_id"))
-        for item in source_assets
-        if item.get("source_kind") == "canonical_asset" and item.get("role") == "canonical"
-    }
-    planning_records = {
-        str(item.get("asset_id"))
-        for item in source_assets
-        if item.get("source_kind") == "planning_only" and item.get("role") == "planning_only"
-    }
-    if canonical_records != canonical or planning_records != planning:
-        add_error(errors, "source_asset_role_mismatch", str(document.get("pass_id")))
-    provenance_by_path: dict[str, tuple[Any, Any]] = {}
-    provenance_by_hash: dict[str, tuple[Any, Any]] = {}
-    for source in source_assets:
-        role = (source.get("source_kind"), source.get("role"))
-        for identity, role_map in (
-            (str(source.get("relative_path")), provenance_by_path),
-            (str(source.get("sha256")), provenance_by_hash),
-        ):
-            prior = role_map.get(identity)
-            if prior is not None and prior != role:
-                add_error(errors, "source_asset_alias_role_conflict", str(source.get("asset_id")))
-            role_map[identity] = role
-        if artifact_root is not None:
-            verify_source_file(
-                source,
-                artifact_root=artifact_root,
-                errors=errors,
-            )
+    if artifact_root is not None:
+        for source in document.get("source_assets", []):
+            verify_source_file(source, artifact_root=artifact_root, errors=errors)
 
     target_shots = set(document.get("target_shot_ids", []))
     stress = document.get("stress_test_binding", {})
@@ -341,6 +349,85 @@ def validate(document: dict[str, Any], *, artifact_root: Path | None = None) -> 
     if structural:
         return structural
     return semantic_errors(document, artifact_root=artifact_root)
+
+
+def validate_design(
+    document: dict[str, Any], *, artifact_root: Path, asset_id: str, role: str,
+) -> list[str]:
+    """Validate selected pre-image design stages without requiring their output images."""
+    errors = schema_errors(document)
+    if errors:
+        return errors
+    required_stages = {
+        "character_identity_reference": ("identity_state", "character_continuity"),
+        "product_identity_board": ("production_design", "production_design"),
+        "prop_continuity_board": ("production_design", "production_design"),
+        "scene_geography_camera_fov_reference": ("camera_geography", "camera_geography"),
+        "lighting_material_style_board": ("material_response", "material_physics"),
+    }
+    stage_id, gap = required_stages.get(role, (None, None))
+    if (
+        stage_id is None or document["status"] != "in_progress"
+        or asset_id not in document.get("planned_asset_ids", [])
+        or asset_id in document["canonical_asset_ids"]
+        or document["compile_gate"]["status"] != "blocked"
+        or not document["compile_gate"]["reason_codes"]
+        or document["stress_test_binding"] is not None
+    ):
+        return ["asset_design_scope_invalid"]
+    stages = document["stages"]
+    ids = [stage["stage_id"] for stage in stages]
+    contracts = {name: (index, owner, validator) for index, (name, owner, validator) in enumerate(STAGE_CONTRACT, 1)}
+    if stage_id not in ids or len(ids) != len(set(ids)) or any(name not in contracts or name == "stress_certification" for name in ids):
+        return ["asset_design_stage_set_invalid"]
+    if [contracts[name][0] for name in ids] != sorted(contracts[name][0] for name in ids):
+        return ["asset_design_stage_order_invalid"]
+    # Stage payloads describe the planned IDs here; no generated/canonical status is granted.
+    payload_context = {**document, "canonical_asset_ids": document["planned_asset_ids"]}
+    prior = None
+    for index, stage in enumerate(stages):
+        sequence, owner, validator = contracts[stage["stage_id"]]
+        if stage["sequence"] != sequence or stage["owner_skill_id"] != owner or stage["validator_skill_id"] != validator:
+            errors.append("asset_design_stage_owner_invalid")
+        if stage["status"] != "passed" or stage["missing_gaps"] or set(stage["covered_gaps"]) != set(stage["required_gaps"]):
+            errors.append("asset_design_stage_incomplete")
+        if stage["stage_id"] == stage_id and (
+            gap not in stage["covered_gaps"]
+            or (role == "character_identity_reference" and "character-continuity-bible" not in stage["collaborator_skill_ids"])
+        ):
+            errors.append("asset_design_required_craft_missing")
+        if (index == 0 and stage["previous_output_sha256"] is not None) or (
+            index > 0 and (stage["input_artifact"] != prior or stage["previous_output_sha256"] != prior["sha256"])
+        ):
+            errors.append("asset_design_hash_chain_invalid")
+        for key, intake in (("input_artifact", True), ("output_artifact", False)):
+            if intake and index > 0:
+                continue
+            binding = stage[key]
+            try:
+                raw = read_relative_regular_file_once(artifact_root, binding["relative_path"], max_bytes=8 * 1024 * 1024, label="asset design artifact")
+                if hashlib.sha256(raw).hexdigest() != binding["sha256"]:
+                    raise ValueError("design hash mismatch")
+                payload = json.loads(raw.decode("utf-8"))
+                if not isinstance(payload, dict):
+                    raise ValueError("design root invalid")
+            except (OSError, ValueError):
+                errors.append("asset_design_artifact_invalid")
+                continue
+            validate_stage_artifact_payload(payload_context, stage, payload, intake=intake, errors=errors)
+        prior = stage["output_artifact"]
+    errors.extend(source_provenance_errors(document))
+    source_ids = [item["asset_id"] for item in document["source_assets"]]
+    if len(source_ids) != len(set(source_ids)) or asset_id in source_ids:
+        errors.append("asset_design_source_set_invalid")
+    for source in document["source_assets"]:
+        try:
+            raw = read_relative_regular_file_once(artifact_root, source["relative_path"], max_bytes=32 * 1024 * 1024, label="asset design source")
+            if hashlib.sha256(raw).hexdigest() != source["sha256"]:
+                raise ValueError("source hash mismatch")
+        except (OSError, ValueError):
+            errors.append("asset_design_source_invalid")
+    return list(dict.fromkeys(errors))
 
 
 def materialize_fixture(template: dict[str, Any], artifact_root: Path) -> dict[str, Any]:

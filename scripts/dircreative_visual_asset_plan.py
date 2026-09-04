@@ -63,6 +63,7 @@ TECHNICAL_RECEIPT_VERSION = "2.0"
 VISUAL_QA_RULESET = "dircreative-role-truth-review-v2"
 VISUAL_QA_RECEIPT_VERSION = "2.0"
 VISUAL_REVIEW_MANIFEST_VERSION = "1.0"
+SCOPED_VISUAL_REVIEW_MANIFEST_VERSION = "1.1"
 SCHEMA_VERSION = "2.3"
 FUTURE_TIMESTAMP_TOLERANCE_SECONDS = 300
 TRUSTED_VISUAL_REVIEW_ADOPTION_REQUIRED = (
@@ -103,6 +104,7 @@ COMPLETION_CLAIMS = {
     "none",
     "plan_complete",
     "sample_plan_complete",
+    "asset_only_plan_complete",
     "sample_visual_assets_complete",
     "visual_assets_complete",
 }
@@ -125,7 +127,16 @@ ASSET_FIELDS = {
     "truth_sha256",
     "technical_receipt",
     "visual_qa_receipt",
+    "compile_route",
 }
+ASSET_OPTIONAL_FIELDS = {
+    "character_mode",
+    "derived_from_asset_id",
+    "approved_source_master_sha256",
+    "character_contract_sha256",
+}
+CHARACTER_MODES = {"headed_master", "headed_state", "headless_safe"}
+COMPILE_ROUTES = {"direct_concise", "selected_skill_handoff", "deterministic_assembly"}
 COVERAGE_FIELDS = {
     "scene_ids",
     "character_ids",
@@ -506,13 +517,17 @@ def normalized_perceptual_hash(width: int, height: int, rgba: bytes) -> str:
     return f"{bits:064x}"
 
 
-def normalized_raster_evidence(width: int, height: int, rgba: bytes) -> dict[str, str]:
+def normalized_raster_evidence(width: int, height: int, rgba: bytes) -> dict[str, Any]:
     expected_bytes = width * height * 4
     if len(rgba) != expected_bytes or expected_bytes > MAX_DECODED_BYTES:
         raise ValueError("normalized_pixel_buffer_invalid")
+    alpha = rgba[3::4]
     return {
         "pixel_sha256": normalized_pixel_sha256(width, height, rgba),
         "perceptual_hash": normalized_perceptual_hash(width, height, rgba),
+        "alpha_min": min(alpha),
+        "alpha_max": max(alpha),
+        "alpha_nonopaque_pixel_count": sum(value != 255 for value in alpha),
     }
 
 
@@ -873,7 +888,12 @@ def validate_technical_receipt(
     return next((key for key, passed in checks.items() if not passed), None)
 
 
-def visual_review_subject_sha256(payload: dict[str, Any]) -> str:
+def visual_review_subject_sha256(
+    payload: dict[str, Any],
+    *,
+    scope_asset_ids: list[str] | None = None,
+) -> str:
+    scope = set(scope_asset_ids) if scope_asset_ids is not None else None
     assets = [
         {
             "asset_id": asset.get("asset_id"),
@@ -887,7 +907,9 @@ def visual_review_subject_sha256(payload: dict[str, Any]) -> str:
             "perceptual_hash": asset.get("generated_perceptual_hash"),
         }
         for asset in payload.get("assets", [])
-        if isinstance(asset, dict) and asset.get("required") is True
+        if isinstance(asset, dict)
+        and asset.get("required") is True
+        and (scope is None or asset.get("asset_id") in scope)
     ]
     assets.sort(key=lambda item: str(item.get("asset_id")))
     return canonical_json_sha256(
@@ -924,12 +946,32 @@ def validate_visual_review_manifest(
         "review_task_id",
         "assets",
     }
-    if not isinstance(manifest, dict) or set(manifest) != root_fields:
+    scoped_fields = root_fields | {"scope_asset_ids"}
+    if not isinstance(manifest, dict) or frozenset(manifest) not in {
+        frozenset(root_fields),
+        frozenset(scoped_fields),
+    }:
         return {}, "manifest_shape"
-    subject_hash = visual_review_subject_sha256(payload)
+    version = manifest.get("schema_version")
+    scope_asset_ids = manifest.get("scope_asset_ids")
+    is_scoped = version == SCOPED_VISUAL_REVIEW_MANIFEST_VERSION
+    if is_scoped:
+        if (
+            not isinstance(scope_asset_ids, list)
+            or not scope_asset_ids
+            or len(scope_asset_ids) != len(set(scope_asset_ids))
+            or not all(isinstance(item, str) and ID_RE.fullmatch(item) for item in scope_asset_ids)
+        ):
+            return {}, "manifest_scope"
+    elif "scope_asset_ids" in manifest:
+        return {}, "manifest_scope_version"
+    subject_hash = visual_review_subject_sha256(
+        payload,
+        scope_asset_ids=scope_asset_ids if is_scoped else None,
+    )
     root_checks = {
-        "manifest_version": manifest.get("schema_version")
-        == VISUAL_REVIEW_MANIFEST_VERSION,
+        "manifest_version": version
+        in {VISUAL_REVIEW_MANIFEST_VERSION, SCOPED_VISUAL_REVIEW_MANIFEST_VERSION},
         "manifest_ruleset": manifest.get("ruleset") == VISUAL_QA_RULESET,
         "manifest_subject": manifest.get("review_subject_sha256") == subject_hash,
         "manifest_timestamp": timestamp_in_review_window(
@@ -953,7 +995,10 @@ def validate_visual_review_manifest(
         for asset in payload.get("assets", [])
         if isinstance(asset, dict) and asset.get("required") is True
     ]
-    required_ids = sorted(str(asset.get("asset_id")) for asset in required_assets)
+    all_required_ids = sorted(str(asset.get("asset_id")) for asset in required_assets)
+    if is_scoped and not set(scope_asset_ids).issubset(all_required_ids):
+        return {}, "manifest_scope_unknown_asset"
+    required_ids = sorted(scope_asset_ids) if is_scoped else all_required_ids
     entries = manifest["assets"]
     entry_ids = [entry.get("asset_id") for entry in entries if isinstance(entry, dict)]
     if len(entry_ids) != len(entries) or sorted(entry_ids) != required_ids or duplicate_values(entry_ids):
@@ -1061,8 +1106,6 @@ def validate_visual_qa_receipt(
         and bool(receipt["review_manifest_file"]),
         "review_manifest_sha256": isinstance(receipt.get("review_manifest_sha256"), str)
         and SHA256_RE.fullmatch(receipt["review_manifest_sha256"]) is not None,
-        "review_subject_sha256": receipt.get("review_subject_sha256")
-        == visual_review_subject_sha256(payload),
         "status": receipt.get("status") == "visual_qa_pass",
         "receipt_hash": receipt.get("receipt_sha256") == receipt_sha256(receipt),
     }
@@ -1078,6 +1121,17 @@ def validate_visual_qa_receipt(
         return "review_manifest_invalid_json"
     if receipt.get("review_manifest_sha256") != manifest_hash:
         return "review_manifest_hash"
+    scope_asset_ids = (
+        manifest.get("scope_asset_ids")
+        if manifest.get("schema_version") == SCOPED_VISUAL_REVIEW_MANIFEST_VERSION
+        else None
+    )
+    expected_subject = visual_review_subject_sha256(
+        payload,
+        scope_asset_ids=scope_asset_ids,
+    )
+    if receipt.get("review_subject_sha256") != expected_subject:
+        return "review_subject"
     cache_key = f"{manifest_path}:{manifest_hash}"
     if cache_key not in manifest_cache:
         entry_map, manifest_problem = validate_visual_review_manifest(
@@ -1216,8 +1270,9 @@ def planned_asset(
     inherits_from: list[str],
     action: str = "generate",
     planning_only: bool = True,
+    compile_route: str = "direct_concise",
 ) -> dict[str, Any]:
-    return {
+    asset = {
         "asset_id": asset_id,
         "role": role,
         "required": True,
@@ -1235,10 +1290,28 @@ def planned_asset(
         "truth_sha256": canonical_json_sha256(truth_payload),
         "technical_receipt": None,
         "visual_qa_receipt": None,
+        "compile_route": compile_route,
     }
+    if role == "character_identity_reference":
+        contract = {
+            "character_mode": "headed_master",
+            "derived_from_asset_id": None,
+            "approved_source_master_sha256": None,
+            "coverage": coverage,
+            "inherits_from": inherits_from,
+            "purpose": purpose,
+        }
+        asset.update(contract)
+        asset["character_contract_sha256"] = canonical_json_sha256(contract)
+    return asset
 
 
-def validate_delivery_profile(profile: Any, errors: list[str]) -> None:
+def validate_delivery_profile(
+    profile: Any,
+    errors: list[str],
+    *,
+    asset_only: bool = False,
+) -> None:
     if not isinstance(profile, dict):
         errors.append("delivery_profile_missing")
         return
@@ -1258,7 +1331,7 @@ def validate_delivery_profile(profile: Any, errors: list[str]) -> None:
         errors.append("delivery_profile_field_set_mismatch")
         return
     medium = profile.get("medium")
-    if medium not in {"broadcast_tvc", "cinema", "web", "social", "other"}:
+    if medium not in {"broadcast_tvc", "cinema", "web", "social", "other", "still"}:
         errors.append("delivery_profile_medium_invalid")
     aspect_ratio = profile.get("aspect_ratio")
     ratio_match = re.fullmatch(
@@ -1279,10 +1352,18 @@ def validate_delivery_profile(profile: Any, errors: list[str]) -> None:
     ):
         errors.append("delivery_profile_raster_invalid")
     frame_rate = profile.get("frame_rate_fps")
-    if not isinstance(frame_rate, (int, float)) or isinstance(frame_rate, bool) or frame_rate <= 0:
+    if asset_only and frame_rate is not None:
+        errors.append("asset_only_frame_rate_must_be_null")
+    elif not asset_only and (
+        not isinstance(frame_rate, (int, float)) or isinstance(frame_rate, bool) or frame_rate <= 0
+    ):
         errors.append("delivery_profile_frame_rate_invalid")
     audio_rate = profile.get("audio_sample_rate_hz")
-    if not isinstance(audio_rate, int) or isinstance(audio_rate, bool) or audio_rate <= 0:
+    if asset_only and audio_rate is not None:
+        errors.append("asset_only_audio_rate_must_be_null")
+    elif not asset_only and (
+        not isinstance(audio_rate, int) or isinstance(audio_rate, bool) or audio_rate <= 0
+    ):
         errors.append("delivery_profile_audio_rate_invalid")
     action_safe = profile.get("action_safe_percent")
     title_safe = profile.get("title_safe_percent")
@@ -1303,6 +1384,11 @@ def validate_delivery_profile(profile: Any, errors: list[str]) -> None:
         "locked_target",
     }:
         errors.append("delivery_profile_target_status_invalid")
+    if asset_only:
+        if medium != "still":
+            errors.append("asset_only_requires_still_medium")
+        if endframe != 0:
+            errors.append("asset_only_brand_endframe_must_be_zero")
     if medium == "broadcast_tvc":
         if aspect_ratio != "16:9":
             errors.append("broadcast_tvc_requires_16_9")
@@ -1399,13 +1485,23 @@ def parse_inventory(
         "style_reference_required",
         "generation_units",
     }
-    if set(inventory) != required or inventory.get("schema_version") != SCHEMA_VERSION:
+    if (
+        not required.issubset(inventory)
+        or set(inventory) - required - {"style_compile_route"}
+        or inventory.get("schema_version") != SCHEMA_VERSION
+    ):
         raise ValueError("visual asset inventory field set or version is invalid")
+    if inventory.get("style_compile_route", "direct_concise") not in {
+        "direct_concise",
+        "selected_skill_handoff",
+    }:
+        raise ValueError("inventory style compile route is invalid")
     for field in ("project_id", "truth_revision"):
         if not isinstance(inventory.get(field), str) or not ID_RE.fullmatch(inventory[field]):
             raise ValueError(f"inventory {field} is invalid")
-    if inventory.get("scope") not in {"whole_film", "sequence", "representative_sample"}:
+    if inventory.get("scope") not in {"whole_film", "sequence", "representative_sample", "asset_only"}:
         raise ValueError("inventory scope is invalid")
+    asset_only = inventory.get("scope") == "asset_only"
     truth_locked_at = inventory.get("truth_locked_at")
     if (
         not valid_utc_timestamp(truth_locked_at)
@@ -1447,9 +1543,14 @@ def parse_inventory(
     ):
         raise ValueError("creative source root is invalid")
 
-    def creative_item_map(label: str, fields: set[str]) -> dict[str, dict[str, Any]]:
+    def creative_item_map(
+        label: str,
+        fields: set[str],
+        *,
+        allow_empty: bool = False,
+    ) -> dict[str, dict[str, Any]]:
         values = creative_source.get(label)
-        if not isinstance(values, list) or not values:
+        if not isinstance(values, list) or (not values and not allow_empty):
             raise ValueError(f"creative source {label} must be a non-empty list")
         mapped: dict[str, dict[str, Any]] = {}
         for item in values:
@@ -1465,8 +1566,12 @@ def parse_inventory(
             mapped[item_id] = item
         return mapped
 
-    story_beat_map = creative_item_map("story_beats", {"id", "summary"})
-    script_line_map = creative_item_map("script_lines", {"id", "speaker", "text"})
+    story_beat_map = creative_item_map(
+        "story_beats", {"id", "summary"}, allow_empty=asset_only
+    )
+    script_line_map = creative_item_map(
+        "script_lines", {"id", "speaker", "text"}, allow_empty=asset_only
+    )
     if (
         set(shot_cards) != {"schema_version", "inventory", "cards"}
         or shot_cards.get("schema_version") != "1.0"
@@ -1474,16 +1579,22 @@ def parse_inventory(
     ):
         raise ValueError("shot cards root is invalid")
     duration = inventory.get("duration_seconds")
-    if not isinstance(duration, (int, float)) or isinstance(duration, bool) or duration <= 0:
+    if asset_only and duration is not None:
+        raise ValueError("asset_only duration must be null")
+    if not asset_only and (
+        not isinstance(duration, (int, float)) or isinstance(duration, bool) or duration <= 0
+    ):
         raise ValueError("inventory duration is invalid")
     profile_errors: list[str] = []
-    validate_delivery_profile(inventory.get("delivery_profile"), profile_errors)
+    validate_delivery_profile(
+        inventory.get("delivery_profile"), profile_errors, asset_only=asset_only
+    )
     if profile_errors:
         raise ValueError("inventory delivery profile is invalid: " + ",".join(profile_errors))
     if not isinstance(inventory.get("style_reference_required"), bool):
         raise ValueError("inventory style-reference policy is invalid")
     raw_rhythm_points = inventory.get("rhythm_points")
-    if not isinstance(raw_rhythm_points, list) or not raw_rhythm_points:
+    if not isinstance(raw_rhythm_points, list) or (not raw_rhythm_points and not asset_only):
         raise ValueError("inventory rhythm points are invalid")
     rhythm_ids: list[str] = []
     for point in raw_rhythm_points:
@@ -1515,7 +1626,11 @@ def parse_inventory(
             raise ValueError(f"inventory {label} must be a list")
         result: dict[str, dict[str, Any]] = {}
         for item in values:
-            if not isinstance(item, dict) or set(item) != {"id", "purpose"}:
+            if (
+                not isinstance(item, dict)
+                or not {"id", "purpose"}.issubset(item)
+                or set(item) - {"id", "purpose", "compile_route"}
+            ):
                 raise ValueError(f"inventory {label} item is invalid")
             entity_id = item.get("id")
             purpose = item.get("purpose")
@@ -1528,13 +1643,20 @@ def parse_inventory(
                 or PLACEHOLDER_RE.search(purpose)
             ):
                 raise ValueError(f"inventory {label} identity or purpose is invalid")
+            if item.get("compile_route", "direct_concise") not in {
+                "direct_concise",
+                "selected_skill_handoff",
+            }:
+                raise ValueError(f"inventory {label} compile route is invalid")
             result[entity_id] = item
         return result
 
     character_map = entity_map("characters")
     raw_appearance_states = inventory.get("appearance_states")
-    if not isinstance(raw_appearance_states, list) or not raw_appearance_states:
-        raise ValueError("inventory appearance_states must be a non-empty list")
+    if not isinstance(raw_appearance_states, list) or (
+        not raw_appearance_states and character_map
+    ):
+        raise ValueError("inventory appearance_states must be a non-empty list for characters")
     appearance_state_map: dict[str, dict[str, Any]] = {}
     for item in raw_appearance_states:
         if not isinstance(item, dict) or set(item) != {"id", "character_id", "purpose"}:
@@ -1557,6 +1679,36 @@ def parse_inventory(
     product_map = entity_map("products")
     prop_map = entity_map("props")
     scene_map = entity_map("scenes")
+
+    if asset_only:
+        if (
+            inventory.get("shots") != []
+            or raw_rhythm_points != []
+            or inventory.get("generation_units") != []
+            or shot_cards.get("cards") != []
+            or story_beat_map
+            or script_line_map
+        ):
+            raise ValueError("asset_only inventory cannot declare film timeline content")
+        if not (character_map or product_map or prop_map or scene_map):
+            raise ValueError("asset_only inventory requires at least one asset entity")
+        return {
+            "character_map": character_map,
+            "appearance_state_map": appearance_state_map,
+            "product_map": product_map,
+            "prop_map": prop_map,
+            "scene_map": scene_map,
+            "unit_map": {},
+            "shot_map": {},
+            "shot_ids": [],
+            "shot_cards": shot_cards,
+            "shot_cards_sha256": actual_shot_cards_hash,
+            "shot_truth": [],
+            "shot_truth_sha256": canonical_json_sha256([]),
+            "creative_source": creative_source,
+            "creative_source_sha256": actual_creative_source_hash,
+            "rhythm_points": [],
+        }
 
     raw_units = inventory.get("generation_units")
     if not isinstance(raw_units, list) or not raw_units:
@@ -1876,6 +2028,7 @@ def derive_plan(
                 },
                 coverage=coverage,
                 inherits_from=[],
+                compile_route="selected_skill_handoff",
             )
         )
     for entity_id, item in product_map.items():
@@ -1898,6 +2051,7 @@ def derive_plan(
                 },
                 coverage=coverage,
                 inherits_from=[],
+                compile_route=item.get("compile_route", "direct_concise"),
             )
         )
     for entity_id, item in prop_map.items():
@@ -1923,6 +2077,7 @@ def derive_plan(
                 },
                 coverage=coverage,
                 inherits_from=[],
+                compile_route=item.get("compile_route", "direct_concise"),
             )
         )
     for entity_id, item in scene_map.items():
@@ -1948,6 +2103,7 @@ def derive_plan(
                 },
                 coverage=coverage,
                 inherits_from=[],
+                compile_route=item.get("compile_route", "direct_concise"),
             )
         )
 
@@ -1962,9 +2118,14 @@ def derive_plan(
                 "lighting_material_style_board",
                 "Lock whole-film lighting, material, atmosphere, optics, and grade "
                 "transitions without replacing scene geography.",
-                truth_payload={"scenes": list(scene_map.values()), "shots": shot_truth},
+                truth_payload={
+                    "scenes": list(scene_map.values()),
+                    "shots": shot_truth,
+                    "compile_route": inventory.get("style_compile_route", "direct_concise"),
+                },
                 coverage=coverage,
                 inherits_from=list(scene_asset_ids.values()),
+                compile_route=inventory.get("style_compile_route", "direct_concise"),
             )
         )
 
@@ -1992,6 +2153,7 @@ def derive_plan(
                 truth_payload=shot_truth_map[shot_id],
                 coverage=coverage,
                 inherits_from=inherits,
+                compile_route="selected_skill_handoff",
             )
         )
 
@@ -2026,6 +2188,7 @@ def derive_plan(
                 coverage=coverage,
                 inherits_from=[f"storyboard-frame-{item}" for item in page_shots],
                 action="assemble",
+                compile_route="deterministic_assembly",
             )
         )
 
@@ -2060,6 +2223,7 @@ def derive_plan(
                     inherits_from=[f"storyboard-frame-{selected_shot}"],
                     action="derive",
                     planning_only=False,
+                    compile_route="selected_skill_handoff",
                 )
             )
 
@@ -2102,7 +2266,9 @@ def derive_plan(
         "generation_units": output_units,
         "assets": assets,
         "completion_claim": (
-            "sample_plan_complete"
+            "asset_only_plan_complete"
+            if inventory["scope"] == "asset_only"
+            else "sample_plan_complete"
             if inventory["scope"] == "representative_sample"
             else "plan_complete"
         ),
@@ -2162,6 +2328,7 @@ def validate_plan(
         tuple[dict[str, Any] | None, str | None],
     ]
     | None = None,
+    _validate_recorded_assets: bool = True,
 ) -> tuple[list[str], dict[str, Any]]:
     errors: list[str] = []
     if not isinstance(payload, dict):
@@ -2189,16 +2356,19 @@ def validate_plan(
     ):
         errors.append("truth_locked_at_invalid")
     scope = payload.get("scope")
-    if scope not in {"whole_film", "sequence", "representative_sample"}:
+    if scope not in {"whole_film", "sequence", "representative_sample", "asset_only"}:
         errors.append("scope_invalid")
     duration = payload.get("duration_seconds")
-    if not isinstance(duration, (int, float)) or isinstance(duration, bool) or duration <= 0:
+    if scope == "asset_only":
+        if duration is not None:
+            errors.append("asset_only_duration_must_be_null")
+    elif not isinstance(duration, (int, float)) or isinstance(duration, bool) or duration <= 0:
         errors.append("duration_invalid")
     completion_claim = payload.get("completion_claim")
     if completion_claim not in COMPLETION_CLAIMS:
         errors.append(f"completion_claim_invalid:{completion_claim}")
     delivery_profile = payload.get("delivery_profile")
-    validate_delivery_profile(delivery_profile, errors)
+    validate_delivery_profile(delivery_profile, errors, asset_only=scope == "asset_only")
     target_frame_ratio: float | None = None
     if isinstance(delivery_profile, dict):
         target_width = delivery_profile.get("raster_width")
@@ -2275,7 +2445,7 @@ def validate_plan(
         payload.get("scene_ids"),
         "scene_ids",
         errors,
-        nonempty=scope != "representative_sample",
+        nonempty=scope not in {"representative_sample", "asset_only"},
     )
     character_ids = validate_id_list(payload.get("character_ids"), "character_ids", errors)
     appearance_state_ids = validate_id_list(
@@ -2285,17 +2455,19 @@ def validate_plan(
     )
     product_ids = validate_id_list(payload.get("product_ids"), "product_ids", errors)
     prop_ids = validate_id_list(payload.get("prop_ids"), "prop_ids", errors)
-    shot_ids = validate_id_list(payload.get("shot_ids"), "shot_ids", errors, nonempty=True)
+    shot_ids = validate_id_list(
+        payload.get("shot_ids"), "shot_ids", errors, nonempty=scope != "asset_only"
+    )
     rhythm_ids = validate_id_list(
         payload.get("rhythm_point_ids"),
         "rhythm_point_ids",
         errors,
-        nonempty=True,
+        nonempty=scope != "asset_only",
     )
-    if len(rhythm_ids) < len(shot_ids):
+    if scope != "asset_only" and len(rhythm_ids) < len(shot_ids):
         errors.append("rhythm_points_fewer_than_shots")
     rhythm_points = payload.get("rhythm_points")
-    if not isinstance(rhythm_points, list) or not rhythm_points:
+    if not isinstance(rhythm_points, list) or (not rhythm_points and scope != "asset_only"):
         errors.append("rhythm_points_missing")
         rhythm_points = []
     parsed_rhythm_ids: list[str] = []
@@ -2345,7 +2517,7 @@ def validate_plan(
 
     raw_truth = payload.get("shot_truth")
     truth_map: dict[str, dict[str, Any]] = {}
-    if not isinstance(raw_truth, list) or not raw_truth:
+    if not isinstance(raw_truth, list) or (not raw_truth and scope != "asset_only"):
         errors.append("shot_truth_missing")
         raw_truth = []
     for index, truth in enumerate(raw_truth):
@@ -2412,7 +2584,7 @@ def validate_plan(
         errors.append("shot_truth_sha256_mismatch")
 
     generation_units = payload.get("generation_units")
-    if not isinstance(generation_units, list) or not generation_units:
+    if not isinstance(generation_units, list) or (not generation_units and scope != "asset_only"):
         errors.append("generation_units_missing")
         generation_units = []
     unit_ids: list[str] = []
@@ -2495,7 +2667,11 @@ def validate_plan(
         "generation_unit_ids": set(unit_ids),
     }
     for index, asset in enumerate(assets_raw):
-        if not isinstance(asset, dict) or set(asset) != ASSET_FIELDS:
+        if (
+            not isinstance(asset, dict)
+            or not ASSET_FIELDS.issubset(asset)
+            or set(asset) - ASSET_FIELDS - ASSET_OPTIONAL_FIELDS
+        ):
             errors.append(f"asset_field_set_mismatch:{index}")
             continue
         asset_id = asset.get("asset_id")
@@ -2508,7 +2684,57 @@ def validate_plan(
         if role not in ROLES:
             errors.append(f"asset_role_invalid:{asset_id}")
             continue
+        compile_route = asset.get("compile_route")
+        if compile_route not in COMPILE_ROUTES:
+            errors.append(f"asset_compile_route_invalid:{asset_id}")
+        elif role in {
+            "character_identity_reference",
+            "storyboard_frame",
+            "clean_first_frame",
+            "clean_key_frame",
+            "clean_end_frame",
+        } and compile_route != "selected_skill_handoff":
+            errors.append(f"asset_compile_route_role_mismatch:{asset_id}")
+        elif role == "professional_storyboard_motion_map" and compile_route != "deterministic_assembly":
+            errors.append(f"asset_compile_route_role_mismatch:{asset_id}")
+        elif role not in {
+            "professional_storyboard_motion_map",
+            "character_identity_reference",
+            "storyboard_frame",
+            "clean_first_frame",
+            "clean_key_frame",
+            "clean_end_frame",
+        } and compile_route == "deterministic_assembly":
+            errors.append(f"asset_compile_route_role_mismatch:{asset_id}")
         role_assets[role].append(asset)
+        if role == "character_identity_reference":
+            mode = asset.get("character_mode")
+            source_id = asset.get("derived_from_asset_id")
+            source_sha = asset.get("approved_source_master_sha256")
+            contract = {
+                "character_mode": mode,
+                "derived_from_asset_id": source_id,
+                "approved_source_master_sha256": source_sha,
+                "coverage": asset.get("coverage"),
+                "inherits_from": asset.get("inherits_from"),
+                "purpose": asset.get("purpose"),
+            }
+            if mode not in CHARACTER_MODES:
+                errors.append(f"character_mode_invalid:{asset_id}")
+            if mode == "headed_master":
+                if source_id is not None or source_sha is not None:
+                    errors.append(f"base_character_source_must_be_empty:{asset_id}")
+            elif (
+                not isinstance(source_id, str)
+                or not ID_RE.fullmatch(source_id)
+                or not isinstance(source_sha, str)
+                or not SHA256_RE.fullmatch(source_sha)
+            ):
+                errors.append(f"derived_character_source_invalid:{asset_id}")
+            if asset.get("character_contract_sha256") != canonical_json_sha256(contract):
+                errors.append(f"character_contract_sha256_mismatch:{asset_id}")
+        elif any(field in asset for field in ASSET_OPTIONAL_FIELDS):
+            errors.append(f"non_character_contract_fields_invalid:{asset_id}")
         purpose = asset.get("purpose")
         if (
             not isinstance(purpose, str)
@@ -2667,6 +2893,27 @@ def validate_plan(
         for source in safe_id_list(asset.get("inherits_from")):
             if source not in asset_by_id:
                 errors.append(f"asset_inheritance_unknown:{asset['asset_id']}:{source}")
+        if asset.get("role") == "character_identity_reference" and asset.get("character_mode") in {
+            "headed_state",
+            "headless_safe",
+        }:
+            source_id = asset.get("derived_from_asset_id")
+            source_asset = asset_by_id.get(str(source_id))
+            if asset.get("action") != "derive":
+                errors.append(f"derived_character_action_invalid:{asset['asset_id']}")
+            if asset.get("inherits_from") != [source_id]:
+                errors.append(f"derived_character_inheritance_mismatch:{asset['asset_id']}")
+            if (
+                not isinstance(source_asset, dict)
+                or source_asset.get("role") != "character_identity_reference"
+                or source_asset.get("character_mode") != "headed_master"
+                or source_asset.get("status") not in GENERATED_STATUSES
+                or source_asset.get("generated_sha256")
+                != asset.get("approved_source_master_sha256")
+                or source_asset.get("coverage", {}).get("character_ids")
+                != asset.get("coverage", {}).get("character_ids")
+            ):
+                errors.append(f"derived_character_source_evidence_mismatch:{asset['asset_id']}")
     cycle = _inheritance_cycle(asset_by_id)
     if cycle:
         errors.append("asset_inheritance_cycle:" + ",".join(cycle))
@@ -2689,7 +2936,15 @@ def validate_plan(
                 "planning_only",
                 "direct_video_input",
                 "truth_sha256",
+                "compile_route",
             ):
+                if (
+                    expected.get("role") == "character_identity_reference"
+                    and actual.get("character_mode") in {"headed_state", "headless_safe"}
+                    and field in {"action", "inherits_from"}
+                    and actual.get("action") == "derive"
+                ):
+                    continue
                 if actual.get(field) == expected.get(field):
                     continue
                 if field == "coverage" and expected["role"] == "storyboard_frame":
@@ -2698,6 +2953,19 @@ def validate_plan(
                     errors.append(f"asset_dependency_mismatch:{asset_id}")
                 else:
                     errors.append(f"asset_semantic_drift:{asset_id}:{field}")
+
+    if scope == "asset_only":
+        if completion_claim != "asset_only_plan_complete":
+            errors.append("asset_only_completion_claim_invalid")
+        if any((shot_ids, rhythm_ids, raw_truth, generation_units)):
+            errors.append("asset_only_timeline_content_present")
+        forbidden_roles = {
+            "storyboard_frame",
+            "professional_storyboard_motion_map",
+            *DIRECT_ROLES,
+        }
+        if any(asset.get("role") in forbidden_roles for asset in assets):
+            errors.append("asset_only_video_asset_present")
 
     def exact_coverage(role: str, field: str, ids: list[str], prefix: str) -> None:
         for value, count in _coverage_counts(assets, role, field, ids).items():
@@ -2843,12 +3111,18 @@ def validate_plan(
         errors.append("sample_plan_complete_requires_sample_scope")
     if completion_claim == "sample_visual_assets_complete" and scope != "representative_sample":
         errors.append("sample_visual_assets_complete_requires_sample_scope")
+    if completion_claim == "asset_only_plan_complete" and scope != "asset_only":
+        errors.append("asset_only_plan_complete_requires_asset_only_scope")
 
     evidence_by_asset: dict[str, dict[str, Any]] = {}
-    if completion_claim in GENERATED_CLAIMS:
-        for asset in assets:
-            if asset.get("required") is not True:
-                continue
+    all_images_required = completion_claim in GENERATED_CLAIMS
+    if all_images_required or (scope == "asset_only" and _validate_recorded_assets):
+        recorded_assets = [
+            asset for asset in assets
+            if asset.get("required") is True
+            and (all_images_required or asset.get("status") in GENERATED_STATUSES)
+        ]
+        for asset in recorded_assets:
             asset_id = asset["asset_id"]
             if asset.get("status") not in GENERATED_STATUSES:
                 errors.append(f"required_asset_not_generated:{asset_id}")
@@ -2861,7 +3135,7 @@ def validate_plan(
                 errors.append(f"required_asset_raster_invalid:{asset_id}:{reason}")
                 continue
             evidence_by_asset[asset_id] = evidence
-            if asset.get("role") in DELIVERY_FRAME_ROLES and target_frame_ratio is not None:
+            if (scope == "asset_only" or asset.get("role") in DELIVERY_FRAME_ROLES) and target_frame_ratio is not None:
                 actual_ratio = evidence["width"] / evidence["height"]
                 relative_drift = abs(actual_ratio - target_frame_ratio) / target_frame_ratio
                 if relative_drift > DELIVERY_ASPECT_RATIO_TOLERANCE:
@@ -2885,13 +3159,57 @@ def validate_plan(
                 errors.append(
                     f"required_asset_technical_receipt_invalid:{asset_id}:{receipt_problem}"
                 )
+            review_claimed = all_images_required or asset.get("status") in {"user_locked", "reused_locked"} or asset.get("visual_qa_receipt") is not None
+            if asset.get("role") == "character_identity_reference" and review_claimed:
+                try:
+                    from dircreative_character_master_visual_gate import (
+                        load_headless_review_authorization,
+                        load_character_master_receipt,
+                    )
+
+                    structure_receipt, structure_errors = load_character_master_receipt(
+                        asset,
+                        base_dir=base_dir,
+                        image_evidence=evidence,
+                    )
+                except (ImportError, OSError, ValueError):
+                    structure_receipt, structure_errors = None, [
+                        "character_master_visual_gate_unavailable"
+                    ]
+                headless_review_errors: list[str] = []
+                if (
+                    isinstance(structure_receipt, dict)
+                    and asset.get("character_mode") == "headless_safe"
+                    and structure_receipt.get("status") == "applied_unverified"
+                ):
+                    _review, headless_review_errors = load_headless_review_authorization(
+                        asset,
+                        base_dir=base_dir,
+                        image_evidence=evidence,
+                    )
+                structure_status_ok = (
+                    isinstance(structure_receipt, dict)
+                    and (
+                        structure_receipt.get("status") == "pass"
+                        or (
+                            asset.get("character_mode") == "headless_safe"
+                            and structure_receipt.get("status") == "applied_unverified"
+                            and not headless_review_errors
+                        )
+                    )
+                )
+                if structure_errors or headless_review_errors or not structure_status_ok:
+                    errors.append(
+                        f"required_character_master_visual_structure_invalid:{asset_id}:"
+                        + ",".join(structure_errors or ["structure_not_passed"])
+                    )
 
         manifest_cache: dict[
             str,
             tuple[dict[str, Any], dict[str, dict[str, Any]], str | None],
         ] = {}
-        for asset in assets:
-            if asset.get("required") is not True:
+        for asset in recorded_assets:
+            if not all_images_required and asset.get("status") == "generated_candidate" and asset.get("visual_qa_receipt") is None:
                 continue
             asset_id = asset["asset_id"]
             evidence = evidence_by_asset.get(asset_id)
@@ -2915,7 +3233,7 @@ def validate_plan(
                 errors.append(
                     f"required_asset_visual_qa_receipt_invalid:{asset_id}:{visual_problem}"
                 )
-        if any(
+        if all_images_required and any(
             isinstance(asset.get("visual_qa_receipt"), dict)
             and asset["visual_qa_receipt"].get("reviewer_type") == "independent_ai"
             for asset in assets
@@ -2999,12 +3317,18 @@ def stamp_plan_evidence(
         raise ValueError("checked_at must be an RFC3339 UTC timestamp")
     stamped = copy.deepcopy(payload)
     semantic_probe = copy.deepcopy(stamped)
-    semantic_probe["completion_claim"] = "none"
-    semantic_errors, _ = validate_plan(semantic_probe, base_dir=base_dir)
+    asset_only = payload.get("scope") == "asset_only"
+    semantic_probe["completion_claim"] = "asset_only_plan_complete" if asset_only else "none"
+    # Validate truth before computing evidence; stamping itself never grants QA.
+    semantic_errors, _ = validate_plan(
+        semantic_probe, base_dir=base_dir, _validate_recorded_assets=False,
+    )
     if semantic_errors:
         raise ValueError("cannot stamp an invalid visual plan: " + ";".join(semantic_errors))
     for asset in stamped["assets"]:
         if asset.get("required") is not True:
+            continue
+        if asset_only and asset.get("status") not in GENERATED_STATUSES and not asset.get("generated_file"):
             continue
         asset_id = asset["asset_id"]
         path = contained_file(asset.get("generated_file"), base_dir)
@@ -3071,6 +3395,8 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
     schema_asset = schema["properties"]["assets"]["items"]
     if set(schema_asset["required"]) != ASSET_FIELDS:
         failures.append("schema asset fields drifted from validator")
+    if not ASSET_OPTIONAL_FIELDS.issubset(schema_asset["properties"]):
+        failures.append("schema character contract fields drifted from validator")
     schema_statuses = set(schema_asset["properties"]["status"]["enum"])
     if schema_statuses != {
         "planned",
@@ -3551,6 +3877,15 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
         generated["completion_claim"] = "visual_assets_complete"
         file_by_asset: dict[str, str] = {}
         source_index = 0
+        import dircreative_character_master_visual_gate as character_visual_gate
+
+        original_character_probe = character_visual_gate.run_probe
+        original_swift_tool_identity = character_visual_gate.swift_tool_identity
+        character_visual_gate.swift_tool_identity = lambda: {
+            "path": "/fixture/swift",
+            "sha256": "f" * 64,
+            "signature_policy": "fixture",
+        }
         for asset in generated["assets"]:
             target = temp_root / f"{asset['asset_id']}.png"
             if asset["role"] in DIRECT_ROLES:
@@ -3683,6 +4018,73 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
             }
             receipt["receipt_sha256"] = receipt_sha256(receipt)
             asset["visual_qa_receipt"] = receipt
+            if asset.get("role") == "character_identity_reference":
+                from dircreative_character_master_visual_gate import make_receipt
+
+                structure_probe = {
+                    "backend": "apple-vision-human-body-pose-v1",
+                    "body_pose_count": 5,
+                    "face_count": 4,
+                    "faces": [],
+                    "human_rectangle_count": 4,
+                    "full_body_count": 4,
+                    "full_bodies": [
+                        {
+                            "center_x": 0.38 + index * 0.14,
+                            "joint_span": 0.66,
+                            "subject_height": 0.80,
+                            "min_y": 0.08,
+                            "max_y": 0.86,
+                            "head_extent_above_shoulders": 0.11,
+                            "subject_top_clearance": 0.04,
+                            "subject_bottom_clearance": 0.04,
+                            "visible_wrist_count": 2,
+                            "visible_elbow_count": 2,
+                            "visible_upper_limb_joint_count": 4,
+                            "human_rect_index": index,
+                            "human_rect_min_x": 0.33 + index * 0.14,
+                            "human_rect_max_x": 0.43 + index * 0.14,
+                        }
+                        for index in range(4)
+                    ],
+                    "left_closeup_face_count": 1,
+                    "left_closeup_faces": [
+                        {
+                            "center_x": 0.15,
+                            "center_y": 0.55,
+                            "width": 0.18,
+                            "height": 0.28,
+                        }
+                    ],
+                    "left_portrait_subject_height": 0.82,
+                    "right_face_count": 3,
+                    "right_full_height_component_count": 4,
+                    "right_full_height_components": [
+                        {
+                            "center_x": 0.38 + index * 0.14,
+                            "joint_span": 0.66,
+                            "subject_height": 0.80,
+                            "min_y": 0.08,
+                            "max_y": 0.86,
+                        }
+                        for index in range(4)
+                    ],
+                }
+                structure_receipt = make_receipt(
+                    asset_id=asset["asset_id"],
+                    asset_truth_sha256=asset["truth_sha256"],
+                    image_evidence=evidence,
+                    probe=structure_probe,
+                    checked_at=review_manifest["reviewed_at"],
+                    mode="headed_master",
+                )
+                atomic_write_json(
+                    (temp_root / asset["generated_file"]).with_suffix(
+                        ".character-master-visual.json"
+                    ),
+                    structure_receipt,
+                )
+        character_visual_gate.run_probe = lambda _image_bytes: (structure_probe, None)
         generated_errors, generated_metrics = validate_plan(
             generated,
             base_dir=temp_root,
@@ -3996,6 +4398,8 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
             json.dumps(shot_cards_fixture, ensure_ascii=False, indent=2) + "\n",
             encoding="utf-8",
         )
+        character_visual_gate.run_probe = original_character_probe
+        character_visual_gate.swift_tool_identity = original_swift_tool_identity
 
         multi_inventory = copy.deepcopy(tvc_inventory)
         multi_inventory["generation_units"][0]["direct_input_min"] = 2

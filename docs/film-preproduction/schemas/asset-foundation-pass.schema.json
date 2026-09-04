@@ -29,8 +29,9 @@
     "pass_id": {"$ref": "#/$defs/id"},
     "status": {"enum": ["in_progress", "blocked", "complete"]},
     "canonical_asset_ids": {"$ref": "#/$defs/id_list"},
+    "planned_asset_ids": {"$ref": "#/$defs/id_list"},
     "planning_source_ids": {"$ref": "#/$defs/id_list"},
-    "source_assets": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/source_asset"}},
+    "source_assets": {"type": "array", "items": {"$ref": "#/$defs/source_asset"}},
     "target_shot_ids": {"$ref": "#/$defs/id_list"},
     "stages": {
       "type": "array",
@@ -38,7 +39,7 @@
       "maxItems": 6,
       "items": {"$ref": "#/$defs/stage"}
     },
-    "stress_test_binding": {"$ref": "#/$defs/stress_binding"},
+    "stress_test_binding": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/stress_binding"}]},
     "compile_gate": {"$ref": "#/$defs/compile_gate"}
   },
   "$defs": {

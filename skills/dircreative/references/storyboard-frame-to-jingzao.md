@@ -41,6 +41,10 @@ the trusted catalog.
 - Generated frames return to DIRcreative for cross-shot consistency, continuity,
   model-input policy, user lock, and status. Neither Jingzao nor imagegen grants
   `visual_assets_complete`, client approval, or delivery.
+- A multi-shot professional storyboard/motion page is assembled after the
+  individual frame reviews with `scripts/dircreative_storyboard_page_assembler.py`.
+  It is a planning overview PNG with its own receipt and visual review, never a
+  second imagegen interpretation or a direct video-model input.
 
 ## Required input packet
 

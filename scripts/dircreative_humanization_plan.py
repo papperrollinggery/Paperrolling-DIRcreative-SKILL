@@ -742,6 +742,7 @@ def build_plan(spec: dict[str, Any]) -> dict[str, Any]:
         return {"status": "invalid", "errors": errors}
     operation, operation_reasons = resolve_operation(normalized)
     profile = resolve_profile(normalized)
+    bounded = bounded_strategy(normalized, operation)
     preservation = normalized["preservation"]
     humanization_guard = build_humanization_guard(normalized["document_type"])
     if operation == "recreate" and preservation["status"] != "ready":
@@ -760,6 +761,7 @@ def build_plan(spec: dict[str, Any]) -> dict[str, Any]:
         }
     if (
         operation in {"refactor", "recreate"}
+        and not bounded
         and profile == "narrative"
         and normalized["voice_profile_status"] == "missing"
         and not normalized["voice_skill_explicit"]
@@ -772,7 +774,6 @@ def build_plan(spec: dict[str, Any]) -> dict[str, Any]:
             "next_action": "derive a VOICE PROFILE from approved source passages, then rebuild the plan",
         }
 
-    bounded = bounded_strategy(normalized, operation)
     if bounded:
         language = normalized["language"]
         if operation == "review":
@@ -944,6 +945,15 @@ def build_plan(spec: dict[str, Any]) -> dict[str, Any]:
     executor_model = normalized["executor_model"]
     return {
         "status": "ready",
+        "execution_status": "not_run",
+        "text_revision_applied": False,
+        "completion_claim_allowed": False,
+        "voice_contract_kind": (
+            "project_register_contract"
+            if normalized["source_mode"] == "new"
+            else "source_voice_profile"
+        ),
+        "source_voice_preservation_verified": False,
         "target_id": normalized["target_id"],
         "strategy": strategy,
         "resolved_operation": operation,
@@ -964,6 +974,9 @@ def build_plan(spec: dict[str, Any]) -> dict[str, Any]:
             "edit_selector_requires_diagnosis_hash": operation in {"refactor", "recreate"},
         },
         "required_edit_inputs": (
+            ["accepted finding IDs", "source-bound protected spans"]
+            if bounded and operation == "refactor"
+            else
             [
                 "content-addressed diagnosis with source-bound quotes",
                 "accepted finding IDs",

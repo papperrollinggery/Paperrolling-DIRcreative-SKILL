@@ -133,6 +133,22 @@ class HumanizationPlanTests(unittest.TestCase):
         self.assertEqual(plan["provider_steps"][0]["provider"], "shuorenhua")
         self.assertFalse(any(step["provider"] == "sepia" for step in plan["provider_steps"]))
 
+    def test_one_line_dialogue_does_not_require_a_document_voice_corpus(self):
+        plan = humanization.build_plan(self.spec(
+            text_kind="narrative", document_type="screenplay", scope="line",
+            length_chars=38, voice_profile_status="missing",
+            preservation=self.preservation(document_type="screenplay"),
+        ))
+        self.assertEqual(plan["status"], "ready")
+        self.assertEqual(plan["strategy"], "bounded_human_language")
+        self.assertNotIn("voice/venue/domain calibration evidence", plan["required_edit_inputs"])
+
+    def test_astra_uses_older_sepia_model_tables_only_as_priors(self):
+        plan = humanization.build_plan(self.spec(executor_model={
+            "family": "OpenAI GPT", "version": "gpt-6-astra", "source": "system",
+        }))
+        self.assertEqual(plan["model_identity"]["executor"]["prose_layer"], "prior")
+
     def test_short_chinese_review_uses_diagnosis_only_scenario(self):
         plan = humanization.build_plan(self.spec(operation="review"))
         self.assertEqual(plan["provider_steps"][0]["scenario_id"], "human_language_diagnosis")
@@ -224,6 +240,11 @@ class HumanizationPlanTests(unittest.TestCase):
             "rarity_move_injection",
             plan["humanization_guard"]["forbidden_auto_moves"],
         )
+        self.assertEqual(plan["execution_status"], "not_run")
+        self.assertFalse(plan["text_revision_applied"])
+        self.assertFalse(plan["completion_claim_allowed"])
+        self.assertEqual(plan["voice_contract_kind"], "project_register_contract")
+        self.assertFalse(plan["source_voice_preservation_verified"])
 
     def test_model_identity_is_never_inferred_from_target_prose(self):
         plan = humanization.build_plan(

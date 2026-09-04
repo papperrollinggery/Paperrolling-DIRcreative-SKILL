@@ -341,6 +341,7 @@ def validate_required_paths() -> None:
         "docs/film-preproduction/schemas/ai-film-production-ledger.schema.json",
         "docs/film-preproduction/schemas/script-to-seedance-handoff.schema.json",
         "docs/film-preproduction/schemas/storyboard-frame-to-jingzao.schema.json",
+        "docs/film-preproduction/schemas/visual-asset-to-jingzao.schema.json",
         "skills/dircreative/agents/openai.yaml",
         "skills/dircreative/runtime/review-trust-registry.json",
         "skills/dircreative/runtime/routing-policy.yaml",
@@ -360,6 +361,7 @@ def validate_required_paths() -> None:
         "skills/dircreative/references/character-master-sheet.md",
         "skills/dircreative/references/script-to-seedance.md",
         "skills/dircreative/references/storyboard-frame-to-jingzao.md",
+        "skills/dircreative/references/visual-asset-to-jingzao.md",
         "skills/dircreative/references/visual-skill-stack.md",
         "tests/fixtures/activation-policy/cases.json",
         "tests/fixtures/human-language/cases.json",
@@ -391,6 +393,10 @@ def validate_required_paths() -> None:
         "tests/fixtures/visual-asset-plan/tvc-60s-inventory.json",
         "tests/fixtures/visual-asset-plan/tvc-60s-shot-cards.json",
         "tests/fixtures/visual-asset-plan/cases.json",
+        "tests/fixtures/asset-execution/character-plan.json",
+        "tests/fixtures/asset-execution/character-inventory.json",
+        "tests/fixtures/asset-execution/character-creative-source.json",
+        "tests/fixtures/asset-execution/character-shot-cards.json",
         "tests/fixtures/content-first/cases.json",
         "scripts/dircreative_adapters/__init__.py",
         "scripts/dircreative_adapters/base.py",
@@ -521,6 +527,11 @@ def validate_required_paths() -> None:
         "scripts/dircreative_specialist_exchange_contract.py",
         "scripts/dircreative_activation_policy_audit.py",
         "scripts/dircreative_route.py",
+        "scripts/dircreative_request_scope_contract.py",
+        "scripts/dircreative_asset_execution_gate.py",
+        "scripts/dircreative_pre_video_assets_gate.py",
+        "scripts/dircreative_humanization_execution_gate.py",
+        "scripts/dircreative_compact_state_migrate.py",
         "scripts/dircreative_context_budget_audit.py",
         "scripts/dircreative_skill_stack.py",
         "scripts/dircreative_review_trust.py",
@@ -532,6 +543,10 @@ def validate_required_paths() -> None:
         "scripts/dircreative_script_to_seedance_selftest.py",
         "scripts/dircreative_script_to_seedance_v3_selftest.py",
         "scripts/dircreative_storyboard_frame_handoff.py",
+        "scripts/dircreative_visual_asset_jingzao_handoff.py",
+        "scripts/dircreative_storyboard_page_assembler.py",
+        "scripts/dircreative_character_master_visual_gate.py",
+        "scripts/dircreative_character_master_vision.swift",
         "scripts/dircreative_run.py",
         "scripts/dircreative_demo.py",
         "scripts/dircreative_readiness_audit.py",
@@ -558,6 +573,19 @@ def validate_required_paths() -> None:
         "scripts/dircreative_visualization_adco_audit.py",
         "scripts/dircreative_install_parity.py",
         "scripts/dircreative_state_audit.py",
+        "tests/test_request_scope_contract.py",
+        "tests/test_asset_execution_gate.py",
+        "tests/test_visual_asset_jingzao_handoff.py",
+        "tests/test_pre_video_assets_gate.py",
+        "tests/test_prompt_compiler_security.py",
+        "tests/test_humanization_execution_gate.py",
+        "tests/test_state_snapshot_media_scope.py",
+        "tests/test_storyboard_page_assembler.py",
+        "tests/test_character_master_visual_gate.py",
+        "tests/test_media_forward_audit.py",
+        "tests/test_script_to_seedance_source_security.py",
+        "tests/test_compact_state_migration.py",
+        "tests/test_skill_stack_route_context.py",
         "scripts/dircreative_media_forward_audit.py",
         "scripts/dircreative_release_gate.py",
         "scripts/dircreative_release_preflight.py",
@@ -1592,11 +1620,14 @@ def validate_context_budget() -> None:
 def validate_skill_stack() -> None:
     proc = run(["python3", "scripts/dircreative_skill_stack.py", "self-test"])
     require(proc.returncode == 0, f"Skill Stack audit failed:\n{proc.stderr}\n{proc.stdout}")
+    cases = json.loads((ROOT / "tests/fixtures/skill-stack/cases.json").read_text())["cases"]
+    for kind in ("positive", "negative"):
+        count = sum(case.get("kind") == kind for case in cases)
+        require(count > 0 and f'"{kind}_cases": {count}' in proc.stdout,
+                f"Skill Stack {kind} coverage does not match its current fixtures")
     for marker in [
         "DIRCREATIVE_SKILL_STACK_AUDIT: PASS",
-        '"positive_cases": 65',
-        '"negative_cases": 63',
-        '"scenario_count": 48',
+        '"scenario_count": 49',
         '"provider_policy_count": 56',
         '"realistic_smoke_cases": 34',
         '"two_phase_host_binding": true',
@@ -1676,6 +1707,30 @@ def validate_visual_asset_plan() -> None:
         '"duplicate_identity_negative_control": true',
     ]:
         require(marker in proc.stdout, f"visual asset plan audit missing evidence: {marker}")
+
+
+def validate_execution_scope_regressions() -> None:
+    modules = [
+        "tests.test_request_scope_contract",
+        "tests.test_asset_execution_gate",
+        "tests.test_asset_only_plan",
+        "tests.test_visual_asset_jingzao_handoff",
+        "tests.test_pre_video_assets_gate",
+        "tests.test_prompt_compiler_security",
+        "tests.test_humanization_execution_gate",
+        "tests.test_state_snapshot_media_scope",
+        "tests.test_storyboard_page_assembler",
+        "tests.test_character_master_visual_gate",
+        "tests.test_media_forward_audit",
+        "tests.test_script_to_seedance_source_security",
+        "tests.test_compact_state_migration",
+        "tests.test_skill_stack_route_context",
+    ]
+    proc = run(["python3", "-m", "unittest", *modules, "-q"])
+    require(
+        proc.returncode == 0,
+        f"execution-scope regression tests failed:\n{proc.stderr}\n{proc.stdout}",
+    )
 
 
 def validate_asset_foundation_pass() -> None:
@@ -1759,8 +1814,8 @@ def validate_script_to_seedance_handoff() -> None:
         '"valid_fixture_passed": true',
         '"valid_seedance25_fixture_passed": true',
         '"valid_v3_detail_binding_fixture_passed": true',
-        '"negative_case_count": 45',
-        '"negative_cases_rejected": 45',
+        '"negative_case_count": 64',
+        '"negative_cases_rejected": 64',
         '"generation_unit_count": 2',
         '"asset_foundation_gate_validated": true',
     ]:
@@ -1940,12 +1995,20 @@ def validate_v2_interaction_contract() -> None:
         "project_id",
         "mode",
         "current_route",
+        "media_scope",
+        "image_generation_authorized",
+        "video_generation_authorized",
+        "active_stage",
+        "active_asset_id",
+        "active_asset_role",
+        "stage_contract_reference",
+        "stage_contract_sha256",
+        "asset_execution_gate_status",
         "locked_facts",
         "working_assumptions",
         "active_outputs",
         "stale_outputs",
         "open_questions",
-        "generation_authorized",
         "client_delivery_approved",
     }, "compact state snapshot fields drifted")
 
@@ -6765,6 +6828,7 @@ def main() -> int:
         ("script-to-Seedance handoff", validate_script_to_seedance_handoff),
         ("storyboard-frame Jingzao handoff", validate_storyboard_frame_handoff),
         ("whole-film visual asset plan", validate_visual_asset_plan),
+        ("execution-scope regressions", validate_execution_scope_regressions),
         ("workspace hygiene runtime", validate_workspace_hygiene_runtime),
         ("headless input-to-answer acceptance", validate_headless_acceptance),
         ("delivery and ownership boundaries", validate_delivery_boundaries),
@@ -6872,7 +6936,7 @@ def main() -> int:
         ("goal-mode rough idea visual dogfood receipt", validate_goal_mode_rough_idea_visual_dogfood_receipt),
         ("media-forward audit script", validate_media_forward_audit_script),
         ("release gate script", validate_release_gate_script),
-        ("no media assets", validate_no_media_assets),
+        ("repository fixture media hygiene", validate_no_media_assets),
     ]
     if INSTALLED_PACKAGE_VALIDATION:
         checks = [item for item in checks if item[0] != "install parity audit"]

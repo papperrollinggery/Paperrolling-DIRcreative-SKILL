@@ -20,7 +20,7 @@
 
 DIRcreative 不是“输入一句话、吐出一堆提示词”的黑盒。它先判断任务是局部修改、完整开发还是交付审计，再只加载对应合同。局部任务直接交付修改结果；只有真实方向冲突、生成授权或客户交付才停下来询问。
 
-当前版本为 [`v0.7.1`](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/releases/tag/v0.7.1)。在 v0.7.0 的人物主资产、Seedance 2.5、生产账本与 Specialist Exchange v2 基础上，本版加入分层文本人化、Seedance 2.5 方法上下文、参考视频蒸馏、动作相位级分镜覆盖，以及高风险场景/支撑真值门。结构验证、独立审核、真实媒体生成、用户采用与发布仍是不同状态。
+当前源码版本为 `v0.8.0`；已发布版本与下载以 [GitHub Releases](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/releases) 为准。本版修复全片前期从文字规划切换到真实图片资产时的执行断层：分离图片/视频授权，绑定跨任务用户范围、资产角色、权威真值、人物母版、依赖 DAG、媒体调用前置检查和真实生成证据；同时把去 AI 化规划与实际改写、Seedance 能力卡与权威剧本源、结构验证与视觉采用继续保持为不同状态。
 
 源码仓库包含 DIRcreative 根 Skill、19 个 `skills/dircreative/*` 内部子 Skill，以及 `ai-film-asset-stress-test`、`ai-film-production-ledger` 两个 P0 能力入口。正式 DIRcreative 安装包按安全设计只暴露根 `$dircreative`，其余入口会内部化后由 selector 路由；Skill Stack 还会发现宿主中已安装的外部专业 provider。这些依赖不会被复制进本仓库，也不能把“宿主可调用”表述成“GitHub 已内置”。ADCO 始终是独立外部编排方。
 
@@ -122,11 +122,12 @@ DIRcreative 会选择 Fast、Studio 或 Delivery。Fast 不进入 Director Room�
 
 ## Safety model
 
-- 未获得用户明确授权，不直接生成图片或视频。
+- 图片生成与最终视频生成分别授权；“完成视频生成前全部流程”在明确包含图片资产时会生成真实图片，但不会生成最终视频。
+- 每次图片调用都要绑定当前视觉计划、active asset、role-specific contract、prompt、父资产审查状态和 host 选择的项目根；错误人物母版不能解锁后续分镜或 clean input。
 - 完整成片先展示动态视觉资产矩阵：角色/产品/关键道具、每个场景、每个镜头的独立分镜图、覆盖全部镜头的导演故事板，以及模型实际需要的 clean frames。
 - TVC 验收使用 16:9 广播主档案，不以 9:16 社媒变体代替；具体帧率、声音、字幕/法务安全区与母版参数以目标客户或播出方规格为准。
 - 再展示生成合同：每张图的用途、继承来源、标题层级和是否会成为视频输入；代表性样片不得冒充全片完成。
-- 视觉资产计划 v2.2 绑定源清单、批准 shot cards、连续且逐帧对齐的 timecode、完整逐镜创意真相和精确继承关系；完成证据统一为依赖无关的规范 PNG，场景、逐镜、风格与视频输入帧必须匹配目标画幅，文件完整解码后再绑定规范化像素身份、技术收据和包内独立视觉复核清单。`user_locked` 只是工作流状态，不能绕过复核；技术盖章不能自动通过视觉判断，独立资产也不得靠 metadata 改写把同一画面冒充多张图。
+- 视觉资产计划 v2.3 绑定源清单、批准 shot cards、连续且逐帧对齐的 timecode、完整逐镜创意真相和精确继承关系；完成证据统一为依赖无关的规范 PNG，场景、逐镜、风格与视频输入帧必须匹配目标画幅，文件完整解码后再绑定规范化像素身份、技术收据和包内独立视觉复核清单。`user_locked` 只是工作流状态，不能绕过复核；技术盖章不能自动通过视觉判断，独立资产也不得靠 metadata 改写把同一画面冒充多张图。
 - `visual_assets_complete` 只表示场景图、逐镜分镜、导演故事板和视频输入帧完成，不表示 TVC 成片、客户批准或电视台验收。
 - fixture、终端演示、HTML 页面和自动化测试不能冒充真人验收。
 - 生成候选、临时截图和 review widget 不能自动成为项目 source of truth。
@@ -196,12 +197,14 @@ roles, performance instructions, and prompt surfaces for each target model.
 
 ### Layered humanization
 
-DIRcreative now diagnoses human-language work before editing. It distinguishes
-`write`, `review`, `refactor`, and `recreate`; inspects architecture or venue,
-discourse and surface in separate evidence-bearing passes; and selects the
-repair depth from the deepest confirmed defect rather than from a word list.
-Every finding needs a source-bound quote, cluster and whitelist verdict.
-Refactor/recreate runs Sepia diagnosis first; only a second call carrying the
+Clear, bounded dialogue and prose edits can be written directly while preserving
+facts and voice. They do not require a full humanization plan or Sepia call.
+Document-scale rewrites and demonstrated structural or discourse problems use
+the layered path: distinguish `write`, `review`, `refactor`, and `recreate`;
+inspect architecture or venue, discourse and surface separately; and select the
+repair depth from confirmed defects. Layered findings need a source-bound quote,
+cluster and whitelist verdict. When Sepia refactor/recreate is selected, diagnosis
+runs first; only a second call carrying the
 diagnosis hash, accepted findings and host-read voice/venue evidence may edit.
 Inline sources have a 64 KiB limit and the full evidence packet has a separately
 reported 128 KiB Studio budget:
@@ -294,11 +297,12 @@ Skill; see [review trust host configuration](docs/film-preproduction/review-trus
 正式安装源是同一 GitHub Release 中的归档和 `SHA256SUMS`，再由该 tag 的精确、
 干净源码执行同进程验证与安装；不能运行归档内的 installer，也不能用 metadata
 自证。下面的信任链从 `v0.5.0` 起适用；更早版本不满足这条正式安装门。
+以下命令在 `v0.8.0` tag 与 Release 实际发布后生效。
 
 ```bash
-gh release download v0.7.1 \
+gh release download v0.8.0 \
   --repo papperrollinggery/Paperrolling-DIRcreative-SKILL \
-  --pattern 'dircreative-0.7.1.tar.gz' \
+  --pattern 'dircreative-0.8.0.tar.gz' \
   --pattern 'SHA256SUMS'
 ```
 
@@ -308,7 +312,7 @@ gh release download v0.7.1 \
 ```bash
 set -euo pipefail
 REPO_URL="https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL.git"
-TAG="v0.7.1"
+TAG="v0.8.0"
 EXPECTED_COMMIT="$(
   git ls-remote --exit-code --tags "$REPO_URL" \
     "refs/tags/$TAG" "refs/tags/$TAG^{}" |
@@ -320,7 +324,7 @@ EXPECTED_COMMIT="$(
     }
   '
 )"
-ARTIFACT="$(pwd)/dircreative-0.7.1.tar.gz"
+ARTIFACT="$(pwd)/dircreative-0.8.0.tar.gz"
 CHECKSUMS="$(pwd)/SHA256SUMS"
 VERIFY_ROOT="$(mktemp -d)"
 trap 'rm -rf "$VERIFY_ROOT"' EXIT

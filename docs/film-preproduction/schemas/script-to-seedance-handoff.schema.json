@@ -39,14 +39,18 @@
     "provider_limits": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["max_references_per_unit", "source_type", "verification_status", "source"],
+      "required": ["max_references_per_unit", "max_image_references_per_unit", "max_video_references_per_unit", "max_audio_references_per_unit", "source_type", "verification_status", "source"],
       "properties": {
         "max_references_per_unit": {"type": "integer", "minimum": 1, "maximum": 64},
-        "source_type": {"enum": ["tool_schema", "official_docs", "live_surface"]},
+        "max_image_references_per_unit": {"type": "integer", "minimum": 0, "maximum": 64},
+        "max_video_references_per_unit": {"type": "integer", "minimum": 0, "maximum": 64},
+        "max_audio_references_per_unit": {"type": "integer", "minimum": 0, "maximum": 64},
+        "source_type": {"type": "string", "minLength": 1},
         "verification_status": {"const": "verified"},
         "source": {"type": "string", "minLength": 1}
       }
     },
+    "method_application": {"$ref": "#/$defs/method_application"},
     "asset_foundation_gate": {"$ref": "#/$defs/asset_foundation_gate"},
     "authoritative_script": {"$ref": "#/$defs/authoritative_script"},
     "entity_ownership": {
@@ -86,6 +90,20 @@
       "items": {"$ref": "#/$defs/prompt_unit"}
     }
   },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "model_surface": {
+            "properties": {"version": {"const": "2.5"}},
+            "required": ["version"]
+          }
+        },
+        "required": ["model_surface"]
+      },
+      "then": {"required": ["method_application"]}
+    }
+  ],
   "$defs": {
     "id_array": {
       "type": "array",
@@ -133,20 +151,23 @@
     "authoritative_script": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["script_id", "sha256", "dialogue_lines"],
+      "required": ["script_id", "source_relative_path", "sha256", "dialogue_lines"],
       "properties": {
         "script_id": {"type": "string", "minLength": 1},
+        "source_relative_path": {"type": "string", "minLength": 1},
         "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
         "dialogue_lines": {
           "type": "array",
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["dialogue_line_id", "speaker_entity_id", "text", "shot_ids"],
+            "required": ["dialogue_line_id", "speaker_entity_id", "text", "source_line_number", "source_line_sha256", "shot_ids"],
             "properties": {
               "dialogue_line_id": {"type": "string", "minLength": 1},
               "speaker_entity_id": {"type": "string", "minLength": 1},
               "text": {"type": "string", "minLength": 1},
+              "source_line_number": {"type": "integer", "minimum": 1},
+              "source_line_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
               "shot_ids": {"$ref": "#/$defs/id_array"}
             }
           }
@@ -172,6 +193,7 @@
         "model_key",
         "version",
         "provider_surface",
+        "status",
         "verification_status"
       ],
       "properties": {
@@ -179,6 +201,7 @@
         "model_key": {"type": "string", "minLength": 1},
         "version": {"type": "string", "minLength": 1},
         "provider_surface": {"type": "string", "minLength": 1},
+        "status": {"type": "string", "minLength": 1},
         "verification_status": {"const": "verified"}
       }
     },
@@ -214,6 +237,46 @@
         "scene_anchor": {"type": "string", "minLength": 1},
         "primary_action": {"type": "string", "minLength": 1},
         "entity_ids": {"$ref": "#/$defs/id_array"}
+      }
+    },
+    "method_application": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "provider_skill_id", "metadata_version", "observed_metadata_version", "authority", "non_adoption_reason", "project_default_segment_max_seconds", "current_segment_max_seconds", "current_limit_scope", "dialogue_edit_authority", "output_unit_policy", "binding_scope", "dynamic_state_policy", "prompt_surface_policy", "capacity_preflight"],
+      "properties": {
+        "status": {"enum": ["applied_unverified", "not_applied"]},
+        "provider_skill_id": {"const": "mr-li-seedance-25"},
+        "metadata_version": {"type": ["string", "null"]},
+        "observed_metadata_version": {"type": ["string", "null"]},
+        "authority": {"enum": ["isolated_method_only", "converter_fallback"]},
+        "non_adoption_reason": {"type": ["string", "null"], "enum": ["provider_missing", "version_mismatch", "body_unavailable", "references_unavailable", "context_budget", null]},
+        "project_default_segment_max_seconds": {"type": "number", "exclusiveMinimum": 0, "maximum": 60},
+        "current_segment_max_seconds": {"type": "number", "exclusiveMinimum": 0, "maximum": 60},
+        "current_limit_scope": {"enum": ["project_default", "current_segment_override"]},
+        "dialogue_edit_authority": {"enum": ["none", "explicit_current_scope"]},
+        "output_unit_policy": {"const": "one_natural_generation_unit_at_a_time"},
+        "binding_scope": {"const": "current_segment_actual_assets_only"},
+        "dynamic_state_policy": {"const": "shot_order_not_binding_freeze"},
+        "prompt_surface_policy": {"const": "heading_free_no_packaging_names"},
+        "capacity_preflight": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["generation_unit_id", "scene_type", "dialogue_characters", "estimated_seconds", "draft_review_seconds", "status", "scene_completion_claim", "next_source_start"],
+            "properties": {
+              "generation_unit_id": {"type": "string", "pattern": "^GU[0-9]{2,}$"},
+              "scene_type": {"enum": ["dialogue", "action", "mixed"]},
+              "dialogue_characters": {"type": "integer", "minimum": 0},
+              "estimated_seconds": {"type": "number", "exclusiveMinimum": 0},
+              "draft_review_seconds": {"type": "number", "exclusiveMinimum": 0},
+              "status": {"const": "pass"},
+              "scene_completion_claim": {"enum": ["segment_only", "scene_complete"]},
+              "next_source_start": {"type": ["string", "null"]}
+            }
+          }
+        }
       }
     },
     "generation_unit": {

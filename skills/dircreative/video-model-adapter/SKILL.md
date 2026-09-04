@@ -90,9 +90,10 @@ Use `skills/dircreative/assets/visualizations/stage-surface-registry.json#video-
   the handoff validator rechecks their real file hashes, stage coverage, verdict,
   and requested shot scope before any prompt is exportable.
 - When the target is Seedance 2.5, retain the same compiler/validator chain and
-  apply `mr-li-seedance-25` 1.8.2 first as the isolated method collaborator.
-  Bind its visual-baseline, prompt-writing, duration and heading-free format
-  references; target intent alone never authorizes model capability or execution.
+  apply `mr-li-seedance-25` 1.9.0 first as the isolated method collaborator.
+  Bind its visual-baseline, prompt-writing, duration, heading-free format and
+  full-flow regression references; apply its pre-write capacity, speaker-change cut and one-natural-
+  segment rules. Target intent alone never authorizes model capability or execution.
 - After prompt preflight, send only the final generation candidate—not drafts—to
   `ai-film-production-ledger`. The Ledger records a `planned` attempt until a
   separate generation authorization and real execution evidence exist.
@@ -136,7 +137,9 @@ Use `skills/dircreative/assets/visualizations/stage-surface-registry.json#video-
 - For longform work, export prompts per sequence pack and preserve sequence IDs for edit assembly.
 - Retry prompts must change one variable at a time: subject/product identity, primary action, camera/shot size, look/material/light, reference binding, or output controls. Record the failure ID and the smallest upstream artifact being corrected.
 - Do not let a graph edge connect a dense board directly to a literal I2V node unless the asset role and model policy allow it.
-- Do not generate videos.
+- In `prompt_only` and `external_generation`, do not call video tools. In an
+  authorized video-generation handoff, return the validated prompt and bindings
+  to the Delivery executor; this adapter does not perform the media call itself.
 - Run the executable Prompt IR schema and semantic validator before adaptation. Compile only references marked `attached_to_run: true`; planning-only assets, missing slots, internal IDs, paths, hashes, QA/retry fields, and post-production-only audio are forbidden on the terminal prompt surface.
 - Every person/product/prop action and every dialogue or event sound must resolve to a valid entity owner. Targets longer than one generation unit require contiguous units with exact adjacent handoff keys/states and audio handoff. Compile and deliver one locally rebased unit prompt at a time; never present a 30-second assembly plan as one model-executable prompt.
 

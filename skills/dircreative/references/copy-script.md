@@ -38,16 +38,18 @@ Natural does not mean casual. Protect facts, names, claims, quotations, coined
 terms, character diction, genre register and performance-bearing form. Derive a
 `VOICE PROFILE` from approved passages, not adjectives such as “poetic.”
 
-- Read `humanization-workflow.md`; bind operation, profile, guard and depth.
-  Diagnose architecture/domain, discourse and surface separately, with quoted
-  source evidence, cluster and whitelist verdict. Review never edits;
-  refactor/recreate first return diagnosis, then a second evidence-bound call
-  applies accepted findings. Recreate also requires exact source spans and
-  hashed preservation content; write sets architecture first.
-- Short local Chinese contextual edits use `shuorenhua`; explicitly selected
-  fidelity cleanup can use `de-AI-writing`; short English edits stay on DIR's
-  bounded path. Document-scale, systemic or venue-specific work selects
-  `sepia_humanization`. A later Chinese pass needs a quoted residual cluster.
+- For a clear, short edit, use the supplied passage and character/context cues
+  directly. Do not require a document-level voice corpus, a planning script or
+  a provider cascade before returning one revised line. Read
+  `humanization-workflow.md` for explicit de-AI diagnosis, persistent defects,
+  document-scale work or formal evidence. Keep diagnosis and revision distinct;
+  an authorized bounded edit may complete both internally.
+  On the layered path: Diagnose architecture/domain, discourse and surface separately;
+  repair only the layers supported by the diagnosis.
+- Add `shuorenhua` when Chinese syntax, spoken rhythm or voice remains a concrete
+  problem; use `de-AI-writing` for selected fidelity cleanup. Sepia is useful for
+  architecture, discourse and venue-level work, or when explicitly requested.
+  A later Chinese pass needs an actual remaining defect, not an automatic quota.
 - `humanizer-zh` remains diagnostic. One phrase hit proves nothing; fix clusters
   and venue mismatches without manufacturing slang or mistakes.
 - Read dialogue and VO aloud. For screenplay or storyboard descriptions, write

@@ -343,7 +343,12 @@
       "generated_perceptual_hash": "",
       "truth_sha256": "f5017dcf523beb0ee22c0b6622036d1dbfbf23ef5cb8145fec5a5a94568d12f0",
       "technical_receipt": null,
-      "visual_qa_receipt": null
+      "visual_qa_receipt": null,
+      "compile_route": "selected_skill_handoff",
+      "character_mode": "headed_master",
+      "derived_from_asset_id": null,
+      "approved_source_master_sha256": null,
+      "character_contract_sha256": "72418354996e0a9c6d97cd59eedbe96f655e323e71cfea1fa270692ddac41469"
     },
     {
       "asset_id": "identity-product-coldbrew-bottle",
@@ -372,7 +377,8 @@
       "generated_perceptual_hash": "",
       "truth_sha256": "473ceb700a7289fae598ccf15771dbabe19e9d9a0c5e22675da59159bffe48e5",
       "technical_receipt": null,
-      "visual_qa_receipt": null
+      "visual_qa_receipt": null,
+      "compile_route": "direct_concise"
     },
     {
       "asset_id": "continuity-prop-ice-cup-state",
@@ -405,7 +411,8 @@
       "generated_perceptual_hash": "",
       "truth_sha256": "601a282b9428680f286a3f941458d9241ada1de178fbdfa3eb27024a9128f44a",
       "technical_receipt": null,
-      "visual_qa_receipt": null
+      "visual_qa_receipt": null,
+      "compile_route": "direct_concise"
     },
     {
       "asset_id": "scene-office-desk",
@@ -441,7 +448,8 @@
       "generated_perceptual_hash": "",
       "truth_sha256": "93e59fe5d0f6245920db7d6d425c33a61ed9fcb4496ed8f25dddb915a93e2e1f",
       "technical_receipt": null,
-      "visual_qa_receipt": null
+      "visual_qa_receipt": null,
+      "compile_route": "direct_concise"
     },
     {
       "asset_id": "look-whole-film",
@@ -477,9 +485,10 @@
       "generated_sha256": "",
       "generated_pixel_sha256": "",
       "generated_perceptual_hash": "",
-      "truth_sha256": "2434925a92e00d055407c781e0c777633afc6d2959f3d8e926b6b26794f13bc6",
+      "truth_sha256": "f8ba3bff482c0a2b110afadd505601287098201f0e1be843a9f618560c71ddab",
       "technical_receipt": null,
-      "visual_qa_receipt": null
+      "visual_qa_receipt": null,
+      "compile_route": "direct_concise"
     },
     {
       "asset_id": "storyboard-frame-S01",
@@ -520,7 +529,8 @@
       "generated_perceptual_hash": "",
       "truth_sha256": "a89e320d924cfdf818cfc62ca28a8a4ae8ee9d7258ce505bef8c4691711c9014",
       "technical_receipt": null,
-      "visual_qa_receipt": null
+      "visual_qa_receipt": null,
+      "compile_route": "selected_skill_handoff"
     },
     {
       "asset_id": "storyboard-frame-S02",
@@ -561,7 +571,8 @@
       "generated_perceptual_hash": "",
       "truth_sha256": "044617242fa9aa0ba8dc7b5bf38b36edf7ddb8d9eaad47a01b599c49f70894a0",
       "technical_receipt": null,
-      "visual_qa_receipt": null
+      "visual_qa_receipt": null,
+      "compile_route": "selected_skill_handoff"
     },
     {
       "asset_id": "storyboard-frame-S03",
@@ -608,7 +619,8 @@
       "generated_perceptual_hash": "",
       "truth_sha256": "278d6ea054f9b7009aadba7bd42f0da4433fe92ba4b74b1fadf491c40ec67d5b",
       "technical_receipt": null,
-      "visual_qa_receipt": null
+      "visual_qa_receipt": null,
+      "compile_route": "selected_skill_handoff"
     },
     {
       "asset_id": "storyboard-frame-S04",
@@ -655,7 +667,8 @@
       "generated_perceptual_hash": "",
       "truth_sha256": "bd71d9b28bcbab0c49db33b89d47f3f234f97481f2cdce29f3904579c0668f00",
       "technical_receipt": null,
-      "visual_qa_receipt": null
+      "visual_qa_receipt": null,
+      "compile_route": "selected_skill_handoff"
     },
     {
       "asset_id": "storyboard-frame-S05",
@@ -696,7 +709,8 @@
       "generated_perceptual_hash": "",
       "truth_sha256": "66531d22b1b078683af81ee9aba6017553c8a6fab01bd508dc7ee208138becbe",
       "technical_receipt": null,
-      "visual_qa_receipt": null
+      "visual_qa_receipt": null,
+      "compile_route": "selected_skill_handoff"
     },
     {
       "asset_id": "storyboard-frame-S06",
@@ -743,7 +757,8 @@
       "generated_perceptual_hash": "",
       "truth_sha256": "0ec09c5645352d61c78a57384aaa5d4a007143659bd8b58fc89603bbb0e44312",
       "technical_receipt": null,
-      "visual_qa_receipt": null
+      "visual_qa_receipt": null,
+      "compile_route": "selected_skill_handoff"
     },
     {
       "asset_id": "director-storyboard-page-01",
@@ -798,7 +813,8 @@
       "generated_perceptual_hash": "",
       "truth_sha256": "1791d581a746be3b10fa336e758d4344caeb5684d911624b9b6f9e4b48c01ab3",
       "technical_receipt": null,
-      "visual_qa_receipt": null
+      "visual_qa_receipt": null,
+      "compile_route": "deterministic_assembly"
     },
     {
       "asset_id": "clean-input-G01",
@@ -837,7 +853,8 @@
       "generated_perceptual_hash": "",
       "truth_sha256": "73c2719c87565a2b5ff5d1b8a05666c669d8d8218d2175bd70c003293479c758",
       "technical_receipt": null,
-      "visual_qa_receipt": null
+      "visual_qa_receipt": null,
+      "compile_route": "selected_skill_handoff"
     },
     {
       "asset_id": "clean-input-G02",
@@ -880,7 +897,8 @@
       "generated_perceptual_hash": "",
       "truth_sha256": "a447098695a09e16e7ae24e7bf1080809ea24f14351615ed5c1bc843c8877581",
       "technical_receipt": null,
-      "visual_qa_receipt": null
+      "visual_qa_receipt": null,
+      "compile_route": "selected_skill_handoff"
     },
     {
       "asset_id": "clean-input-G03",
@@ -923,7 +941,8 @@
       "generated_perceptual_hash": "",
       "truth_sha256": "a32f974673900aa202cb05800b038403d2fe1e0d759f1925d9751e672ae61df6",
       "technical_receipt": null,
-      "visual_qa_receipt": null
+      "visual_qa_receipt": null,
+      "compile_route": "selected_skill_handoff"
     }
   ],
   "completion_claim": "plan_complete"

@@ -30,6 +30,30 @@ def run_self_test(
         artifact_root.mkdir()
         review_root.mkdir()
         trust_root.mkdir()
+        script_fixture = VALID_PATH.parent / "source" / "SCRIPT-001.md"
+        script_relative_path = Path("source") / "SCRIPT-001.md"
+
+        def materialize_authoritative_script(
+            root: Path,
+            *,
+            content_suffix: str = "",
+            symlink: bool = False,
+        ) -> None:
+            source_path = root / script_relative_path
+            source_path.parent.mkdir(parents=True, exist_ok=True)
+            source_content = script_fixture.read_text(encoding="utf-8") + content_suffix
+            if symlink:
+                target = root / "source" / "SCRIPT-001-target.md"
+                target.write_text(source_content, encoding="utf-8")
+                if source_path.exists() or source_path.is_symlink():
+                    source_path.unlink()
+                source_path.symlink_to(target.name)
+            else:
+                if source_path.is_symlink():
+                    source_path.unlink()
+                source_path.write_text(source_content, encoding="utf-8")
+
+        materialize_authoritative_script(artifact_root)
         stress_template = load_json(
             ROOT / "tests/fixtures/asset-stress-test/valid-report.json"
         )
@@ -173,6 +197,7 @@ def run_self_test(
         }
         valid_errors = validate(
             valid,
+            project_root=artifact_root,
             asset_foundation_path=foundation_path,
             asset_stress_path=stress_path,
             asset_artifact_root=artifact_root,
@@ -189,16 +214,21 @@ def run_self_test(
             "model_key": "seedance",
             "version": "2.5",
             "provider_surface": "Seedance 2.5 launch product surfaces described by ByteDance Seed",
+            "status": "current",
             "verification_status": "verified",
         }
         valid25["provider_limits"] = {
             "max_references_per_unit": 50,
-            "source_type": "official_docs",
+            "max_image_references_per_unit": 30,
+            "max_video_references_per_unit": 10,
+            "max_audio_references_per_unit": 10,
+            "source_type": "version_scoped_official_launch_guide",
             "verification_status": "verified",
             "source": "https://seed.bytedance.com/en/blog/one-take-creation-flexible-referencing-introducing-seedance-2-5",
         }
         valid25_errors = validate(
             valid25,
+            project_root=artifact_root,
             asset_foundation_path=foundation_path,
             asset_stress_path=stress_path,
             asset_artifact_root=artifact_root,
@@ -230,6 +260,11 @@ def run_self_test(
 
         rejected = 0
         for case in cases:
+            materialize_authoritative_script(
+                artifact_root,
+                content_suffix=str(case.get("script_content_suffix", "")),
+                symlink=case.get("script_symlink") is True,
+            )
             case_foundation = copy.deepcopy(foundation)
             case_stress = copy.deepcopy(stress)
             dependency_mutations = case.get("dependency_mutations", {})
@@ -266,6 +301,7 @@ def run_self_test(
             case_document = apply_mutations(case_document, case.get("mutations", []))
             errors = validate(
                 case_document,
+                project_root=artifact_root,
                 asset_foundation_path=case_foundation_path,
                 asset_stress_path=case_stress_path,
                 asset_artifact_root=artifact_root,

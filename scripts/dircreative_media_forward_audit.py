@@ -31,8 +31,10 @@ MAX_PNG_PIXELS = 100_000_000
 MAX_DECODED_PNG_BYTES = 512 * 1024 * 1024
 MAX_RECEIPT_BYTES = 1024 * 1024
 MAX_C2PATOOL_BYTES = 256 * 1024 * 1024
-MAX_HOST_TRACE_PREFIX_BYTES = 512 * 1024 * 1024
-MAX_HOST_TRACE_LINE_BYTES = 64 * 1024 * 1024
+MAX_HOST_TRACE_PREFIX_BYTES = 16 * 1024 * 1024
+MAX_HOST_TRACE_LINE_BYTES = 15 * 1024 * 1024
+MAX_HOST_TRACE_INLINE_PNG_BYTES = 10 * 1024 * 1024
+MAX_HOST_TRACE_READ_BYTES = 64 * 1024
 C2PATOOL_ALLOWED_SHA256 = frozenset(
     {
         # contentauth/c2pa-rs c2patool-v0.27.0 universal-apple-darwin binary.
@@ -520,9 +522,13 @@ def trace_descriptor_failures(
         not isinstance(prefix_bytes, int)
         or isinstance(prefix_bytes, bool)
         or prefix_bytes <= 0
-        or prefix_bytes > MAX_HOST_TRACE_PREFIX_BYTES
     ):
         failures.append(f"{label}.prefix_bytes is outside the audit limit")
+    elif prefix_bytes > MAX_HOST_TRACE_PREFIX_BYTES:
+        failures.append(
+            f"{label}.prefix_bytes exceeds the v2 sealed-prefix limit (16 MiB); "
+            "re-export a smaller prefix"
+        )
     digest = descriptor.get("prefix_sha256")
     if not isinstance(digest, str) or not SHA256_RE.fullmatch(digest):
         failures.append(f"{label}.prefix_sha256 is invalid")
@@ -599,7 +605,7 @@ def parse_host_trace_prefix(
     pending_generation: dict[str, Any] | None = None
     pending_views: dict[str, dict[str, Any]] = {}
     digest = hashlib.sha256()
-    buffered = b""
+    line_buffer = bytearray()
     line_number = 0
 
     def consume_line(raw_line: bytes) -> None:
@@ -703,10 +709,12 @@ def parse_host_trace_prefix(
                 image_bytes = base64.b64decode(raw_result, validate=True)
             except binascii.Error as exc:
                 raise ValueError(f"{label} image result is invalid base64") from exc
-            if (
-                not image_bytes.startswith(b"\x89PNG\r\n\x1a\n")
-                or len(image_bytes) > MAX_PNG_FILE_BYTES
-            ):
+            if len(image_bytes) > MAX_HOST_TRACE_INLINE_PNG_BYTES:
+                raise ValueError(
+                    f"{label} inline PNG exceeds the 10 MiB trace limit; "
+                    "larger inline results are unsupported by host-trace audit"
+                )
+            if not image_bytes.startswith(b"\x89PNG\r\n\x1a\n"):
                 raise ValueError(f"{label} image result is not one bounded PNG")
             generation = dict(pending_generation)
             generation.update(
@@ -739,7 +747,10 @@ def parse_host_trace_prefix(
                 if not has_image:
                     raise ValueError(f"{label} marked view returned no image")
                 evidence["view_events"][pending_view["event_id"]] = pending_view["path"]
-        evidence["review_claims"].update(parse_review_claims(trace_text(payload)))
+        if record.get("type") == "event_msg" and payload.get("type") == "agent_message":
+            evidence["review_claims"].update(
+                parse_review_claims(str(payload.get("message", "")))
+            )
 
     try:
         before = os.fstat(descriptor_fd)
@@ -754,19 +765,37 @@ def parse_host_trace_prefix(
             raise ValueError(f"{label} must be one regular single-link file containing the prefix")
         remaining = prefix_bytes
         while remaining:
-            chunk = os.read(descriptor_fd, min(remaining, 1024 * 1024))
+            chunk = os.read(descriptor_fd, min(remaining, MAX_HOST_TRACE_READ_BYTES))
             if not chunk:
                 raise ValueError(f"{label} ended before the declared prefix")
             digest.update(chunk)
             remaining -= len(chunk)
-            buffered += chunk
-            while b"\n" in buffered:
-                raw_line, buffered = buffered.split(b"\n", 1)
+            start = 0
+            while start < len(chunk):
+                newline = chunk.find(b"\n", start)
+                segment_end = len(chunk) if newline < 0 else newline
+                segment = chunk[start:segment_end]
+                if len(line_buffer) + len(segment) > MAX_HOST_TRACE_LINE_BYTES:
+                    raise ValueError(
+                        f"{label} line {line_number + 1} exceeds the v2 audit limit "
+                        "(15 MiB); re-export a sealed trace with each inline result record "
+                        "below 15 MiB"
+                    )
+                if newline < 0:
+                    line_buffer.extend(segment)
+                    break
+                if line_buffer:
+                    line_buffer.extend(segment)
+                    raw_line = bytes(line_buffer)
+                    line_buffer.clear()
+                else:
+                    raw_line = segment
                 if raw_line:
                     consume_line(raw_line)
+                start = newline + 1
         after = os.fstat(descriptor_fd)
         path_after = expanded.lstat()
-        if buffered:
+        if line_buffer:
             raise ValueError(f"{label} prefix must end at a JSONL line boundary")
         if (
             file_identity(before) != file_identity(after)

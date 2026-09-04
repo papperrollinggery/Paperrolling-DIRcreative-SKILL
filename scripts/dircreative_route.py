@@ -134,6 +134,8 @@ def generation_authorized(request: str) -> bool:
     return explicit_action_match(
         text,
         r"(?:现在|立即|直接|马上|开始|(?<!申)请)\s*(?:真实)?生成|"
+        r"(?:直接|立即|马上|现在|请|帮我)\s*(?:出图|渲染(?:一张图)?|跑(?:一张|图))|"
+        r"(?:^|\s)跑一张(?:看看|试试)?|"
         r"(?:我|本人)\s*(?:(?:现在|重新|明确|正式|确认)\s*)*授权\s*(?:真实)?生成|"
         r"(?:please\s+)?generate\s+now|start\s+(?:real\s+)?generation(?:\s+now)?|"
         r"\bi\s+(?:hereby\s+)?authorize\s+(?:real\s+)?generation(?:\s+now)?",
@@ -151,6 +153,7 @@ def client_delivery_authorized(request: str) -> bool:
         text,
         r"(?:现在|立即|直接|马上|(?<!申)请)\s*(?:正式\s*)?"
         r"(?:交付(?:给)?|发送(?:给)?|发给)客户|"
+        r"(?:现在|立即|马上)\s*把(?:这个|该|这些)?(?:文件|成片|结果|素材|资产)?\s*发给客户|"
         r"正式\s*(?:交付(?:给)?|发送(?:给)?|发给)客户|"
         r"(?:我|本人)\s*(?:(?:现在|重新|明确|正式|确认)\s*)*(?:批准|授权)\s*"
         r"(?:客户交付|外发|发给客户)|"
@@ -169,6 +172,109 @@ def denied_generation_followed_by_imperative(request: str) -> bool:
         r"(?:现在|立即|直接|马上|开始)\s*(?:真实)?生成|"
         r"(?:please\s+)?generate\s+now|start\s+(?:real\s+)?generation",
     )
+
+
+def classify_media_scope(request: str) -> dict[str, Any]:
+    """Resolve image generation and final-video generation as separate scopes."""
+    text = action_text(request)
+    prompt_only = has(
+        text,
+        r"prompt[- ]?only|dry[- ]?run|纯文本|只(?:输出|做|给).{0,20}(?:提示词|资产计划)|"
+        r"不要?(?:实际)?生成(?:任何)?(?:真实)?媒体|不出图",
+    )
+    image_denied = has(
+        text,
+        r"不要生成(?:任何)?(?:真实)?(?:图片|图像)|不生成(?:任何)?(?:真实)?(?:图片|图像)|"
+        r"不授权(?:任何)?(?:图片|图像)(?:资产)?生成|"
+        r"do\s+not\s+generate\s+(?:any\s+)?images?|no\s+image\s+generation",
+    )
+    video_denied = has(
+        text,
+        r"不要生成(?:最终)?视频|不生成(?:最终)?视频|不授权(?:最终)?视频生成|"
+        r"视频生成(?:暂缓|延后|不在本轮)|停在视频生成前|"
+        r"do\s+not\s+generate\s+(?:the\s+)?(?:final\s+)?video|no\s+video\s+generation",
+    )
+    pre_video_assets = has(
+        text,
+        r"(?:直到|完成|做到|走到).{0,16}(?:视频生成|生成视频)(?:之)?前.{0,24}(?:全部|全套|流程|图片|图像|资产)|"
+        r"(?:视频生成|生成视频)前.{0,24}(?:全部|全套|流程|图片|图像|资产)|"
+        r"(?:全部|全套|完整).{0,20}(?:前期图片|图片资产|视觉资产)|"
+        r"(?:pre[- ]video|pre[- ]generation).{0,24}(?:image|visual|asset)",
+    )
+    image_action = explicit_action_match(
+        text,
+        r"(?:生成|产出|制作|做完|落盘).{0,16}(?:图片|图像|图片资产|视觉资产)|"
+        r"(?:图片|图像|图片资产|视觉资产).{0,16}(?:生成|产出|制作|做完|落盘)|"
+        r"出图|渲染(?:一张图)?|跑图|跑一张(?:看看|试试)?|"
+        r"generate.{0,16}(?:images?|visual assets?)",
+    )
+    video_action = explicit_action_match(
+        text,
+        r"(?:生成|制作|开始|授权).{0,16}(?:最终视频|成片|视频生成)|"
+        r"(?:最终视频|成片).{0,12}(?:生成|制作)|generate.{0,16}(?:final\s+)?video",
+    )
+    forwarded_context = has(
+        text,
+        r"用户原始要求|原始用户要求|派发限制|转交限制|source\s+request|delegated\s+constraint",
+    )
+    authorization_application = has(
+        text,
+        r"(?:正在|准备|打算)?申请.{0,16}(?:生成|出图|视频).{0,8}授权|"
+        r"apply(?:ing)?\s+for.{0,16}(?:generation|rendering)\s+authorization",
+    )
+    planning_request = has(
+        text,
+        r"需要哪些|包括什么|包含什么|有哪些|只想知道|帮我规划|请规划|"
+        r"怎么规划|如何规划|what\s+(?:does|is|are)|explain\s+how|"
+        r"plan(?:ning)?\s+the\s+workflow",
+    )
+    explanation_request = has(text, r"explain\s+how\s+to|how\s+do\s+i") and not has(
+        text, r"(?:then|and\s+then).{0,16}generate|然后.{0,16}生成",
+    )
+    scope_conflict = forwarded_context and pre_video_assets and image_denied
+    if scope_conflict:
+        return {
+            "media_scope": "scope_conflict",
+            "image_generation_authorized": False,
+            "video_generation_authorized": False,
+            "minimum_evidence": "scope_resolution_required",
+        }
+    if prompt_only or (image_denied and not video_action):
+        return {
+            "media_scope": "prompt_only",
+            "image_generation_authorized": False,
+            "video_generation_authorized": False,
+            "minimum_evidence": "planning_artifacts",
+        }
+    if authorization_application or explanation_request or (
+        planning_request and not image_action and not video_action
+    ):
+        return {
+            "media_scope": "planning_only",
+            "image_generation_authorized": False,
+            "video_generation_authorized": False,
+            "minimum_evidence": "planning_artifacts",
+        }
+    if video_action and not video_denied:
+        return {
+            "media_scope": "video_generation",
+            "image_generation_authorized": image_action and not image_denied,
+            "video_generation_authorized": True,
+            "minimum_evidence": "generated_video",
+        }
+    if pre_video_assets or image_action:
+        return {
+            "media_scope": "pre_video_assets",
+            "image_generation_authorized": True,
+            "video_generation_authorized": False,
+            "minimum_evidence": "generated_image_assets",
+        }
+    return {
+        "media_scope": "planning_only",
+        "image_generation_authorized": False,
+        "video_generation_authorized": False,
+        "minimum_evidence": "planning_artifacts",
+    }
 
 
 TECHNICAL_DELIVERABLE_RE = re.compile(
@@ -235,6 +341,11 @@ def classify_route(
 
     text = " ".join(request.split())
     actionable = action_text(request)
+    character_master_target = has(
+        actionable,
+        r"人物母版|角色母版|人物设定(?:图|资产)|角色设定(?:图|资产)|"
+        r"character\s+(?:master|turnaround|model)\s+(?:sheet|asset)",
+    )
     maintenance_target = has(
         text,
         r"(?:DIRcreative\s+Skill\s*(?:本身)?|DIR\s*(?:的)?\s*SKILL\.md|DIR\s*安装器|"
@@ -244,6 +355,13 @@ def classify_route(
     if maintenance_target and maintenance_action:
         return "source_maintenance", ["repository_maintenance", "skill_runtime_forbidden"]
 
+
+    media_scope = classify_media_scope(request)["media_scope"]
+    pre_video_full_scope = media_scope == "scope_conflict" or has(
+        actionable,
+        r"(?:直到|完成|做到|走到).{0,16}(?:视频生成|生成视频)(?:之)?前.{0,24}(?:全部|全套|流程)|"
+        r"(?:视频生成|生成视频)前.{0,20}(?:全部|全套|完整).{0,12}(?:技术)?流程",
+    )
 
     if has(
         actionable,
@@ -260,6 +378,12 @@ def classify_route(
         and not has(actionable, r"Prompt|提示词|方案|计划|plan")
     ):
         return "generation_authorization", ["real_generation_requires_authorization"]
+
+    if character_master_target:
+        return "film_development", [
+            "character_master_asset",
+            "identity_state_contract_required",
+        ]
 
     # Study the media itself; prompt-only criticism stays on the existing route.
     study_action = explicit_action_match(
@@ -321,7 +445,7 @@ def classify_route(
         r"one sentence|one paragraph|single shot|this shot|few storyboards|bounded",
     )
     revision = has(actionable, r"修改|优化|调整|润色|改写|评审|补充|分析|改(?:得|成|为)|revise|rewrite|polish|adjust|review|improve|analy[sz]e")
-    complete = has(actionable, r"完整|全套|多产物|概念\s*\+|故事\s*\+|脚本\s*\+\s*分镜|full|complete|multi[- ]artifact")
+    complete = pre_video_full_scope or has(actionable, r"完整|全套|多产物|概念\s*\+|故事\s*\+|脚本\s*\+\s*分镜|full|complete|multi[- ]artifact")
     broad_scope = has(
         actionable,
         r"(?:整个|整支|整部|全片|全部|全套|逐一|每个)\s*(?:[0-9]+\s*个?)?"
@@ -358,6 +482,12 @@ def classify_deliverable_layer(request: str, route: str) -> tuple[str | None, bo
         return "bounded_output", False
 
     text = action_text(request)
+    if has(
+        text,
+        r"人物母版|角色母版|人物设定(?:图|资产)|角色设定(?:图|资产)|"
+        r"character\s+(?:master|turnaround|model)\s+(?:sheet|asset)",
+    ):
+        return "technical_production", False
     technical = explicit_technical_request(text)
     if technical:
         return "technical_production", True
@@ -387,6 +517,7 @@ def route_request(
     handoff_path: Path | None = None,
 ) -> dict[str, Any]:
     policy = load_policy()
+    media_scope = classify_media_scope(request)
     route, reason_codes = classify_route(
         request,
         handoff,
@@ -410,6 +541,7 @@ def route_request(
             "full_receipt_required": False,
             "deliverable_layer": None,
             "shot_matrix_allowed": False,
+            **media_scope,
             "reason_codes": [*reason_codes, "skill_runtime_forbidden"],
         }
     config = policy["routes"][route]
@@ -437,19 +569,27 @@ def route_request(
         if external_user_gate
         else "continue"
     )
+    if media_scope["media_scope"] == "scope_conflict":
+        action = "stop_for_scope_conflict"
+        reason_codes = [*reason_codes, "forwarded_media_scope_conflict"]
     persistence = policy["interaction_contract"]["state_persistence"][config["mode"]]
     deliverable_layer, shot_matrix_allowed = classify_deliverable_layer(request, route)
+    required_files = list(config["required_files"])
+    if "identity_state_contract_required" in reason_codes:
+        required_files = ["skills/dircreative/references/character-master-sheet.md"]
     return {
         "execution_context": execution_context,
         "mode": config["mode"],
         "route": route,
-        "required_files": config["required_files"],
+        "required_files": required_files,
         "optional_files": config["optional_files"],
         "external_user_gate": external_user_gate,
         "action": action,
         "first_response_contract": (
             "not_applicable"
             if action == "stop_skill_runtime"
+            else "scope_conflict_report"
+            if action == "stop_for_scope_conflict"
             else "gate_question"
             if action == "stop_for_external_gate"
             else "useful_artifact_first"
@@ -460,6 +600,7 @@ def route_request(
         "full_receipt_required": config["full_receipt_required"],
         "deliverable_layer": deliverable_layer,
         "shot_matrix_allowed": shot_matrix_allowed,
+        **media_scope,
         "reason_codes": reason_codes,
     }
 
@@ -472,12 +613,17 @@ def self_test() -> list[str]:
         for field in (
             "mode",
             "route",
+            "required_files",
             "external_user_gate",
             "action",
             "first_response_contract",
             "state_persistence",
             "deliverable_layer",
             "shot_matrix_allowed",
+            "media_scope",
+            "image_generation_authorized",
+            "video_generation_authorized",
+            "minimum_evidence",
         ):
             if field not in case:
                 continue
