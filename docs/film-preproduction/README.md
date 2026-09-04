@@ -41,6 +41,12 @@ Presentation guides such as `chat-co-creation-interface.md` and
 `live-chat-start-protocol.md` explain how to show the result; machine-readable
 routing, gates, persistence, and schemas remain authoritative.
 
+## Post-release product specifications
+
+- `dir-native-adjustment-panel-prd.md` defines the proposed native Visual
+  Workspace project browser and adjustment loop. It is a product specification,
+  not an implemented runtime surface and not a localhost web application.
+
 ## Prompt System Upgrade Bundle
 
 研究、规范和实现前置文档：

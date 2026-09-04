@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Adds a post-v0.7.1 product specification for a native Visual Workspace adjustment panel. The PRD keeps the canvas read-only, routes changes back through conversation and existing gates, defines story/text/shot/action/asset/sound/Seedance views, and uses the S07 false-support case as a fail-closed MVP acceptance fixture.
+
 ## 0.7.1 - 2026-09-04
 
 - Adds Studio `video_distillation` with an offline Workbench evidence bridge, twelve craft axes, candidate mechanisms and explicit effect-comparison records; media/binding validation remains separate from factual and creative-quality review.
