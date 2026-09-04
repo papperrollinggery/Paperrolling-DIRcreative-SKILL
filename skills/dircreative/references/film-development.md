@@ -120,7 +120,10 @@ weak or misleading direction.
 All audience-facing treatment, screenplay, storyboard description, PPT, README
 and report copy receives the authored-voice pass in `copy-script.md` before
 delivery. A source-derived `VOICE PROFILE` protects project vocabulary,
-character voices and genre cadence. Use `de-AI-writing` for bounded fidelity
-cleanup; route explicit natural-language requests or residual template prose to
-`human_language_revision`. Do not apply the pass to IDs, timecodes, literal
-SUPER, exact claims, technical fields or paste-ready model syntax.
+character voices and genre cadence. Use `dircreative_humanization_plan.py` to
+separate bounded cleanup from Sepia's layered narrative/professional operations.
+Diagnose by layer, attach quoted evidence, accept findings before editing, and
+bind recreation to a hashed preservation set. IDs, timecodes, literal SUPER,
+exact claims, technical fields and paste-ready model syntax are protected units;
+change one only when the task explicitly includes it and its own contract allows
+the change.

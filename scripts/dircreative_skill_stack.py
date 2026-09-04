@@ -12,6 +12,8 @@ from dataclasses import dataclass, replace
 from pathlib import Path, PurePosixPath
 from typing import Any, Callable, Iterable
 
+import dircreative_humanization_plan as humanization_plan
+
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE_SKILL_ROOT = ROOT / "skills/dircreative"
@@ -23,6 +25,7 @@ HOST_CATALOG_PATH = ROOT / "tests/fixtures/skill-stack/host-catalog.json"
 MAIN_SKILL = SKILL_ROOT / "SKILL.md"
 
 ID_RE = re.compile(r"^[a-z0-9][a-z0-9:._-]{0,127}$")
+EXTERNAL_PROVIDER_ID_EXCEPTIONS = {"de-AI-writing"}
 SHA_RE = re.compile(r"^[0-9a-f]{64}$")
 ALLOWED_ROLES = {
     "craft_owner",
@@ -40,6 +43,7 @@ ALLOWED_PERSPECTIVES = {
 }
 ISOLATED_CONTEXT_SCOPES = {
     "isolated_craft_contract",
+    "isolated_method_contract",
     "isolated_validator_contract",
     "isolated_handoff_contract",
 }
@@ -67,6 +71,7 @@ REQUIRED_PROVIDER_FIELDS = {
 PRIVATE_PATH_MARKERS = ("/Users/", "/home/", "\\Users\\")
 BodyLoader = Callable[[str, "CatalogEntry"], "CatalogEntry | None"]
 _ROUTE_CONTEXT_SEAL = object()
+_CALIBRATION_READBACK_SEAL = object()
 REALISTIC_SMOKE_EXPECTED = {
     "p01_fast_single_concept": ("dircreative", 0, "ready", None),
     "p06_key_visual": ("dircreative", 0, "ready", None),
@@ -87,9 +92,16 @@ REALISTIC_SMOKE_EXPECTED = {
     "p46_script_to_seedance": ("convert-script-to-seedance", 2, "ready", None),
     "p52_script_to_seedance25": ("convert-script-to-seedance", 3, "ready", None),
     "p53_seedance25_emotion_specialist": ("seedance-25-emotion-prompt", 2, "ready", None),
-    "p54_seedance25_fast_priority": ("mr-li-seedance-25", 1, "ready", None),
+    "p54_seedance25_fast_priority": ("dircreative", 0, "ready", None),
     "p55_script_target_seedance25_from_20_source": ("convert-script-to-seedance", 3, "ready", None),
     "p56_contextual_human_language": ("shuorenhua", 2, "ready", None),
+    "p59_sepia_narrative_refactor": ("sepia", 1, "ready", None),
+    "p60_sepia_professional_review": ("sepia", 1, "ready", None),
+    "p61_sepia_narrative_write": ("sepia", 1, "ready", None),
+    "p62_bounded_human_language_diagnosis": ("dircreative", 1, "ready", None),
+    "p63_bounded_chinese_fidelity_revision": ("de-AI-writing", 1, "ready", None),
+    "p64_sepia_recreate_with_bound_preservation": ("sepia", 1, "ready", None),
+    "p65_bounded_english_human_language": ("dircreative", 0, "ready", None),
     "p47_cinematic_storyboard_frames": ("jingzao-image-forge", 1, "ready", None),
     "p48_asset_foundation_production_design_pass": ("production-design-worldbuilding", 1, "needs_followup", None),
     "p49_asset_stress_validation": ("dircreative", 1, "ready", None),
@@ -109,7 +121,7 @@ REALISTIC_BODY_PAD = {
     "imagegen": 19000,
     "score-and-mix-picture": 9950,
     "convert-script-to-seedance": 7680,
-    "mr-li-seedance-25": 5355,
+    "mr-li-seedance-25": 16802,
     "production-design-worldbuilding": 4430,
     "minimum-visual-bible": 5000,
     "character-continuity-bible": 5000,
@@ -118,7 +130,9 @@ REALISTIC_BODY_PAD = {
     "jingzao-image-forge": 28240,
     "ai-video-prompt-preflight": 23600,
     "shuorenhua": 20670,
+    "de-AI-writing": 5042,
     "humanizer-zh": 18898,
+    "sepia": 8058,
 }
 JINGZAO_REFERENCE_PAD = {
     "references/visual-spec.md": 29007,
@@ -129,8 +143,23 @@ JINGZAO_REFERENCE_PAD = {
     "references/cinematic-shot-design.md": 7767,
 }
 MR_LI_REFERENCE_PAD = {
-    "references/prompt-writing.md": 2863,
-    "references/continuity-and-duration.md": 1917,
+    "references/visual-baseline-and-tags.md": 10327,
+    "references/prompt-writing.md": 7111,
+    "references/continuity-and-duration.md": 2657,
+    "references/format-samples.md": 5121,
+}
+SEPIA_REFERENCE_PAD = {
+    "references/narrative-pass.md": 11705,
+    "references/discourse-pass.md": 5010,
+    "references/style-pass.md": 7156,
+    "references/rubric.md": 8715,
+    "references/model-fingerprints.md": 14221,
+    "references/professional-pass.md": 6381,
+    "references/domains/release-notes.md": 2005,
+    "references/domains/dev-replies.md": 2537,
+    "references/domains/postmortems.md": 2564,
+    "references/domains/tickets.md": 1725,
+    "references/domains/tech-articles.md": 2987,
 }
 SHUORENHUA_REFERENCE_PAD = {
     "references/protected-spans.md": 4399,
@@ -165,6 +194,12 @@ ASSET_FOUNDATION_STAGE_IDS = [
 
 class SkillStackError(ValueError):
     pass
+
+
+def valid_provider_id(value: Any) -> bool:
+    return isinstance(value, str) and (
+        ID_RE.fullmatch(value) is not None or value in EXTERNAL_PROVIDER_ID_EXCEPTIONS
+    )
 
 
 def resolve_runtime_path(
@@ -262,6 +297,68 @@ class ValidatedRouteContext:
             raise SkillStackError("route context must be created by primary-route validation")
 
 
+@dataclass(frozen=True)
+class ValidatedCalibrationReadback:
+    calibration_context_sha256: str
+    source_refs: tuple[str, ...]
+    source_document_sha256: tuple[str, ...]
+    readback_sha256: str
+    _seal: object
+
+    def __post_init__(self) -> None:
+        if self._seal is not _CALIBRATION_READBACK_SEAL:
+            raise SkillStackError("calibration readback must be created by host validation")
+
+
+def validate_calibration_readback(
+    calibration: dict[str, Any],
+    profile: str,
+    source_documents: dict[str, str],
+) -> ValidatedCalibrationReadback:
+    errors, normalized = humanization_plan.validate_calibration_context(
+        calibration,
+        profile,
+    )
+    if errors or normalized.get("mode") == "domain_baseline":
+        raise SkillStackError("calibration readback requires valid source samples")
+    if not isinstance(source_documents, dict):
+        raise SkillStackError("calibration source documents are unavailable")
+    refs: list[str] = []
+    document_hashes: list[str] = []
+    for sample in normalized.get("samples", []):
+        source_ref = sample["source_ref"]
+        source_text = source_documents.get(source_ref)
+        if (
+            not isinstance(source_text, str)
+            or not source_text.strip()
+            or len(source_text.encode("utf-8"))
+            > humanization_plan.SOURCE_TEXT_BYTES_MAX
+            or sample["text"] not in source_text
+        ):
+            raise SkillStackError(f"calibration source readback failed: {source_ref}")
+        refs.append(source_ref)
+        document_hashes.append(digest_bytes(source_text.encode("utf-8")))
+    receipt_payload = {
+        "calibration_context_sha256": normalized["context_sha256"],
+        "source_refs": refs,
+        "source_document_sha256": document_hashes,
+    }
+    return ValidatedCalibrationReadback(
+        calibration_context_sha256=normalized["context_sha256"],
+        source_refs=tuple(refs),
+        source_document_sha256=tuple(document_hashes),
+        readback_sha256=digest_bytes(
+            json.dumps(
+                receipt_payload,
+                ensure_ascii=False,
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode("utf-8")
+        ),
+        _seal=_CALIBRATION_READBACK_SEAL,
+    )
+
+
 def validate_primary_route_context(
     intent: dict[str, Any],
     *,
@@ -331,6 +428,26 @@ def _fixture_route_context(case: dict[str, Any]) -> ValidatedRouteContext:
     )
 
 
+def _fixture_calibration_readback(
+    case: dict[str, Any],
+) -> ValidatedCalibrationReadback | None:
+    if case.get("skip_fixture_calibration_readback") is True:
+        return None
+    calibration = case.get("intent", {}).get("humanization_calibration")
+    profile = case.get("intent", {}).get("humanization_profile")
+    if not isinstance(calibration, dict) or calibration.get("mode") == "domain_baseline":
+        return None
+    source_documents = {
+        str(sample.get("source_ref")): str(sample.get("text", ""))
+        for sample in calibration.get("samples", [])
+        if isinstance(sample, dict) and isinstance(sample.get("source_ref"), str)
+    }
+    try:
+        return validate_calibration_readback(calibration, str(profile), source_documents)
+    except SkillStackError:
+        return None
+
+
 def digest_bytes(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
@@ -384,7 +501,7 @@ def normalize_providers(registry: dict[str, Any]) -> dict[str, dict[str, Any]]:
         if missing:
             raise SkillStackError(f"provider metadata missing fields: {sorted(missing)}")
         skill_id = item.get("skill_id")
-        if not isinstance(skill_id, str) or not ID_RE.fullmatch(skill_id):
+        if not valid_provider_id(skill_id):
             raise SkillStackError(f"invalid provider id: {skill_id!r}")
         if skill_id in normalized:
             raise SkillStackError(f"duplicate provider id: {skill_id}")
@@ -547,13 +664,23 @@ def validate_registry(registry: dict[str, Any]) -> list[str]:
         failures.append("Fast isolated craft context must remain 16 KiB")
     if modes.get("studio", {}).get("isolated_validator_context_bytes_max") != 65536:
         failures.append("Studio isolated validator context must remain 64 KiB")
+    if modes.get("studio", {}).get("isolated_method_context_bytes_max") != 65536:
+        failures.append("Studio isolated method context must remain 64 KiB")
     if modes.get("studio", {}).get("isolated_handoff_context_bytes_max") != 86016:
         failures.append("Studio isolated handoff context must remain 84 KiB")
+    if modes.get("studio", {}).get("humanization_evidence_context_bytes_max") != 131072:
+        failures.append("Studio humanization evidence context must remain 128 KiB")
     if modes.get("delivery", {}).get("execution_adapter_context_bytes_max") != 24576:
         failures.append("Delivery isolated execution-adapter budget must remain 24 KiB")
     for skill_id, provider in providers.items():
         if not valid_reference_pack(provider.get("reference_pack", [])):
             failures.append(f"{skill_id}: invalid provider reference pack")
+        collaborator_context_cost = provider.get("collaborator_context_cost")
+        if collaborator_context_cost is not None and (
+            collaborator_context_cost != "isolated_method_contract"
+            or "collaborator" not in provider.get("provider_roles", [])
+        ):
+            failures.append(f"{skill_id}: invalid collaborator context contract")
         application_contract = provider.get("application_contract")
         if application_contract is not None and (
             not isinstance(application_contract, dict)
@@ -608,6 +735,32 @@ def validate_registry(registry: dict[str, Any]) -> list[str]:
         or production_ledger.get("may_cost_money") is not False
     ):
         failures.append("production ledger must remain a record-only collaborator")
+    mr_li = providers.get("mr-li-seedance-25", {})
+    if (
+        mr_li.get("mode_allowlist") != ["studio"]
+        or mr_li.get("reference_pack") != list(MR_LI_REFERENCE_PAD)
+        or mr_li.get("collaborator_context_cost") != "isolated_method_contract"
+        or "visual_baseline_gate" not in mr_li.get("capabilities", [])
+        or "natural_paragraph_delivery" not in mr_li.get("capabilities", [])
+    ):
+        failures.append("mr-li-seedance-25 1.8.2 routing contract drifted")
+    sepia = providers.get("sepia", {})
+    if (
+        sepia.get("provider_roles") != ["craft_owner"]
+        or sepia.get("mode_allowlist") != ["studio"]
+        or sepia.get("context_cost") != "isolated_craft_contract"
+        or sepia.get("reference_pack", []) != []
+    ):
+        failures.append("Sepia must remain an operation-bound Studio craft owner")
+    bounded_fidelity = providers.get("de-AI-writing", {})
+    if (
+        bounded_fidelity.get("provider_roles") != ["craft_owner"]
+        or bounded_fidelity.get("mode_allowlist") != ["fast"]
+        or bounded_fidelity.get("context_cost") != "isolated_craft_contract"
+        or "bounded_chinese_fidelity_revision"
+        not in bounded_fidelity.get("capabilities", [])
+    ):
+        failures.append("de-AI-writing must remain a bounded Chinese Fast craft owner")
     handoff_contracts = registry.get("handoff_contracts")
     if not isinstance(handoff_contracts, dict):
         failures.append("handoff_contracts must be an object")
@@ -694,6 +847,81 @@ def validate_registry(registry: dict[str, Any]) -> list[str]:
                 failures.append(f"{scenario_id}: handoff target is not the first owner candidate")
         if scenario.get("validator_required") is True and not scenario.get("validator_candidates"):
             failures.append(f"{scenario_id}: required validator has no candidates")
+        owner_required = scenario.get("owner_required")
+        if owner_required not in {None, True, False}:
+            failures.append(f"{scenario_id}: owner_required must be boolean")
+        operation_field = scenario.get("operation_field")
+        operation_allowlist = scenario.get("operation_allowlist")
+        if operation_field is not None:
+            if (
+                not isinstance(operation_field, str)
+                or not ID_RE.fullmatch(operation_field)
+                or not isinstance(operation_allowlist, list)
+                or not operation_allowlist
+                or len(operation_allowlist) != len(set(operation_allowlist))
+                or not set(operation_allowlist) <= {"write", "review", "refactor", "recreate"}
+            ):
+                failures.append(f"{scenario_id}: invalid provider operation contract")
+        elif operation_allowlist is not None:
+            failures.append(f"{scenario_id}: operation allowlist has no field")
+        reference_profile_field = scenario.get("reference_profile_field")
+        provider_reference_profiles = scenario.get("provider_reference_profiles")
+        if reference_profile_field is not None:
+            if (
+                not isinstance(reference_profile_field, str)
+                or not ID_RE.fullmatch(reference_profile_field)
+                or not isinstance(provider_reference_profiles, dict)
+                or not provider_reference_profiles
+            ):
+                failures.append(f"{scenario_id}: invalid reference profile contract")
+            else:
+                for provider_id, profiles in provider_reference_profiles.items():
+                    if provider_id not in referenced or not isinstance(profiles, dict) or not profiles:
+                        failures.append(f"{scenario_id}: invalid profile provider: {provider_id}")
+                        continue
+                    for profile_id, reference_pack in profiles.items():
+                        if (
+                            not isinstance(profile_id, str)
+                            or not ID_RE.fullmatch(profile_id)
+                            or not valid_reference_pack(reference_pack)
+                        ):
+                            failures.append(
+                                f"{scenario_id}: invalid reference profile: {provider_id}/{profile_id}"
+                            )
+        elif provider_reference_profiles is not None:
+            failures.append(f"{scenario_id}: reference profiles have no field")
+        document_type_field = scenario.get("document_type_field")
+        guard_field = scenario.get("guard_field")
+        preservation_field = scenario.get("preservation_field")
+        diagnosis_field = scenario.get("diagnosis_field")
+        accepted_findings_field = scenario.get("accepted_findings_field")
+        calibration_field = scenario.get("calibration_field")
+        for contract_field_name, contract_field in (
+            ("document_type_field", document_type_field),
+            ("guard_field", guard_field),
+            ("preservation_field", preservation_field),
+            ("diagnosis_field", diagnosis_field),
+            ("accepted_findings_field", accepted_findings_field),
+            ("calibration_field", calibration_field),
+        ):
+            if contract_field is not None and (
+                not isinstance(contract_field, str) or not ID_RE.fullmatch(contract_field)
+            ):
+                failures.append(f"{scenario_id}: invalid {contract_field_name}")
+        semantic_fields = (
+            document_type_field,
+            guard_field,
+            preservation_field,
+            diagnosis_field,
+            accepted_findings_field,
+            calibration_field,
+        )
+        if any(item is not None for item in semantic_fields) and (
+            operation_field is None
+            or reference_profile_field is None
+            or not all(isinstance(item, str) for item in semantic_fields)
+        ):
+            failures.append(f"{scenario_id}: incomplete humanization semantic contract")
         staged_passes = scenario.get("staged_passes")
         if staged_passes is not None:
             if scenario_id != "asset_foundation" or not isinstance(staged_passes, list):
@@ -723,6 +951,29 @@ def validate_registry(registry: dict[str, Any]) -> list[str]:
     )
     if script_scenario.get("requires_asset_foundation_gate") is not True:
         failures.append("script_to_seedance must require the asset foundation gate")
+    sepia_scenario = next(
+        (
+            item
+            for item in scenarios
+            if isinstance(item, dict) and item.get("scenario_id") == "sepia_humanization"
+        ),
+        {},
+    )
+    if (
+        sepia_scenario.get("owner_candidates") != ["sepia"]
+        or sepia_scenario.get("owner_required") is not True
+        or sepia_scenario.get("operation_field") != "humanization_operation"
+        or sepia_scenario.get("operation_allowlist")
+        != ["write", "review", "refactor", "recreate"]
+        or sepia_scenario.get("reference_profile_field") != "humanization_profile"
+        or sepia_scenario.get("document_type_field") != "document_type"
+        or sepia_scenario.get("guard_field") != "humanization_guard"
+        or sepia_scenario.get("preservation_field") != "preservation"
+        or sepia_scenario.get("diagnosis_field") != "humanization_diagnosis"
+        or sepia_scenario.get("accepted_findings_field") != "accepted_finding_ids"
+        or sepia_scenario.get("calibration_field") != "humanization_calibration"
+    ):
+        failures.append("sepia_humanization must remain profile, operation, and semantic-bound")
     missing = registry.get("missing_legacy_handoffs")
     if missing != [
         "ai-video-prompt-director",
@@ -798,7 +1049,7 @@ def _parse_frontmatter(text: str, max_bytes: int) -> tuple[dict[str, str], int]:
             value = value[1:-1]
         result[key] = value
         index += 1
-    if not ID_RE.fullmatch(result.get("name", "")) or not result.get("description", "").strip():
+    if not valid_provider_id(result.get("name", "")) or not result.get("description", "").strip():
         raise SkillStackError("frontmatter_required_fields_invalid")
     return result, boundary + 5
 
@@ -1009,9 +1260,9 @@ def discover_roots(
                     body_loaded=False,
                 )
             except SkillStackError as exc:
-                rejected.append({"skill_id": child.name if ID_RE.fullmatch(child.name) else "invalid", "source_type": source_type, "reason": str(exc)})
+                rejected.append({"skill_id": child.name if valid_provider_id(child.name) else "invalid", "source_type": source_type, "reason": str(exc)})
             except OSError:
-                rejected.append({"skill_id": child.name if ID_RE.fullmatch(child.name) else "invalid", "source_type": source_type, "reason": "skill_unavailable"})
+                rejected.append({"skill_id": child.name if valid_provider_id(child.name) else "invalid", "source_type": source_type, "reason": "skill_unavailable"})
     return catalog, rejected
 
 
@@ -1039,7 +1290,11 @@ def load_host_catalog(path: Path, registry: dict[str, Any]) -> tuple[dict[str, C
             rejected.append({"source_type": "host_catalog", "reason": "catalog_entry_not_object"})
             continue
         raw_skill_id = raw.get("skill_id") or raw.get("name")
-        safe_skill_id = raw_skill_id if isinstance(raw_skill_id, str) and ID_RE.fullmatch(raw_skill_id) else "invalid"
+        safe_skill_id = (
+            raw_skill_id
+            if valid_provider_id(raw_skill_id)
+            else "invalid"
+        )
         serialized = json.dumps(raw, ensure_ascii=False)
         if any(marker in serialized for marker in PRIVATE_PATH_MARKERS) or any(
             key in raw for key in ("path", "skill_path", "root", "cwd")
@@ -1059,7 +1314,7 @@ def load_host_catalog(path: Path, registry: dict[str, Any]) -> tuple[dict[str, C
             )
         if (
             not isinstance(skill_id, str)
-            or not ID_RE.fullmatch(skill_id)
+            or not valid_provider_id(skill_id)
             or not isinstance(description, str)
             or not description.strip()
             or not isinstance(source_type, str)
@@ -1285,6 +1540,7 @@ def select_stack(
     catalog: dict[str, CatalogEntry],
     *,
     route_context: ValidatedRouteContext,
+    calibration_readback: ValidatedCalibrationReadback | None = None,
     body_loader: BodyLoader | None = None,
 ) -> dict[str, Any]:
     providers = normalize_providers(registry)
@@ -1435,6 +1691,320 @@ def select_stack(
         raise SkillStackError(f"route/mode mismatch: {route_id}/{mode}")
     if route_context.route_id != route_id or route_context.mode != mode:
         raise SkillStackError("Skill Stack route does not match validated primary route")
+    provider_operation: str | None = None
+    provider_reference_profile: str | None = None
+    provider_document_type: str | None = None
+    humanization_guard_sha256: str | None = None
+    preservation_set_sha256: str | None = None
+    preservation_source_text_sha256: str | None = None
+    humanization_diagnosis_sha256: str | None = None
+    humanization_source_text_sha256: str | None = None
+    accepted_finding_ids: list[str] = []
+    humanization_calibration_sha256: str | None = None
+    humanization_calibration_source_refs: list[str] = []
+    humanization_calibration_readback_sha256: str | None = None
+    humanization_calibration_source_document_sha256: list[str] = []
+    calibration_host_readback_required = False
+    humanization_evidence_context_bytes = 0
+    operation_field = scenario.get("operation_field")
+    if isinstance(operation_field, str):
+        raw_operation = intent.get(operation_field)
+        operation_allowlist = scenario.get("operation_allowlist", [])
+        if not isinstance(raw_operation, str) or raw_operation not in operation_allowlist:
+            return {
+                "status": "blocked",
+                "reason_codes": ["humanization_operation_required"],
+                "candidate_count": 0,
+                "artifact_before_skill_card": True,
+                "final_artifact_owner": route_context.final_owner,
+                "final_state_owner": route_context.final_owner,
+                "execution_performed": False,
+                "generated": False,
+                "provider_operation": None,
+            }
+        provider_operation = raw_operation
+    reference_profile_field = scenario.get("reference_profile_field")
+    if isinstance(reference_profile_field, str):
+        raw_profile = intent.get(reference_profile_field)
+        provider_reference_profiles = scenario.get("provider_reference_profiles", {})
+        known_profiles = {
+            profile_id
+            for profiles in provider_reference_profiles.values()
+            if isinstance(profiles, dict)
+            for profile_id in profiles
+        } if isinstance(provider_reference_profiles, dict) else set()
+        if not isinstance(raw_profile, str) or raw_profile not in known_profiles:
+            return {
+                "status": "blocked",
+                "reason_codes": ["humanization_profile_required"],
+                "candidate_count": 0,
+                "artifact_before_skill_card": True,
+                "final_artifact_owner": route_context.final_owner,
+                "final_state_owner": route_context.final_owner,
+                "execution_performed": False,
+                "generated": False,
+                "provider_operation": provider_operation,
+                "provider_reference_profile": None,
+            }
+        provider_reference_profile = raw_profile
+    document_type_field = scenario.get("document_type_field")
+    if isinstance(document_type_field, str):
+        raw_document_type = intent.get(document_type_field)
+        if not isinstance(raw_document_type, str) or not ID_RE.fullmatch(raw_document_type):
+            return {
+                "status": "blocked",
+                "reason_codes": ["humanization_document_type_required"],
+                "candidate_count": 0,
+                "artifact_before_skill_card": True,
+                "final_artifact_owner": route_context.final_owner,
+                "final_state_owner": route_context.final_owner,
+                "execution_performed": False,
+                "generated": False,
+                "provider_operation": provider_operation,
+                "provider_reference_profile": provider_reference_profile,
+                "provider_document_type": None,
+            }
+        provider_document_type = raw_document_type
+        expected_profile = humanization_plan.expected_profile_for_document(
+            provider_document_type
+        )
+        if provider_reference_profile != expected_profile:
+            return {
+                "status": "blocked",
+                "reason_codes": ["humanization_profile_document_mismatch"],
+                "candidate_count": 0,
+                "artifact_before_skill_card": True,
+                "final_artifact_owner": route_context.final_owner,
+                "final_state_owner": route_context.final_owner,
+                "execution_performed": False,
+                "generated": False,
+                "provider_operation": provider_operation,
+                "provider_reference_profile": provider_reference_profile,
+                "provider_document_type": provider_document_type,
+                "expected_humanization_profile": expected_profile,
+            }
+    guard_field = scenario.get("guard_field")
+    if isinstance(guard_field, str):
+        guard_errors, normalized_guard = humanization_plan.validate_humanization_guard(
+            intent.get(guard_field),
+            provider_document_type or "",
+        )
+        if guard_errors:
+            return {
+                "status": "blocked",
+                "reason_codes": ["humanization_guard_invalid"],
+                "humanization_guard_errors": guard_errors,
+                "candidate_count": 0,
+                "artifact_before_skill_card": True,
+                "final_artifact_owner": route_context.final_owner,
+                "final_state_owner": route_context.final_owner,
+                "execution_performed": False,
+                "generated": False,
+                "provider_operation": provider_operation,
+                "provider_reference_profile": provider_reference_profile,
+                "provider_document_type": provider_document_type,
+            }
+        humanization_guard_sha256 = normalized_guard["guard_sha256"]
+    preservation_field = scenario.get("preservation_field")
+    diagnosis_field = scenario.get("diagnosis_field")
+    accepted_findings_field = scenario.get("accepted_findings_field")
+    calibration_field = scenario.get("calibration_field")
+    evidence_budget = int(
+        registry["mode_contracts"].get(mode, {}).get(
+            "humanization_evidence_context_bytes_max", 0
+        )
+    )
+    if provider_operation in {"refactor", "recreate"}:
+        evidence_payload = {
+            "humanization_diagnosis": (
+                intent.get(diagnosis_field) if isinstance(diagnosis_field, str) else None
+            ),
+            "accepted_finding_ids": (
+                intent.get(accepted_findings_field)
+                if isinstance(accepted_findings_field, str)
+                else None
+            ),
+            "humanization_calibration": (
+                intent.get(calibration_field) if isinstance(calibration_field, str) else None
+            ),
+            "preservation": (
+                intent.get(preservation_field)
+                if isinstance(preservation_field, str)
+                else None
+            ),
+        }
+        humanization_evidence_context_bytes = len(
+            json.dumps(
+                evidence_payload,
+                ensure_ascii=False,
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode("utf-8")
+        )
+        if not evidence_budget or humanization_evidence_context_bytes > evidence_budget:
+            return {
+                "status": "blocked",
+                "reason_codes": ["humanization_evidence_context_budget_exceeded"],
+                "candidate_count": 0,
+                "artifact_before_skill_card": True,
+                "final_artifact_owner": route_context.final_owner,
+                "final_state_owner": route_context.final_owner,
+                "execution_performed": False,
+                "generated": False,
+                "provider_operation": provider_operation,
+                "provider_reference_profile": provider_reference_profile,
+                "provider_document_type": provider_document_type,
+                "humanization_evidence_context_bytes": humanization_evidence_context_bytes,
+                "humanization_evidence_context_budget_bytes": evidence_budget,
+            }
+    if provider_operation in {"refactor", "recreate"} and isinstance(preservation_field, str):
+        preservation_errors, normalized_preservation = (
+            humanization_plan.validate_preservation_set(intent.get(preservation_field))
+        )
+        if preservation_errors or normalized_preservation.get("status") != "ready":
+            return {
+                "status": "blocked",
+                "reason_codes": [
+                    "recreate_preservation_set_required"
+                    if provider_operation == "recreate"
+                    else "refactor_preservation_set_required"
+                ],
+                "preservation_errors": preservation_errors,
+                "candidate_count": 0,
+                "artifact_before_skill_card": True,
+                "final_artifact_owner": route_context.final_owner,
+                "final_state_owner": route_context.final_owner,
+                "execution_performed": False,
+                "generated": False,
+                "provider_operation": provider_operation,
+                "provider_reference_profile": provider_reference_profile,
+                "provider_document_type": provider_document_type,
+                "humanization_guard_sha256": humanization_guard_sha256,
+            }
+        preservation_set_sha256 = normalized_preservation["set_sha256"]
+        preservation_source_text_sha256 = normalized_preservation["source_text_sha256"]
+    if provider_operation in {"refactor", "recreate"}:
+        diagnosis_errors, normalized_diagnosis = (
+            humanization_plan.validate_diagnosis_set(
+                intent.get(diagnosis_field) if isinstance(diagnosis_field, str) else None,
+                provider_document_type or "",
+                provider_reference_profile or "",
+            )
+        )
+        raw_accepted = (
+            intent.get(accepted_findings_field)
+            if isinstance(accepted_findings_field, str)
+            else None
+        )
+        known_findings = {
+            item.get("finding_id")
+            for item in normalized_diagnosis.get("findings", [])
+            if isinstance(item, dict)
+            and item.get("whitelist_verdict") == "not_whitelisted"
+        }
+        acceptance_errors: list[str] = []
+        if (
+            not isinstance(raw_accepted, list)
+            or not raw_accepted
+            or not all(
+                isinstance(item, str) and humanization_plan.ID_RE.fullmatch(item)
+                for item in raw_accepted
+            )
+            or len(raw_accepted) != len(set(raw_accepted))
+            or not set(raw_accepted).issubset(known_findings)
+        ):
+            acceptance_errors.append("accepted_finding_ids_invalid")
+        elif any(
+            item.get("recommended_operation") != provider_operation
+            for item in normalized_diagnosis.get("findings", [])
+            if isinstance(item, dict) and item.get("finding_id") in set(raw_accepted)
+        ):
+            acceptance_errors.append("accepted_finding_operation_mismatch")
+        calibration_errors, normalized_calibration = (
+            humanization_plan.validate_calibration_context(
+                intent.get(calibration_field) if isinstance(calibration_field, str) else None,
+                provider_reference_profile or "",
+            )
+        )
+        if provider_operation == "recreate" and not diagnosis_errors:
+            accepted_set = set(raw_accepted) if isinstance(raw_accepted, list) else set()
+            accepted_recreate = [
+                item
+                for item in normalized_diagnosis.get("findings", [])
+                if isinstance(item, dict)
+                and item.get("finding_id") in accepted_set
+                and item.get("severity") == "systemic"
+                and item.get("recommended_operation") == "recreate"
+                and item.get("layer") in {"architecture", "venue"}
+            ]
+            if not accepted_recreate:
+                acceptance_errors.append("recreate_requires_accepted_systemic_root_finding")
+        if (
+            not diagnosis_errors
+            and preservation_source_text_sha256
+            != normalized_diagnosis.get("source_text_sha256")
+        ):
+            diagnosis_errors.append("diagnosis_preservation_source_mismatch")
+        if diagnosis_errors or acceptance_errors or calibration_errors:
+            return {
+                "status": "blocked",
+                "reason_codes": ["humanization_edit_evidence_required"],
+                "diagnosis_errors": diagnosis_errors,
+                "acceptance_errors": acceptance_errors,
+                "calibration_errors": calibration_errors,
+                "candidate_count": 0,
+                "artifact_before_skill_card": True,
+                "final_artifact_owner": route_context.final_owner,
+                "final_state_owner": route_context.final_owner,
+                "execution_performed": False,
+                "generated": False,
+                "provider_operation": provider_operation,
+                "provider_reference_profile": provider_reference_profile,
+                "provider_document_type": provider_document_type,
+                "humanization_guard_sha256": humanization_guard_sha256,
+                "preservation_set_sha256": preservation_set_sha256,
+            }
+        humanization_diagnosis_sha256 = normalized_diagnosis["diagnosis_sha256"]
+        humanization_source_text_sha256 = normalized_diagnosis["source_text_sha256"]
+        accepted_finding_ids = list(raw_accepted)
+        humanization_calibration_sha256 = normalized_calibration["context_sha256"]
+        humanization_calibration_source_refs = [
+            str(item["source_ref"])
+            for item in normalized_calibration.get("samples", [])
+            if isinstance(item, dict) and isinstance(item.get("source_ref"), str)
+        ]
+        calibration_host_readback_required = (
+            normalized_calibration.get("mode") != "domain_baseline"
+        )
+        if calibration_host_readback_required:
+            if (
+                calibration_readback is None
+                or calibration_readback.calibration_context_sha256
+                != humanization_calibration_sha256
+                or list(calibration_readback.source_refs)
+                != humanization_calibration_source_refs
+            ):
+                return {
+                    "status": "waiting_for_host_readback",
+                    "reason_codes": ["humanization_calibration_host_readback_required"],
+                    "candidate_count": 0,
+                    "artifact_before_skill_card": True,
+                    "final_artifact_owner": route_context.final_owner,
+                    "final_state_owner": route_context.final_owner,
+                    "execution_performed": False,
+                    "generated": False,
+                    "provider_operation": provider_operation,
+                    "provider_reference_profile": provider_reference_profile,
+                    "provider_document_type": provider_document_type,
+                    "humanization_calibration_sha256": humanization_calibration_sha256,
+                    "humanization_calibration_source_refs": humanization_calibration_source_refs,
+                    "humanization_evidence_context_bytes": humanization_evidence_context_bytes,
+                    "humanization_evidence_context_budget_bytes": evidence_budget,
+                }
+            humanization_calibration_readback_sha256 = calibration_readback.readback_sha256
+            humanization_calibration_source_document_sha256 = list(
+                calibration_readback.source_document_sha256
+            )
     internal_base_bytes, internal_base_files = _base_context_bytes(route_id, routing)
     external_base_bytes, external_base_files = _base_context_bytes(
         route_id,
@@ -1593,7 +2163,7 @@ def select_stack(
     if ledger_candidate_blocked:
         reason_codes.append("ledger_candidate_not_final")
     materialization_failures: dict[str, str] = {}
-    reference_request_cache: dict[str, list[dict[str, Any]]] = {}
+    reference_request_cache: dict[tuple[str, str], list[dict[str, Any]]] = {}
 
     def materialize(skill_id: str) -> bool:
         if skill_id == "dircreative":
@@ -1617,15 +2187,28 @@ def select_stack(
         catalog[skill_id] = loaded
         return True
 
-    def provider_reference_requests(skill_id: str) -> list[dict[str, Any]]:
-        if skill_id in reference_request_cache:
-            return reference_request_cache[skill_id]
+    def provider_reference_requests(
+        skill_id: str,
+        context_scope: str = "isolated_craft_contract",
+    ) -> list[dict[str, Any]]:
+        cache_key = (skill_id, context_scope)
+        if cache_key in reference_request_cache:
+            return reference_request_cache[cache_key]
         reference_pack = list(providers.get(skill_id, {}).get("reference_pack", []))
+        reference_profile_field = scenario.get("reference_profile_field")
+        provider_reference_profiles = scenario.get("provider_reference_profiles", {})
+        if isinstance(reference_profile_field, str) and isinstance(
+            provider_reference_profiles, dict
+        ):
+            selected_profile = intent.get(reference_profile_field)
+            provider_profiles = provider_reference_profiles.get(skill_id, {})
+            if isinstance(selected_profile, str) and isinstance(provider_profiles, dict):
+                reference_pack.extend(provider_profiles.get(selected_profile, []))
         if handoff_contract and handoff_contract.get("target_owner") == skill_id:
             reference_pack.extend(handoff_contract.get("reference_pack", []))
         reference_pack = list(dict.fromkeys(reference_pack))
         if not reference_pack:
-            reference_request_cache[skill_id] = []
+            reference_request_cache[cache_key] = []
             return []
         entry = catalog.get(skill_id)
         if entry is None or entry.skill_file is None:
@@ -1660,11 +2243,11 @@ def select_stack(
                     "relative_path": relative,
                     "bytes": len(data),
                     "sha256": digest_bytes(data),
-                    "context_scope": "isolated_craft_contract",
+                    "context_scope": context_scope,
                     "host_action": "primary_host_read_hash_verify_and_apply_when_provider_routes_here",
                 }
             )
-        reference_request_cache[skill_id] = requests
+        reference_request_cache[cache_key] = requests
         return requests
 
     def eligible(skill_id: str, role: str) -> bool:
@@ -1694,6 +2277,11 @@ def select_stack(
         slot = _slot(skill_id, role, provider, entry)
         if role == "craft_owner" and provider.get("context_cost") == "isolated_craft_contract":
             slot["context_scope"] = "isolated_craft_contract"
+        if (
+            role == "collaborator"
+            and provider.get("collaborator_context_cost") == "isolated_method_contract"
+        ):
+            slot["context_scope"] = "isolated_method_contract"
         if role == "collaborator" and provider.get("context_cost") == "isolated_handoff_contract":
             slot["context_scope"] = "isolated_handoff_contract"
         if (
@@ -1725,6 +2313,27 @@ def select_stack(
                 json.dumps(requests, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
             )
         isolated_craft_budget = int(mode_contract.get("isolated_craft_context_bytes_max", 0))
+        isolated_methods = [
+            item for item in future if item.get("context_scope") == "isolated_method_contract"
+        ]
+        isolated_method_bytes = sum(
+            int(item["body_bytes"]) + _metadata_bytes([item]) for item in isolated_methods
+        )
+        for item in isolated_methods:
+            try:
+                requests = provider_reference_requests(
+                    item["skill_id"], "isolated_method_contract"
+                )
+            except (OSError, SkillStackError) as exc:
+                materialization_failures[item["skill_id"]] = str(exc)
+                return False
+            isolated_method_bytes += sum(int(request["bytes"]) for request in requests)
+            isolated_method_bytes += len(
+                json.dumps(requests, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+            )
+        isolated_method_budget = int(
+            mode_contract.get("isolated_method_context_bytes_max", 0)
+        )
         isolated_validators = [
             item for item in future if item.get("context_scope") == "isolated_validator_contract"
         ]
@@ -1757,18 +2366,32 @@ def select_stack(
                 ]
             )
         )
-        main_bodies = bodies - len(isolated_craft) - len(isolated_validators) - len(isolated_handoffs)
+        main_bodies = (
+            bodies
+            - len(isolated_craft)
+            - len(isolated_methods)
+            - len(isolated_validators)
+            - len(isolated_handoffs)
+        )
         total_files = base_files + main_bodies
         return (
             bodies <= body_cap
             and total_bytes <= budget
             and total_files <= file_budget
             and len(isolated_craft) <= 1
+            and len(isolated_methods) <= 1
             and len(isolated_validators) <= 1
             and len(isolated_handoffs) <= 1
             and (
                 not isolated_craft
                 or (bool(isolated_craft_budget) and isolated_craft_bytes <= isolated_craft_budget)
+            )
+            and (
+                not isolated_methods
+                or (
+                    bool(isolated_method_budget)
+                    and isolated_method_bytes <= isolated_method_budget
+                )
             )
             and (
                 not isolated_validators
@@ -1815,8 +2438,12 @@ def select_stack(
                 suggestions.append(skill_id)
 
     if owner_id is None:
-        if intent.get("disable_dir_fallback"):
-            reason_codes.append("no_eligible_craft_owner")
+        if intent.get("disable_dir_fallback") or scenario.get("owner_required") is True:
+            reason_codes.append(
+                "required_craft_owner_unavailable"
+                if scenario.get("owner_required") is True
+                else "no_eligible_craft_owner"
+            )
             return {
                 "status": "blocked",
                 "reason_codes": reason_codes,
@@ -1826,6 +2453,8 @@ def select_stack(
                 "final_state_owner": final_owner,
                 "execution_performed": False,
                 "generated": False,
+                "provider_operation": provider_operation,
+                "provider_reference_profile": provider_reference_profile,
             }
         owner_id = "dircreative"
         reason_codes.append("dircreative_fallback")
@@ -1833,6 +2462,65 @@ def select_stack(
     elif owner_id == "dircreative":
         base_bytes, base_files = internal_base_bytes, internal_base_files
     owner_slot = _slot(owner_id, "craft_owner", providers[owner_id], catalog.get(owner_id))
+    if provider_operation is not None:
+        owner_slot["application_contract"] = (
+            {
+                "authority": "diagnostic_only",
+                "output_mode": "findings_only",
+                "may_rewrite": False,
+            }
+            if provider_operation == "review"
+            else {
+                "authority": "new_draft",
+                "output_mode": "draft_text",
+                "may_rewrite": False,
+                "architecture_before_prose": True,
+            }
+            if provider_operation == "write"
+            else {
+                "authority": "bounded_rewrite",
+                "output_mode": "revised_text",
+                "may_rewrite": True,
+                "preserve_structure_voice_intent": True,
+            }
+            if provider_operation == "refactor"
+            else {
+                "authority": "full_rewrite",
+                "output_mode": "recreated_text",
+                "may_rewrite": True,
+                "preserve_facts_claims_intent": True,
+            }
+        )
+        owner_slot["application_contract"].update(
+            {
+                "document_type": provider_document_type,
+                "humanization_guard_sha256": humanization_guard_sha256,
+                "diagnosis_before_edit": provider_operation in {"refactor", "recreate"},
+                "accepted_finding_ids_required_before_edit": provider_operation
+                in {"refactor", "recreate"},
+                "corpus_findings_are_advisory": True,
+            }
+        )
+        if provider_operation in {"refactor", "recreate"}:
+            owner_slot["application_contract"].update(
+                {
+                    "preservation_set_sha256": preservation_set_sha256,
+                    "source_text_sha256": preservation_source_text_sha256,
+                }
+            )
+        if provider_operation in {"refactor", "recreate"}:
+            owner_slot["application_contract"].update(
+                {
+                    "diagnosis_sha256": humanization_diagnosis_sha256,
+                    "diagnosis_source_text_sha256": humanization_source_text_sha256,
+                    "accepted_finding_ids": accepted_finding_ids,
+                    "calibration_context_sha256": humanization_calibration_sha256,
+                    "calibration_source_refs": humanization_calibration_source_refs,
+                    "calibration_host_readback_required": calibration_host_readback_required,
+                    "calibration_readback_sha256": humanization_calibration_readback_sha256,
+                    "calibration_source_document_sha256": humanization_calibration_source_document_sha256,
+                }
+            )
     if providers[owner_id].get("context_cost") == "isolated_craft_contract":
         owner_slot["context_scope"] = "isolated_craft_contract"
     if owner_id == "dircreative":
@@ -1887,7 +2575,12 @@ def select_stack(
                     providers[skill_id],
                     catalog[skill_id],
                 )
-                if providers[skill_id].get("context_cost") == "isolated_handoff_contract":
+                if (
+                    providers[skill_id].get("collaborator_context_cost")
+                    == "isolated_method_contract"
+                ):
+                    collaborator_slot["context_scope"] = "isolated_method_contract"
+                elif providers[skill_id].get("context_cost") == "isolated_handoff_contract":
                     collaborator_slot["context_scope"] = "isolated_handoff_contract"
                 slots.append(collaborator_slot)
                 selected_ids.add(skill_id)
@@ -2024,20 +2717,45 @@ def select_stack(
     reference_read_requests = [
         request
         for item in slots
+        if item.get("context_scope") in {"isolated_craft_contract", "isolated_method_contract"}
+        for request in provider_reference_requests(
+            str(item["skill_id"]), str(item.get("context_scope"))
+        )
+    ]
+    isolated_craft_reference_requests = [
+        item
+        for item in reference_read_requests
         if item.get("context_scope") == "isolated_craft_contract"
-        for request in provider_reference_requests(str(item["skill_id"]))
+    ]
+    isolated_method_reference_requests = [
+        item
+        for item in reference_read_requests
+        if item.get("context_scope") == "isolated_method_contract"
     ]
     isolated_craft_reference_bytes = sum(
-        int(request["bytes"]) for request in reference_read_requests
+        int(request["bytes"]) for request in isolated_craft_reference_requests
     ) + (
         len(
             json.dumps(
-                reference_read_requests,
+                isolated_craft_reference_requests,
                 ensure_ascii=False,
                 separators=(",", ":"),
             ).encode("utf-8")
         )
-        if reference_read_requests
+        if isolated_craft_reference_requests
+        else 0
+    )
+    isolated_method_reference_bytes = sum(
+        int(request["bytes"]) for request in isolated_method_reference_requests
+    ) + (
+        len(
+            json.dumps(
+                isolated_method_reference_requests,
+                ensure_ascii=False,
+                separators=(",", ":"),
+            ).encode("utf-8")
+        )
+        if isolated_method_reference_requests
         else 0
     )
     provider_body_bytes = sum(
@@ -2057,6 +2775,11 @@ def select_stack(
         for item in slots
         if item.get("context_scope") == "isolated_craft_contract"
     ) + isolated_craft_reference_bytes
+    isolated_method_context_bytes = sum(
+        int(item["body_bytes"]) + _metadata_bytes([item])
+        for item in slots
+        if item.get("context_scope") == "isolated_method_contract"
+    ) + isolated_method_reference_bytes
     isolated_validator_context_bytes = sum(
         int(item["body_bytes"]) + _metadata_bytes([item])
         for item in slots
@@ -2091,6 +2814,10 @@ def select_stack(
         mode_contract.get("isolated_validator_context_bytes_max", 0)
     ):
         raise SkillStackError("selected isolated validator context exceeds its budget")
+    if isolated_method_context_bytes > int(
+        mode_contract.get("isolated_method_context_bytes_max", 0)
+    ):
+        raise SkillStackError("selected isolated method context exceeds its budget")
     if isolated_handoff_context_bytes > int(
         mode_contract.get("isolated_handoff_context_bytes_max", 0)
     ):
@@ -2187,6 +2914,19 @@ def select_stack(
         ),
         "handoff_contract": applied_handoff_contract,
         "priority_method_provider": priority_method_provider,
+        "provider_operation": provider_operation,
+        "provider_reference_profile": provider_reference_profile,
+        "provider_document_type": provider_document_type,
+        "humanization_guard_sha256": humanization_guard_sha256,
+        "preservation_set_sha256": preservation_set_sha256,
+        "preservation_source_text_sha256": preservation_source_text_sha256,
+        "humanization_diagnosis_sha256": humanization_diagnosis_sha256,
+        "humanization_source_text_sha256": humanization_source_text_sha256,
+        "accepted_finding_ids": accepted_finding_ids,
+        "humanization_calibration_sha256": humanization_calibration_sha256,
+        "humanization_calibration_source_refs": humanization_calibration_source_refs,
+        "humanization_calibration_readback_sha256": humanization_calibration_readback_sha256,
+        "humanization_calibration_source_document_sha256": humanization_calibration_source_document_sha256,
         "mode": mode,
         "route_id": route_id,
         "media": media,
@@ -2261,13 +3001,19 @@ def select_stack(
             ),
             "isolated_craft_context_bytes": isolated_craft_context_bytes,
             "isolated_craft_reference_bytes": isolated_craft_reference_bytes,
-            "isolated_craft_reference_count": len(reference_read_requests),
+            "isolated_craft_reference_count": len(isolated_craft_reference_requests),
             "isolated_craft_context_budget_bytes": int(
                 mode_contract.get("isolated_craft_context_bytes_max", 0)
             ),
             "isolated_validator_context_bytes": isolated_validator_context_bytes,
             "isolated_validator_context_budget_bytes": int(
                 mode_contract.get("isolated_validator_context_bytes_max", 0)
+            ),
+            "isolated_method_context_bytes": isolated_method_context_bytes,
+            "isolated_method_reference_bytes": isolated_method_reference_bytes,
+            "isolated_method_reference_count": len(isolated_method_reference_requests),
+            "isolated_method_context_budget_bytes": int(
+                mode_contract.get("isolated_method_context_bytes_max", 0)
             ),
             "isolated_handoff_context_bytes": isolated_handoff_context_bytes,
             "isolated_handoff_reference_count": len(handoff_read_requests),
@@ -2277,9 +3023,15 @@ def select_stack(
             "aggregate_accounted_bytes": (
                 total_context_bytes
                 + isolated_craft_context_bytes
+                + isolated_method_context_bytes
                 + isolated_validator_context_bytes
                 + isolated_handoff_context_bytes
                 + execution_adapter_context_bytes
+                + humanization_evidence_context_bytes
+            ),
+            "humanization_evidence_context_bytes": humanization_evidence_context_bytes,
+            "humanization_evidence_context_budget_bytes": int(
+                mode_contract.get("humanization_evidence_context_bytes_max", 0)
             ),
             "total_bytes": total_context_bytes,
             "budget_bytes": budget,
@@ -2367,8 +3119,10 @@ def _write_mock_skill(root: Path, skill_id: str, body_pad: int = 0) -> None:
     skill_dir = root / skill_id.replace(":", "__")
     skill_dir.mkdir(parents=True)
     nested_metadata = (
-        '\nmetadata:\n  version: "1.5.0"\n  display-version-name: "Seedance 2.5 method"'
+        '\nmetadata:\n  version: "1.8.2"\n  display-version-name: "Seedance 2.5 method"'
         if skill_id == "mr-li-seedance-25"
+        else '\nmetadata:\n  version: "0.5.0"'
+        if skill_id == "sepia"
         else ""
     )
     body = (
@@ -2395,6 +3149,14 @@ def _write_mock_skill(root: Path, skill_id: str, body_pad: int = 0) -> None:
             reference.parent.mkdir(parents=True, exist_ok=True)
             target_bytes = realistic_bytes if body_pad else 64
             prefix = "# Deterministic reference fixture\n"
+            padding = max(0, target_bytes - len(prefix.encode("utf-8")))
+            reference.write_text(prefix + ("x" * padding), encoding="utf-8")
+    if skill_id == "sepia":
+        for relative, realistic_bytes in SEPIA_REFERENCE_PAD.items():
+            reference = skill_dir / relative
+            reference.parent.mkdir(parents=True, exist_ok=True)
+            target_bytes = realistic_bytes if body_pad else 64
+            prefix = "# Deterministic Sepia reference fixture\n"
             padding = max(0, target_bytes - len(prefix.encode("utf-8")))
             reference.write_text(prefix + ("x" * padding), encoding="utf-8")
     if skill_id == "shuorenhua":
@@ -2443,6 +3205,8 @@ def _case_assertions(case: dict[str, Any], receipt: dict[str, Any]) -> list[str]
 
 def self_test() -> tuple[list[str], dict[str, Any]]:
     failures = validate_registry(load_registry())
+    if not valid_provider_id("de-AI-writing") or valid_provider_id("Unexpected-Provider"):
+        failures.append("external provider ID exception widened beyond the installed legacy name")
     registry = load_registry()
     misrouted_registry = json.loads(json.dumps(registry))
     for scenario in misrouted_registry.get("scenarios", []):
@@ -2460,6 +3224,24 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
     expected_defaults = cases_payload.get("expected_defaults", {}) if isinstance(cases_payload, dict) else {}
     positives = [case for case in cases if case.get("kind") == "positive"]
     negatives = [case for case in cases if case.get("kind") == "negative"]
+    calibration_case = next(
+        (case for case in cases if case.get("id") == "p59_sepia_narrative_refactor"),
+        None,
+    )
+    if calibration_case is None:
+        failures.append("calibration readback fixture is missing")
+    else:
+        calibration = calibration_case["intent"]["humanization_calibration"]
+        fake_sources = {
+            sample["source_ref"]: "unrelated source text that does not contain the approved sample"
+            for sample in calibration["samples"]
+        }
+        try:
+            validate_calibration_readback(calibration, "narrative", fake_sources)
+        except SkillStackError:
+            pass
+        else:
+            failures.append("calibration readback accepted unresolved sample provenance")
     if len(positives) < 24:
         failures.append("Skill Stack fixtures need at least 24 positive cases")
     if len(negatives) < 12:
@@ -2559,6 +3341,7 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
                     routing,
                     case_catalog,
                     route_context=_fixture_route_context(case),
+                    calibration_readback=_fixture_calibration_readback(case),
                     body_loader=fixture_loader,
                 )
             except SkillStackError as exc:
@@ -2583,6 +3366,56 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
                 for suggested in receipt.get("suggested_skill_ids", []):
                     if suggested not in used_ids and f"已用 `${suggested}`" in rendered:
                         failures.append(f"{case['id']}: suggested provider mislabeled as used")
+
+        oversized_case = json.loads(
+            json.dumps(
+                next(item for item in cases if item["id"] == "p59_sepia_narrative_refactor"),
+                ensure_ascii=False,
+            )
+        )
+        oversized_source = (
+            oversized_case["intent"]["humanization_diagnosis"]["source_text"]
+            + ("扩" * 70000)
+        )
+        oversized_diagnosis = oversized_case["intent"]["humanization_diagnosis"]
+        oversized_diagnosis["source_text"] = oversized_source
+        oversized_diagnosis["source_text_sha256"] = digest_bytes(
+            oversized_source.encode("utf-8")
+        )
+        oversized_diagnosis["diagnosis_sha256"] = humanization_plan.canonical_sha256(
+            {
+                key: value
+                for key, value in oversized_diagnosis.items()
+                if key != "diagnosis_sha256"
+            }
+        )
+        oversized_preservation = oversized_case["intent"]["preservation"]
+        oversized_preservation["source_text"] = oversized_source
+        oversized_preservation["source_text_sha256"] = digest_bytes(
+            oversized_source.encode("utf-8")
+        )
+        oversized_preservation["set_sha256"] = humanization_plan.canonical_sha256(
+            {
+                key: value
+                for key, value in oversized_preservation.items()
+                if key != "set_sha256"
+            }
+        )
+        oversized_receipt = select_stack(
+            oversized_case["intent"],
+            registry,
+            routing,
+            dict(catalog),
+            route_context=_fixture_route_context(oversized_case),
+            calibration_readback=_fixture_calibration_readback(oversized_case),
+            body_loader=fixture_loader,
+        )
+        if (
+            oversized_receipt.get("status") != "blocked"
+            or "humanization_evidence_context_budget_exceeded"
+            not in oversized_receipt.get("reason_codes", [])
+        ):
+            failures.append("oversized humanization evidence bypassed its context budget")
 
         overlay_case = next(item for item in cases if item["id"] == "p40_explicit_overlays")
         reverse_overlay_intent = dict(
@@ -2676,6 +3509,7 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
                     routing,
                     dict(realistic_catalog),
                     route_context=_fixture_route_context(case),
+                    calibration_readback=_fixture_calibration_readback(case),
                     body_loader=realistic_loader,
                 )
             except SkillStackError as exc:
@@ -2801,14 +3635,14 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
                     != "scripts/dircreative_script_to_seedance_handoff.py"
                 ):
                     failures.append("realistic Seedance validator was not isolated and budgeted")
-            if case_id == "p54_seedance25_fast_priority":
+            if case_id == "p17_seedance_direct":
                 context = receipt.get("context") or {}
                 reference_requests = receipt.get("reference_read_requests") or []
                 if (
-                    int(context.get("isolated_craft_context_bytes", 0)) < 10000
-                    or int(context.get("isolated_craft_context_bytes", 0)) > 16384
-                    or int(context.get("isolated_craft_reference_count", 0)) != 2
-                    or int(context.get("isolated_craft_reference_bytes", 0)) < 5000
+                    int(context.get("isolated_craft_context_bytes", 0)) < 40000
+                    or int(context.get("isolated_craft_context_bytes", 0)) > 131072
+                    or int(context.get("isolated_craft_reference_count", 0)) != 4
+                    or int(context.get("isolated_craft_reference_bytes", 0)) < 26000
                     or int(context.get("aggregate_accounted_bytes", 0))
                     != int(context.get("total_bytes", 0))
                     + int(context.get("isolated_craft_context_bytes", 0))
@@ -2816,7 +3650,158 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
                     != set(MR_LI_REFERENCE_PAD)
                     or any(not item.get("sha256") for item in reference_requests)
                 ):
-                    failures.append("realistic Fast Seedance method references were not isolated and budgeted")
+                    failures.append("realistic Seedance 1.8.2 references were not isolated and budgeted")
+            if case_id == "p54_seedance25_fast_priority":
+                context = receipt.get("context") or {}
+                if (
+                    receipt.get("craft_owner", {}).get("skill_id") != "dircreative"
+                    or int(context.get("isolated_craft_context_bytes", 0)) != 0
+                    or "mr-li-seedance-25" not in receipt.get("suggested_skill_ids", [])
+                ):
+                    failures.append("Fast Seedance revision expanded context or hid Studio routing")
+            if case_id in {
+                "p52_script_to_seedance25",
+                "p53_seedance25_emotion_specialist",
+                "p55_script_target_seedance25_from_20_source",
+            }:
+                context = receipt.get("context") or {}
+                method_requests = [
+                    item
+                    for item in receipt.get("reference_read_requests", [])
+                    if item.get("context_scope") == "isolated_method_contract"
+                ]
+                if (
+                    int(context.get("isolated_method_context_bytes", 0)) < 40000
+                    or int(context.get("isolated_method_context_bytes", 0)) > 65536
+                    or int(context.get("isolated_method_reference_count", 0)) != 4
+                    or {item.get("relative_path") for item in method_requests}
+                    != set(MR_LI_REFERENCE_PAD)
+                    or int(context.get("total_bytes", 0)) > 20000
+                    or int(context.get("aggregate_accounted_bytes", 0))
+                    != int(context.get("total_bytes", 0))
+                    + int(context.get("isolated_craft_context_bytes", 0))
+                    + int(context.get("isolated_method_context_bytes", 0))
+                    + int(context.get("isolated_validator_context_bytes", 0))
+                    + int(context.get("isolated_handoff_context_bytes", 0))
+                    + int(context.get("execution_adapter_context_bytes", 0))
+                ):
+                    failures.append(f"{case_id}: Seedance 1.8.2 method context was not isolated")
+            if case_id in {
+                "p59_sepia_narrative_refactor",
+                "p60_sepia_professional_review",
+                "p61_sepia_narrative_write",
+                "p64_sepia_recreate_with_bound_preservation",
+            }:
+                context = receipt.get("context") or {}
+                body_request = next(
+                    (
+                        item
+                        for item in receipt.get("body_read_requests", [])
+                        if item.get("skill_id") == "sepia"
+                    ),
+                    {},
+                )
+                expected_reference_count = (
+                    4
+                    if case_id.startswith("p60_")
+                    else 3
+                    if case_id.startswith("p64_")
+                    else 5
+                )
+                expected_operation = (
+                    "refactor"
+                    if case_id.startswith("p59_")
+                    else "review"
+                    if case_id.startswith("p60_")
+                    else "write"
+                    if case_id.startswith("p61_")
+                    else "recreate"
+                )
+                application_contract = receipt.get("craft_owner", {}).get(
+                    "application_contract", {}
+                )
+                if (
+                    receipt.get("provider_operation") != expected_operation
+                    or receipt.get("craft_owner", {}).get("context_scope")
+                    != "isolated_craft_contract"
+                    or int(context.get("isolated_craft_reference_count", 0))
+                    != expected_reference_count
+                    or int(context.get("isolated_craft_context_bytes", 0)) > 131072
+                    or (
+                        expected_operation in {"refactor", "recreate"}
+                        and (
+                            int(context.get("humanization_evidence_context_bytes", 0)) <= 0
+                            or int(context.get("humanization_evidence_context_bytes", 0))
+                            > 131072
+                        )
+                    )
+                    or (
+                        expected_operation in {"review", "write"}
+                        and int(context.get("humanization_evidence_context_bytes", 0)) != 0
+                    )
+                    or int(context.get("aggregate_accounted_bytes", 0))
+                    != int(context.get("total_bytes", 0))
+                    + int(context.get("isolated_craft_context_bytes", 0))
+                    + int(context.get("isolated_method_context_bytes", 0))
+                    + int(context.get("isolated_validator_context_bytes", 0))
+                    + int(context.get("isolated_handoff_context_bytes", 0))
+                    + int(context.get("execution_adapter_context_bytes", 0))
+                    + int(context.get("humanization_evidence_context_bytes", 0))
+                    or int(context.get("total_bytes", 0)) > 20000
+                    or body_request.get("application_contract")
+                    != application_contract
+                    or not application_contract.get("humanization_guard_sha256")
+                    or not application_contract.get("document_type")
+                    or (
+                        expected_operation in {"refactor", "recreate"}
+                        and (
+                            application_contract.get("diagnosis_before_edit") is not True
+                            or application_contract.get(
+                                "accepted_finding_ids_required_before_edit"
+                            )
+                            is not True
+                            or not application_contract.get("diagnosis_sha256")
+                            or not application_contract.get("diagnosis_source_text_sha256")
+                            or not application_contract.get("accepted_finding_ids")
+                            or not application_contract.get("calibration_context_sha256")
+                            or application_contract.get("calibration_host_readback_required")
+                            != (case_id == "p59_sepia_narrative_refactor")
+                            or application_contract.get("diagnosis_sha256")
+                            != receipt.get("humanization_diagnosis_sha256")
+                            or application_contract.get("diagnosis_source_text_sha256")
+                            != receipt.get("humanization_source_text_sha256")
+                            or application_contract.get("accepted_finding_ids")
+                            != receipt.get("accepted_finding_ids")
+                            or application_contract.get("calibration_context_sha256")
+                            != receipt.get("humanization_calibration_sha256")
+                            or application_contract.get("calibration_source_refs")
+                            != receipt.get("humanization_calibration_source_refs")
+                            or application_contract.get("calibration_readback_sha256")
+                            != receipt.get("humanization_calibration_readback_sha256")
+                            or application_contract.get("calibration_source_document_sha256")
+                            != receipt.get(
+                                "humanization_calibration_source_document_sha256"
+                            )
+                            or (
+                                case_id == "p59_sepia_narrative_refactor"
+                                and not application_contract.get("calibration_readback_sha256")
+                            )
+                        )
+                    )
+                    or (
+                        expected_operation in {"refactor", "recreate"}
+                        and (
+                            not application_contract.get("preservation_set_sha256")
+                            or not application_contract.get("source_text_sha256")
+                        )
+                    )
+                    or (
+                        expected_operation == "review"
+                        and "diagnose_only_no_rewrite"
+                        not in str(body_request.get("host_action", ""))
+                    )
+                ):
+                    failures.append(f"{case_id}: Sepia operation or context contract drifted")
         still_case = next(item for item in cases if item["id"] == "p06_key_visual")
         still_receipt = select_stack(
             still_case["intent"],
@@ -3102,7 +4087,9 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
         "delivery_single_body_reservation": True,
         "isolated_execution_adapter_budget_bytes": 24576,
         "isolated_craft_context_budget_bytes": 131072,
+        "isolated_method_context_budget_bytes": 65536,
         "isolated_validator_context_budget_bytes": 65536,
+        "humanization_evidence_context_budget_bytes": 131072,
         "host_managed_imagegen_path": True,
         "failures": failures,
     }
@@ -3153,6 +4140,11 @@ def main() -> int:
     select_parser.add_argument("--handoff", type=Path, help="real ADCO Specialist Exchange handoff")
     select_parser.add_argument("--project-root", type=Path, help="ADCO project root")
     select_parser.add_argument("--descriptor", type=Path, help="DIR specialist descriptor")
+    select_parser.add_argument(
+        "--calibration-sources",
+        type=Path,
+        help="host-read JSON object mapping calibration source_ref to actual source text",
+    )
     case_parser = subparsers.add_parser("case")
     case_parser.add_argument("case_id")
     case_parser.add_argument("--root", action="append", help="[source_type=]/authorized/skill/root")
@@ -3188,6 +4180,18 @@ def main() -> int:
         return 0
     if command == "select":
         intent = load_json(args.intent)
+        calibration_readback = None
+        if args.calibration_sources:
+            source_documents = load_json(args.calibration_sources)
+            calibration = intent.get("humanization_calibration")
+            profile = intent.get("humanization_profile")
+            if not isinstance(calibration, dict) or not isinstance(source_documents, dict):
+                raise SkillStackError("calibration readback inputs are invalid")
+            calibration_readback = validate_calibration_readback(
+                calibration,
+                str(profile),
+                source_documents,
+            )
         route_context = validate_primary_route_context(
             intent,
             request_text=args.request,
@@ -3201,6 +4205,7 @@ def main() -> int:
             load_routing(),
             catalog,
             route_context=route_context,
+            calibration_readback=calibration_readback,
             body_loader=body_loader,
         )
         print(json.dumps(receipt, ensure_ascii=False, indent=2, sort_keys=True))
@@ -3243,6 +4248,7 @@ def main() -> int:
                 load_routing(),
                 dict(catalog),
                 route_context=_fixture_route_context(case_map[case_id]),
+                calibration_readback=_fixture_calibration_readback(case_map[case_id]),
                 body_loader=body_loader,
             )
             for case_id in selected_ids
@@ -3297,6 +4303,7 @@ def main() -> int:
         load_routing(),
         catalog,
         route_context=_fixture_route_context(case),
+        calibration_readback=_fixture_calibration_readback(case),
         body_loader=body_loader,
     )
     print(json.dumps(receipt, ensure_ascii=False, indent=2, sort_keys=True))

@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.7.1 - 2026-09-01
+## 0.7.1 - 2026-09-04
 
 - Adds Studio `video_distillation` with an offline Workbench evidence bridge, twelve craft axes, candidate mechanisms and explicit effect-comparison records; media/binding validation remains separate from factual and creative-quality review.
 - Preserves generation and delivery gate precedence, rejects changed media properties and invalid evidence, and requires study/upgrade review before an original-production trial. Interface integration remains a later PRD.
@@ -14,6 +14,13 @@
 - Makes source-derived authored voice a default requirement for audience-facing story, screenplay, storyboard-description, PPT, README and report copy while protecting facts, literal SUPER, names, coined terms, character diction and genre register.
 - Preserves mythic, historical, literary and period language instead of flattening every natural-language pass into casual modern Chinese; `de-AI-writing` remains the ordinary bounded fidelity cleanup rather than a stacked second owner.
 - Records the cross-project behavior study that exposed the routing gap without copying RTBC or Shanhaijing wording into the Skill.
+- Updates the external `mr-li-seedance-25` integration for the verified 1.8.2 contract: formal prompt compilation routes to Studio, binds visual-baseline/prompt/duration/format references, and uses a separate 64 KiB method context when paired with the existing compiler; bounded Fast edits do not inflate their context or falsely claim the method was loaded.
+- Adds a layered humanization planner and Sepia 0.5.0 routing by operation and text/venue profile. Architecture/venue, discourse and surface use source-bound findings; cluster and whitelist verdicts keep intentional voice, venue conventions and isolated hits out of the editable set; model identity is never inferred from prose.
+- Makes refactor/recreate two-stage: the first Sepia call is findings-only, while edit authority requires the exact diagnosis/source hash, accepted finding IDs and content-addressed voice/venue/domain calibration. Document/profile mismatches and evidence-free direct selector calls fail closed.
+- Requires host-read calibration sources before sampled VOICE/venue contexts can unlock edit authority; unresolved references return `waiting_for_host_readback`. Inline sources are capped at 64 KiB and the complete humanization evidence payload is counted against a separate 128 KiB Studio budget instead of disappearing from context accounting.
+- Replaces self-asserted preservation booleans with actual source text, exact entry spans, coverage and set contracts for recreation. The selector binds document type and a hashed narrative guard, so direct Sepia calls cannot bypass protections or invent corpus-derived subplots, nonlinear time, delayed reveals, named references or rarity moves.
+- Keeps `shuorenhua`, `de-AI-writing`, and `humanizer-zh` as conditional bounded or diagnostic passes rather than stacking rewriting owners. `de-AI-writing` is reachable only as an explicit bounded Chinese fidelity route; short English work uses DIR's bounded method; final validation is diagnosis-only and cannot rewrite the prior result. External provider bodies remain host-installed and hash-read at selection time; this repository contains only routing and distilled method contracts.
+- Adds an answer-first README definition, AI-video use cases, workflow FAQ, a compact `llms.txt` discovery map, and a 60-second release-candidate regression report. The project-level regression correctly blocks two S07 images with false scene/support geometry while preserving the other 28 panels and both model plans.
 
 ## 0.7.0 - 2026-08-30
 

@@ -23,12 +23,14 @@ Persist and validate the machine packet with
   manifest and remains responsible for Prompt IR validation, exact capability
   card resolution, direct-input policy, rights, QA, retry, and status.
 
-For a Seedance 2.5 target, apply `mr-li-seedance-25` first for authoritative
-text, independent segments, real capacity, stable numbering, and clean-master
-repair. Target intent selects this method only; exact card/version/surface is
-still required for model facts, export, or execution. The collaborator cannot
-replace this handoff, DIR ownership, asset gate, or preflight. If absent, retain
-the converter path and report that its method was not adopted.
+For a Seedance 2.5 target, apply the installed `mr-li-seedance-25` 1.8.2 method
+first: confirm the project visual baseline, identify speaking-role voice inputs,
+estimate real performance capacity, bind assets/audio once per requested scope,
+and preserve its heading-free natural-paragraph format. The method body and its
+selected references use isolated method context when paired with this compiler.
+Target intent alone never establishes model facts; the exact card/version/surface,
+DIR ownership, asset gate, handoff validator and preflight remain authoritative.
+If the provider is absent, retain the converter and report non-adoption.
 
 ## Required input packet
 

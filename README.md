@@ -20,9 +20,29 @@
 
 DIRcreative 不是“输入一句话、吐出一堆提示词”的黑盒。它先判断任务是局部修改、完整开发还是交付审计，再只加载对应合同。局部任务直接交付修改结果；只有真实方向冲突、生成授权或客户交付才停下来询问。
 
-当前版本为 [`v0.7.1`](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/releases/tag/v0.7.1)。在 v0.7.0 的人物主资产、Seedance 2.5、生产账本与 Specialist Exchange v2 基础上，本版加入语境化“说人话”路由、参考视频蒸馏、动作相位级分镜覆盖，以及高风险场景/支撑真值门。结构验证、独立审核、真实媒体生成、用户采用与发布仍是不同状态。
+当前版本为 [`v0.7.1`](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/releases/tag/v0.7.1)。在 v0.7.0 的人物主资产、Seedance 2.5、生产账本与 Specialist Exchange v2 基础上，本版加入分层文本人化、Seedance 2.5 方法上下文、参考视频蒸馏、动作相位级分镜覆盖，以及高风险场景/支撑真值门。结构验证、独立审核、真实媒体生成、用户采用与发布仍是不同状态。
 
 源码仓库包含 DIRcreative 根 Skill、19 个 `skills/dircreative/*` 内部子 Skill，以及 `ai-film-asset-stress-test`、`ai-film-production-ledger` 两个 P0 能力入口。正式 DIRcreative 安装包按安全设计只暴露根 `$dircreative`，其余入口会内部化后由 selector 路由；Skill Stack 还会发现宿主中已安装的外部专业 provider。这些依赖不会被复制进本仓库，也不能把“宿主可调用”表述成“GitHub 已内置”。ADCO 始终是独立外部编排方。
+
+## What is DIRcreative?
+
+DIRcreative is an AI film preproduction and AI video workflow Skill for Codex.
+It turns a brief, screenplay, local video, or public reference-video link into
+the production decisions and artifacts needed before image or video generation.
+It is designed for narrative shorts, commercials, brand films, and model-aware
+workflows using Seedance 2.5/2.0 and other video models.
+
+Typical outputs include:
+
+- reference-film evidence, timecoded craft analysis, and transferable methods;
+- concept direction, treatment, screenplay, dialogue, and source-derived voice;
+- shot list, camera/blocking plan, reverse shots, eyelines, and action-phase panels;
+- character, location, prop, material, continuity, and clean-input asset plans;
+- image prompts plus Seedance-specific video prompts and asset/audio bindings;
+- sound cues, production ledger, validation report, rejection reasons, and retry plan.
+
+DIRcreative does not claim that a prompt is a generated video, that a local
+candidate is approved, or that a structural PASS proves visual quality.
 
 ## Why DIRcreative
 
@@ -142,8 +162,66 @@ python3 scripts/dircreative_adco_native_exchange.py \
 | [`goal-mode-simulation-test`](examples/goal-mode-simulation-test/) | 用户不逐项回复时，如何标注模拟选择并安全继续 |
 | [`assisted-generation-preflight-chat`](examples/assisted-generation-preflight-chat/) | 用户说“看看图”时，如何先完成生成前置门 |
 | [`zombie-cleaner-test`](examples/zombie-cleaner-test/) | 180 秒长叙事的拆解、参考计划与 prompt-only 测试 |
+| [`v0.7.1 60s preproduction regression`](docs/film-preproduction/research/v071-60s-preproduction-regression.md) | 真实 60 秒项目如何保留 18 镜/30 面板设计，同时阻止受场景/支撑污染的 S07 进入 Seedance |
+
+## Frequently asked questions
+
+### Is DIRcreative an AI video generator?
+
+It prepares and validates the creative, visual, sound, asset, and model-specific
+inputs. Real image/video generation is a separately authorized Delivery action,
+and every generated output still needs visual and production review.
+
+### Can it analyze a reference video without copying it?
+
+Yes. The `video_distillation` route separates timecoded observations,
+inferences, unknowns, and transferable mechanisms. A new project inherits the
+method and quality bar, not the source film's characters, world, dialogue, or
+protected expression.
+
+### How detailed are its storyboards?
+
+Coverage follows actions and information changes rather than a fixed image
+count. A shot can contain prepare/contact/consequence panels, reverse shots,
+eyelines, prop-state transitions, and clean model inputs when those distinctions
+change generation or QA.
+
+### How does it use Seedance 2.5 and 2.0?
+
+The authoritative script and asset ledger are model-neutral. DIRcreative then
+builds different generation units, duration plans, visual baselines, reference
+roles, performance instructions, and prompt surfaces for each target model.
 
 ## Documentation
+
+### Layered humanization
+
+DIRcreative now diagnoses human-language work before editing. It distinguishes
+`write`, `review`, `refactor`, and `recreate`; inspects architecture or venue,
+discourse and surface in separate evidence-bearing passes; and selects the
+repair depth from the deepest confirmed defect rather than from a word list.
+Every finding needs a source-bound quote, cluster and whitelist verdict.
+Refactor/recreate runs Sepia diagnosis first; only a second call carrying the
+diagnosis hash, accepted findings and host-read voice/venue evidence may edit.
+Inline sources have a 64 KiB limit and the full evidence packet has a separately
+reported 128 KiB Studio budget:
+
+```bash
+python3 scripts/dircreative_humanization_plan.py plan \
+  docs/film-preproduction/templates/humanization-plan.template.json
+python3 -m unittest discover -s tests -p test_humanization_plan.py -v
+```
+
+The plan treats model fingerprints as version-scoped inspection guidance, never
+infers an author model from prose, and requires the actual source text, exact
+entry spans and content/set hashes before a full rewrite. A document guard
+travels into provider selection, blocking screenplay-inappropriate inventions such as added
+subplots, nonlinear time or fourth-wall gestures merely to imitate a corpus
+statistic. Short Chinese edits choose a contextual or explicit fidelity route;
+short English edits remain bounded; layered operations use the installed
+[Sepia](https://github.com/Nanako0129/sepia) provider when selected.
+Sepia and `mr-li-seedance-25` remain external Skills and are not copied into this
+repository. See [the workflow contract](skills/dircreative/references/humanization-workflow.md).
 
 ### Reference-video distillation
 

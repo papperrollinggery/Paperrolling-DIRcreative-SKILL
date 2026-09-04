@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.0",
+  "target_id": "TEXT-001",
+  "operation": "auto",
+  "text_kind": "narrative",
+  "document_type": "screenplay",
+  "language": "zh",
+  "scope": "document",
+  "length_chars": 0,
+  "structural_defects": "unknown",
+  "source_mode": "existing",
+  "voice_profile_status": "locked",
+  "venue_corpus_status": "not_applicable",
+  "sepia_requested": false,
+  "validation_required": true,
+  "voice_skill_explicit": false,
+  "bounded_preference": "auto",
+  "preservation": {
+    "status": "missing",
+    "set_id": null,
+    "source_text": null,
+    "source_text_sha256": null,
+    "coverage": {
+      "facts": "not_present",
+      "claims": "not_present",
+      "intent": "not_present",
+      "quotations": "not_present",
+      "dialogue": "not_present",
+      "protected_spans": "not_present"
+    },
+    "entries": [],
+    "set_sha256": null
+  },
+  "author_model": {
+    "family": "unknown",
+    "version": "unknown",
+    "source": "unknown"
+  },
+  "executor_model": {
+    "family": "OpenAI GPT",
+    "version": "5.6",
+    "source": "system"
+  }
+}

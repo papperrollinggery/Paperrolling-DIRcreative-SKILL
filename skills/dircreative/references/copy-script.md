@@ -34,24 +34,22 @@ revision. Return the revised text before analysis.
 
 ## Human-language and authored-voice pass
 
-Natural does not mean casual. Before revising, protect exact facts, names,
-claims, quotations, coined world terms, character-specific diction, genre
-register, deliberate metaphor and line breaks that carry performance. Build a
-small `VOICE PROFILE` from approved source passages when the project has a
-distinct literary or brand voice; adjectives such as “poetic” or “premium” are
-not a voice profile.
+Natural does not mean casual. Protect facts, names, claims, quotations, coined
+terms, character diction, genre register and performance-bearing form. Derive a
+`VOICE PROFILE` from approved passages, not adjectives such as “poetic.”
 
-- Ordinary fidelity cleanup: use `de-AI-writing` when available to remove
-  lecture scaffolding, route signs, template symmetry and chatbot residue
-  without changing meaning or adding facts. This is an optional inline refiner,
-  not a second Skill Stack owner.
-- Explicit “说人话 / 去 AI 味 / 自然一点”, or a draft that remains awkward after
-  the fidelity pass: route `human_language_revision` to `shuorenhua` in Studio.
-  Use one recommended rewrite, not stacked rewrites from both owners. Fast
-  bounded edits keep these local rules and do not claim the larger provider was
-  loaded.
-- `humanizer-zh` remains a final diagnostic when validation is needed. A phrase
-  hit cannot overrule intentional voice or approve copy by itself.
+- Read `humanization-workflow.md`; bind operation, profile, guard and depth.
+  Diagnose architecture/domain, discourse and surface separately, with quoted
+  source evidence, cluster and whitelist verdict. Review never edits;
+  refactor/recreate first return diagnosis, then a second evidence-bound call
+  applies accepted findings. Recreate also requires exact source spans and
+  hashed preservation content; write sets architecture first.
+- Short local Chinese contextual edits use `shuorenhua`; explicitly selected
+  fidelity cleanup can use `de-AI-writing`; short English edits stay on DIR's
+  bounded path. Document-scale, systemic or venue-specific work selects
+  `sepia_humanization`. A later Chinese pass needs a quoted residual cluster.
+- `humanizer-zh` remains diagnostic. One phrase hit proves nothing; fix clusters
+  and venue mismatches without manufacturing slang or mistakes.
 - Read dialogue and VO aloud. For screenplay or storyboard descriptions, write
   what a writer, director or storyboard artist would naturally say in that
   scene: short enough to speak, specific enough to stage, and free of repeated

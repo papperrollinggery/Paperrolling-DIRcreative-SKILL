@@ -1,0 +1,30 @@
+# DIRcreative
+
+> DIRcreative is a chat-first Codex Skill for AI film preproduction: reference-video analysis, creative direction, screenplay and dialogue development, production ledgers, detailed storyboards, visual asset planning, Seedance 2.5/2.0 prompt compilation, sound planning, and evidence-bound quality review before video generation.
+
+Use the root Skill as the only public entrypoint. External providers such as Sepia, Jingzao, and mr-li-seedance-25 remain optional host-installed capabilities. A planned prompt, local candidate, generated file, human approval, and published release are different states.
+
+## Start here
+
+- [README](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/blob/main/README.md): Product definition, use cases, examples, installation, safety boundaries, and validation.
+- [DIRcreative Skill](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/blob/main/skills/dircreative/SKILL.md): Canonical Codex Skill entrypoint and routing contract.
+- [Film development workflow](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/blob/main/skills/dircreative/references/film-development.md): Story, shot, asset, sound, prompt, and QA workflow.
+
+## AI video workflows
+
+- [Reference-video distillation](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/blob/main/skills/dircreative/references/video-distillation.md): Evidence-first video breakdown and transferable production-method analysis.
+- [Storyboard coverage](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/blob/main/skills/dircreative/references/storyboard-coverage.md): Within-shot action panels, reverse shots, eyelines, and coverage validation.
+- [Seedance compilation](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/blob/main/skills/dircreative/references/script-to-seedance.md): Script-to-Seedance handoff, visual baseline, asset bindings, continuity, and duration rules.
+- [Humanization workflow](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/blob/main/skills/dircreative/references/humanization-workflow.md): Two-stage diagnosis and evidence-bound text editing without flattening voice.
+- [Visual Skill Stack](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/blob/main/skills/dircreative/references/visual-skill-stack.md): Conditional provider selection, context budgets, and ownership boundaries.
+
+## Quality and release
+
+- [Film and commercial quality standard](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/blob/main/docs/film-preproduction/film-commercial-quality-standard.md): Creative and production quality gates.
+- [Runtime contracts](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/blob/main/docs/film-preproduction/runtime-contracts.md): State ownership, modes, evidence, and compatibility contracts.
+- [Releases](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/releases): Verified source archives, checksums, tags, and release notes.
+
+## Optional
+
+- [Full documentation index](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/tree/main/docs/film-preproduction): Schemas, research, QA rules, integration contracts, and interface studies.
+- [Examples](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/tree/main/examples): Prompt-only film and commercial workflow fixtures.
