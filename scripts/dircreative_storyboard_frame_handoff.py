@@ -21,7 +21,18 @@ except ImportError:  # pragma: no cover
 
 from dircreative_script_to_seedance_handoff import apply_mutations, load_json
 from dircreative_state_audit import _builtin_schema_errors
-from dircreative_media_forward_audit import png_dimensions
+from dircreative_review_trust import (
+    default_review_trust_registry_path,
+    verify_detached_review_artifact,
+)
+from dircreative_media_forward_audit import (
+    parse_host_trace_prefix,
+    png_dimensions,
+)
+from dircreative_storyboard_coverage import (
+    MAX_JSON_BYTES,
+    validate as validate_storyboard_coverage,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -38,10 +49,80 @@ ACTION_CLASSES = {"action", "transition"}
 GENERIC_NA_REASONS = {"n/a", "na", "none", "not applicable", "not_applicable", "无", "不适用"}
 MAX_HOST_TRACE_PREFIX_BYTES = 512 * 1024 * 1024
 MAX_HOST_TRACE_LINE_BYTES = 64 * 1024 * 1024
+SCENE_SOVEREIGN_FIELDS = {
+    "background",
+    "ground_surface",
+    "scene_geography",
+    "support_relation",
+}
+LAYOUT_SOVEREIGN_FIELDS = {
+    "character_identity",
+    "prop_identity",
+    "material",
+    "texture",
+    "final_art_style",
+}
+SPATIAL_CONSTRAINT_MODES = {"spatial_mockup", "depth_layout", "multi_view"}
+ROLE_CONTROL_FIELDS = {
+    "identity": ["character_identity"],
+    "wardrobe": ["wardrobe_identity"],
+    "vehicle": ["vehicle_identity"],
+    "prop": ["prop_identity"],
+    "camera_action": ["camera_action"],
+    "style": ["final_art_style"],
+    "palette": ["palette"],
+    "clean_frame_state": ["clean_frame_state"],
+}
+LAYOUT_CONTROL_FIELDS = ["geometry", "composition", "occlusion", "scale", "support_relation"]
+
+
+def default_jingzao_provider_catalog_paths() -> tuple[Path, ...]:
+    return (
+        Path.home() / ".codex/skills/jingzao-image-forge",
+        Path.home() / ".agents/skills/jingzao-image-forge",
+        Path.home() / ".skillshub/jingzao-image-forge",
+    )
+
+
+def provider_trust_errors(
+    artifact_root: Path,
+    provider_root: Path,
+    trusted_catalog_paths: tuple[Path, ...] | None,
+) -> list[str]:
+    try:
+        resolved_artifact = artifact_root.resolve(strict=True)
+        resolved_provider = provider_root.resolve(strict=True)
+    except (FileNotFoundError, RuntimeError):
+        return ["provider_root_invalid: path does not resolve"]
+    if (
+        resolved_provider.is_relative_to(resolved_artifact)
+        or resolved_artifact.is_relative_to(resolved_provider)
+    ):
+        return ["provider_artifact_root_overlap: resolved roots overlap"]
+    candidates: set[Path] = set()
+    for candidate in (
+        default_jingzao_provider_catalog_paths()
+        if trusted_catalog_paths is None
+        else trusted_catalog_paths
+    ):
+        try:
+            resolved = candidate.expanduser().resolve(strict=True)
+        except (FileNotFoundError, RuntimeError):
+            continue
+        if resolved.is_dir():
+            candidates.add(resolved)
+    if resolved_provider not in candidates:
+        return [f"provider_root_not_installed: {resolved_provider}"]
+    return []
 
 
 def add_error(errors: list[str], code: str, detail: str) -> None:
     errors.append(f"{code}: {detail}")
+
+
+def canonical_sha256(value: Any) -> str:
+    payload = json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
 def fixture_png_bytes() -> bytes:
@@ -117,23 +198,108 @@ def verify_artifact_file(
     return path
 
 
+def validate_panel_bindings(
+    document: dict[str, Any], artifact_root: Path | None
+) -> list[str]:
+    errors: list[str] = []
+    for frame in document.get("frames", []):
+        if not isinstance(frame, dict):
+            continue
+        context = frame.get("panel_context")
+        if context is None:
+            continue
+        frame_id = str(frame.get("frame_id"))
+        if not isinstance(context, dict):
+            continue
+        panel_id = str(context.get("panel_id"))
+        if frame_id != panel_id:
+            add_error(errors, "panel_context_frame_id_mismatch", panel_id)
+        if artifact_root is None:
+            add_error(errors, "panel_context_artifact_root_required", panel_id)
+            continue
+        coverage_file = context.get("coverage_file")
+        try:
+            coverage_path = contained_file(artifact_root, coverage_file)
+        except OSError:
+            coverage_path = None
+        if coverage_path is None:
+            add_error(errors, "panel_context_coverage_path_invalid", panel_id)
+            continue
+        try:
+            if coverage_path.stat().st_size > MAX_JSON_BYTES:
+                add_error(errors, "panel_context_coverage_too_large", panel_id)
+                continue
+            payload = coverage_path.read_bytes()
+        except OSError:
+            add_error(errors, "panel_context_coverage_file_invalid", panel_id)
+            continue
+        if hashlib.sha256(payload).hexdigest() != context.get("coverage_sha256"):
+            add_error(errors, "panel_context_coverage_hash_mismatch", panel_id)
+            continue
+        try:
+            coverage_document = json.loads(payload.decode("utf-8"))
+            if not isinstance(coverage_document, dict):
+                raise ValueError("coverage must be a JSON object")
+        except (OSError, ValueError, UnicodeDecodeError, json.JSONDecodeError):
+            add_error(errors, "panel_context_coverage_json_invalid", panel_id)
+            continue
+        coverage_result = validate_storyboard_coverage(
+            coverage_document, artifact_root, "design"
+        )
+        if coverage_result.get("status") != "valid":
+            add_error(errors, "panel_context_coverage_invalid", panel_id)
+        panels = coverage_document.get("panels")
+        matches = (
+            [item for item in panels if isinstance(item, dict) and item.get("panel_id") == panel_id]
+            if isinstance(panels, list)
+            else []
+        )
+        if not matches:
+            add_error(errors, "panel_context_panel_missing", panel_id)
+            continue
+        if len(matches) != 1:
+            add_error(errors, "panel_context_panel_ambiguous", panel_id)
+            continue
+        panel = matches[0]
+        requirements = {
+            item.get("requirement_id"): item
+            for item in coverage_document.get("requirements", [])
+            if isinstance(item, dict)
+        }
+        requirement = requirements.get(panel.get("requirement_id"))
+        if (
+            isinstance(requirement, dict)
+            and requirement.get("risk") == "high"
+            and not isinstance(frame.get("truth_contract"), dict)
+        ):
+            add_error(errors, "high_risk_truth_contract_required", panel_id)
+        truth = frame.get("truth_contract")
+        if isinstance(truth, dict) and isinstance(requirement, dict) and truth.get("risk") != requirement.get("risk"):
+            add_error(errors, "truth_contract_risk_mismatch", panel_id)
+        for field in ("shot_id", "phase", "at_seconds", "state"):
+            declared = frame.get(field) if field == "shot_id" else context.get(field)
+            if panel.get(field) != declared:
+                add_error(errors, f"panel_context_{field}_mismatch", panel_id)
+    return errors
+
+
 def validate_prompt_manifest(
     path: Path | None,
     expected_frame_ids: set[str],
     errors: list[str],
-) -> dict[str, str]:
-    prompt_hash_by_frame: dict[str, str] = {}
+) -> dict[str, dict[str, Any]]:
+    prompt_contract_by_frame: dict[str, dict[str, Any]] = {}
     if path is None:
-        return prompt_hash_by_frame
+        return prompt_contract_by_frame
     try:
         payload = load_json(path)
     except (json.JSONDecodeError, OSError):
         add_error(errors, "prompt_manifest_invalid", str(path))
-        return prompt_hash_by_frame
+        return prompt_contract_by_frame
     frame_prompts = payload.get("frame_prompts") if isinstance(payload, dict) else None
     if not isinstance(frame_prompts, list):
         add_error(errors, "prompt_manifest_frame_prompts_missing", str(path))
-        return prompt_hash_by_frame
+        return prompt_contract_by_frame
     for item in frame_prompts:
         if not isinstance(item, dict):
             add_error(errors, "prompt_manifest_frame_entry_invalid", str(path))
@@ -150,16 +316,345 @@ def validate_prompt_manifest(
         actual_prompt_hash = hashlib.sha256(prompt.encode("utf-8")).hexdigest()
         if item.get("prompt_sha256") != actual_prompt_hash:
             add_error(errors, "prompt_manifest_prompt_hash_mismatch", frame_id)
-        if frame_id in prompt_hash_by_frame:
+        if frame_id in prompt_contract_by_frame:
             add_error(errors, "prompt_manifest_frame_duplicate", frame_id)
-        prompt_hash_by_frame[frame_id] = actual_prompt_hash
-    if set(prompt_hash_by_frame) != expected_frame_ids:
+        reference_inputs = item.get("reference_inputs")
+        if reference_inputs is not None and not isinstance(reference_inputs, list):
+            add_error(errors, "prompt_manifest_reference_inputs_invalid", frame_id)
+            reference_inputs = None
+        reference_authority = item.get("reference_authority")
+        if reference_authority is not None and not isinstance(reference_authority, list):
+            add_error(errors, "prompt_manifest_reference_authority_invalid", frame_id)
+            reference_authority = None
+        prompt_contract_by_frame[frame_id] = {
+            "prompt": prompt,
+            "prompt_sha256": actual_prompt_hash,
+            "reference_inputs": copy.deepcopy(reference_inputs),
+            "reference_authority": copy.deepcopy(reference_authority),
+        }
+    if set(prompt_contract_by_frame) != expected_frame_ids:
         add_error(
             errors,
             "prompt_manifest_frame_coverage_invalid",
-            f"expected={sorted(expected_frame_ids)} actual={sorted(prompt_hash_by_frame)}",
+            f"expected={sorted(expected_frame_ids)} actual={sorted(prompt_contract_by_frame)}",
         )
-    return prompt_hash_by_frame
+    return prompt_contract_by_frame
+
+
+def truth_attachment_inputs(
+    frame: dict[str, Any],
+    artifact_root: Path,
+    errors: list[str],
+) -> list[dict[str, str]]:
+    frame_id = str(frame["frame_id"])
+    truth = frame["truth_contract"]
+    role_by_id = {str(item["asset_id"]): item for item in frame["reference_roles"]}
+    inputs: list[dict[str, str]] = []
+    for asset_id in truth["required_attachment_ids"]:
+        role = role_by_id.get(str(asset_id))
+        attachment = role.get("attachment") if role else None
+        if not isinstance(attachment, dict):
+            code = (
+                "required_scene_attachment_missing"
+                if asset_id == truth["scene_asset_id"]
+                else "required_attachment_missing"
+            )
+            add_error(errors, code, f"{frame_id}:{asset_id}")
+            continue
+        verify_artifact_file(attachment, artifact_root, f"truth_attachment:{frame_id}:{asset_id}", errors)
+        inputs.append({
+            "source_id": str(asset_id),
+            "role": str(role["role"]),
+            "relative_path": str(attachment["relative_path"]),
+            "sha256": str(attachment["sha256"]),
+        })
+    return inputs
+
+
+def truth_reference_authority(frame: dict[str, Any]) -> list[dict[str, Any]]:
+    truth = frame["truth_contract"]
+    role_by_id = {str(item["asset_id"]): item for item in frame["reference_roles"]}
+    result: list[dict[str, Any]] = []
+    for asset_id in truth["required_attachment_ids"]:
+        role = role_by_id.get(str(asset_id))
+        if not role:
+            continue
+        role_name = str(role["role"])
+        may_control = (
+            sorted(SCENE_SOVEREIGN_FIELDS)
+            if role_name == "scene"
+            else sorted(LAYOUT_CONTROL_FIELDS)
+            if role_name == "layout"
+            else ROLE_CONTROL_FIELDS.get(role_name, [role_name])
+        )
+        result.append({
+            "source_id": str(asset_id),
+            "role": role_name,
+            "may_control": may_control,
+            "must_not_control": sorted(role["must_not_control"]),
+        })
+    return result
+
+
+def validate_prompt_authority_review(
+    document: dict[str, Any],
+    artifact_root: Path,
+    prompt_contracts: dict[str, dict[str, Any]],
+    review_trust_registry_path: Path | None,
+) -> list[str]:
+    errors: list[str] = []
+    high_frames = [
+        frame
+        for frame in document.get("frames", [])
+        if isinstance(frame, dict)
+        and isinstance(frame.get("truth_contract"), dict)
+        and frame["truth_contract"].get("risk") == "high"
+    ]
+    if not high_frames:
+        return errors
+    output_spec = document.get("output_spec", {})
+    relative = output_spec.get("prompt_authority_review_relative_path")
+    signature_relative = output_spec.get("prompt_authority_review_signature_relative_path")
+    if not safe_relative_path(relative) or not safe_relative_path(signature_relative):
+        add_error(errors, "prompt_authority_review_missing", "high-risk handoff")
+        return errors
+    review_path = contained_file(artifact_root, relative)
+    signature_path = contained_file(artifact_root, signature_relative)
+    if review_path is None or signature_path is None:
+        add_error(errors, "prompt_authority_review_missing", str(relative))
+        return errors
+    try:
+        if review_path.stat().st_size > MAX_JSON_BYTES:
+            raise ValueError
+        raw = review_path.read_bytes()
+    except (OSError, ValueError):
+        add_error(errors, "prompt_authority_review_invalid", str(relative))
+        return errors
+    if hashlib.sha256(raw).hexdigest() != output_spec.get("prompt_authority_review_sha256"):
+        add_error(errors, "prompt_authority_review_hash_mismatch", str(relative))
+        return errors
+    try:
+        review = json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        add_error(errors, "prompt_authority_review_invalid", str(relative))
+        return errors
+    if not isinstance(review, dict) or (
+        review.get("contract_id") != "prompt_authority_semantic_review_v1"
+        or review.get("purpose") != "prompt_authority_review"
+        or review.get("source") != "independent_review"
+        or not isinstance(review.get("frames"), list)
+    ):
+        add_error(errors, "prompt_authority_review_invalid", str(relative))
+        return errors
+    trust_errors = verify_detached_review_artifact(
+        review_path,
+        signature_path,
+        authority_id=review.get("authority_id"),
+        actor=review.get("actor"),
+        purpose="prompt_authority_review",
+        source="independent_review",
+        registry_path=review_trust_registry_path,
+        artifact_root=artifact_root,
+    )
+    errors.extend(f"prompt_authority_{item}" for item in trust_errors)
+    review_by_frame = {
+        str(item.get("frame_id")): item
+        for item in review["frames"]
+        if isinstance(item, dict)
+    }
+    expected_ids = {str(frame["frame_id"]) for frame in high_frames}
+    if set(review_by_frame) != expected_ids or len(review_by_frame) != len(review["frames"]):
+        add_error(errors, "prompt_authority_review_coverage_mismatch", str(sorted(expected_ids)))
+    for frame in high_frames:
+        frame_id = str(frame["frame_id"])
+        item = review_by_frame.get(frame_id, {})
+        prompt_contract = prompt_contracts.get(frame_id, {})
+        expected = {
+            "prompt_sha256": prompt_contract.get("prompt_sha256"),
+            "reference_authority_sha256": canonical_sha256(prompt_contract.get("reference_authority")),
+            "truth_revision_sha256": canonical_sha256(frame["truth_contract"]),
+            "coverage_sha256": frame.get("panel_context", {}).get("coverage_sha256"),
+        }
+        if any(item.get(key) != value for key, value in expected.items()):
+            add_error(errors, "prompt_authority_review_binding_mismatch", frame_id)
+        if (
+            item.get("verdict") != "pass"
+            or item.get("forbidden_control_conflict") is not False
+            or item.get("conflicts") != []
+        ):
+            add_error(errors, "prompt_authority_review_failed", frame_id)
+    return errors
+
+
+def validate_truth_contracts(
+    document: dict[str, Any],
+    artifact_root: Path | None,
+    host_event_log: Path | None,
+    trusted_host_log_root: Path | None,
+    review_trust_registry_path: Path,
+) -> list[str]:
+    errors: list[str] = []
+    truth_frames = [
+        frame
+        for frame in document.get("frames", [])
+        if isinstance(frame, dict) and isinstance(frame.get("truth_contract"), dict)
+    ]
+    if not truth_frames:
+        return errors
+    if artifact_root is None:
+        add_error(errors, "truth_artifact_root_required", "truth-bound handoff")
+        return errors
+
+    frame_by_id = {str(frame["frame_id"]): frame for frame in truth_frames}
+    expected_inputs_by_frame: dict[str, list[dict[str, str]]] = {}
+    for frame in truth_frames:
+        frame_id = str(frame["frame_id"])
+        truth = frame["truth_contract"]
+        if not isinstance(frame.get("panel_context"), dict):
+            add_error(errors, "truth_contract_risk_source_missing", frame_id)
+        canonical = set(frame["canonical_asset_ids"])
+        required_ids = set(truth["required_attachment_ids"])
+        scene_asset_id = truth["scene_asset_id"]
+        roles = frame["reference_roles"]
+        role_by_id = {str(item["asset_id"]): item for item in roles}
+
+        if truth["status"] != "ready":
+            add_error(errors, "truth_frame_not_ready", frame_id)
+        if scene_asset_id not in canonical or scene_asset_id not in required_ids:
+            add_error(errors, "scene_truth_unbound", f"{frame_id}:{scene_asset_id}")
+        scene_roles = [role for role in roles if role["role"] == "scene"]
+        scene_role = role_by_id.get(str(scene_asset_id))
+        if len(scene_roles) != 1:
+            add_error(errors, "scene_truth_role_ambiguous", frame_id)
+        elif not scene_role or scene_role["role"] != "scene":
+            add_error(errors, "scene_truth_role_invalid", f"{frame_id}:{scene_asset_id}")
+        missing_required = required_ids - canonical
+        if missing_required:
+            add_error(errors, "required_attachment_not_canonical", f"{frame_id}:{','.join(sorted(missing_required))}")
+
+        constraint = truth["constraint_input"]
+        constraint_mode = constraint["mode"]
+        constraint_asset_id = constraint["asset_id"]
+        for role in roles:
+            if role["role"] == "scene":
+                continue
+            if role["role"] == "layout":
+                missing_fields = LAYOUT_SOVEREIGN_FIELDS - set(role["must_not_control"])
+                code = "layout_identity_authority_unbounded"
+                if constraint_mode not in SPATIAL_CONSTRAINT_MODES or role["asset_id"] != constraint_asset_id:
+                    add_error(errors, "layout_constraint_binding_invalid", f"{frame_id}:{role['asset_id']}")
+            else:
+                missing_fields = SCENE_SOVEREIGN_FIELDS - set(role["must_not_control"])
+                code = "reference_background_authority_unbounded"
+            if missing_fields:
+                detail = f"{frame_id}:{role['asset_id']}:{','.join(sorted(missing_fields))}"
+                add_error(errors, code, detail)
+
+        support = truth["support"]
+        if support["status"] == "required":
+            subject, anchor = support["subject_asset_id"], support["anchor_asset_id"]
+            if subject not in canonical or anchor not in canonical or subject == anchor:
+                add_error(errors, "support_truth_unbound", frame_id)
+            if subject not in required_ids or anchor not in required_ids:
+                add_error(errors, "support_truth_attachment_missing", frame_id)
+            if support["visibility"] != "explicit_in_frame":
+                add_error(errors, "support_truth_not_visible", frame_id)
+            if support["relationship"].casefold() in {"unknown", "not_required", "n/a"}:
+                add_error(errors, "support_truth_relationship_invalid", frame_id)
+
+        if truth["risk"] == "high" and constraint_mode == "none":
+            add_error(errors, "constraint_input_required", frame_id)
+        expected_role = "scene" if constraint_mode == "scene_reference" else "layout"
+        constraint_role = role_by_id.get(str(constraint_asset_id))
+        if constraint_mode == "none":
+            if constraint_asset_id is not None:
+                add_error(errors, "constraint_input_binding_invalid", frame_id)
+        elif (
+            not constraint_role
+            or constraint_role["role"] != expected_role
+            or constraint_asset_id not in required_ids
+        ):
+            add_error(errors, "constraint_input_binding_invalid", frame_id)
+        expected_inputs_by_frame[frame_id] = truth_attachment_inputs(frame, artifact_root, errors)
+
+    for frame_id, frame in frame_by_id.items():
+        for parent_id in frame["truth_contract"]["parent_frame_ids"]:
+            parent = frame_by_id.get(str(parent_id))
+            if parent is None:
+                add_error(errors, "parent_truth_missing", f"{frame_id}:{parent_id}")
+            elif parent["truth_contract"]["status"] != "ready":
+                add_error(errors, "parent_truth_not_ready", f"{frame_id}:{parent_id}")
+    output_spec = document.get("output_spec", {})
+    prompt_manifest_path = verify_artifact_file(
+        {
+            "relative_path": output_spec.get("prompt_manifest_relative_path"),
+            "sha256": output_spec.get("prompt_manifest_sha256"),
+        },
+        artifact_root, "truth_prompt_manifest", errors,
+    )
+    prompt_contracts = validate_prompt_manifest(
+        prompt_manifest_path, {str(frame.get("frame_id")) for frame in document.get("frames", [])}, errors,
+    )
+    for frame_id, expected_inputs in expected_inputs_by_frame.items():
+        prompt_contract = prompt_contracts.get(frame_id, {})
+        if prompt_contract.get("reference_inputs") != expected_inputs:
+            add_error(errors, "execution_attachment_manifest_mismatch", frame_id)
+        if prompt_contract.get("reference_authority") != truth_reference_authority(frame_by_id[frame_id]):
+            add_error(errors, "prompt_reference_authority_mismatch", frame_id)
+    errors.extend(
+        validate_prompt_authority_review(
+            document,
+            artifact_root,
+            prompt_contracts,
+            review_trust_registry_path,
+        )
+    )
+
+    consumption = document.get("delivery_consumption", {})
+    if consumption.get("status") != "observed_unverified":
+        return errors
+    if host_event_log is None:
+        add_error(errors, "truth_host_event_log_required", "observed truth-bound handoff")
+        return errors
+    try:
+        resolved_log = host_event_log.expanduser().resolve(strict=True)
+        resolved_artifact = artifact_root.resolve(strict=True)
+        resolved_trusted = (trusted_host_log_root or Path.home() / ".codex/sessions").resolve(strict=True)
+        if resolved_log.is_relative_to(resolved_artifact) or not resolved_log.is_relative_to(resolved_trusted):
+            raise ValueError
+    except (FileNotFoundError, RuntimeError, ValueError):
+        add_error(errors, "truth_host_event_log_invalid", str(host_event_log))
+        return errors
+    evidence, host_errors = parse_host_trace_prefix(
+        resolved_log,
+        consumption.get("host_trace", {}),
+        label="generation host trace",
+    )
+    errors.extend(f"truth_{item}" for item in host_errors)
+    if evidence.get("thread_id") != consumption.get("host_trace", {}).get("thread_id"):
+        add_error(errors, "truth_host_trace_thread_mismatch", str(resolved_log))
+    actual_requests = [
+        event["request"]
+        for event in evidence.get("generation_events", {}).values()
+        if isinstance(event.get("request"), dict)
+    ]
+    for frame_id, expected_inputs in expected_inputs_by_frame.items():
+        expected_prompt = prompt_contracts.get(frame_id, {}).get("prompt")
+        expected_paths = [str((artifact_root / item["relative_path"]).resolve()) for item in expected_inputs]
+        if any(
+            item.get("prompt") == expected_prompt
+            and item.get("referenced_image_paths") == expected_paths
+            for item in actual_requests
+        ):
+            continue
+        prompt_matched = any(item.get("prompt") == expected_prompt for item in actual_requests)
+        code = (
+            "execution_attachment_manifest_mismatch"
+            if prompt_matched
+            else "execution_prompt_manifest_mismatch"
+        )
+        add_error(errors, code, frame_id)
+    return errors
 
 
 def parse_host_generation_events(
@@ -283,6 +778,7 @@ def production_provenance_errors(
     provider_root: Path | None,
     host_event_log: Path | None,
     trusted_host_log_root: Path | None,
+    trusted_provider_catalog_paths: tuple[Path, ...] | None,
 ) -> list[str]:
     if document.get("fixture_only") is True:
         return []
@@ -297,6 +793,14 @@ def production_provenance_errors(
     ):
         add_error(errors, "host_event_log_required", "observed non-fixture handoff")
     if artifact_root is None or provider_root is None:
+        return errors
+    trust_errors = provider_trust_errors(
+        artifact_root,
+        provider_root,
+        trusted_provider_catalog_paths,
+    )
+    errors.extend(trust_errors)
+    if trust_errors:
         return errors
 
     provider_skill = document.get("provider_skill", {})
@@ -336,7 +840,7 @@ def production_provenance_errors(
         "prompt_manifest",
         errors,
     )
-    prompt_hash_by_frame = validate_prompt_manifest(
+    prompt_contract_by_frame = validate_prompt_manifest(
         prompt_manifest_path,
         {str(item.get("frame_id")) for item in document.get("frames", [])},
         errors,
@@ -356,7 +860,7 @@ def production_provenance_errors(
         seen_call_ids: set[str] = set()
         for output in consumption.get("frame_outputs", []):
             frame_id = str(output.get("frame_id"))
-            prompt_hash = prompt_hash_by_frame.get(frame_id)
+            prompt_hash = prompt_contract_by_frame.get(frame_id, {}).get("prompt_sha256")
             receipt_binding = output.get("execution_receipt", {})
             generated_binding = output.get("generated_artifact", {})
             receipt_path = verify_artifact_file(
@@ -488,16 +992,30 @@ def validate(
     provider_root: Path | None = None,
     host_event_log: Path | None = None,
     trusted_host_log_root: Path | None = None,
+    _review_trust_registry_path: Path | None = None,
+    _trusted_provider_catalog_roots: tuple[Path, ...] | None = None,
 ) -> list[str]:
     structural = schema_errors(document)
     if structural:
         return structural
-    return semantic_errors(document) + production_provenance_errors(
-        document,
-        artifact_root,
-        provider_root,
-        host_event_log,
-        trusted_host_log_root,
+    return (
+        semantic_errors(document)
+        + validate_panel_bindings(document, artifact_root)
+        + validate_truth_contracts(
+            document,
+            artifact_root,
+            host_event_log,
+            trusted_host_log_root,
+            _review_trust_registry_path,
+        )
+        + production_provenance_errors(
+            document,
+            artifact_root,
+            provider_root,
+            host_event_log,
+            trusted_host_log_root,
+            _trusted_provider_catalog_roots,
+        )
     )
 
 
@@ -642,6 +1160,7 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
             production,
             artifact_root=artifact_root,
             provider_root=provider_root,
+            _trusted_provider_catalog_roots=(provider_root,),
             host_event_log=host_log,
             trusted_host_log_root=trusted_host_root,
         )
@@ -704,6 +1223,7 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
                 planned,
                 artifact_root=artifact_root,
                 provider_root=provider_root,
+                _trusted_provider_catalog_roots=(provider_root,),
             )
             if not any(error.startswith(expected_code + ":") for error in planned_errors):
                 failures.append(
@@ -716,6 +1236,7 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
             production,
             artifact_root=artifact_root,
             provider_root=provider_root,
+            _trusted_provider_catalog_roots=(provider_root,),
             host_event_log=host_log,
             trusted_host_log_root=trusted_host_root,
         )
@@ -728,6 +1249,7 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
             production,
             artifact_root=artifact_root,
             provider_root=provider_root,
+            _trusted_provider_catalog_roots=(provider_root,),
             host_event_log=self_issued_host_log,
             trusted_host_log_root=trusted_host_root,
         )
@@ -742,6 +1264,7 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
             production,
             artifact_root=artifact_root,
             provider_root=provider_root,
+            _trusted_provider_catalog_roots=(provider_root,),
             host_event_log=external_fake_log,
             trusted_host_log_root=trusted_host_root,
         )
@@ -772,6 +1295,7 @@ def main() -> int:
     validate_parser.add_argument("--artifact-root", type=Path)
     validate_parser.add_argument("--provider-root", type=Path)
     validate_parser.add_argument("--host-event-log", type=Path)
+    validate_parser.add_argument("--review-trust-registry", type=Path)
     args = parser.parse_args()
 
     if args.command == "self-test":
@@ -785,9 +1309,20 @@ def main() -> int:
         artifact_root=args.artifact_root,
         provider_root=args.provider_root,
         host_event_log=args.host_event_log,
+        _review_trust_registry_path=args.review_trust_registry,
     )
-    print(json.dumps({"path": str(args.path), "errors": errors}, ensure_ascii=False, indent=2))
-    return 0 if not errors else 1
+    registry_path = args.review_trust_registry or default_review_trust_registry_path()
+    trust_blocked = any(
+        "review_trust_registry_" in error or "review_authority_unconfigured:" in error
+        for error in errors
+    )
+    print(json.dumps({
+        "status": "TOOL_BLOCKED" if trust_blocked else "valid" if not errors else "invalid",
+        "path": str(args.path),
+        "review_trust_registry_path": str(registry_path),
+        "errors": errors,
+    }, ensure_ascii=False, indent=2))
+    return 2 if trust_blocked else 0 if not errors else 1
 
 
 if __name__ == "__main__":

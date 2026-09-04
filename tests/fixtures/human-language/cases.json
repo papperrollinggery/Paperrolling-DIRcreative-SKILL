@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "cases": [
+    {
+      "case_id": "mythic_screenplay_preserves_authored_voice",
+      "scene": "screenplay",
+      "source_text": "巫者把照名火压进骨简，火沿旧纹一寸寸暗下去。她没有回头。这不仅仅是一次逃亡，更是对命运的深刻叩问。",
+      "candidate_text": "巫者把照名火压进骨简。火沿旧纹一寸寸暗下去，她没有回头。",
+      "protected_spans": ["巫者", "照名火", "骨简", "旧纹", "她没有回头"],
+      "forbidden_fragments": ["不仅仅是", "深刻叩问", "这是一个"],
+      "authored_voice_markers": ["一寸寸暗下去", "她没有回头"]
+    },
+    {
+      "case_id": "storyboard_copy_keeps_literal_super",
+      "scene": "storyboard",
+      "source_text": "画面中，一名青年女性逐渐抬起遥控器，呈现出电视被打开的过程，并强调连接已经开始。SUPER：开始连接",
+      "candidate_text": "青年女性坐在沙发上，遥控器指向电视。屏幕亮起。SUPER：开始连接",
+      "protected_spans": ["青年女性", "遥控器", "电视", "SUPER：开始连接"],
+      "forbidden_fragments": ["画面中", "逐渐", "呈现出", "并强调"],
+      "authored_voice_markers": ["遥控器指向电视", "屏幕亮起"]
+    }
+  ]
+}

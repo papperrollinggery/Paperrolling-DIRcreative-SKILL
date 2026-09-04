@@ -63,6 +63,76 @@
         "prompt_sha256": {"$ref": "#/$defs/sha256"}
       }
     },
+    "execution_attachment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["asset_id", "role", "relative_path", "sha256"],
+      "properties": {
+        "asset_id": {"$ref": "#/$defs/id"},
+        "role": {"$ref": "#/$defs/id"},
+        "relative_path": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "handoff_truth_artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["relative_path", "sha256", "frame_id"],
+      "properties": {
+        "relative_path": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "frame_id": {"$ref": "#/$defs/id"}
+      }
+    },
+    "support_truth": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "subject_asset_id", "anchor_asset_id", "visibility"],
+      "properties": {
+        "status": {"enum": ["required", "not_required"]},
+        "subject_asset_id": {"type": ["string", "null"]},
+        "anchor_asset_id": {"type": ["string", "null"]},
+        "visibility": {"enum": ["explicit_in_frame", "not_visible", "not_required"]}
+      }
+    },
+    "scene_support_truth": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["revision_id", "revision_sha256", "status", "scene_asset_id", "support", "parent_attempt_ids", "handoff_truth_artifact"],
+      "properties": {
+        "revision_id": {"$ref": "#/$defs/id"},
+        "revision_sha256": {"$ref": "#/$defs/sha256"},
+        "status": {"enum": ["ready", "blocked", "failed"]},
+        "scene_asset_id": {"$ref": "#/$defs/id"},
+        "support": {"$ref": "#/$defs/support_truth"},
+        "parent_attempt_ids": {"$ref": "#/$defs/id_list"},
+        "handoff_truth_artifact": {"$ref": "#/$defs/handoff_truth_artifact"}
+      }
+    },
+    "execution_input_manifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["prompt_sha256", "ordered_attachments", "attachment_manifest_sha256", "scene_support_truth"],
+      "properties": {
+        "prompt_sha256": {"$ref": "#/$defs/sha256"},
+        "ordered_attachments": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/execution_attachment"}},
+        "attachment_manifest_sha256": {"$ref": "#/$defs/sha256"},
+        "scene_support_truth": {"$ref": "#/$defs/scene_support_truth"}
+      }
+    },
+    "execution_risk_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_contract_id", "relative_path", "sha256", "panel_id", "requirement_id", "declared_risk"],
+      "properties": {
+        "source_contract_id": {"const": "storyboard_coverage_v1"},
+        "relative_path": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "panel_id": {"$ref": "#/$defs/id"},
+        "requirement_id": {"$ref": "#/$defs/id"},
+        "declared_risk": {"enum": ["low", "medium", "high"]}
+      }
+    },
     "model_snapshot": {
       "type": "object",
       "additionalProperties": false,
@@ -87,6 +157,30 @@
         ,"receipt_id": {"$ref": "#/$defs/id"}
       }
     },
+    "parent_truth_check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["attempt_id", "latest_state", "truth_review_status"],
+      "properties": {
+        "attempt_id": {"$ref": "#/$defs/id"},
+        "latest_state": {"enum": ["planned", "attached", "executed", "observed_unverified", "generated_verified", "selected", "rejected", "superseded", "delivered"]},
+        "truth_review_status": {"enum": ["pass", "failed", "rejected", "unverified"]}
+      }
+    },
+    "semantic_truth_review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["output_sha256", "truth_revision_sha256", "scene_truth", "support_visible", "forbidden_background_ground_contamination", "parent_checks", "review_sha256"],
+      "properties": {
+        "output_sha256": {"$ref": "#/$defs/sha256"},
+        "truth_revision_sha256": {"$ref": "#/$defs/sha256"},
+        "scene_truth": {"enum": ["pass", "failed", "unverified"]},
+        "support_visible": {"enum": ["pass", "failed", "unverified"]},
+        "forbidden_background_ground_contamination": {"enum": ["absent", "present", "unverified"]},
+        "parent_checks": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/parent_truth_check"}},
+        "review_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
     "review": {
       "type": "object",
       "additionalProperties": false,
@@ -96,7 +190,8 @@
         "verdict": {"enum": ["accept", "reject", "conditional"]},
         "sha256": {"$ref": "#/$defs/sha256"},
         "source": {"enum": ["producer", "independent_review", "human_review"]},
-        "receipt_id": {"$ref": "#/$defs/id"}
+        "receipt_id": {"$ref": "#/$defs/id"},
+        "semantic_truth_review": {"$ref": "#/$defs/semantic_truth_review"}
       }
     },
     "cost": {
@@ -146,6 +241,8 @@
         "generation_unit_id": {"$ref": "#/$defs/id"},
         "asset_bindings": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/asset_binding"}},
         "prompt_artifact": {"$ref": "#/$defs/prompt_artifact"},
+        "execution_risk_binding": {"$ref": "#/$defs/execution_risk_binding"},
+        "execution_input_manifest": {"$ref": "#/$defs/execution_input_manifest"},
         "model_snapshot": {"$ref": "#/$defs/model_snapshot"},
         "authorized_execution_state": {"enum": ["planned", "authorized"]},
         "expected_visible_proof": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},

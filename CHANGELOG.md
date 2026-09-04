@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.7.1 - 2026-09-01
+
+- Adds Studio `video_distillation` with an offline Workbench evidence bridge, twelve craft axes, candidate mechanisms and explicit effect-comparison records; media/binding validation remains separate from factual and creative-quality review.
+- Preserves generation and delivery gate precedence, rejects changed media properties and invalid evidence, and requires study/upgrade review before an original-production trial. Interface integration remains a later PRD.
+- Adds a supplementary detailed-storyboard coverage contract for within-shot action panels and explicit reverse/eyeline pairs, preserving legacy representative-frame and clean-input contracts. Whole-film asset checks cannot pass with only planned images; model-specific grouping can retain connected multi-shot action.
+- Adds a fail-closed scene/support truth gate to the existing Jingzao frame handoff: high-risk panel bindings require it, while scene attachments, role-specific reference sovereignty, visible support declarations, parent-frame invalidation, risk-selected constraint inputs, signed prompt-authority semantic preflight, and host-observed prompt/reference requests are hash-bound without changing legacy rough-planning packets. Every direct image-tool selection binds validated upstream risk; high risk also binds prompt, ordered attachments, truth revision, and structured output semantic review through the existing production ledger, while hash-scoped low-risk legacy selections stay lightweight.
+- Revalidates the complete storyboard-to-Jingzao packet before ledger selection instead of accepting extracted truth wrappers. Reviewer public keys now default to persistent host configuration outside the installed Skill, with explicit status/provisioning CLIs and no private-key generation.
+- Treats the validated packet target-frame prompt entry as the execution source of truth: prompt text/hash and normalized ordered attachments must match exactly before ledger selection.
+- Requires an explicit handoff provider root when a ledger revalidates a production packet. Empty review registries now report `TOOL_BLOCKED`; public-key provisioning verifies canonical public input externally before Python reads or stores bytes.
+- Restricts production handoff providers to resolved installed `jingzao-image-forge` catalog paths and rejects provider/artifact overlap in either direction, including symlink aliases.
+- Adds a bounded `human_language_revision` route: explicit “说人话 / 去 AI 味 / 自然一点” requests select `shuorenhua`, with `humanizer-zh` as diagnostic-only validation and DIRcreative fallback when the optional provider is absent.
+- Makes source-derived authored voice a default requirement for audience-facing story, screenplay, storyboard-description, PPT, README and report copy while protecting facts, literal SUPER, names, coined terms, character diction and genre register.
+- Preserves mythic, historical, literary and period language instead of flattening every natural-language pass into casual modern Chinese; `de-AI-writing` remains the ordinary bounded fidelity cleanup rather than a stacked second owner.
+- Records the cross-project behavior study that exposed the routing gap without copying RTBC or Shanhaijing wording into the Skill.
+
 ## 0.7.0 - 2026-08-30
 
 - Replaces the split face/wardrobe default for new recurring clothed humans with a unified headed character master sheet generated coherently in one pass: one large three-quarter portrait plus matched full-body front, left profile, right profile, and back views in one physical image.

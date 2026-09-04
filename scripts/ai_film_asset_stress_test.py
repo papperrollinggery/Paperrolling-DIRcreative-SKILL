@@ -1427,14 +1427,19 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
                     review_receipt_path=receipt_path,
                     review_signature_path=signature_path,
                 ),
-                "review_authority_unconfigured",
+                ("review_authority_unconfigured", "review_trust_registry_invalid"),
             ),
         ]
         for case_id, errors, expected in trust_cases:
-            if any(error.startswith(expected + ":") for error in errors):
+            expected_codes = (expected,) if isinstance(expected, str) else expected
+            if any(
+                error.startswith(code + ":")
+                for error in errors
+                for code in expected_codes
+            ):
                 rejected += 1
             else:
-                failures.append(f"{case_id}: expected {expected}, got {errors[:3]}")
+                failures.append(f"{case_id}: expected {expected_codes}, got {errors[:3]}")
         multi_asset = copy.deepcopy(valid)
         second_asset = copy.deepcopy(multi_asset["assets"][0])
         second_asset["asset_id"] = "CHAR-SECONDARY"

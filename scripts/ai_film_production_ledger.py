@@ -12,7 +12,19 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from dircreative_review_trust import DEFAULT_REGISTRY_PATH, resolve_review_key, sensitive_paths
+from dircreative_review_trust import (
+    default_review_trust_registry_path,
+    resolve_review_key,
+    sensitive_paths,
+)
+from dircreative_storyboard_coverage import (
+    json_hash as coverage_json_hash,
+    validate as validate_storyboard_coverage,
+)
+from dircreative_storyboard_frame_handoff import (
+    contained_file,
+    validate as validate_storyboard_frame_handoff,
+)
 from dircreative_validation_common import (
     add_error,
     apply_mutations,
@@ -38,10 +50,398 @@ TRANSITIONS = {
     "superseded": set(),
     "delivered": set(),
 }
+MAX_RISK_SOURCE_BYTES = 8 * 1024 * 1024
 
 
 def canonical(value: Any) -> str:
     return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+
+
+def load_handoff_truth_contract(
+    truth: dict[str, Any],
+    artifact_root: Path | None,
+    attempt_id: str,
+    errors: list[str],
+    review_trust_registry_path: Path | None,
+    handoff_provider_root: Path | None,
+    trusted_handoff_provider_catalog_roots: tuple[Path, ...] | None,
+    attempt: dict[str, Any],
+) -> tuple[dict[str, Any], dict[str, Any]] | None:
+    binding = truth.get("handoff_truth_artifact", {})
+    relative = binding.get("relative_path")
+    if artifact_root is None or not safe_relative_path(relative):
+        add_error(errors, "execution_handoff_truth_invalid", attempt_id)
+        return None
+    try:
+        root = artifact_root.resolve(strict=True)
+        path = (root / str(relative)).resolve(strict=True)
+        path.relative_to(root)
+        if not path.is_file() or path.stat().st_size > MAX_RISK_SOURCE_BYTES:
+            raise ValueError
+        raw = path.read_bytes()
+    except (FileNotFoundError, OSError, RuntimeError, ValueError):
+        add_error(errors, "execution_handoff_truth_invalid", attempt_id)
+        return None
+    if hashlib.sha256(raw).hexdigest() != binding.get("sha256"):
+        add_error(errors, "execution_handoff_truth_hash_mismatch", attempt_id)
+        return None
+    try:
+        payload = json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        add_error(errors, "execution_handoff_truth_invalid", attempt_id)
+        return None
+    if not isinstance(payload, dict):
+        add_error(errors, "execution_handoff_packet_invalid", attempt_id)
+        return None
+    packet_errors = validate_storyboard_frame_handoff(
+        payload,
+        artifact_root=artifact_root,
+        provider_root=handoff_provider_root,
+        _review_trust_registry_path=review_trust_registry_path,
+        _trusted_provider_catalog_roots=trusted_handoff_provider_catalog_roots,
+    )
+    if packet_errors:
+        add_error(errors, "execution_handoff_packet_invalid", f"{attempt_id}:{packet_errors[0]}")
+        return None
+    frame_matches = [
+        frame
+        for frame in payload.get("frames", [])
+        if isinstance(frame, dict) and frame.get("frame_id") == binding.get("frame_id")
+    ]
+    risk_binding = attempt.get("execution_risk_binding", {})
+    if len(frame_matches) != 1:
+        add_error(errors, "execution_handoff_scope_mismatch", attempt_id)
+        return None
+    frame = frame_matches[0]
+    panel_context = frame.get("panel_context", {})
+    if (
+        binding.get("frame_id") != risk_binding.get("panel_id")
+        or frame.get("shot_id") != attempt.get("shot_id")
+        or frame.get("generation_unit_id") != attempt.get("generation_unit_id")
+        or panel_context.get("coverage_file") != risk_binding.get("relative_path")
+        or panel_context.get("coverage_sha256") != risk_binding.get("sha256")
+        or payload.get("delivery_consumption", {}).get("status") != "planned"
+    ):
+        add_error(errors, "execution_handoff_scope_mismatch", attempt_id)
+        return None
+    prompt_manifest_path = contained_file(
+        artifact_root,
+        payload.get("output_spec", {}).get("prompt_manifest_relative_path"),
+    )
+    if prompt_manifest_path is None:
+        add_error(errors, "execution_handoff_packet_invalid", attempt_id)
+        return None
+    try:
+        prompt_manifest = json.loads(prompt_manifest_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+        add_error(errors, "execution_handoff_packet_invalid", attempt_id)
+        return None
+    prompt_matches = [
+        item
+        for item in prompt_manifest.get("frame_prompts", [])
+        if isinstance(item, dict) and item.get("frame_id") == binding.get("frame_id")
+    ] if isinstance(prompt_manifest, dict) else []
+    if len(prompt_matches) != 1:
+        add_error(errors, "execution_handoff_scope_mismatch", attempt_id)
+        return None
+    return frame["truth_contract"], prompt_matches[0]
+
+
+def execution_input_errors(
+    attempt: dict[str, Any],
+    artifact_root: Path | None,
+    review_trust_registry_path: Path | None,
+    handoff_provider_root: Path | None,
+    trusted_handoff_provider_catalog_roots: tuple[Path, ...] | None,
+) -> list[str]:
+    errors: list[str] = []
+    attempt_id = str(attempt.get("attempt_id"))
+    manifest = attempt.get("execution_input_manifest")
+    if not isinstance(manifest, dict):
+        return errors
+    if manifest.get("prompt_sha256") != attempt.get("prompt_artifact", {}).get("prompt_sha256"):
+        add_error(errors, "execution_prompt_hash_mismatch", attempt_id)
+    attachments = manifest.get("ordered_attachments", [])
+    if canonical_sha256(attachments) != manifest.get("attachment_manifest_sha256"):
+        add_error(errors, "execution_attachment_manifest_hash_mismatch", attempt_id)
+    binding_by_id = {
+        str(item.get("asset_id")): item
+        for item in attempt.get("asset_bindings", [])
+        if isinstance(item, dict)
+    }
+    attachment_ids: list[str] = []
+    for attachment in attachments:
+        if not isinstance(attachment, dict):
+            continue
+        asset_id = str(attachment.get("asset_id"))
+        attachment_ids.append(asset_id)
+        binding = binding_by_id.get(asset_id)
+        if not isinstance(binding, dict) or any(
+            attachment.get(field) != binding.get(field)
+            for field in ("relative_path", "sha256")
+        ):
+            add_error(errors, "execution_attachment_binding_mismatch", f"{attempt_id}:{asset_id}")
+    if len(attachment_ids) != len(set(attachment_ids)):
+        add_error(errors, "execution_attachment_duplicate", attempt_id)
+    truth = manifest.get("scene_support_truth", {})
+    handoff_source = load_handoff_truth_contract(
+        truth,
+        artifact_root,
+        attempt_id,
+        errors,
+        review_trust_registry_path,
+        handoff_provider_root,
+        trusted_handoff_provider_catalog_roots,
+        attempt,
+    )
+    if handoff_source is not None:
+        handoff_truth, packet_prompt = handoff_source
+        support = truth.get("support", {})
+        upstream_support = handoff_truth.get("support", {})
+        if (
+            canonical_sha256(handoff_truth) != truth.get("revision_sha256")
+            or handoff_truth.get("risk")
+            != attempt.get("execution_risk_binding", {}).get("declared_risk")
+            or handoff_truth.get("status") != truth.get("status")
+            or handoff_truth.get("scene_asset_id") != truth.get("scene_asset_id")
+            or any(
+                upstream_support.get(field) != support.get(field)
+                for field in ("status", "subject_asset_id", "anchor_asset_id", "visibility")
+            )
+            or attempt.get("execution_risk_binding", {}).get("panel_id")
+            != truth.get("handoff_truth_artifact", {}).get("frame_id")
+        ):
+            add_error(errors, "execution_truth_revision_mismatch", attempt_id)
+        prompt_artifact = attempt.get("prompt_artifact", {})
+        if (
+            prompt_artifact.get("prompt_text") != packet_prompt.get("prompt")
+            or prompt_artifact.get("prompt_sha256") != packet_prompt.get("prompt_sha256")
+            or manifest.get("prompt_sha256") != packet_prompt.get("prompt_sha256")
+        ):
+            add_error(errors, "execution_packet_prompt_mismatch", attempt_id)
+        packet_attachments = [
+            {
+                "asset_id": item.get("source_id"),
+                "role": item.get("role"),
+                "relative_path": item.get("relative_path"),
+                "sha256": item.get("sha256"),
+            }
+            for item in packet_prompt.get("reference_inputs", [])
+            if isinstance(item, dict)
+        ]
+        if attachments != packet_attachments:
+            add_error(errors, "execution_packet_attachment_mismatch", attempt_id)
+    return errors
+
+
+def execution_risk_level(
+    attempt: dict[str, Any], artifact_root: Path | None
+) -> tuple[str | None, list[str]]:
+    binding = attempt.get("execution_risk_binding")
+    if not isinstance(binding, dict):
+        return None, []
+    attempt_id = str(attempt.get("attempt_id"))
+    errors: list[str] = []
+    relative = binding.get("relative_path")
+    if artifact_root is None or not safe_relative_path(relative):
+        add_error(errors, "execution_risk_source_invalid", attempt_id)
+        return None, errors
+    try:
+        root = artifact_root.resolve(strict=True)
+        path = (root / str(relative)).resolve(strict=True)
+        path.relative_to(root)
+        if not path.is_file() or path.stat().st_size > MAX_RISK_SOURCE_BYTES:
+            raise ValueError
+        raw = path.read_bytes()
+    except (FileNotFoundError, OSError, RuntimeError, ValueError):
+        add_error(errors, "execution_risk_source_invalid", f"{attempt_id}:{relative}")
+        return None, errors
+    if hashlib.sha256(raw).hexdigest() != binding.get("sha256"):
+        add_error(errors, "execution_risk_source_hash_mismatch", attempt_id)
+        return None, errors
+    try:
+        coverage = json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        add_error(errors, "execution_risk_source_invalid", attempt_id)
+        return None, errors
+    if not isinstance(coverage, dict) or coverage.get("schema_version") != "1.0":
+        add_error(errors, "execution_risk_source_invalid", attempt_id)
+        return None, errors
+    if validate_storyboard_coverage(coverage, artifact_root, "design").get("status") != "valid":
+        add_error(errors, "execution_risk_source_invalid", attempt_id)
+        return None, errors
+    panel_matches = [
+        item
+        for item in coverage.get("panels", [])
+        if isinstance(item, dict) and item.get("panel_id") == binding.get("panel_id")
+    ]
+    requirement_matches = [
+        item
+        for item in coverage.get("requirements", [])
+        if isinstance(item, dict)
+        and item.get("requirement_id") == binding.get("requirement_id")
+    ]
+    if (
+        len(panel_matches) != 1
+        or len(requirement_matches) != 1
+        or panel_matches[0].get("requirement_id") != binding.get("requirement_id")
+    ):
+        add_error(errors, "execution_risk_source_invalid", attempt_id)
+        return None, errors
+    if (
+        coverage.get("project_id") != attempt.get("project_id")
+        or panel_matches[0].get("shot_id") != attempt.get("shot_id")
+    ):
+        add_error(errors, "execution_risk_scope_mismatch", attempt_id)
+        return None, errors
+    actual_risk = requirement_matches[0].get("risk")
+    if actual_risk not in {"low", "medium", "high"}:
+        add_error(errors, "execution_risk_source_invalid", attempt_id)
+        return None, errors
+    if actual_risk != binding.get("declared_risk"):
+        add_error(errors, "execution_risk_mismatch", f"{attempt_id}:{actual_risk}")
+    return str(actual_risk), errors
+
+
+def selected_execution_input_errors(
+    attempt: dict[str, Any], attempt_map: dict[str, dict[str, Any]]
+) -> list[str]:
+    errors: list[str] = []
+    attempt_id = str(attempt.get("attempt_id"))
+    manifest = attempt.get("execution_input_manifest")
+    if not isinstance(manifest, dict):
+        add_error(errors, "selected_execution_input_manifest_missing", attempt_id)
+        return errors
+    truth = manifest.get("scene_support_truth", {})
+    if truth.get("status") != "ready":
+        add_error(errors, "selected_scene_support_truth_not_ready", attempt_id)
+    scene_id = truth.get("scene_asset_id")
+    support = truth.get("support", {})
+    subject_id = support.get("subject_asset_id")
+    anchor_id = support.get("anchor_asset_id")
+    attachments = [item for item in manifest.get("ordered_attachments", []) if isinstance(item, dict)]
+    scene_inputs = [
+        item
+        for item in attachments
+        if item.get("asset_id") == scene_id
+        and item.get("role") == "scene"
+    ]
+    if len(scene_inputs) != 1:
+        add_error(errors, "selected_scene_attachment_missing", attempt_id)
+    subject_inputs = [item for item in attachments if item.get("asset_id") == subject_id]
+    anchor_inputs = [item for item in attachments if item.get("asset_id") == anchor_id]
+    if len(subject_inputs) != 1 or subject_inputs[0].get("role") == "scene":
+        add_error(errors, "selected_support_subject_missing", attempt_id)
+    if len(anchor_inputs) != 1 or anchor_id != scene_id or anchor_inputs[0].get("role") != "scene":
+        add_error(errors, "selected_support_anchor_missing", attempt_id)
+    if support.get("status") != "required" or support.get("visibility") != "explicit_in_frame":
+        add_error(errors, "selected_support_truth_invalid", attempt_id)
+    for parent_id in truth.get("parent_attempt_ids", []):
+        parent = attempt_map.get(str(parent_id))
+        if parent is None:
+            add_error(errors, "selected_parent_truth_missing", f"{attempt_id}:{parent_id}")
+            continue
+        parent_truth = parent.get("execution_input_manifest", {}).get("scene_support_truth", {})
+        if parent_truth.get("status") != "ready":
+            add_error(errors, "selected_parent_truth_not_ready", f"{attempt_id}:{parent_id}")
+    return errors
+
+
+def semantic_review_digest(review: dict[str, Any]) -> str:
+    payload = {key: value for key, value in review.items() if key != "review_sha256"}
+    return canonical_sha256(payload)
+
+
+def review_subject_sha256(attempt: dict[str, Any], review: dict[str, Any]) -> str:
+    semantic = review.get("semantic_truth_review")
+    if not isinstance(semantic, dict):
+        return generated_subject_sha256(attempt)
+    return canonical_sha256(
+        {
+            "generated_subject_sha256": generated_subject_sha256(attempt),
+            "semantic_truth_review_sha256": semantic.get("review_sha256"),
+        }
+    )
+
+
+def semantic_review_core_failed(attempt: dict[str, Any], semantic: dict[str, Any]) -> bool:
+    manifest = attempt.get("execution_input_manifest", {})
+    truth = manifest.get("scene_support_truth", {})
+    output_hashes = {
+        item.get("sha256")
+        for item in attempt.get("output_manifest", [])
+        if isinstance(item, dict)
+    }
+    return (
+        semantic_review_digest(semantic) != semantic.get("review_sha256")
+        or semantic.get("output_sha256") not in output_hashes
+        or semantic.get("truth_revision_sha256") != truth.get("revision_sha256")
+        or semantic.get("scene_truth") != "pass"
+        or semantic.get("support_visible") != "pass"
+        or semantic.get("forbidden_background_ground_contamination") != "absent"
+    )
+
+
+def semantic_truth_review_errors(
+    attempt: dict[str, Any],
+    review: dict[str, Any],
+    attempt_map: dict[str, dict[str, Any]],
+    latest_state_by_attempt: dict[str, str],
+    states_by_attempt: dict[str, list[dict[str, Any]]],
+    receipt_map: dict[str, dict[str, Any]],
+    valid_receipt_ids: set[str],
+) -> list[str]:
+    errors: list[str] = []
+    attempt_id = str(attempt.get("attempt_id"))
+    semantic = review.get("semantic_truth_review")
+    if not isinstance(semantic, dict):
+        return [f"selected_semantic_truth_review_missing: {attempt_id}"]
+    manifest = attempt.get("execution_input_manifest", {})
+    truth = manifest.get("scene_support_truth", {})
+    if semantic_review_core_failed(attempt, semantic):
+        add_error(errors, "selected_semantic_truth_review_failed", attempt_id)
+    parent_ids = set(truth.get("parent_attempt_ids", []))
+    parent_checks = {
+        str(item.get("attempt_id")): item
+        for item in semantic.get("parent_checks", [])
+        if isinstance(item, dict)
+    }
+    if set(parent_checks) != parent_ids:
+        add_error(errors, "selected_parent_truth_review_missing", attempt_id)
+    for parent_id in parent_ids:
+        check = parent_checks.get(str(parent_id), {})
+        latest_state = latest_state_by_attempt.get(str(parent_id))
+        if latest_state not in {"selected", "delivered"} or check.get("latest_state") != latest_state:
+            add_error(errors, "selected_parent_latest_state_invalid", f"{attempt_id}:{parent_id}")
+        parent = attempt_map.get(str(parent_id), {})
+        parent_selected_refs = {
+            str(receipt_id)
+            for event in states_by_attempt.get(str(parent_id), [])
+            if event.get("state") == "selected"
+            for receipt_id in event.get("evidence_refs", [])
+        }
+        parent_review_passed = any(
+            not semantic_review_core_failed(parent, parent_review)
+            and item.get("verdict") == "accept"
+            and item.get("source") in {"independent_review", "human_review"}
+            and str(item.get("receipt_id")) in parent_selected_refs
+            and str(item.get("receipt_id")) in valid_receipt_ids
+            and isinstance(receipt_map.get(str(item.get("receipt_id"))), dict)
+            and receipt_map[str(item.get("receipt_id"))].get("purpose") == "review"
+            and receipt_map[str(item.get("receipt_id"))].get("attempt_id") == parent_id
+            and receipt_map[str(item.get("receipt_id"))].get("subject_sha256")
+            == review_subject_sha256(parent, item)
+            and receipt_map[str(item.get("receipt_id"))].get("source") == item.get("source")
+            and receipt_map[str(item.get("receipt_id"))].get("sha256") == item.get("sha256")
+            and receipt_map[str(item.get("receipt_id"))].get("actor") != parent.get("actor")
+            for item in parent.get("review_evidence", [])
+            if isinstance(item, dict)
+            for parent_review in [item.get("semantic_truth_review")]
+            if isinstance(parent_review, dict)
+        )
+        if check.get("truth_review_status") != "pass" or not parent_review_passed:
+            add_error(errors, "selected_parent_truth_review_invalid", f"{attempt_id}:{parent_id}")
+    return errors
 
 
 def generation_candidate_sha256(attempt: dict[str, Any]) -> str:
@@ -61,7 +461,12 @@ def generation_candidate_sha256(attempt: dict[str, Any]) -> str:
         "primary_delta",
         "preserved_successes",
     )
-    return canonical_sha256({key: attempt.get(key) for key in keys})
+    candidate = {key: attempt.get(key) for key in keys}
+    if "execution_input_manifest" in attempt:
+        candidate["execution_input_manifest"] = attempt.get("execution_input_manifest")
+    if "execution_risk_binding" in attempt:
+        candidate["execution_risk_binding"] = attempt.get("execution_risk_binding")
+    return canonical_sha256(candidate)
 
 
 def generated_subject_sha256(attempt: dict[str, Any]) -> str:
@@ -126,6 +531,8 @@ def append_only_errors(current: dict[str, Any], previous: dict[str, Any] | None)
         "generation_unit_id",
         "asset_bindings",
         "prompt_artifact",
+        "execution_risk_binding",
+        "execution_input_manifest",
         "model_snapshot",
         "authorized_execution_state",
         "expected_visible_proof",
@@ -179,7 +586,10 @@ def semantic_errors(
     previous: dict[str, Any] | None,
     artifact_root: Path | None,
     initial_ledger: bool,
-    trust_registry_path: Path,
+    trust_registry_path: Path | None,
+    review_trust_registry_path: Path | None,
+    handoff_provider_root: Path | None,
+    trusted_handoff_provider_catalog_roots: tuple[Path, ...] | None,
 ) -> list[str]:
     errors = append_only_errors(document, previous)
     if previous is None and not initial_ledger:
@@ -195,6 +605,7 @@ def semantic_errors(
     if len(attempt_ids) != len(set(attempt_ids)):
         add_error(errors, "attempt_id_duplicate", str(attempt_ids))
     attempt_map: dict[str, dict[str, Any]] = {}
+    risk_by_attempt: dict[str, str | None] = {}
     output_hash_owners: dict[str, str] = {}
     output_id_owners: dict[str, str] = {}
     receipts = [item for item in document.get("receipt_manifest", []) if isinstance(item, dict)]
@@ -202,8 +613,12 @@ def semantic_errors(
     if len(receipt_ids) != len(set(receipt_ids)):
         add_error(errors, "receipt_id_duplicate", str(receipt_ids))
     receipt_map = {str(item.get("receipt_id")): item for item in receipts}
+    valid_receipt_ids: set[str] = set()
     key_cache: dict[str, tuple[Path | None, str | None, dict[str, Any] | None]] = {}
     for receipt_id, receipt in receipt_map.items():
+        receipt_error_count = len(errors)
+        signature_valid = False
+        authority_policy: dict[str, Any] | None = None
         relative = receipt.get("relative_path")
         if not safe_relative_path(relative):
             add_error(errors, "receipt_path_invalid", f"{receipt_id}:{relative}")
@@ -309,6 +724,10 @@ def semantic_errors(
                 )
                 if result.returncode != 0:
                     add_error(errors, "receipt_signature_invalid", receipt_id)
+                else:
+                    signature_valid = True
+        if len(errors) == receipt_error_count and authority_policy is not None and signature_valid:
+            valid_receipt_ids.add(receipt_id)
     for index, attempt in enumerate(attempts):
         attempt_id = str(attempt.get("attempt_id"))
         if attempt.get("project_id") != project_id:
@@ -330,6 +749,18 @@ def semantic_errors(
         text = str(prompt.get("prompt_text", ""))
         if hashlib.sha256(text.encode("utf-8")).hexdigest() != prompt.get("prompt_sha256"):
             add_error(errors, "prompt_hash_mismatch", attempt_id)
+        errors.extend(
+            execution_input_errors(
+                attempt,
+                artifact_root,
+                review_trust_registry_path,
+                handoff_provider_root,
+                trusted_handoff_provider_catalog_roots,
+            )
+        )
+        risk_level, risk_errors = execution_risk_level(attempt, artifact_root)
+        risk_by_attempt[attempt_id] = risk_level
+        errors.extend(risk_errors)
         for binding in attempt.get("asset_bindings", []):
             if binding.get("attached") is not True or binding.get("source_status") != "available":
                 add_error(errors, "asset_binding_not_available", f"{attempt_id}:{binding.get('asset_id')}")
@@ -442,6 +873,11 @@ def semantic_errors(
             add_error(errors, "event_attempt_unresolved", attempt_id)
             continue
         states_by_attempt[attempt_id].append(event)
+    latest_state_by_attempt = {
+        attempt_id: str(attempt_events[-1].get("state"))
+        for attempt_id, attempt_events in states_by_attempt.items()
+        if attempt_events
+    }
     for attempt_id, attempt_events in states_by_attempt.items():
         if not attempt_events or attempt_events[0].get("state") != "planned":
             add_error(errors, "attempt_missing_planned_state", attempt_id)
@@ -474,12 +910,22 @@ def semantic_errors(
                     if state == "executed"
                     else generated_subject_sha256(attempt)
                 )
+                review_subjects = {
+                    str(review.get("receipt_id")): review_subject_sha256(attempt, review)
+                    for review in attempt.get("review_evidence", [])
+                    if isinstance(review, dict)
+                }
+                def expected_subject(receipt: dict[str, Any]) -> str | None:
+                    if state == "selected":
+                        return review_subjects.get(str(receipt.get("receipt_id")))
+                    return expected_subject_sha256
+
                 if any(
                     receipt is not None
                     and (
                         receipt.get("purpose") != purpose
                         or receipt.get("attempt_id") != attempt_id
-                        or receipt.get("subject_sha256") != expected_subject_sha256
+                        or receipt.get("subject_sha256") != expected_subject(receipt)
                         or receipt.get("source") not in sources
                         or receipt.get("source") != evidence_source
                         or receipt.get("actor") == attempt.get("actor")
@@ -523,6 +969,41 @@ def semantic_errors(
             ):
                 add_error(errors, "selected_without_review", attempt_id)
             if state == "selected":
+                has_risk_binding = isinstance(attempt.get("execution_risk_binding"), dict)
+                if not has_risk_binding:
+                    add_error(errors, "selected_execution_risk_binding_missing", attempt_id)
+                if risk_by_attempt.get(attempt_id) == "high":
+                    errors.extend(selected_execution_input_errors(attempt, attempt_map))
+                    semantic_reviews = [
+                        review
+                        for review in attempt.get("review_evidence", [])
+                        if isinstance(review, dict)
+                        and isinstance(review.get("semantic_truth_review"), dict)
+                    ]
+                    trusted_semantic_reviews = [
+                        review
+                        for review in semantic_reviews
+                        if review.get("verdict") == "accept"
+                        and review.get("source") in {"independent_review", "human_review"}
+                        and review.get("receipt_id") in evidence_refs
+                        and str(review.get("receipt_id")) in valid_receipt_ids
+                    ]
+                    if len(trusted_semantic_reviews) != len(semantic_reviews):
+                        add_error(errors, "selected_semantic_truth_review_untrusted", attempt_id)
+                    if not trusted_semantic_reviews:
+                        add_error(errors, "selected_semantic_truth_review_missing", attempt_id)
+                    for review in semantic_reviews:
+                        errors.extend(
+                            semantic_truth_review_errors(
+                                attempt,
+                                review,
+                                attempt_map,
+                                latest_state_by_attempt,
+                                states_by_attempt,
+                                receipt_map,
+                                valid_receipt_ids,
+                            )
+                        )
                 for review in attempt.get("review_evidence", []):
                     receipt = receipt_map.get(str(review.get("receipt_id")))
                     if receipt is None:
@@ -530,8 +1011,7 @@ def semantic_errors(
                     elif (
                         receipt.get("purpose") != "review"
                         or receipt.get("attempt_id") != attempt_id
-                        or receipt.get("subject_sha256")
-                        != generated_subject_sha256(attempt)
+                        or receipt.get("subject_sha256") != review_subject_sha256(attempt, review)
                         or receipt.get("source") != review.get("source")
                         or receipt.get("sha256") != review.get("sha256")
                         or receipt.get("actor") == attempt.get("actor")
@@ -546,7 +1026,10 @@ def validate(
     previous: dict[str, Any] | None = None,
     artifact_root: Path | None = None,
     initial_ledger: bool = False,
-    _trust_registry_path: Path = DEFAULT_REGISTRY_PATH,
+    _trust_registry_path: Path | None = None,
+    _review_trust_registry_path: Path | None = None,
+    handoff_provider_root: Path | None = None,
+    _trusted_handoff_provider_catalog_roots: tuple[Path, ...] | None = None,
 ) -> list[str]:
     structural = schema_errors(document)
     if structural:
@@ -557,6 +1040,9 @@ def validate(
         artifact_root=artifact_root,
         initial_ledger=initial_ledger,
         trust_registry_path=_trust_registry_path,
+        review_trust_registry_path=_review_trust_registry_path,
+        handoff_provider_root=handoff_provider_root,
+        trusted_handoff_provider_catalog_roots=_trusted_handoff_provider_catalog_roots,
     )
 
 
@@ -755,6 +1241,139 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
         attempt = advanced_genesis["attempts"][0]
         attempt["authorized_execution_state"] = "authorized"
         attempt["source_status"] = "external_import"
+        attempt["asset_bindings"].append(
+            {
+                "asset_id": "BELL-01",
+                "version": "v1",
+                "relative_path": "assets/bell-01-v1.png",
+                "sha256": "e" * 64,
+                "source_status": "available",
+                "attached": True,
+            }
+        )
+        attempt["asset_bindings"].append(
+            {
+                "asset_id": "FOUNDRY-B",
+                "version": "v1",
+                "relative_path": "assets/foundry-b-v1.png",
+                "sha256": "b" * 64,
+                "source_status": "available",
+                "attached": True,
+            }
+        )
+        materialize_asset_bindings(advanced_genesis, artifact_root)
+        attachments = [
+            {
+                "asset_id": binding["asset_id"],
+                "role": (
+                    "scene"
+                    if binding["asset_id"] == "FOUNDRY-B"
+                    else "prop"
+                    if binding["asset_id"] == "BELL-01"
+                    else "identity"
+                ),
+                "relative_path": binding["relative_path"],
+                "sha256": binding["sha256"],
+            }
+            for binding in attempt["asset_bindings"]
+        ]
+        handoff_truth = {
+            "contract_id": "storyboard_frame_to_jingzao_v1",
+            "frame_id": "SH01-P01",
+            "truth_contract": {
+                "risk": "high",
+                "status": "ready",
+                "scene_asset_id": "FOUNDRY-B",
+                "support": {
+                    "status": "required",
+                    "subject_asset_id": "BELL-01",
+                    "anchor_asset_id": "FOUNDRY-B",
+                    "visibility": "explicit_in_frame",
+                },
+            },
+        }
+        handoff_payload = (json.dumps(handoff_truth, sort_keys=True) + "\n").encode("utf-8")
+        handoff_path = artifact_root / "handoff/SH01-P01-truth.json"
+        handoff_path.parent.mkdir(parents=True, exist_ok=True)
+        handoff_path.write_bytes(handoff_payload)
+        scene_truth = {
+            "revision_id": "TRUTH-SH01-v1",
+            "revision_sha256": canonical_sha256(handoff_truth["truth_contract"]),
+            "status": "ready",
+            "scene_asset_id": "FOUNDRY-B",
+            "support": {
+                "status": "required",
+                "subject_asset_id": "BELL-01",
+                "anchor_asset_id": "FOUNDRY-B",
+                "visibility": "explicit_in_frame",
+            },
+            "parent_attempt_ids": [],
+            "handoff_truth_artifact": {
+                "relative_path": "handoff/SH01-P01-truth.json",
+                "sha256": hashlib.sha256(handoff_payload).hexdigest(),
+                "frame_id": "SH01-P01",
+            },
+        }
+        attempt["execution_input_manifest"] = {
+            "prompt_sha256": attempt["prompt_artifact"]["prompt_sha256"],
+            "ordered_attachments": attachments,
+            "attachment_manifest_sha256": canonical_sha256(attachments),
+            "scene_support_truth": scene_truth,
+        }
+        coverage_cards = {"cards": [{"shot_id": "SH01", "timecode": "00:00-00:05"}]}
+        coverage_cards_path = artifact_root / "coverage/SH01-cards.json"
+        coverage_cards_path.parent.mkdir(parents=True, exist_ok=True)
+        coverage_cards_path.write_text(json.dumps(coverage_cards), encoding="utf-8")
+        coverage_payload = (
+            json.dumps(
+                {
+                    "schema_version": "1.0",
+                    "project_id": attempt["project_id"],
+                    "frame_rate_fps": 25,
+                    "scope": "whole_film",
+                    "shot_cards_file": "coverage/SH01-cards.json",
+                    "shot_cards_sha256": coverage_json_hash(coverage_cards),
+                    "requirements": [{
+                        "requirement_id": "SH01-support",
+                        "source_anchor": "cards:SH01",
+                        "kind": "action",
+                        "shot_ids": ["SH01"],
+                        "phases": ["contact"],
+                        "risk": "low",
+                        "image_required": True,
+                    }],
+                    "panels": [{
+                        "panel_id": "SH01-P01",
+                        "shot_id": "SH01",
+                        "requirement_id": "SH01-support",
+                        "phase": "contact",
+                        "at_seconds": 1.0,
+                        "state": "subject visibly supported",
+                        "camera_setup": "wide",
+                        "view_subject": "subject",
+                        "gaze_target": "scene anchor",
+                        "axis_id": "scene",
+                        "axis_side": "north",
+                        "look_direction": "center",
+                        "image": {"status": "planned"},
+                    }],
+                },
+                sort_keys=True,
+            )
+            + "\n"
+        ).encode("utf-8")
+        coverage_path = artifact_root / "coverage/SH01.json"
+        coverage_path.parent.mkdir(parents=True, exist_ok=True)
+        coverage_path.write_bytes(coverage_payload)
+        attempt["execution_risk_binding"] = {
+            "source_contract_id": "storyboard_coverage_v1",
+            "relative_path": "coverage/SH01.json",
+            "sha256": hashlib.sha256(coverage_payload).hexdigest(),
+            "panel_id": "SH01-P01",
+            "requirement_id": "SH01-support",
+            "declared_risk": "low",
+        }
+        attempt.pop("execution_input_manifest", None)
         advanced_genesis["genesis_sha256"] = genesis_sha256(advanced_genesis)
         advanced = copy.deepcopy(advanced_genesis)
         attempt = advanced["attempts"][0]
@@ -875,10 +1494,20 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
         advanced["state_events"][0] = copy.deepcopy(advanced_genesis["state_events"][0])
         output_subject_sha256 = generated_subject_sha256(attempt)
         candidate_subject_sha256 = generation_candidate_sha256(attempt)
+        attempt["review_evidence"] = [
+            {
+                "review_id": "REVIEW-001",
+                "verdict": "accept",
+                "sha256": "d" * 64,
+                "source": "independent_review",
+                "receipt_id": "RECEIPT-REVIEW",
+            }
+        ]
+        review_subject = review_subject_sha256(attempt, attempt["review_evidence"][0])
         receipt_specs = [
             ("RECEIPT-EXEC", "MEDIA-HOST-001", "execution", "host_observation", "tapnow-host", "2026-08-24T00:00:02Z", candidate_subject_sha256),
             ("RECEIPT-GEN", "MEDIA-HOST-001", "generation", "external_verified", "tapnow-host", "2026-08-24T00:00:03Z", output_subject_sha256),
-            ("RECEIPT-REVIEW", "HUMAN-REVIEW-001", "review", "independent_review", "reviewer-01", "2026-08-24T00:00:04Z", output_subject_sha256),
+            ("RECEIPT-REVIEW", "HUMAN-REVIEW-001", "review", "independent_review", "reviewer-01", "2026-08-24T00:00:04Z", review_subject),
             ("RECEIPT-DELIVERY", "DELIVERY-HOST-001", "delivery", "external_verified", "delivery-host", "2026-08-24T00:00:05Z", output_subject_sha256),
             ("RECEIPT-BILLING", "BILLING-HOST-001", "billing", "external_verified", "billing-host", "2026-08-24T00:00:06Z", cost_subject_sha256(attempt)),
         ]
@@ -926,15 +1555,7 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
         review_receipt = next(
             item for item in advanced["receipt_manifest"] if item["receipt_id"] == "RECEIPT-REVIEW"
         )
-        attempt["review_evidence"] = [
-            {
-                "review_id": "REVIEW-001",
-                "verdict": "accept",
-                "sha256": review_receipt["sha256"],
-                "source": "independent_review",
-                "receipt_id": "RECEIPT-REVIEW",
-            }
-        ]
+        attempt["review_evidence"][0]["sha256"] = review_receipt["sha256"]
         advanced["attempts"] = [attempt]
         advanced["state_events"] = [
             copy.deepcopy(advanced_genesis["state_events"][0]),
@@ -963,7 +1584,8 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
             previous=advanced_genesis,
         )
         unconfigured_authority_rejected = any(
-            error.startswith("review_authority_unconfigured:") for error in untrusted_errors
+            error.startswith(("review_authority_unconfigured:", "review_trust_registry_invalid:"))
+            for error in untrusted_errors
         )
         if not unconfigured_authority_rejected:
             failures.append(f"unconfigured receipt authority accepted: {untrusted_errors[:3]}")
@@ -1070,6 +1692,8 @@ def main() -> int:
     baseline.add_argument("--previous", type=Path)
     baseline.add_argument("--initial-ledger", action="store_true")
     validate_parser.add_argument("--artifact-root", type=Path)
+    validate_parser.add_argument("--review-trust-registry", type=Path)
+    validate_parser.add_argument("--handoff-provider-root", type=Path)
     args = parser.parse_args()
     if args.command == "self-test":
         failures, summary = self_test()
@@ -1082,9 +1706,24 @@ def main() -> int:
         previous=previous,
         artifact_root=args.artifact_root,
         initial_ledger=args.initial_ledger,
+        _trust_registry_path=args.review_trust_registry,
+        _review_trust_registry_path=args.review_trust_registry,
+        handoff_provider_root=args.handoff_provider_root,
     )
-    print(json.dumps({"path": str(args.path), "errors": errors}, ensure_ascii=False, indent=2))
-    return 0 if not errors else 1
+    registry_path = args.review_trust_registry or default_review_trust_registry_path()
+    trust_blocked = any(
+        "review_trust_registry_" in error
+        or "review_authority_unconfigured:" in error
+        or "prompt_authority_review_trust_registry_" in error
+        for error in errors
+    )
+    print(json.dumps({
+        "status": "TOOL_BLOCKED" if trust_blocked else "valid" if not errors else "invalid",
+        "path": str(args.path),
+        "review_trust_registry_path": str(registry_path),
+        "errors": errors,
+    }, ensure_ascii=False, indent=2))
+    return 2 if trust_blocked else 0 if not errors else 1
 
 
 if __name__ == "__main__":

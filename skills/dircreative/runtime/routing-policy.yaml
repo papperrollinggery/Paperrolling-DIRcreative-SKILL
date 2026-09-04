@@ -119,6 +119,17 @@
     "artifact_before_skill_card": true
   },
   "routes": {
+    "video_distillation": {
+      "mode": "studio",
+      "route_card": "skills/dircreative/routes/studio-development.md",
+      "required_files": [
+        "skills/dircreative/references/video-distillation.md"
+      ],
+      "optional_files": [],
+      "external_user_gate": null,
+      "threads_allowed": false,
+      "full_receipt_required": false
+    },
     "source_maintenance": {
       "mode": "fast",
       "route_card": "skills/dircreative/routes/fast-task.md",

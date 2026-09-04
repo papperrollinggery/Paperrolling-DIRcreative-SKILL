@@ -20,7 +20,7 @@
 
 DIRcreative 不是“输入一句话、吐出一堆提示词”的黑盒。它先判断任务是局部修改、完整开发还是交付审计，再只加载对应合同。局部任务直接交付修改结果；只有真实方向冲突、生成授权或客户交付才停下来询问。
 
-当前稳定版本为 [`v0.7.0`](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/releases/tag/v0.7.0)，包含 v2 路由、动态专业视角、紧凑状态、拆分模型 Adapter、资产基础/压测/生产账本链路、Seedance 2.5 方法优先、v3 统一人物主资产板与可选无头/细节派生合同，以及 Specialist Exchange v2。
+当前版本为 [`v0.7.1`](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/releases/tag/v0.7.1)。在 v0.7.0 的人物主资产、Seedance 2.5、生产账本与 Specialist Exchange v2 基础上，本版加入语境化“说人话”路由、参考视频蒸馏、动作相位级分镜覆盖，以及高风险场景/支撑真值门。结构验证、独立审核、真实媒体生成、用户采用与发布仍是不同状态。
 
 源码仓库包含 DIRcreative 根 Skill、19 个 `skills/dircreative/*` 内部子 Skill，以及 `ai-film-asset-stress-test`、`ai-film-production-ledger` 两个 P0 能力入口。正式 DIRcreative 安装包按安全设计只暴露根 `$dircreative`，其余入口会内部化后由 selector 路由；Skill Stack 还会发现宿主中已安装的外部专业 provider。这些依赖不会被复制进本仓库，也不能把“宿主可调用”表述成“GitHub 已内置”。ADCO 始终是独立外部编排方。
 
@@ -110,6 +110,7 @@ DIRcreative 会选择 Fast、Studio 或 Delivery。Fast 不进入 Director Room�
 - `visual_assets_complete` 只表示场景图、逐镜分镜、导演故事板和视频输入帧完成，不表示 TVC 成片、客户批准或电视台验收。
 - fixture、终端演示、HTML 页面和自动化测试不能冒充真人验收。
 - 生成候选、临时截图和 review widget 不能自动成为项目 source of truth。
+- 高风险场景/支撑关系在交给镜造或图像工具前必须写入 `truth_contract`：场景附件、道具附件、参考图不可控制的背景/地面字段、可见支撑关系、父帧状态和最低充分约束输入均须显式绑定。实际执行的 prompt 与附件路径还必须和 hash-bound manifest 及 host trace 一致；结构 PASS 不代表像素里真的看见了悬挂关系。
 - 不在未授权情况下修改目标项目的 `AGENTS.md`。
 
 ## ADCO Integration
@@ -144,6 +145,60 @@ python3 scripts/dircreative_adco_native_exchange.py \
 
 ## Documentation
 
+### Reference-video distillation
+
+`$dircreative 拆解这个视频链接，给我 AI 制作方法报告` selects the Studio
+`video_distillation` route. Reuse the installed public-video downloader and
+Video Evidence Workbench when available. The local bridge prepares hash-bound
+evidence and an unknown analysis draft; it does not perform vision inference:
+
+```bash
+python3 scripts/dircreative_video_distill.py prepare \
+  --video /path/to/source.mp4 --output-dir /path/to/new-study \
+  --workbench-project /path/to/workbench-project
+python3 scripts/dircreative_video_distill.py validate /path/to/new-study
+python3 scripts/dircreative_video_distill.py render /path/to/new-study
+python3 -m unittest discover -s tests -p test_video_distill.py -v
+```
+
+The report separates observations, inferred methods and unknowns across twelve
+craft axes. Its creative review asks why the reference works, why that effect
+matters to the original, where the actual artifact falls short, what changes,
+and what reinspection shows. Structural validity cannot certify creative quality.
+Analysis produces candidates; source iteration, image/video generation, global
+installation and publishing retain separate scoped authorization. Complete the
+reference study and upgrade review before an explicitly requested original-film
+trial. See [the mode contract](skills/dircreative/references/video-distillation.md).
+
+Explicit detailed/full preproduction also uses an action-panel coverage sidecar.
+It preserves one representative frame per shot while allowing ordered panels
+inside that shot and optional reverse/eyeline pairs. Design and actual PNG
+coverage are separate checks, with no fixed per-minute shot quota:
+
+```bash
+python3 scripts/dircreative_storyboard_coverage.py validate /path/coverage.json \
+  --project-root /path/project --phase design
+python3 scripts/dircreative_storyboard_coverage.py validate /path/coverage.json \
+  --project-root /path/project --phase assets --legacy-plan /path/project/visual-plan.json
+```
+
+See [detailed storyboard coverage](skills/dircreative/references/storyboard-coverage.md).
+Legacy visual-asset completeness does not alone certify all requested action
+panels. The new checker validates declared coverage, never artistic quality.
+
+Coverage-declared high-risk scene/support frames must use the existing Jingzao
+handoff truth gate. `truth_contract` keeps the scene asset authoritative,
+prevents prop or identity references from donating their background or ground,
+requires every declared attachment to exist and match its SHA-256, invalidates
+children of failed parent frames, and compares the compiled prompt/reference
+manifest with the sealed host request. Low-risk and rough-planning frames keep
+the legacy path; a spatial mockup or scene reference is selected only when risk
+requires it. See [the Jingzao handoff contract](skills/dircreative/references/storyboard-frame-to-jingzao.md).
+Reviewer public keys live in persistent host configuration, not the installed
+Skill; see [review trust host configuration](docs/film-preproduction/review-trust-host-config.md).
+
+白模、深度图或空间 layout 不是默认资产。只有镜头存在高风险空间、遮挡、比例或支撑关系时才选择最低充分约束；它们只控制 geometry、composition、occlusion、scale 与 support，不得控制人物/道具身份、材质、纹理或最终美术。最终生图是否调用镜造仍由任务和已安装 provider 能力决定，不做全局强制。
+
 - [`System plan`](docs/film-preproduction/01-system-plan.md) — 系统架构、角色、适配器和 QA 门
 - [`Runtime contracts`](docs/film-preproduction/runtime-contracts.md) — v2 单一合同所有者、上下文边界和兼容矩阵
 - [`Chat co-creation interface`](docs/film-preproduction/chat-co-creation-interface.md) — 结果优先的聊天呈现指南
@@ -162,9 +217,9 @@ python3 scripts/dircreative_adco_native_exchange.py \
 自证。下面的信任链从 `v0.5.0` 起适用；更早版本不满足这条正式安装门。
 
 ```bash
-gh release download v0.7.0 \
+gh release download v0.7.1 \
   --repo papperrollinggery/Paperrolling-DIRcreative-SKILL \
-  --pattern 'dircreative-0.7.0.tar.gz' \
+  --pattern 'dircreative-0.7.1.tar.gz' \
   --pattern 'SHA256SUMS'
 ```
 
@@ -174,7 +229,7 @@ gh release download v0.7.0 \
 ```bash
 set -euo pipefail
 REPO_URL="https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL.git"
-TAG="v0.7.0"
+TAG="v0.7.1"
 EXPECTED_COMMIT="$(
   git ls-remote --exit-code --tags "$REPO_URL" \
     "refs/tags/$TAG" "refs/tags/$TAG^{}" |
@@ -186,7 +241,7 @@ EXPECTED_COMMIT="$(
     }
   '
 )"
-ARTIFACT="$(pwd)/dircreative-0.7.0.tar.gz"
+ARTIFACT="$(pwd)/dircreative-0.7.1.tar.gz"
 CHECKSUMS="$(pwd)/SHA256SUMS"
 VERIFY_ROOT="$(mktemp -d)"
 trap 'rm -rf "$VERIFY_ROOT"' EXIT
