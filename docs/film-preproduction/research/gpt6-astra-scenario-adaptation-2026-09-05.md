@@ -57,6 +57,11 @@ binding and publication remain separate states.
    video units. Its completion claim is limited to the asset plan. Direct still
    prompts also omit unsolicited project titles, IDs and hashes that conflicted
    with the user's no-text request.
+6. Actual character outputs contained unintended nonopaque alpha, while the
+   primary-portrait template inherited a three-quarter view. Neutral-background
+   masters now require measured full opacity bound to the review receipt, and
+   their default primary portrait is frontal. Generic RGBA assets remain valid;
+   the workflow does not flatten or cut out failed source images.
 
 ## Instruction scope
 
@@ -83,3 +88,20 @@ Real forward acceptance must independently read the installed candidate and
 required provider bodies, produce the requested files, inspect actual images,
 and preserve any remaining failures. Neither a ready selector nor a newer model
 is evidence that a film has achieved the reference's quality.
+
+### Observed forward-test boundary
+
+The isolated native test made five image calls: one standalone cup and four
+character candidates. The cup passed an independent visual check. The first two
+character tool outputs had unintended alpha and were rejected without editing.
+The next two were fully opaque with frontal primary faces. The last call used an
+actually attached 2D composition guide, after the real reference-bearing provider
+compile, sealed replay and execution-packet checks passed. It also passed the
+Apple Vision four-body structural check and independent view-order inspection.
+
+The final character candidate still failed the requested 3:1 canvas: it was
+1717 by 916 pixels, and its portrait included excess shoulder/chest area. The
+five-call test stopped with those failures recorded. It did not certify a final
+character master, authorize downstream headless derivatives, or validate video.
+This is a runtime workflow and failure-handling check, not a sealed exact-release
+media certificate or a guarantee that an image provider will obey every prompt.

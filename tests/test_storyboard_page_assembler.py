@@ -207,9 +207,9 @@ class StoryboardPageAssemblerTests(unittest.TestCase):
                 output_path=collision,
                 receipt_path=collision,
             )
-        self.assertEqual(result["status"], "blocked")
-        self.assertIn("assembly_output_receipt_collision", result["errors"])
-        self.assertFalse(collision.exists())
+            self.assertEqual(result["status"], "blocked")
+            self.assertIn("assembly_output_receipt_collision", result["errors"])
+            self.assertFalse(collision.exists())
 
     @unittest.skipUnless(assembler.Image is not None, "Pillow is required for storyboard assembly")
     def test_existing_parent_frame_cannot_be_overwritten(self):
