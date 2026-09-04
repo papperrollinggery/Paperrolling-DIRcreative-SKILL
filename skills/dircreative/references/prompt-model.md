@@ -37,11 +37,11 @@ Build a model-neutral intent before adapting the surface:
 6. Prompt revision alone does not require a rights audit, capability receipt,
    file hash, or generation authorization. Those belong only to a real execution
    or formal handoff.
-7. When the target is Seedance 2.5, use `mr-li-seedance-25` as the priority
-   method owner. Add `seedance-25-emotion-prompt` only for explicitly
-   emotion/micro-performance-led work; otherwise avoid the overlapping body.
-   Target intent selects the method, while an exact capability card is still
-   required before stating model limits or authorizing execution.
+7. When the target is Seedance 2.5, formal compilation routes to Studio and uses
+   `mr-li-seedance-25` 1.8.2 as the priority method owner or isolated method
+   collaborator. Add `seedance-25-emotion-prompt` only for explicitly
+   emotion/micro-performance-led work. Small existing-prompt edits remain Fast
+   without claiming the full method; exact model cards still own capability facts.
 8. For a recurring clothed human, bind one active unified character master per
    generation unit. Default to the headed master; use a user-requested or
    evidence-triggered headless-safe derivative instead, never alongside it. Add

@@ -34,11 +34,16 @@ real source samples
 
 The `VOICE PROFILE` is built from real approved samples, not a list of desired adjectives. DIR professional judgment then decides the audience effect, channel fit, factual boundary, tradeoff, and approved claims. `de-AI-writing` removes machine-organized residue without changing meaning or adding facts.
 
-Use `shuorenhua` through `human_language_revision` only when the user explicitly
-asks for natural human language or when a fidelity-clean draft still reads like
-a template. It is the contextual craft owner for that pass, not an additional
-rewrite stacked automatically after `de-AI-writing`. `humanizer-zh` remains a
-diagnostic reviewer.
+Use the layered plan in `skills/dircreative/references/humanization-workflow.md`.
+Sepia owns document-scale layered diagnosis; DIRcreative retains the operation,
+accepted-finding, document-guard and preservation decision. Refactor/recreate
+receives edit authority only on a second call with the diagnosis/source hash and
+host-read voice/venue evidence or the exact domain baseline. `shuorenhua` owns a
+bounded contextual Chinese sentence pass when a quoted cluster requires it.
+`de-AI-writing` is an explicitly selected bounded Chinese fidelity pass, while
+`humanizer-zh` remains diagnostic. This means review cannot silently become a
+rewrite, and a full rewrite cannot start without actual source text, entry spans
+and source/set hashes.
 
 The `humanizer` and `humanizer-zh` rules are the last diagnostic gate. They may identify an AI-trace cluster for manual review, but a word-list hit cannot prove AI authorship and cannot fail copy by itself. Keep intentional voice, quotations, technical terms, and approved claims when resolving a trace.
 

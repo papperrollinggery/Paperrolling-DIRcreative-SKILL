@@ -318,6 +318,7 @@ def iter_repo_files() -> list[Path]:
 def validate_required_paths() -> None:
     required = [
         "README.md",
+        "llms.txt",
         "VERSION",
         "CHANGELOG.md",
         "docs/film-preproduction/06-gstack-execution-goal.md",
@@ -1593,11 +1594,11 @@ def validate_skill_stack() -> None:
     require(proc.returncode == 0, f"Skill Stack audit failed:\n{proc.stderr}\n{proc.stdout}")
     for marker in [
         "DIRCREATIVE_SKILL_STACK_AUDIT: PASS",
-        '"positive_cases": 58',
-        '"negative_cases": 46',
-        '"scenario_count": 44',
-        '"provider_policy_count": 54',
-        '"realistic_smoke_cases": 27',
+        '"positive_cases": 65',
+        '"negative_cases": 63',
+        '"scenario_count": 48',
+        '"provider_policy_count": 56',
+        '"realistic_smoke_cases": 34',
         '"two_phase_host_binding": true',
         '"trusted_primary_route_controls": true',
         '"artifact_output_guard_controls": true',
@@ -1610,6 +1611,7 @@ def validate_skill_stack() -> None:
         '"delivery_single_body_reservation": true',
         '"isolated_execution_adapter_budget_bytes": 24576',
         '"isolated_craft_context_budget_bytes": 131072',
+        '"isolated_method_context_budget_bytes": 65536',
         '"isolated_validator_context_budget_bytes": 65536',
         '"host_managed_imagegen_path": true',
     ]:
@@ -6346,8 +6348,19 @@ def validate_release_distribution_contract() -> None:
     require(re.fullmatch(r"\d+\.\d+\.\d+", version) is not None, "VERSION must be semantic x.y.z")
     readme = require_path("README.md").read_text(encoding="utf-8")
     changelog = require_path("CHANGELOG.md").read_text(encoding="utf-8")
+    llms_text = require_path("llms.txt").read_text(encoding="utf-8")
     require(f"v{version}" in readme, f"README must declare v{version}")
     require(f"## {version}" in changelog, f"CHANGELOG must contain {version}")
+    for term in (
+        "# DIRcreative",
+        "AI film preproduction",
+        "Reference-video distillation",
+        "Seedance compilation",
+        "Humanization workflow",
+        "Quality and release",
+        "https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL",
+    ):
+        require(term in llms_text, f"llms.txt missing discovery term: {term}")
     require("--expected-commit \"$EXPECTED_COMMIT\"" in readme, "formal install docs must bind archive metadata to the remote tag commit")
     require("refs/tags/$TAG^{}" in readme, "formal install docs must resolve the annotated remote tag commit")
     require("--formal-install" in readme, "formal install docs must explicitly authorize replacing the canonical installation")
@@ -6517,6 +6530,14 @@ def validate_release_distribution_contract() -> None:
 
 
 def validate_specialized_capability_behavior_audits() -> None:
+    require_path("scripts/dircreative_humanization_plan.py")
+    require_path("skills/dircreative/references/humanization-workflow.md")
+    require_path("docs/film-preproduction/templates/humanization-plan.template.json")
+    require_path("tests/test_humanization_plan.py")
+    proc = run(["python3", "scripts/dircreative_humanization_plan.py", "self-test"])
+    require(proc.returncode == 0, f"humanization plan self-test failed:\n{proc.stderr}\n{proc.stdout}")
+    proc = run(["python3", "-m", "unittest", "discover", "-s", "tests", "-p", "test_humanization_plan.py", "-v"])
+    require(proc.returncode == 0, f"humanization plan tests failed:\n{proc.stderr}\n{proc.stdout}")
     require_path("scripts/dircreative_storyboard_coverage.py")
     proc = run(["python3", "-m", "unittest", "discover", "-s", "tests", "-p", "test_storyboard_coverage.py", "-v"])
     require(proc.returncode == 0, f"storyboard coverage tests failed:\n{proc.stderr}\n{proc.stdout}")

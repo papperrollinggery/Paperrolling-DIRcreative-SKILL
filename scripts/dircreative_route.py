@@ -272,6 +272,43 @@ def classify_route(
     if study_action and study_media and not text_artifact_only:
         return "video_distillation", ["reference_media_study", "evidence_before_inference"]
 
+    seedance25_target = has(text, r"seedance\s*2(?:[._\s-]*5)|seedance25")
+    seedance25_prompt_target = has(actionable, r"提示词|prompt")
+    seedance25_source_scope = has(actionable, r"剧本|脚本|场次|场景|script|scene")
+    seedance25_compile_action = has(
+        actionable,
+        r"写成|改成|做成|生成(?:成|为)?|转(?:换|成)|编译|制作(?:成)?|输出(?:为)?|"
+        r"convert|compile|turn\s+.+\s+into",
+    )
+    if (
+        seedance25_target
+        and seedance25_prompt_target
+        and seedance25_source_scope
+        and seedance25_compile_action
+    ):
+        return "film_development", [
+            "seedance25_formal_compile",
+            "visual_baseline_required",
+        ]
+
+    explicit_sepia = has(text, r"\bSepia\b") and has(
+        actionable,
+        r"去\s*AI|AI\s*痕迹|人味|润色|改写|重构|重写|审查|评审|检查|诊断|写作|写|"
+        r"humaniz|unslop|polish|rewrite|review|inspect|diagnos|refactor|recreate|write",
+    )
+    layered_humanization = explicit_sepia or has(
+        actionable,
+        r"(?:Sepia|深度|结构|篇章|全文|整篇|整份|整部).{0,36}"
+        r"(?:去\s*AI|AI\s*痕迹|人味|humaniz|unslop|润色|改写|重构|重写|审查|评审|review|refactor|recreate)|"
+        r"(?:去\s*AI|AI\s*痕迹|humaniz|unslop).{0,36}"
+        r"(?:结构|篇章|全文|整篇|整份|整部|重构|重写)",
+    )
+    if layered_humanization:
+        return "film_development", [
+            "layered_humanization",
+            "diagnosis_before_edit",
+        ]
+
     if has(
         actionable,
         r"方向(?:互不兼容|不可兼容|冲突)|不可兼容(?:的)?(?:创意)?方向|incompatible (?:creative )?directions?|material concept conflict",
@@ -446,6 +483,10 @@ def self_test() -> list[str]:
                 continue
             if result[field] != case[field]:
                 failures.append(f"{case['id']}: {field}={result[field]} expected={case[field]}")
+        if case["id"] == "sepia_explicit_inspect_article" and "layered_humanization" not in result["reason_codes"]:
+            failures.append("explicit Sepia inspection did not activate layered diagnosis")
+        if case["id"] == "spear_story_is_not_sepia_alias" and "layered_humanization" in result["reason_codes"]:
+            failures.append("ordinary English spear was treated as the Sepia provider")
     handoff_path = ROOT / "tests/fixtures/activation-policy/valid-adco-v2-handoff.json"
     handoff = json.loads(handoff_path.read_text(encoding="utf-8"))
     descriptor = json.loads(DESCRIPTOR_PATH.read_text(encoding="utf-8"))

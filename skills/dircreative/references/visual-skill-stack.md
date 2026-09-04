@@ -88,18 +88,20 @@ without a verified tool and cost boundary.
   DIR retains upstream truth and consumes the compiled prompt back into its
   manifest and QA flow.
 - For a declared Seedance 2.5 target, keep that same compiler and handoff. Apply
-  `mr-li-seedance-25` first as the authoring-method provider for
-  authoritative-script fidelity, independently complete segments, duration
-  capacity, stable asset numbering, and clean-master repair discipline. It does
+  `mr-li-seedance-25` 1.8.2 first as the authoring-method provider for the
+  confirmed visual baseline, authoritative-script fidelity, real performance
+  capacity, one binding block per requested scope, voice-reference checks,
+  natural-paragraph delivery, and clean-image diagnostics. It does
   not become a controller, state owner, capability source, or execution adapter;
   the exact capability card is still required before model facts or execution.
   If absent, the retained compiler path still works without claiming its method.
 - For direct Seedance 2.5 prompt work, `mr-li-seedance-25` is the default craft
   owner. When the task is explicitly emotion/micro-performance led,
   `seedance-25-emotion-prompt` becomes the specialist owner after the mr-li
-  method pass. Do not load both for ordinary prompts. Fast mode reserves a
-  bounded 16 KiB isolated method context for the Skill body plus the prompt and
-  duration references; asset construction or delivery review stays in Studio.
+  method pass. Do not load both for ordinary prompts. Formal compilation runs in
+  Studio: the owner uses isolated craft context; use as a compiler collaborator
+  uses one 64 KiB isolated method context. A small existing-prompt edit remains
+  Fast and does not inflate Fast or silently claim the 1.8.2 method was loaded.
 - `ai-film-production-ledger` is an isolated record-only collaborator after
   preflight. It receives only the final generation candidate, preserves
   append-only attempt/event lineage, and cannot become a story owner, director,
@@ -119,11 +121,21 @@ without a verified tool and cost boundary.
   Do not import vendor model rankings, fixed word counts, automatic mirroring,
   universal hard-cut/first-frame rules, or pixel-identity guarantees. Keep only
   a demonstrated benefit; absent or unneeded references remain unused.
-- Audience-facing text keeps one language owner. `de-AI-writing` is the bounded
-  meaning-preserving fallback; explicit “说人话 / 去 AI 味 / 自然一点” or residual
-  template prose selects `shuorenhua` through `human_language_revision`.
-  `humanizer-zh` may diagnose remaining AI-trace patterns but cannot flatten a
-  source-derived literary, character, historical or brand voice.
+- Human-language work first builds the operation/profile plan in
+  `humanization-workflow.md`. Architecture/venue, discourse and surface findings
+  require source-bound quotes, cluster and whitelist verdicts. Long or
+  structurally machine-shaped text routes to a findings-only Sepia pass; a
+  second call needs accepted IDs plus voice/venue evidence before editing. Its
+  document/profile pair and guard are bound, and recreation also needs actual
+  source spans in a content-addressed preservation set. `shuorenhua`
+  is a conditional contextual Chinese sentence pass; `de-AI-writing` is an
+  explicitly selected bounded Chinese fidelity pass; short English work uses
+  DIR's bounded path; `humanizer-zh` is findings-only validation. No validator
+  repeats the rewrite.
+- Sampled voice/venue calibration stays at `waiting_for_host_readback` until the
+  host resolves the source references. Humanization evidence is a separately
+  accounted Studio context with a 128 KiB ceiling; inline sources over 64 KiB
+  fail closed rather than being silently truncated.
 - ADCO owns PPT/export/adoption. `codex-ppt` is recommendation-only inside DIR;
   it cannot become an ADCO-worker adapter or introduce nested slide dispatch.
 

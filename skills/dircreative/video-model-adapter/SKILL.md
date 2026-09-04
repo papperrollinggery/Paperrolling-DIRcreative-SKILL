@@ -90,10 +90,9 @@ Use `skills/dircreative/assets/visualizations/stage-surface-registry.json#video-
   the handoff validator rechecks their real file hashes, stage coverage, verdict,
   and requested shot scope before any prompt is exportable.
 - When the target is Seedance 2.5, retain the same compiler/validator chain and
-  apply `mr-li-seedance-25` first as the method collaborator. Its selected body
-  improves faithful segmentation, independent
-  bindings, real duration capacity, stable asset versions, and clean-master
-  repairs; target intent alone never authorizes model capability or execution.
+  apply `mr-li-seedance-25` 1.8.2 first as the isolated method collaborator.
+  Bind its visual-baseline, prompt-writing, duration and heading-free format
+  references; target intent alone never authorizes model capability or execution.
 - After prompt preflight, send only the final generation candidate—not drafts—to
   `ai-film-production-ledger`. The Ledger records a `planned` attempt until a
   separate generation authorization and real execution evidence exist.
