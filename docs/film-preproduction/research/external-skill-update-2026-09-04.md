@@ -3,7 +3,7 @@
 ## Scope
 
 This study records the two user-named Codex tasks and the installed artifacts
-that may inform DIRcreative v0.7.1. It does not vendor either external Skill or
+that may inform the DIRcreative v0.8.0 candidate. It does not vendor either external Skill or
 claim that installation alone proves host adoption on a future task.
 
 ## Sepia 0.5.0
@@ -53,7 +53,55 @@ DIRcreative adaptation:
   are distinct paths; a final diagnostic provider has no rewrite authority;
 - Sepia remains an external provider. DIR does not copy its reference corpus.
 
-## mr-li-seedance-25 1.8.2
+## mr-li-seedance-25 1.9.0
+
+- The user-supplied archive SHA-256 is
+  `3d9ce13dcf215885485711d2505144c1a0023c7008038ccd0fd0ec0085874f5c`.
+- The host installation reports `metadata.version=1.9.0`; 20 files matched a
+  fresh extraction, package/consistency audits passed, and a fresh Codex process
+  explicitly loaded the entry. Those facts establish installed and loadable,
+  not author identity, supply-chain signature, DIR adoption, generation or approval.
+- DIR now requires the exact 1.9.0 metadata version and a full body read. The
+  selector receipt records version, body hash/bytes, reference hashes/bytes and
+  isolated context. Version drift fails closed to the existing DIR/converter path.
+
+Adopted method deltas:
+
+- project default and one-off segment limits remain separate; the exact DIR
+  capability card still owns model facts (2.5 and 2.0 are not conflated);
+- capacity is checked before drafting and after drafting across dialogue,
+  pauses, sequential/parallel action, blocking, geography, prop readability and cuts;
+- one request returns one natural generation unit and an exact next source beat;
+- dialogue cuts when the speaker changes, while one speaker's continuous turn
+  can remain in one shot and DIR's axis/reverse-shot grammar remains authoritative;
+- dialogue edits require explicit scope; pasted text is classified as adopt,
+  analyze, review or reference before any writeback;
+- bindings include only current-segment assets; changing possession/damage state
+  stays in shot order; absent media creates no fictional binding block;
+- director/work titles and post packaging stay outside the model-facing prompt;
+  formal prompt visibility and clean delivery staging remain separate from file existence.
+
+Rejected or bounded deltas:
+
+- Seven-stage onboarding is used only when this provider owns a new direct
+  Seedance session; it does not replace DIR routing or force tutorials into Fast.
+- The provider's own character-board layout is not imported. DIR's approved
+  character-master, Vision sidecar, asset plan and Jingzao contracts remain owners.
+- Its asset list, retry state and delivery audit do not become a second DIR
+  controller, ledger, completion authority or model-capability registry.
+
+State boundary for this update:
+
+| State | Evidence in this task |
+| --- | --- |
+| source candidate | archive hash recorded; author signature unverified |
+| installed | upstream installation receipt reported |
+| discovered/body loaded | current selector reads exact 1.9.0 body and references |
+| applied | only when a scenario selects it and the host performs those reads |
+| validated | DIR tests and handoff/preflight must pass separately |
+| host adopted/generated/user approved/published | never implied by the states above |
+
+## mr-li-seedance-25 1.8.2 (historical integration baseline)
 
 - Task: `01a06aea-1ca6-7c12-82f2-ed32d3523ae4`.
 - Source inspected from the user-supplied 1.8.2 archive outside this repository.

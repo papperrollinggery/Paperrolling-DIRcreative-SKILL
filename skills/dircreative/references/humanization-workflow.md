@@ -15,7 +15,10 @@ accepted finding plus preservation contract permits it.
 
 ## Decision before editing
 
-Build a plan with `scripts/dircreative_humanization_plan.py`. The planner binds:
+For an obvious short edit, DIR may write directly from the supplied text and
+context. Use the planner when layered diagnosis, document-scale work or a formal
+execution record is needed; do not make it an entry toll for one natural line.
+Build that plan with `scripts/dircreative_humanization_plan.py`. The planner binds:
 
 - operation: `write`, `review`, `refactor`, or `recreate`;
 - text profile: narrative, general professional prose, or a supported venue;
@@ -26,6 +29,14 @@ Build a plan with `scripts/dircreative_humanization_plan.py`. The planner binds:
   full rewrite;
 - a document/genre guard carried into provider selection, rather than left as
   prose advice beside the execution path.
+
+Planner status is not execution status. Every ready plan starts with
+`execution_status=not_run`, `text_revision_applied=false`, and
+`completion_claim_allowed=false`. For a new screenplay, build the plan before
+the first full draft so the selected architecture/write owner actually governs
+the text. A later self-authored review cannot retroactively prove adoption.
+For new writing, an internally authored character/register note is a
+`project_register_contract`, not proof of a source-author VOICE PROFILE.
 
 Diagnosis is layered and evidence-bearing:
 
@@ -44,7 +55,8 @@ confirmed cluster sets the maximum repair depth; layers without a confirmed
 cluster stay unchanged. Refactor and recreate require accepted finding IDs
 before any edit pass.
 
-Short local edits can remain bounded. Chinese contextual or voice-sensitive
+Short local edits can remain bounded, deriving constraints from the supplied
+passage without a two-sample author corpus. Chinese contextual or voice-sensitive
 edits use `shuorenhua`; an explicitly selected Chinese fidelity cleanup can use
 `de-AI-writing`; short English edits use DIR's bounded method. A long narrative,
 document-level revision, systemic defect, explicit Sepia request, or
@@ -110,6 +122,13 @@ must read the referenced source before applying the provider result.
 The full source baseline applies to document-scale Sepia refactor/recreate. A
 bounded local cleanup keeps its smaller protected-span contract and does not
 inherit this document-level payload.
+
+After provider execution, validate a separate
+`humanization_execution_gate_v1` receipt with
+`scripts/dircreative_humanization_execution_gate.py`. It binds the plan, draft
+and result hashes, every required provider/validator run, protected-content
+diff, overcorrection check and read-aloud review. `plan ready`, self-test PASS or
+a prose review memo cannot replace that receipt.
 
 ## Context budget
 
@@ -187,6 +206,29 @@ metadata, or the actual system context may establish them. Never infer the
 author model by reading the prose. Version-matched prose guidance can be
 operative; family-only or other-version guidance is a prior; missing guidance
 is `none`. Model tables guide inspection and do not prove authorship.
+
+The installed Sepia 0.5.0 GPT prose table targets GPT-5.6 and its narrative table
+targets GPT-5.4. Treat both as priors for Astra; do not relabel them as a measured
+Astra fingerprint or a validated Chinese detector. Current official model
+guidance can inform execution behavior without changing those research labels.
+
+## Chinese expression
+
+Choose the smallest intervention that improves the actual passage. Check who
+would say the line, what they want from the listener, spoken stress and breath,
+and whether the surrounding image already conveys the explanation. Preserve
+Chinese topic omission, varied sentence length, genre diction and deliberate
+restraint when they work. In client prose, retain the responsible party, facts,
+uncertainty and next action. Removing a useful qualification to sound concise
+is a loss, not a style improvement.
+
+Do not translate English word lists into Chinese bans, enforce idioms or slang,
+insert mistakes, remove every metaphor, or end every exchange with an aphorism.
+For short dialogue the model's direct draft may already be sufficient. For a
+whole scene or systemic repetition, Sepia's architecture/discourse pass can be
+useful, followed only by the Chinese edits the resulting draft still needs.
+Compare outputs on meaning, voice, causality and readability; no route guarantees
+the best text merely because a newer model or a Skill was selected.
 
 ## User-facing controls
 

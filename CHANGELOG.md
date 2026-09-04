@@ -2,7 +2,26 @@
 
 ## Unreleased
 
-- Adds a post-v0.7.1 product specification for a native Visual Workspace adjustment panel. The PRD keeps the canvas read-only, routes changes back through conversation and existing gates, defines story/text/shot/action/asset/sound/Seedance views, and uses the S07 false-support case as a fail-closed MVP acceptance fixture.
+## 0.8.0 - 2026-09-05
+
+- Preserves the selected image craft owner during authorized execution, including clean-image and key-visual scenarios, while keeping missing packets and wrong media scope blocked.
+- Counts selected provider metadata once across craft and isolated contexts, preventing boundary-budget fallback from dropping required validators or collaborators without raising context limits.
+- Removes the first-image circular dependency: selected design stages can precede generated assets; complete asset/stress certification remains mandatory for video compilation. Adds from-zero coverage with no placeholder PNGs.
+- Supports standalone product/character/prop/scene studies with an explicit `asset_only` scope and no invented film timeline. Direct still prompts preserve the requested canvas and omit controller IDs, hashes and unsolicited page titles.
+- Applies current GPT-6 Astra guidance to scenario selection and repository instructions: bounded autonomy, explicit Skill conflicts, proportional verification, and model-independent controller ownership.
+- Keeps short Chinese dialogue edits bounded without a document-level voice corpus, and uses Sepia for demonstrated structural/discourse needs while treating its older model tables as priors for Astra.
+- Separates `planning_only`, `prompt_only`, real pre-video image assets, and final-video generation. Natural-language image execution aliases route through Delivery, while questions, planning requests, authorization applications, and explicit no-media requests stay non-executing.
+- Adds a cross-task scope-consistency contract that preserves decision-relevant user wording and required methods without pretending local hashes prove user authorization.
+- Connects character-master and every imagegen execution path to an active asset packet, host-bound project root, visual-plan truth, role contract, prompt hash, dependency DAG, saved evidence and scope-specific route context. Storyboard/clean prompts must be exact outputs of a sealed production Jingzao handoff bound to the complete active shot truth; multi-shot overview pages use deterministic assembly. Incorrect two-view character prompts, stale cross-project frames, identity/wardrobe/material drift, arbitrary dependencies, non-execution scenarios, and image/video authorization crossover fail before the media adapter is exposed.
+- Adds a pre-video asset evidence gate: planned/prompt-ready rows remain incomplete; generated candidates need actual PNG evidence and visual-review binding before they are ready for user review, which still does not grant user acceptance.
+- Adds a post-generation character-master vision gate. It detects the far-left portrait and four separate full bodies before any pass/downstream claim, preserves the remaining orientation/material review boundary, and blocks the exact two-body false-positive found by the isolated forward test.
+- Supports the installed `mr-li-seedance-25` v1.9.0 only as an isolated Seedance method provider: exact version/body/reference receipts, pre-write capacity, model-scoped segment limits, speaker-change cuts, dialogue permission, current-segment bindings, clean prompt surfaces and accurate next-start state. Handoffs remain `applied_unverified` until host adoption evidence exists; its asset layout and controller/ledger semantics are intentionally not copied.
+- Distinguishes humanization planning from execution. A ready plan starts `not_run`; local before/after/provider receipts remain `applied_unverified` and cannot self-grant completion. New-project register rules no longer masquerade as source-author voice evidence.
+- Binds Script-to-Seedance handoffs to the trusted capability-card registry, typed image/video/audio/total reference limits, an inode-stable project-root script file, and exact source-line dialogue locators. Forged cards, inflated limits, path escapes, symlinks, hardlinks, stale scripts and shortened/negated dialogue fragments fail closed.
+- Adds compact-state 2.0 → 2.1 migration. Ambiguous legacy generation authorization becomes `scope_conflict` with both image and video permissions false until reconfirmed.
+- Replaces large host-trace accumulation with bounded streaming reads: 16 MiB sealed prefixes, 15 MiB records, a distinct 10 MiB inline-PNG limit and 64 KiB chunks, retaining common image events while avoiding the prior 512 MiB/64 MiB memory path.
+- Pins project-relative ancestor directories while reading execution inputs, rejects symlink/hardlink/path escapes, bounds Prompt IR and handoff payloads, and revalidates Jingzao only from a private sealed snapshot of its content-addressed provider and project inputs.
+- Adds a post-v0.7.1 product specification for a native Visual Workspace adjustment panel. The PRD remains a future implementation basis rather than part of the v0.8.0 execution runtime.
 
 ## 0.7.1 - 2026-09-04
 

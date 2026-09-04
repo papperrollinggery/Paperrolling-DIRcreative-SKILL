@@ -38,7 +38,7 @@ Build a model-neutral intent before adapting the surface:
    file hash, or generation authorization. Those belong only to a real execution
    or formal handoff.
 7. When the target is Seedance 2.5, formal compilation routes to Studio and uses
-   `mr-li-seedance-25` 1.8.2 as the priority method owner or isolated method
+   `mr-li-seedance-25` 1.9.0 as the priority method owner or isolated method
    collaborator. Add `seedance-25-emotion-prompt` only for explicitly
    emotion/micro-performance-led work. Small existing-prompt edits remain Fast
    without claiming the full method; exact model cards still own capability facts.

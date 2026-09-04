@@ -81,14 +81,17 @@ without a verified tool and cost boundary.
   `jingzao-image-forge` owns frame-level visual direction and prompt/spec
   compilation through `cinematic_storyboard_frames`. Load its full body in the
   isolated craft context and let it follow its own styleboard, shot-tension, and
-  narrative-frame references. DIR owns upstream truth and returned state;
-  imagegen remains the separately authorized execution adapter.
+  narrative-frame references. Reopen and validate the production handoff, then
+  pass only the exact prompt/hash from its manifest to imagegen. DIR owns
+  upstream truth and returned state; imagegen remains the separately authorized
+  execution adapter. Build the multi-shot overview page deterministically from
+  approved frame files and shot-card text rather than asking imagegen to redraw it.
 - `convert-script-to-seedance` is a bounded model compiler when selected through
   `script_to_seedance`. Apply the registered `script_to_seedance_v1` contract;
   DIR retains upstream truth and consumes the compiled prompt back into its
   manifest and QA flow.
 - For a declared Seedance 2.5 target, keep that same compiler and handoff. Apply
-  `mr-li-seedance-25` 1.8.2 first as the authoring-method provider for the
+  `mr-li-seedance-25` 1.9.0 first as the authoring-method provider for the
   confirmed visual baseline, authoritative-script fidelity, real performance
   capacity, one binding block per requested scope, voice-reference checks,
   natural-paragraph delivery, and clean-image diagnostics. It does
@@ -101,15 +104,26 @@ without a verified tool and cost boundary.
   method pass. Do not load both for ordinary prompts. Formal compilation runs in
   Studio: the owner uses isolated craft context; use as a compiler collaborator
   uses one 64 KiB isolated method context. A small existing-prompt edit remains
-  Fast and does not inflate Fast or silently claim the 1.8.2 method was loaded.
+  Fast and does not inflate Fast or silently claim the 1.9.0 method was loaded.
 - `ai-film-production-ledger` is an isolated record-only collaborator after
   preflight. It receives only the final generation candidate, preserves
   append-only attempt/event lineage, and cannot become a story owner, director,
   generation adapter, or approval authority.
-- Recurring clothed-human asset construction routes to the single canonical
-  contract in `character-master-sheet.md`; this stack only selects that bounded
-  owner and the later validator. It does not restate layout thresholds, activate
-  headed and headless together, or create another controller.
+- Recurring clothed-human asset construction first routes to the canonical
+  truth contract in `character-master-sheet.md`. If the active image task has
+  multi-view layout, reference, continuity, exact-geography, edit/preserve, or
+  observed artifact risk, select the existing `visual_asset_compile` scenario;
+  Jingzao owns the visual spec and prompt/reference preflight. A simple low-risk
+  image remains eligible for the concise direct path. Do not create another
+  router or load every image Skill by default.
+- `real_execution` is not a craft shortcut. For still/image-series work it may
+  expose `imagegen` only after `asset_execution_gate_v1` passes for the active
+  asset. When a prior `visual_asset_compile` selection exists, the packet must
+  carry its Skill Stack receipt, provider/ref hashes, validated Jingzao spec,
+  compiled prompt manifest, and call-plan status through
+  `visual_asset_to_jingzao_v1`; Delivery cannot reset the craft owner to a new
+  direct prompt. The caller cannot replace that packet with
+  `scenario_id=real_execution` or a generation-authorization boolean.
 - Prompt preflight is before generation, output review is after real evidence,
   and iteration doctor prescribes the next bounded retry.
 - When explicitly requested or a specific gap warrants it, the optional

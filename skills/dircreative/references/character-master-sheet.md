@@ -5,6 +5,11 @@ audit a recurring character/costume asset sheet. It governs the `identity_state`
 asset; it does not replace shot design, scene assets, prompt preflight, or media
 generation authorization.
 
+When requested independently of a film, use an `asset_only` inventory and the
+selected pre-image foundation design stage. No screenplay, timed shots or
+already-generated master is required to create the first master. Its identity,
+appearance state, purpose and compilation route still bind the image request.
+
 ## One identity system, not competing character packs
 
 All character sheets for one state share the same `asset_id`, `state_family`,
@@ -87,11 +92,20 @@ upscale a weak board. Use the horizontal strip to preserve source pixels. Move
 macro garment construction into the conditional detail sheet instead of
 shrinking the master with more panels.
 
-This is an external visual-review gate. The JSON validator verifies the declared
-0.75 policy floor, required case, evidence bytes, review signature and report
-binding; it does not infer subject bounding boxes or measure pixels. The reviewer
-must inspect the saved image and record the actual visual decision. Do not report
-this structural validation as automatic image measurement.
+Immediately after saving a headed master, run
+`python3 scripts/dircreative_character_master_visual_gate.py --image <png>
+--asset-id <id> --asset-truth-sha256 <hash> --mode <headed_master|headed_state|headless_safe>`.
+Headed modes must detect
+one far-left close-up and exactly four separated full bodies to the right before
+any `reviewed/pass` claim or downstream generation. A missing/unavailable probe
+fails closed. Headless-safe checks one dominant left portrait, four plausible
+full-height body components and zero detected faces in those slots, but remains
+`applied_unverified`; only a separate human review signed by an authority in the
+host trust registry can unlock it.
+It also remains bound to the approved headed source hash. Bind the canonical
+sidecar receipt to the plan; do not replace it with a written checklist. This structural measurement still cannot identify
+front/left/right/back orientation, identity, garment material or side-specific
+details, so the normal manifest-bound visual review remains mandatory.
 
 Add portrait front/left/right close-ups only when planned profile close-ups,
 prosthetics, hair asymmetry, or identity stress justify the extra pixels. Do not
@@ -177,13 +191,28 @@ the approved identity and wardrobe facts. Neutral mid-gray seamless background,
 soft even studio light, neutral expression, no cinematic grade, no text, no
 labels, no watermark. One unified sheet: one dominant three-quarter face
 close-up framed crown-to-neck at far left; then one horizontal row of four
-full-body headed views at identical scale and ground line — front, left profile,
-right profile, back. Every portrait and body spans at least 75% of canvas height.
+full-body headed views at identical scale and ground line — Panel 1 front,
+Panel 2 left profile, Panel 3 right profile, Panel 4 back. Every portrait and
+body spans at least 75% of canvas height.
+Left profile means the subject's anatomical left side is visible and the nose
+points frame-left; right profile means the anatomical right side is visible and
+the nose points frame-right. Panels 2 and 3 are not interchangeable or mirror
+substitutes.
+
+This template is a DIR source contract, not the formal image compiler. For a
+Studio pre-video asset, route the locked facts through the installed
+`jingzao-image-forge` visual spec and its prompt/reference preflight before the
+host image adapter is called. Jingzao owns how asymmetric hardware, panel
+visibility, references, local edits and material controls are expressed in the
+model-facing prompt. A direct DIR prompt is only a rough-planning fallback and
+cannot become a reviewed production master.
 No 2x2 grid. Same person, exact body
 proportions, hair, outfit construction, accessories, footwear and side-specific
-placements in every panel. Relaxed A-pose, accurate anatomy, complete head-to-toe
-framing, clear silhouette. Do not add poses, props, costume variants or details
-not present in the approved asset description.
+placements in every panel. Use the approved pose lock exactly; do not append a
+generic relaxed pose that conflicts with it. Accurate anatomy, complete
+head-to-toe framing, clear silhouette. Do not add poses, props, costume variants,
+carabiners, holsters, pouches, waist tools, dangling equipment or details not
+present in the approved asset description.
 ```
 
 ## Prompt template: headless-safe derivative

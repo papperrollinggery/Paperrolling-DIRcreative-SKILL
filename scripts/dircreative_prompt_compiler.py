@@ -5,6 +5,7 @@ import argparse
 import hashlib
 import json
 import math
+import re
 import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -14,10 +15,176 @@ from dircreative_state_audit import _builtin_schema_errors
 from dircreative_model_capability_audit import REGISTRY_PATH, load_yaml
 from dircreative_adapters import AdapterContractError, get_adapter, shared_surface_errors
 from dircreative_adapters.base import INTERNAL_SURFACE_PATTERNS, clean as _clean
+from dircreative_verify_release import read_relative_regular_file_once
 
 
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_PATH = ROOT / "docs/film-preproduction/schemas/prompt-ir.schema.json"
+MAX_PROMPT_IR_BYTES = 4 * 1024 * 1024
+MAX_PROJECT_FILE_BYTES = 32 * 1024 * 1024
+
+ASSET_ROLE_LABELS = {
+    "product_identity_board": "产品身份参考图 / PRODUCT IDENTITY REFERENCE",
+    "prop_continuity_board": "道具连续性参考图 / PROP CONTINUITY REFERENCE",
+    "scene_geography_camera_fov_reference": "场景空间+镜头视场参考图 / SCENE GEOGRAPHY + CAMERA FOV REFERENCE",
+    "lighting_material_style_board": "灯光+材质风格参考图 / LIGHTING + MATERIAL STYLE REFERENCE",
+}
+ASSET_ROLE_RULES = {
+    "product_identity_board": "Preserve exact silhouette, scale, construction, material and function. Keep approved packaging marks readable; add no unrelated scene, person, panel or invented label.",
+    "prop_continuity_board": "Preserve exact shape, interface, material, orientation and state. This board cannot control a future scene, ground surface, support, camera or lighting.",
+    "scene_geography_camera_fov_reference": "Preserve fixed architecture, landmarks, entrances, axes, scale, support relations and ground surface. Keep the scene empty of characters and temporary action.",
+    "lighting_material_style_board": "Control only palette, exposure, contrast, highlight rolloff, atmosphere and material response. Do not redesign identity, geometry, action or props.",
+}
+JINGZAO_COMPILED_ROLES = {
+    "storyboard_frame",
+    "clean_first_frame",
+    "clean_key_frame",
+    "clean_end_frame",
+}
+DETERMINISTIC_LAYOUT_ROLES = {"professional_storyboard_motion_map"}
+def character_pose_lock(details: list[str]) -> str:
+    pose_details = [
+        item
+        for item in details
+        if re.search(r"\bpose\b", item.lower()) is not None or "姿势" in item
+    ]
+    if pose_details:
+        return "; ".join(pose_details)
+    return (
+        "neutral 20-degree A-pose, straight elbows, both hands fully visible, feet apart, "
+        "clear arm-to-torso gaps and an anatomically legible back view"
+    )
+
+
+def build_character_master_prompt(
+    *,
+    identity: str,
+    wardrobe: str,
+    materials: str,
+    side_specific: str,
+    pose_lock: str,
+) -> str:
+    return " ".join(
+        (
+            "Create one professional photorealistic headed character master sheet from the approved identity and wardrobe facts.",
+            identity.strip(),
+            wardrobe.strip(),
+            materials.strip(),
+            side_specific.strip(),
+            "Use one wide physical image on a neutral mid-gray seamless background with soft even studio light and no cinematic grade.",
+            "Place one dominant high-resolution three-quarter face close-up framed crown-to-neck at the far left.",
+            "After it, use one single horizontal row of four full-body headed views at identical scale and one shared ground line: Panel 1 front; Panel 2 left profile; Panel 3 right profile; Panel 4 back.",
+            "Panel 2 shows the subject's anatomical left side to camera and the nose points frame-left; Panel 3 shows the anatomical right side and the nose points frame-right. Panels 2 and 3 are not interchangeable or mirror substitutes.",
+            "The portrait and every full-body subject must each span at least 75% of the canvas height.",
+            "Keep the same face, body proportions, hair, outfit construction, materials, accessories, footwear, hands and side-specific placements in every view.",
+            f"Pose lock: {pose_lock.strip()}. Do not relax, mirror or replace the approved pose.",
+            "Keep every named left/right detail on the subject's anatomical side and at its declared garment or body anchor in front, profile and back views.",
+            "Accurate anatomy and complete head-to-toe framing. Do not add any prop, tool or accessory absent from the approved facts, including clips, carabiners, holsters, pouches, waist tools or dangling equipment. No 2x2 grid, alternate identity, costume variant, text, labels, borders, logos or watermark.",
+        )
+    )
+
+
+def build_character_master_prompt_from_contract(
+    authoritative_purpose: str,
+    contract: dict[str, Any],
+) -> str:
+    details = [str(item) for item in contract.get("side_specific_details", [])]
+    pose_lock = character_pose_lock(details)
+    return build_character_master_prompt(
+        identity=authoritative_purpose,
+        wardrobe="; ".join(str(item) for item in contract.get("wardrobe_facts", [])),
+        materials="; ".join(str(item) for item in contract.get("wardrobe_materials", [])),
+        side_specific="; ".join(details),
+        pose_lock=pose_lock,
+    )
+
+
+def build_headed_state_prompt_from_contract(
+    authoritative_purpose: str,
+    contract: dict[str, Any],
+) -> str:
+    details = [str(item) for item in contract.get("side_specific_details", [])]
+    pose_lock = character_pose_lock(details)
+    return " ".join(
+        (
+            "Create one professional photorealistic headed character state derivative from the approved headed master.",
+            f"Approved source master SHA-256: {contract.get('approved_source_master_sha256')}.",
+            authoritative_purpose.strip(),
+            "; ".join(str(item) for item in contract.get("state_facts", [])),
+            "Change only the declared visible state; preserve the same identity, body, hair, outfit construction, materials, accessories, footwear and side-specific placements.",
+            "Use one wide physical image on a neutral mid-gray seamless background with soft even studio light and no cinematic grade.",
+            "Place one dominant high-resolution three-quarter face close-up framed crown-to-neck at the far left.",
+            "After it, use one single horizontal row of four full-body headed views at identical scale and one shared ground line: Panel 1 front; Panel 2 left profile; Panel 3 right profile; Panel 4 back.",
+            "Panel 2 shows the subject's anatomical left side to camera and the nose points frame-left; Panel 3 shows the anatomical right side and the nose points frame-right. Panels 2 and 3 are not interchangeable or mirror substitutes.",
+            "The portrait and every full-body subject must each span at least 75% of the canvas height.",
+            f"Pose lock: {pose_lock}. Do not relax, mirror or replace the approved pose.",
+            "Keep every named left/right detail on the subject's anatomical side and declared anchor. Accurate anatomy and complete head-to-toe framing. Do not add any prop, tool or accessory absent from the approved facts, including clips, carabiners, holsters, pouches, waist tools or dangling equipment. No 2x2 grid, alternate identity, unrelated damage, costume variant, text, labels, logos or watermark.",
+        )
+    )
+
+
+def build_headless_safe_prompt_from_contract(
+    authoritative_purpose: str,
+    contract: dict[str, Any],
+) -> str:
+    return " ".join(
+        (
+            "Create one professional photorealistic headless-safe character sheet derived only from the approved headed master.",
+            f"Approved source master SHA-256: {contract.get('approved_source_master_sha256')}.",
+            authoritative_purpose.strip(),
+            "Preserve identical body proportions, outfit construction, materials, accessories, footwear, hands, cuffs and left/right placements.",
+            "Use one wide physical image on a neutral mid-gray seamless background with soft even studio light and no cinematic grade.",
+            "Place one dominant high-resolution three-quarter face close-up framed crown-to-neck at the far left; it is the only readable face.",
+            "After it, use one single horizontal row of four fully headless full-body silhouettes at identical scale and one shared ground line: Panel 1 front; Panel 2 left profile; Panel 3 right profile; Panel 4 back. Panels 2 and 3 are not interchangeable or mirror substitutes.",
+            "The portrait and every full-body subject must each span at least 75% of the canvas height.",
+            "Remove every body head from the neck opening upward while preserving natural hands, rear collar, inner back neckline and collar-ring continuity.",
+            "No 2x2 grid, mannequin head, tiny body face, alternate identity, missing hand, erased collar, props, text, labels, logos or watermark.",
+        )
+    )
+
+
+def build_character_prompt_from_contract(
+    authoritative_purpose: str,
+    contract: dict[str, Any],
+) -> str:
+    mode = contract.get("mode")
+    if mode == "headed_master":
+        return build_character_master_prompt_from_contract(authoritative_purpose, contract)
+    if mode == "headed_state":
+        return build_headed_state_prompt_from_contract(authoritative_purpose, contract)
+    if mode == "headless_safe":
+        return build_headless_safe_prompt_from_contract(authoritative_purpose, contract)
+    raise ValueError(f"unsupported character master mode: {mode}")
+
+
+def build_asset_role_prompt(asset: dict[str, Any], visual_plan: dict[str, Any]) -> str:
+    role = str(asset.get("role"))
+    if role in JINGZAO_COMPILED_ROLES:
+        raise ValueError(
+            f"{role} requires a validated storyboard_frame_to_jingzao_v1 prompt manifest"
+        )
+    if role in DETERMINISTIC_LAYOUT_ROLES:
+        raise ValueError(
+            f"{role} must be assembled from approved storyboard frames, not generated by imagegen"
+        )
+    purpose = str(asset.get("purpose"))
+    project_id = str(visual_plan.get("project_id"))
+    label = ASSET_ROLE_LABELS.get(role)
+    rule = ASSET_ROLE_RULES.get(role)
+    if label is None or rule is None:
+        raise ValueError(f"unsupported asset prompt role: {role}")
+    if visual_plan.get("scope") == "asset_only":
+        aspect = visual_plan.get("delivery_profile", {}).get("aspect_ratio")
+        return f"{purpose}\nImage aspect ratio: {aspect}. {rule}"
+    header = (
+        f"Pre-generation contract: asset {asset.get('asset_id')} uses truth {asset.get('truth_sha256')}. "
+        f"Largest title on the page: {label}. "
+        f"Smaller metadata only: Project: {project_id}. "
+        f"Do not make {project_id} the largest title. "
+        "Direct video input policy: planning_only. "
+        f"Authoritative asset purpose: {purpose} {rule}"
+    )
+    return header
 
 
 class PromptContractError(Exception):
@@ -81,12 +248,19 @@ def semantic_errors(payload: dict[str, Any], *, verify_project_files: bool = Tru
             if not asset.get("source_hash"):
                 errors.append(f"project_file asset requires source_hash: {asset['asset_id']}")
             if verify_project_files:
-                path = ROOT / asset["source_locator"]
-                if not path.is_file():
-                    errors.append(f"project_file asset is missing: {asset['source_locator']}")
-                elif asset.get("source_hash"):
-                    actual_hash = hashlib.sha256(path.read_bytes()).hexdigest()
-                    if actual_hash != asset["source_hash"]:
+                locator = asset["source_locator"]
+                try:
+                    payload_bytes = read_relative_regular_file_once(
+                        ROOT,
+                        locator,
+                        max_bytes=MAX_PROJECT_FILE_BYTES,
+                        label=f"project_file asset {asset['asset_id']}",
+                    )
+                except (OSError, ValueError):
+                    errors.append(f"project_file asset is invalid: {locator}")
+                else:
+                    actual_hash = hashlib.sha256(payload_bytes).hexdigest()
+                    if asset.get("source_hash") and actual_hash != asset["source_hash"]:
                         errors.append(f"project_file asset hash mismatch: {asset['asset_id']}")
 
     references = payload["references"]
@@ -367,8 +541,14 @@ def compile_prompt(payload: dict[str, Any], *, verify_project_files: bool = True
 
 def load_prompt_ir(path: Path) -> dict[str, Any]:
     try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
+        raw = read_relative_regular_file_once(
+            path.parent.resolve(strict=True),
+            path.name,
+            max_bytes=MAX_PROMPT_IR_BYTES,
+            label="Prompt IR",
+        )
+        payload = json.loads(raw.decode("utf-8"))
+    except (OSError, UnicodeDecodeError, ValueError, json.JSONDecodeError) as exc:
         raise PromptContractError(f"cannot read Prompt IR {path}: {exc}") from exc
     if not isinstance(payload, dict):
         raise PromptContractError("Prompt IR root must be an object")

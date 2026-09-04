@@ -1,0 +1,129 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dircreative.local/schemas/visual-asset-to-jingzao.schema.json",
+  "title": "DIRcreative formal visual asset to Jingzao compile handoff",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_id",
+    "authority",
+    "source_owner",
+    "target_owner",
+    "output_owner",
+    "fixture_only",
+    "active_asset",
+    "visual_plan",
+    "skill_stack_request",
+    "skill_stack_receipt",
+    "input_spec",
+    "provider_skill",
+    "provider_runtime_files",
+    "reference_reads",
+    "output_spec",
+    "delivery_consumption"
+  ],
+  "properties": {
+    "contract_id": {"const": "visual_asset_to_jingzao_v1"},
+    "authority": {"const": "compile_only"},
+    "source_owner": {"const": "dircreative"},
+    "target_owner": {"const": "jingzao-image-forge"},
+    "output_owner": {"const": "dircreative"},
+    "fixture_only": {"type": "boolean"},
+    "active_asset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["asset_id", "role", "truth_sha256", "purpose_sha256", "visual_plan_sha256", "operation"],
+      "properties": {
+        "asset_id": {"$ref": "#/$defs/id"},
+        "role": {"enum": ["character_identity_reference", "product_identity_board", "prop_continuity_board", "scene_geography_camera_fov_reference", "lighting_material_style_board"]},
+        "truth_sha256": {"$ref": "#/$defs/sha256"},
+        "purpose_sha256": {"$ref": "#/$defs/sha256"},
+        "visual_plan_sha256": {"$ref": "#/$defs/sha256"},
+        "operation": {"enum": ["create", "reconstruct", "edit", "restyle", "expand", "clean_reset"]}
+      }
+    },
+    "visual_plan": {"$ref": "#/$defs/artifact_binding"},
+    "skill_stack_request": {"$ref": "#/$defs/artifact_binding"},
+    "skill_stack_receipt": {"$ref": "#/$defs/artifact_binding"},
+    "input_spec": {"$ref": "#/$defs/artifact_binding"},
+    "provider_skill": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["skill_id", "sha256"],
+      "properties": {
+        "skill_id": {"const": "jingzao-image-forge"},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "provider_runtime_files": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/provider_file"}
+    },
+    "reference_reads": {
+      "type": "array",
+      "minItems": 4,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/reference_read"}
+    },
+    "output_spec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["visual_generation_spec", "validation_receipt", "compiled_prompt_manifest", "prompt_sha256"],
+      "properties": {
+        "visual_generation_spec": {"$ref": "#/$defs/artifact_binding"},
+        "validation_receipt": {"$ref": "#/$defs/artifact_binding"},
+        "compiled_prompt_manifest": {"$ref": "#/$defs/artifact_binding"},
+        "prompt_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "delivery_consumption": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["route_id", "adapter", "status", "consumed_prompt_sha256", "generated"],
+      "properties": {
+        "route_id": {"const": "generation_authorization"},
+        "adapter": {"const": "imagegen"},
+        "status": {"enum": ["planned", "failed"]},
+        "consumed_prompt_sha256": {"$ref": "#/$defs/sha256"},
+        "generated": {"const": false}
+      }
+    }
+  },
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"},
+    "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "safe_relative_path": {"type": "string", "minLength": 1, "pattern": "^[A-Za-z0-9._/-]+$"},
+    "artifact_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["relative_path", "sha256"],
+      "properties": {
+        "relative_path": {"$ref": "#/$defs/safe_relative_path"},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "reference_read": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["relative_path", "sha256", "bytes"],
+      "properties": {
+        "relative_path": {"type": "string", "pattern": "^references/[A-Za-z0-9._/-]+$"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "bytes": {"type": "integer", "minimum": 1, "maximum": 1048576}
+      }
+    },
+    "provider_file": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["relative_path", "sha256", "bytes"],
+      "properties": {
+        "relative_path": {"type": "string", "pattern": "^scripts/[A-Za-z0-9._/-]+\\.py$"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "bytes": {"type": "integer", "minimum": 1, "maximum": 1048576}
+      }
+    }
+  }
+}

@@ -7,6 +7,22 @@ Persist the pass with
 `docs/film-preproduction/schemas/asset-foundation-pass.schema.json` and validate
 it using `python3 scripts/dircreative_asset_foundation_pass.py validate <pass> --artifact-root <root>`.
 
+## Before the first image
+
+An asset being created cannot supply its own completed image or stress report.
+For image compilation, the same pass may remain `in_progress` with explicit
+`planned_asset_ids`, only the selected design stages, and
+`stress_test_binding: null`. Keep `compile_gate.status: blocked`: this is the
+video-compilation gate, not image authorization. `source_assets` contains only
+actual supplied or previously generated inputs and may be empty. Planned IDs
+must not be presented as `canonical_asset_ids`.
+
+The image handoff uses `validate_design` to check the selected stage owners,
+required craft, structured output, source files and hash chain. A character
+needs identity/wardrobe/state design; a scene needs camera/geography design.
+Load other stages only when needed. This design check does not certify images;
+the complete pass and stress gate below remain required before Seedance.
+
 ## Stable passes
 
 Run one bounded pass at a time. Each pass consumes the exact hash of the prior

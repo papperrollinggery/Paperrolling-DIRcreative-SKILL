@@ -26,6 +26,14 @@ def validate_v3_detail_binding_fixture(
     v3_artifact_root.mkdir()
     v3_review_root.mkdir()
     v3_trust_root.mkdir()
+    script_relative_path = Path(valid["authoritative_script"]["source_relative_path"])
+    script_path = v3_artifact_root / script_relative_path
+    script_path.parent.mkdir(parents=True, exist_ok=True)
+    script_path.write_bytes(
+        (
+            ROOT / "tests/fixtures/script-to-seedance" / script_relative_path
+        ).read_bytes()
+    )
     v3_template = load_json(
         ROOT / "tests/fixtures/asset-stress-test/valid-report-v3-headed.json"
     )
@@ -212,6 +220,7 @@ def validate_v3_detail_binding_fixture(
     }
     valid_v3_detail_errors = validate(
         valid_v3_detail,
+        project_root=v3_artifact_root,
         asset_foundation_path=v3_foundation_path,
         asset_stress_path=v3_stress_path,
         asset_artifact_root=v3_artifact_root,

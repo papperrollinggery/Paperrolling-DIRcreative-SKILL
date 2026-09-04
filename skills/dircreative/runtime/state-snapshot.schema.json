@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "dircreative.compact-state-snapshot/2.0",
+  "$id": "dircreative.compact-state-snapshot/2.1",
   "title": "DIRcreative Compact State Snapshot",
   "description": "V2 working state. Fast stays in memory; Studio persists only for pause, cross-session resume, or multi-file output; Delivery persists. Full state audit is reserved for resume, handoff, delivery, and completion claims.",
   "type": "object",
@@ -9,24 +9,64 @@
     "project_id",
     "mode",
     "current_route",
+    "media_scope",
+    "image_generation_authorized",
+    "video_generation_authorized",
+    "active_stage",
+    "active_asset_id",
+    "active_asset_role",
+    "stage_contract_reference",
+    "stage_contract_sha256",
+    "asset_execution_gate_status",
     "locked_facts",
     "working_assumptions",
     "active_outputs",
     "stale_outputs",
     "open_questions",
-    "generation_authorized",
     "client_delivery_approved"
   ],
   "properties": {
     "project_id": {"type": "string"},
     "mode": {"enum": ["fast", "studio", "delivery"]},
     "current_route": {"type": "string", "minLength": 1},
+    "media_scope": {"enum": ["planning_only", "prompt_only", "pre_video_assets", "video_generation", "scope_conflict"]},
+    "image_generation_authorized": {"type": "boolean"},
+    "video_generation_authorized": {"type": "boolean"},
+    "active_stage": {"type": ["string", "null"]},
+    "active_asset_id": {"type": ["string", "null"]},
+    "active_asset_role": {"type": ["string", "null"]},
+    "stage_contract_reference": {"type": ["string", "null"]},
+    "stage_contract_sha256": {
+      "oneOf": [
+        {"type": "null"},
+        {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+      ]
+    },
+    "asset_execution_gate_status": {"enum": ["not_required", "pending", "pass", "failed"]},
     "locked_facts": {"type": "array", "items": {"type": "string"}},
     "working_assumptions": {"type": "array", "items": {"type": "string"}},
     "active_outputs": {"type": "array", "items": {"type": "string"}},
     "stale_outputs": {"type": "array", "items": {"type": "string"}},
     "open_questions": {"type": "array", "items": {"type": "string"}},
-    "generation_authorized": {"type": "boolean"},
+    "generation_authorized": {
+      "type": "boolean",
+      "deprecated": true,
+      "description": "Legacy aggregate readback only. New runs use separate image/video authorization fields."
+    },
     "client_delivery_approved": {"type": "boolean"}
-  }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"media_scope": {"const": "pre_video_assets"}}, "required": ["media_scope"]},
+      "then": {"properties": {"image_generation_authorized": {"const": true}, "video_generation_authorized": {"const": false}}}
+    },
+    {
+      "if": {"properties": {"media_scope": {"enum": ["planning_only", "prompt_only", "scope_conflict"]}}, "required": ["media_scope"]},
+      "then": {"properties": {"image_generation_authorized": {"const": false}, "video_generation_authorized": {"const": false}}}
+    },
+    {
+      "if": {"properties": {"media_scope": {"const": "video_generation"}}, "required": ["media_scope"]},
+      "then": {"properties": {"video_generation_authorized": {"const": true}}}
+    }
+  ]
 }

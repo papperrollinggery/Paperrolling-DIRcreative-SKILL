@@ -174,6 +174,111 @@
       "expected_error": "schema_error"
     },
     {
+      "case_id": "model_surface_capability_card_untrusted",
+      "mutations": [
+        {"op": "replace", "path": "/model_surface/capability_card_id", "value": "seedance_forged_card"}
+      ],
+      "expected_error": "model_surface_capability_card_untrusted"
+    },
+    {
+      "case_id": "model_surface_model_key_forged",
+      "mutations": [
+        {"op": "replace", "path": "/model_surface/model_key", "value": "seedance-forged"}
+      ],
+      "expected_error": "model_surface_registry_mismatch"
+    },
+    {
+      "case_id": "model_surface_version_forged",
+      "mutations": [
+        {"op": "replace", "path": "/model_surface/version", "value": "2.6"}
+      ],
+      "expected_error": "model_surface_registry_mismatch"
+    },
+    {
+      "case_id": "model_surface_provider_surface_forged",
+      "mutations": [
+        {"op": "replace", "path": "/model_surface/provider_surface", "value": "forged provider surface"}
+      ],
+      "expected_error": "model_surface_registry_mismatch"
+    },
+    {
+      "case_id": "model_surface_status_forged",
+      "mutations": [
+        {"op": "replace", "path": "/model_surface/status", "value": "deprecated"}
+      ],
+      "expected_error": "model_surface_registry_mismatch"
+    },
+    {
+      "case_id": "provider_limit_forged",
+      "mutations": [
+        {"op": "replace", "path": "/provider_limits/max_references_per_unit", "value": 49}
+      ],
+      "expected_error": "provider_limits_registry_mismatch"
+    },
+    {
+      "case_id": "provider_limit_source_type_forged",
+      "mutations": [
+        {"op": "replace", "path": "/provider_limits/source_type", "value": "official_docs"}
+      ],
+      "expected_error": "provider_limits_registry_mismatch"
+    },
+    {
+      "case_id": "provider_limit_source_forged",
+      "mutations": [
+        {"op": "replace", "path": "/provider_limits/source", "value": "https://example.invalid/forged"}
+      ],
+      "expected_error": "provider_limits_registry_mismatch"
+    },
+    {
+      "case_id": "authoritative_script_hash_self_reported",
+      "mutations": [
+        {"op": "replace", "path": "/authoritative_script/sha256", "value": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"}
+      ],
+      "expected_error": "authoritative_script_hash_mismatch"
+    },
+    {
+      "case_id": "authoritative_script_path_escapes_root",
+      "mutations": [
+        {"op": "replace", "path": "/authoritative_script/source_relative_path", "value": "../SCRIPT-001.md"}
+      ],
+      "expected_error": "authoritative_script_path_invalid"
+    },
+    {
+      "case_id": "authoritative_script_content_changed_after_claim",
+      "mutations": [
+      ],
+      "script_content_suffix": "\nchanged after claimed hash\n",
+      "expected_error": "authoritative_script_hash_mismatch"
+    },
+    {
+      "case_id": "authoritative_script_symlink_forbidden",
+      "mutations": [
+      ],
+      "script_symlink": true,
+      "expected_error": "authoritative_script_file_invalid"
+    },
+    {
+      "case_id": "authoritative_dialogue_must_exist_in_source",
+      "mutations": [
+        {"op": "replace", "path": "/authoritative_script/dialogue_lines/0/text", "value": "源文件里不存在的台词。"}
+      ],
+      "expected_error": "authoritative_dialogue_not_in_source"
+    },
+    {
+      "case_id": "provider_image_limit_forged",
+      "mutations": [
+        {"op": "replace", "path": "/provider_limits/max_image_references_per_unit", "value": 31}
+      ],
+      "expected_error": "provider_limits_registry_mismatch"
+    },
+    {
+      "case_id": "authoritative_dialogue_dropped_prefix",
+      "mutations": [
+        {"op": "replace", "path": "/authoritative_script/dialogue_lines/0/text", "value": "反击。"}
+      ],
+      "expected_error": "authoritative_dialogue_source_line_mismatch"
+    },
+    {
       "case_id": "planned_audio_has_stale_local_order",
       "mutations": [
         {"op": "replace", "path": "/bindings/5/local_order_by_gu", "value": {"GU02": 3}}
@@ -225,32 +330,14 @@
     {
       "case_id": "duplicate_text_dialogue_requires_two_occurrences",
       "mutations": [
-        {
-          "op": "add",
-          "path": "/authoritative_script/dialogue_lines/-",
-          "value": {
-            "dialogue_line_id": "DLG-002",
-            "speaker_entity_id": "pilot",
-            "text": "执行反击。",
-            "shot_ids": ["SH04"]
-          }
-        }
+        {"op": "add", "path": "/authoritative_script/dialogue_lines/-", "value": {"dialogue_line_id": "DLG-002", "speaker_entity_id": "pilot", "text": "执行反击。", "source_line_number": 4, "source_line_sha256": "2f487f54fad90aec8c420d1b5610149c9c7edc9e3d11df007e4a7dea26d4f9a1", "shot_ids": ["SH04"]}}
       ],
-      "expected_error": "prompt_dialogue_count_mismatch"
+      "expected_error": "authoritative_dialogue_source_locator_duplicate"
     },
     {
       "case_id": "dialogue_line_id_duplicated",
       "mutations": [
-        {
-          "op": "add",
-          "path": "/authoritative_script/dialogue_lines/-",
-          "value": {
-            "dialogue_line_id": "DLG-001",
-            "speaker_entity_id": "pilot",
-            "text": "再次确认。",
-            "shot_ids": ["SH04"]
-          }
-        }
+        {"op": "add", "path": "/authoritative_script/dialogue_lines/-", "value": {"dialogue_line_id": "DLG-001", "speaker_entity_id": "pilot", "text": "再次确认。", "source_line_number": 4, "source_line_sha256": "2f487f54fad90aec8c420d1b5610149c9c7edc9e3d11df007e4a7dea26d4f9a1", "shot_ids": ["SH04"]}}
       ],
       "expected_error": "dialogue_line_id_duplicate"
     },
@@ -293,7 +380,8 @@
     },
     {
       "case_id": "asset_stress_matrix_incomplete",
-      "mutations": [],
+      "mutations": [
+      ],
       "dependency_mutations": {
         "stress": [
           {"op": "replace", "path": "/test_cases/0/status", "value": "not_run"},
@@ -304,7 +392,8 @@
     },
     {
       "case_id": "asset_foundation_stage_failed",
-      "mutations": [],
+      "mutations": [
+      ],
       "dependency_mutations": {
         "foundation": [
           {"op": "replace", "path": "/stages/2/status", "value": "failed"}
@@ -346,6 +435,34 @@
         {"op": "remove", "path": "/bindings/0/asset_version"}
       ],
       "expected_error": "schema_error"
+    },
+    {
+      "case_id": "seedance19_method_version_drift",
+      "mutations": [
+        {"op": "replace", "path": "/method_application/metadata_version", "value": "1.8.2"}
+      ],
+      "expected_error": "seedance25_method_application_invalid"
+    },
+    {
+      "case_id": "seedance19_capacity_preflight_over_limit",
+      "mutations": [
+        {"op": "replace", "path": "/method_application/capacity_preflight/0/estimated_seconds", "value": 31}
+      ],
+      "expected_error": "capacity_limit_exceeded"
+    },
+    {
+      "case_id": "seedance19_internal_heading_leaks_to_prompt",
+      "mutations": [
+        {"op": "replace", "path": "/prompt_units/0/prompt_text", "value": "【全局画面与声音】轨道外景，敌人进入并击中环体。"}
+      ],
+      "expected_error": "formal_prompt_surface_not_clean"
+    },
+    {
+      "case_id": "seedance19_speaker_change_without_cut",
+      "mutations": [
+        {"op": "add", "path": "/authoritative_script/dialogue_lines/-", "value": {"dialogue_line_id": "DLG-002", "speaker_entity_id": "ring", "text": "执行反击。", "shot_ids": ["SH03"], "source_line_number": 4, "source_line_sha256": "2f487f54fad90aec8c420d1b5610149c9c7edc9e3d11df007e4a7dea26d4f9a1"}}
+      ],
+      "expected_error": "dialogue_speaker_change_requires_new_shot"
     }
   ]
 }

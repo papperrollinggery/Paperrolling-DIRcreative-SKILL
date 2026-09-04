@@ -13,6 +13,7 @@ from pathlib import Path, PurePosixPath
 from typing import Any, Callable, Iterable
 
 import dircreative_humanization_plan as humanization_plan
+import dircreative_asset_execution_gate as asset_execution_gate
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -23,8 +24,11 @@ ROUTING_PATH = SKILL_ROOT / "runtime/routing-policy.yaml"
 CASES_PATH = ROOT / "tests/fixtures/skill-stack/cases.json"
 HOST_CATALOG_PATH = ROOT / "tests/fixtures/skill-stack/host-catalog.json"
 MAIN_SKILL = SKILL_ROOT / "SKILL.md"
+MAX_INTENT_BYTES = 2 * 1024 * 1024
+MAX_CALIBRATION_SOURCES_BYTES = 2 * 1024 * 1024
 
 ID_RE = re.compile(r"^[a-z0-9][a-z0-9:._-]{0,127}$")
+ASSET_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9:._-]{0,127}$")
 EXTERNAL_PROVIDER_ID_EXCEPTIONS = {"de-AI-writing"}
 SHA_RE = re.compile(r"^[0-9a-f]{64}$")
 ALLOWED_ROLES = {
@@ -121,7 +125,7 @@ REALISTIC_BODY_PAD = {
     "imagegen": 19000,
     "score-and-mix-picture": 9950,
     "convert-script-to-seedance": 7680,
-    "mr-li-seedance-25": 16802,
+    "mr-li-seedance-25": 20927,
     "production-design-worldbuilding": 4430,
     "minimum-visual-bible": 5000,
     "character-continuity-bible": 5000,
@@ -135,18 +139,20 @@ REALISTIC_BODY_PAD = {
     "sepia": 8058,
 }
 JINGZAO_REFERENCE_PAD = {
-    "references/visual-spec.md": 29007,
-    "references/prompt-compiler.md": 16154,
+    "references/visual-spec.md": 31552,
+    "references/prompt-compiler.md": 19655,
     "references/reference-delivery.md": 6718,
+    "references/quality-controls.md": 16840,
     "references/styleboard-mode.md": 6429,
     "references/shot-tension-design.md": 5096,
     "references/cinematic-shot-design.md": 7767,
 }
 MR_LI_REFERENCE_PAD = {
-    "references/visual-baseline-and-tags.md": 10327,
-    "references/prompt-writing.md": 7111,
-    "references/continuity-and-duration.md": 2657,
-    "references/format-samples.md": 5121,
+    "references/visual-baseline-and-tags.md": 10727,
+    "references/prompt-writing.md": 9247,
+    "references/continuity-and-duration.md": 3795,
+    "references/format-samples.md": 4141,
+    "references/full-flow-regression.md": 7020,
 }
 SEPIA_REFERENCE_PAD = {
     "references/narrative-pass.md": 11705,
@@ -176,6 +182,12 @@ HANDOFF_REQUIRED_CHAINS = {
         "prompt_units",
     ],
     "storyboard_frame_to_jingzao_v1": [
+        "input_spec",
+        "reference_reads",
+        "output_spec",
+        "delivery_consumption",
+    ],
+    "visual_asset_to_jingzao_v1": [
         "input_spec",
         "reference_reads",
         "output_spec",
@@ -266,6 +278,7 @@ class CatalogEntry:
     frontmatter_bytes: int
     openai_metadata: dict[str, str]
     body_loaded: bool
+    metadata_version: str | None = None
     capability_policy: dict[str, Any] | None = None
 
     def public(self) -> dict[str, Any]:
@@ -278,6 +291,7 @@ class CatalogEntry:
             "frontmatter_bytes": self.frontmatter_bytes,
             "openai_metadata_present": bool(self.openai_metadata),
             "body_loaded": self.body_loaded,
+            "metadata_version": self.metadata_version,
             "capability_policy_validated": self.capability_policy is not None,
         }
 
@@ -290,6 +304,11 @@ class ValidatedRouteContext:
     final_owner: str
     granted_gates: frozenset[str]
     deliverable_layer: str
+    media_scope: str
+    image_generation_authorized: bool
+    video_generation_authorized: bool
+    execution_project_root: Path | None
+    execution_task_id: str | None
     _seal: object
 
     def __post_init__(self) -> None:
@@ -366,6 +385,8 @@ def validate_primary_route_context(
     handoff_path: Path | None = None,
     project_root: Path | None = None,
     descriptor_path: Path | None = None,
+    execution_project_root: Path | None = None,
+    execution_task_id: str | None = None,
 ) -> ValidatedRouteContext:
     from dircreative_route import route_request
 
@@ -398,6 +419,22 @@ def validate_primary_route_context(
         raise SkillStackError("intent execution context does not match the validated primary route")
     if primary.get("action") == "stop_skill_runtime":
         raise SkillStackError("validated primary route stopped Skill runtime")
+    resolved_execution_project = resolved_project
+    if execution_project_root is not None:
+        try:
+            resolved_execution_project = execution_project_root.resolve(strict=True)
+        except OSError as exc:
+            raise SkillStackError("execution project root is unavailable") from exc
+        if not resolved_execution_project.is_dir():
+            raise SkillStackError("execution project root is not a directory")
+        if resolved_project is not None and resolved_execution_project != resolved_project:
+            raise SkillStackError("execution project root conflicts with ADCO project root")
+    if execution_task_id is not None and (
+        not isinstance(execution_task_id, str)
+        or not execution_task_id.strip()
+        or len(execution_task_id) > 256
+    ):
+        raise SkillStackError("execution task id is invalid")
     granted: set[str] = set()
     if primary.get("action") == "continue" and primary.get("external_user_gate") is None:
         if primary.get("route") == "generation_authorization":
@@ -411,19 +448,50 @@ def validate_primary_route_context(
         final_owner="adco" if execution_context == "orchestrated_worker" else "dircreative",
         granted_gates=frozenset(granted),
         deliverable_layer=str(primary.get("deliverable_layer") or "bounded_output"),
+        media_scope=str(primary.get("media_scope") or "planning_only"),
+        image_generation_authorized=primary.get("image_generation_authorized") is True,
+        video_generation_authorized=primary.get("video_generation_authorized") is True,
+        execution_project_root=resolved_execution_project,
+        execution_task_id=(
+            execution_task_id.strip() if isinstance(execution_task_id, str) else None
+        ),
         _seal=_ROUTE_CONTEXT_SEAL,
     )
 
 
 def _fixture_route_context(case: dict[str, Any]) -> ValidatedRouteContext:
     intent = case["intent"]
+    granted = frozenset(case.get("trusted_granted_gates", []))
+    inferred_scope = (
+        "pre_video_assets"
+        if "generation_authorization" in granted
+        and intent.get("media") in {"still", "image_series"}
+        else "video_generation"
+        if "generation_authorization" in granted and intent.get("media") == "video"
+        else "planning_only"
+    )
     return ValidatedRouteContext(
         route_id=str(intent["route_id"]),
         mode=str(intent["mode"]),
         execution_context=str(intent.get("execution_context") or "standalone_chat"),
         final_owner=str(case.get("trusted_controller_owner") or "dircreative"),
-        granted_gates=frozenset(case.get("trusted_granted_gates", [])),
+        granted_gates=granted,
         deliverable_layer=str(intent.get("deliverable_layer") or "fixture_layer"),
+        media_scope=str(case.get("trusted_media_scope") or inferred_scope),
+        image_generation_authorized=bool(
+            case.get(
+                "trusted_image_generation_authorized",
+                inferred_scope == "pre_video_assets",
+            )
+        ),
+        video_generation_authorized=bool(
+            case.get(
+                "trusted_video_generation_authorized",
+                inferred_scope == "video_generation",
+            )
+        ),
+        execution_project_root=(ROOT if intent.get("asset_execution_fixture") else None),
+        execution_task_id="fixture-execution-task",
         _seal=_ROUTE_CONTEXT_SEAL,
     )
 
@@ -448,6 +516,57 @@ def _fixture_calibration_readback(
         return None
 
 
+def _fixture_intent(case: dict[str, Any]) -> dict[str, Any]:
+    intent = json.loads(json.dumps(case["intent"], ensure_ascii=False))
+    fixture_kind = intent.pop("asset_execution_fixture", None)
+    if fixture_kind != "valid_simple_product_board":
+        return intent
+    visual_plan_path = ROOT / "tests/fixtures/asset-execution/character-plan.json"
+    visual_plan = json.loads(visual_plan_path.read_text(encoding="utf-8"))
+    active_asset = next(
+        asset for asset in visual_plan["assets"] if asset["role"] == "product_identity_board"
+    )
+    prompt = asset_execution_gate.build_role_prompt(active_asset, visual_plan)
+    stage_id = "production_design"
+    reference_relative = "skills/dircreative/references/asset-foundation-pass.md"
+    reference = ROOT / reference_relative
+    packet = {
+        "contract_id": "asset_execution_gate_v1",
+        "asset_id": active_asset["asset_id"],
+        "asset_role": active_asset["role"],
+        "media_scope": "pre_video_assets",
+        "authorization": {
+            "source": "validated_route_context",
+            "image_generation": True,
+            "video_generation": False,
+        },
+        "visual_plan": {
+            "path": "tests/fixtures/asset-execution/character-plan.json",
+            "sha256": hashlib.sha256(visual_plan_path.read_bytes()).hexdigest(),
+        },
+        "active_asset_truth_sha256": active_asset["truth_sha256"],
+        "stage_contract": {
+            "stage_id": stage_id,
+            "reference": reference_relative,
+            "sha256": hashlib.sha256(reference.read_bytes()).hexdigest(),
+        },
+        "dependencies": [],
+        "execution": {
+            "adapter": "imagegen",
+            "mode": "serial_review_gated",
+            "parallel_group": None,
+        },
+        "prompt": prompt,
+        "prompt_sha256": hashlib.sha256(prompt.encode("utf-8")).hexdigest(),
+        "prompt_authority": asset_execution_gate.build_prompt_authority(
+            active_asset,
+            hashlib.sha256(prompt.encode("utf-8")).hexdigest(),
+        ),
+    }
+    intent["asset_execution_packet"] = packet
+    return intent
+
+
 def digest_bytes(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
@@ -466,9 +585,21 @@ def valid_reference_pack(value: Any) -> bool:
     )
 
 
-def load_json(path: Path) -> Any:
+def load_json(
+    path: Path,
+    *,
+    max_bytes: int | None = None,
+    label: str = "JSON",
+) -> Any:
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
+        if max_bytes is None:
+            payload = path.read_bytes()
+        else:
+            with path.open("rb") as handle:
+                payload = handle.read(max_bytes + 1)
+            if len(payload) > max_bytes:
+                raise SkillStackError(f"{label} exceeds size limit ({max_bytes})")
+        return json.loads(payload.decode("utf-8"))
     except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
         raise SkillStackError(f"invalid JSON: {path.name}: {exc}") from exc
 
@@ -740,10 +871,14 @@ def validate_registry(registry: dict[str, Any]) -> list[str]:
         mr_li.get("mode_allowlist") != ["studio"]
         or mr_li.get("reference_pack") != list(MR_LI_REFERENCE_PAD)
         or mr_li.get("collaborator_context_cost") != "isolated_method_contract"
+        or mr_li.get("required_metadata_version") != "1.9.0"
+        or int(mr_li.get("minimum_body_bytes", 0)) < 20000
         or "visual_baseline_gate" not in mr_li.get("capabilities", [])
         or "natural_paragraph_delivery" not in mr_li.get("capabilities", [])
+        or "prewrite_capacity_gate" not in mr_li.get("capabilities", [])
+        or "speaker_change_cut_logic" not in mr_li.get("capabilities", [])
     ):
-        failures.append("mr-li-seedance-25 1.8.2 routing contract drifted")
+        failures.append("mr-li-seedance-25 1.9.0 routing contract drifted")
     sepia = providers.get("sepia", {})
     if (
         sepia.get("provider_roles") != ["craft_owner"]
@@ -951,6 +1086,13 @@ def validate_registry(registry: dict[str, Any]) -> list[str]:
     )
     if script_scenario.get("requires_asset_foundation_gate") is not True:
         failures.append("script_to_seedance must require the asset foundation gate")
+    for scenario in scenarios:
+        if "imagegen" in scenario.get("execution_adapters", []) and (
+            {"still", "image_series"} & set(scenario.get("media", []))
+        ) and scenario.get("required_execution_contract") != "asset_execution_gate_v1":
+            failures.append(
+                f"{scenario.get('scenario_id')}: imagegen execution must require asset_execution_gate_v1"
+            )
     sepia_scenario = next(
         (
             item
@@ -1088,6 +1230,12 @@ def _frontmatter_probe(
     except UnicodeDecodeError as exc:
         raise SkillStackError("skill_body_not_utf8") from exc
     frontmatter, front_bytes = _parse_frontmatter(text, frontmatter_limit)
+    version_match = re.search(
+        r"(?ms)^metadata:\s*$.*?^\s{2}version:\s*[\"']?([^\"'\n]+)",
+        text,
+    )
+    if version_match:
+        frontmatter["metadata.version"] = version_match.group(1).strip()
     return frontmatter, front_bytes, metadata.st_size
 
 
@@ -1105,6 +1253,11 @@ def hydrate_entry(entry: CatalogEntry, registry: dict[str, Any]) -> CatalogEntry
         text,
         int(registry["discovery_contract"]["frontmatter_bytes_max"]),
     )
+    version_match = re.search(
+        r"(?ms)^metadata:\s*$.*?^\s{2}version:\s*[\"']?([^\"'\n]+)",
+        text,
+    )
+    metadata_version = version_match.group(1).strip() if version_match else None
     if frontmatter["name"] != entry.skill_id:
         raise SkillStackError("selected_skill_identity_changed")
     return replace(
@@ -1113,6 +1266,7 @@ def hydrate_entry(entry: CatalogEntry, registry: dict[str, Any]) -> CatalogEntry
         body_sha256=digest_bytes(data),
         frontmatter_bytes=front_bytes,
         body_loaded=True,
+        metadata_version=metadata_version,
     )
 
 
@@ -1258,6 +1412,7 @@ def discover_roots(
                     frontmatter_bytes=front_bytes,
                     openai_metadata=openai_metadata,
                     body_loaded=False,
+                    metadata_version=frontmatter.get("metadata.version"),
                 )
             except SkillStackError as exc:
                 rejected.append({"skill_id": child.name if valid_provider_id(child.name) else "invalid", "source_type": source_type, "reason": str(exc)})
@@ -1356,6 +1511,11 @@ def load_host_catalog(path: Path, registry: dict[str, Any]) -> tuple[dict[str, C
             frontmatter_bytes=metadata_bytes,
             openai_metadata={},
             body_loaded=False,
+            metadata_version=(
+                str(raw.get("metadata_version"))
+                if isinstance(raw.get("metadata_version"), str)
+                else None
+            ),
             capability_policy=capability_policy,
         )
     return catalog, rejected
@@ -1456,6 +1616,7 @@ def _slot(skill_id: str, role: str, provider: dict[str, Any], entry: CatalogEntr
         "status": "materialized",
         "body_bytes": entry.body_bytes,
         "body_sha256": entry.body_sha256,
+        "metadata_version": entry.metadata_version,
     }
     application_contract = provider.get("application_contract")
     if isinstance(application_contract, dict):
@@ -2171,7 +2332,15 @@ def select_stack(
         entry = catalog.get(skill_id)
         if entry is None:
             return False
+        required_version = providers.get(skill_id, {}).get("required_metadata_version")
+        minimum_body_bytes = providers.get(skill_id, {}).get("minimum_body_bytes")
         if entry.body_loaded:
+            if required_version and entry.metadata_version != required_version:
+                materialization_failures[skill_id] = "provider_version_mismatch"
+                return False
+            if isinstance(minimum_body_bytes, int) and entry.body_bytes < minimum_body_bytes:
+                materialization_failures[skill_id] = "provider_body_too_small"
+                return False
             return True
         if body_loader is None:
             materialization_failures[skill_id] = "provider_body_not_bound"
@@ -2183,6 +2352,12 @@ def select_stack(
             return False
         if loaded is None or not loaded.body_loaded:
             materialization_failures[skill_id] = "provider_body_unavailable"
+            return False
+        if required_version and loaded.metadata_version != required_version:
+            materialization_failures[skill_id] = "provider_version_mismatch"
+            return False
+        if isinstance(minimum_body_bytes, int) and loaded.body_bytes < minimum_body_bytes:
+            materialization_failures[skill_id] = "provider_body_too_small"
             return False
         catalog[skill_id] = loaded
         return True
@@ -2350,9 +2525,15 @@ def select_stack(
             int(item["body_bytes"]) + _metadata_bytes([item]) for item in isolated_handoffs
         )
         isolated_handoff_budget = int(mode_contract.get("isolated_handoff_context_bytes_max", 0))
+        selected_candidate_ids = {str(item["skill_id"]) for item in future}
+        pending_candidate_metadata_bytes = _candidate_metadata_bytes(
+            (candidate_id for candidate_id in candidate_pool if candidate_id not in selected_candidate_ids),
+            catalog,
+            providers,
+        )
         total_bytes = (
             base_bytes
-            + candidate_metadata_bytes
+            + pending_candidate_metadata_bytes
             + sum(
                 int(item["body_bytes"])
                 for item in future
@@ -2406,36 +2587,13 @@ def select_stack(
             )
         )
 
-    reserve_for_isolated_adapter = mode == "delivery" and bool(intent.get("real_side_effect")) and any(
-        skill_id in candidate_set
-        and providers.get(skill_id, {}).get("context_cost") == "isolated_host_tool_contract"
-        and _eligible(
-            skill_id,
-            "execution_adapter",
-            mode,
-            media,
-            str(scenario["stage"]),
-            route_context.deliverable_layer,
-            explicit,
-            providers,
-            catalog,
-            available_tools,
-        )
-        for skill_id in scenario.get("execution_adapters", [])
-    )
     owner_id: str | None = None
-    if reserve_for_isolated_adapter:
-        reason_codes.append("delivery_body_reserved_for_execution_adapter")
-        suggestions.extend(skill_id for skill_id in owner_candidates if skill_id in catalog)
-        if not intent.get("disable_dir_fallback"):
-            owner_id = "dircreative"
-    else:
-        for skill_id in owner_candidates:
-            if eligible(skill_id, "craft_owner") and can_add(skill_id, "craft_owner"):
-                owner_id = skill_id
-                break
-            if skill_id in catalog:
-                suggestions.append(skill_id)
+    for skill_id in owner_candidates:
+        if eligible(skill_id, "craft_owner") and can_add(skill_id, "craft_owner"):
+            owner_id = skill_id
+            break
+        if skill_id in catalog:
+            suggestions.append(skill_id)
 
     if owner_id is None:
         if intent.get("disable_dir_fallback") or scenario.get("owner_required") is True:
@@ -2525,6 +2683,11 @@ def select_stack(
         owner_slot["context_scope"] = "isolated_craft_contract"
     if owner_id == "dircreative":
         trimmed = False
+        candidate_metadata_bytes = _candidate_metadata_bytes(
+            (candidate_id for candidate_id in candidate_pool if candidate_id != owner_id),
+            catalog,
+            providers,
+        )
         while candidate_pool and (
             base_bytes + candidate_metadata_bytes + _metadata_bytes([owner_slot]) > budget
         ):
@@ -2534,6 +2697,11 @@ def select_stack(
             if dropped != "dircreative":
                 suggestions.append(dropped)
             trimmed = True
+            candidate_metadata_bytes = _candidate_metadata_bytes(
+                (candidate_id for candidate_id in candidate_pool if candidate_id != owner_id),
+                catalog,
+                providers,
+            )
         if base_bytes + candidate_metadata_bytes + _metadata_bytes([owner_slot]) > budget:
             raise SkillStackError("dircreative fallback cannot fit the mode context budget")
         if trimmed:
@@ -2631,9 +2799,59 @@ def select_stack(
     if scenario.get("requires_complete_gaps_before_downstream") is True and missing_gaps:
         reason_codes.append("required_asset_foundation_gaps_missing")
 
+    asset_packet = intent.get("asset_execution_packet")
+    asset_packet_errors = ["asset_execution_packet_missing"]
+    if isinstance(asset_packet, dict) and route_context.execution_project_root is not None:
+        try:
+            asset_packet_errors = asset_execution_gate.validate_packet(
+                asset_packet,
+                repo_root=ROOT,
+                project_root=route_context.execution_project_root,
+                execution_task_id=route_context.execution_task_id,
+            )
+        except (OSError, ValueError, RuntimeError):
+            asset_packet_errors = ["asset_execution_project_root_invalid"]
+    asset_execution_gate_bound = not asset_packet_errors
+    if asset_execution_gate_bound and (
+        asset_packet.get("media_scope") != route_context.media_scope
+        or asset_packet.get("authorization", {}).get("image_generation")
+        is not route_context.image_generation_authorized
+        or asset_packet.get("authorization", {}).get("video_generation")
+        is not route_context.video_generation_authorized
+    ):
+        asset_packet_errors = ["asset_execution_packet_scope_mismatch"]
+        asset_execution_gate_bound = False
+    media_scope_execution_blocked = (
+        intent.get("real_side_effect") is True
+        and "generation_authorization" in route_context.granted_gates
+        and (
+            (media in {"still", "image_series"} and not route_context.image_generation_authorized)
+            or (media == "video" and not route_context.video_generation_authorized)
+        )
+    )
+    if media_scope_execution_blocked:
+        reason_codes.append(
+            "image_generation_not_authorized"
+            if media in {"still", "image_series"}
+            else "video_generation_not_authorized"
+        )
+    asset_execution_gate_blocked = (
+        scenario.get("required_execution_contract") == "asset_execution_gate_v1"
+        and media in {"still", "image_series"}
+        and intent.get("real_side_effect") is True
+        and "generation_authorization" in route_context.granted_gates
+        and not asset_execution_gate_bound
+    )
+    if asset_execution_gate_blocked:
+        reason_codes.append("asset_execution_gate_required")
+
     gate: str | None = None
     adapter: dict[str, Any] | None = None
-    if intent.get("real_side_effect"):
+    if (
+        intent.get("real_side_effect")
+        and not asset_execution_gate_blocked
+        and not media_scope_execution_blocked
+    ):
         side_effect_kind = intent.get("side_effect_kind", "generation")
         for skill_id in scenario.get("execution_adapters", []):
             if skill_id not in candidate_set:
@@ -2805,6 +3023,12 @@ def select_stack(
         if adapter is not None and adapter.get("context_scope") == "isolated_host_tool_contract"
         else 0
     )
+    selected_candidate_ids = {str(item["skill_id"]) for item in slots}
+    candidate_metadata_bytes = _candidate_metadata_bytes(
+        (candidate_id for candidate_id in candidate_pool if candidate_id not in selected_candidate_ids),
+        catalog,
+        providers,
+    )
     total_context_bytes = base_bytes + candidate_metadata_bytes + provider_body_bytes + selected_metadata_bytes
     if total_context_bytes > budget:
         raise SkillStackError("selected stack exceeds total context budget")
@@ -2822,7 +3046,12 @@ def select_stack(
         mode_contract.get("isolated_handoff_context_bytes_max", 0)
     ):
         raise SkillStackError("selected isolated handoff context exceeds its budget")
-    if len(loaded_body_ids) > body_cap:
+    loaded_stack_body_ids = {
+        item["skill_id"]
+        for item in slots
+        if item["status"] in {"materialized", "eligible_after_gate"}
+    }
+    if len(loaded_stack_body_ids) > body_cap:
         raise SkillStackError("selected stack exceeds provider body budget")
     if len([item for item in slots if item["role"] == "validator"]) > 1:
         raise SkillStackError("selected stack has more than one validator")
@@ -2875,6 +3104,8 @@ def select_stack(
         if validation_required_missing
         or staged_pass_blocked
         or asset_foundation_gate_blocked
+        or asset_execution_gate_blocked
+        or media_scope_execution_blocked
         or ledger_candidate_blocked
         or (intent.get("real_side_effect") and adapter is None)
         else "needs_followup"
@@ -2904,6 +3135,15 @@ def select_stack(
     return {
         "status": status,
         "scenario_id": scenario_id,
+        "required_execution_contract": scenario.get("required_execution_contract"),
+        "active_asset_id": asset_packet.get("asset_id") if asset_execution_gate_bound else None,
+        "active_asset_role": asset_packet.get("asset_role") if asset_execution_gate_bound else None,
+        "asset_execution_packet_sha256": (
+            asset_execution_gate.canonical_packet_sha256(asset_packet)
+            if asset_execution_gate_bound
+            else None
+        ),
+        "asset_execution_packet_errors": asset_packet_errors if asset_execution_gate_blocked else [],
         "active_asset_pass_id": active_asset_pass_id,
         "next_asset_pass_id": next_asset_pass_id,
         "staged_pass_count": staged_pass_count,
@@ -2914,6 +3154,18 @@ def select_stack(
         ),
         "handoff_contract": applied_handoff_contract,
         "priority_method_provider": priority_method_provider,
+        "priority_method_provider_version": (
+            next(
+                (
+                    item.get("metadata_version")
+                    for item in slots
+                    if item.get("skill_id") == priority_method_provider
+                ),
+                None,
+            )
+            if priority_method_provider
+            else None
+        ),
         "provider_operation": provider_operation,
         "provider_reference_profile": provider_reference_profile,
         "provider_document_type": provider_document_type,
@@ -2946,6 +3198,7 @@ def select_stack(
                 "skill_id": item["skill_id"],
                 "body_sha256": item["body_sha256"],
                 "body_bytes": item["body_bytes"],
+                "metadata_version": item.get("metadata_version"),
                 "context_scope": item.get("context_scope", "main_skill_stack"),
                 "host_action": (
                     "primary_host_diagnose_only_no_rewrite_hash_verify_before_card"
@@ -2981,6 +3234,7 @@ def select_stack(
         },
         "slots": slots,
         "suggested_skill_ids": suggestions,
+        "materialization_failures": materialization_failures,
         "final_artifact_owner": final_owner,
         "final_state_owner": final_owner,
         "gate": gate,
@@ -3119,12 +3373,14 @@ def _write_mock_skill(root: Path, skill_id: str, body_pad: int = 0) -> None:
     skill_dir = root / skill_id.replace(":", "__")
     skill_dir.mkdir(parents=True)
     nested_metadata = (
-        '\nmetadata:\n  version: "1.8.2"\n  display-version-name: "Seedance 2.5 method"'
+        '\nmetadata:\n  version: "1.9.0"\n  display-version-name: "Seedance 2.5 method"'
         if skill_id == "mr-li-seedance-25"
         else '\nmetadata:\n  version: "0.5.0"'
         if skill_id == "sepia"
         else ""
     )
+    if skill_id == "mr-li-seedance-25" and body_pad < 20000:
+        body_pad = 20000
     body = (
         f"---\nname: {skill_id}\ndescription: Deterministic test provider.{nested_metadata}\n---\n\n# Test\n"
     ) + ("x" * body_pad)
@@ -3336,7 +3592,7 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
                 case_catalog.pop(missing, None)
             try:
                 receipt = select_stack(
-                    case["intent"],
+                    _fixture_intent(case),
                     registry,
                     routing,
                     case_catalog,
@@ -3504,7 +3760,7 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
             case = case_map[case_id]
             try:
                 receipt = select_stack(
-                    case["intent"],
+                    _fixture_intent(case),
                     registry,
                     routing,
                     dict(realistic_catalog),
@@ -3641,7 +3897,7 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
                 if (
                     int(context.get("isolated_craft_context_bytes", 0)) < 40000
                     or int(context.get("isolated_craft_context_bytes", 0)) > 131072
-                    or int(context.get("isolated_craft_reference_count", 0)) != 4
+                    or int(context.get("isolated_craft_reference_count", 0)) != 5
                     or int(context.get("isolated_craft_reference_bytes", 0)) < 26000
                     or int(context.get("aggregate_accounted_bytes", 0))
                     != int(context.get("total_bytes", 0))
@@ -3650,7 +3906,7 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
                     != set(MR_LI_REFERENCE_PAD)
                     or any(not item.get("sha256") for item in reference_requests)
                 ):
-                    failures.append("realistic Seedance 1.8.2 references were not isolated and budgeted")
+                    failures.append("realistic Seedance 1.9.0 references were not isolated and budgeted")
             if case_id == "p54_seedance25_fast_priority":
                 context = receipt.get("context") or {}
                 if (
@@ -3673,7 +3929,7 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
                 if (
                     int(context.get("isolated_method_context_bytes", 0)) < 40000
                     or int(context.get("isolated_method_context_bytes", 0)) > 65536
-                    or int(context.get("isolated_method_reference_count", 0)) != 4
+                    or int(context.get("isolated_method_reference_count", 0)) != 5
                     or {item.get("relative_path") for item in method_requests}
                     != set(MR_LI_REFERENCE_PAD)
                     or int(context.get("total_bytes", 0)) > 20000
@@ -3685,7 +3941,7 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
                     + int(context.get("isolated_handoff_context_bytes", 0))
                     + int(context.get("execution_adapter_context_bytes", 0))
                 ):
-                    failures.append(f"{case_id}: Seedance 1.8.2 method context was not isolated")
+                    failures.append(f"{case_id}: Seedance 1.9.0 method context was not isolated")
             if case_id in {
                 "p59_sepia_narrative_refactor",
                 "p60_sepia_professional_review",
@@ -3892,12 +4148,14 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
             else:
                 failures.append("renderer accepted caller-supplied adoption hashes")
         authorized_case = next(item for item in cases if item["id"] == "p42_authorized_generation_adapter")
+        authorized_intent = _fixture_intent(authorized_case)
         authorized_context = validate_primary_route_context(
-            authorized_case["intent"],
-            request_text="$dircreative 现在立即生成这个画面，我确认生成",
+            authorized_intent,
+            request_text="$dircreative 现在直接出图",
+            execution_project_root=ROOT,
         )
         authorized_receipt = select_stack(
-            authorized_case["intent"],
+            authorized_intent,
             registry,
             routing,
             dict(catalog),
@@ -3906,7 +4164,7 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
         )
         if authorized_receipt.get("execution_adapter", {}).get("skill_id") != "imagegen":
             failures.append("validated generation route did not grant the selected adapter")
-        fal_intent = dict(authorized_case["intent"], available_tools=["fal_media"])
+        fal_intent = dict(authorized_intent, available_tools=["fal_media"])
         fal_catalog = dict(catalog)
         fal_catalog.pop("imagegen", None)
         fal_receipt = select_stack(
@@ -3928,11 +4186,13 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
             "needs_validation": False,
             "real_side_effect": True,
             "side_effect_kind": "generation",
+            "asset_execution_packet": authorized_intent["asset_execution_packet"],
             "available_tools": ["image_gen.imagegen"],
         }
         key_visual_context = validate_primary_route_context(
             key_visual_intent,
-            request_text="$dircreative 现在立即生成这个画面，我确认生成",
+            request_text="$dircreative 现在直接出图",
+            execution_project_root=ROOT,
         )
         key_visual_receipt = select_stack(
             key_visual_intent,
@@ -3944,17 +4204,21 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
         )
         if (
             key_visual_receipt.get("status") != "ready"
-            or key_visual_receipt.get("craft_owner", {}).get("skill_id") != "dircreative"
+            or key_visual_receipt.get("scenario_id") != "key_visual"
             or key_visual_receipt.get("execution_adapter", {}).get("skill_id") != "imagegen"
-            or key_visual_receipt.get("loaded_body_count") != 1
+        ):
+            failures.append("authorized image scenario did not retain its selection through execution")
+        if (
+            authorized_receipt.get("execution_adapter", {}).get("skill_id") != "imagegen"
+            or authorized_receipt.get("loaded_body_count") != 1
         ):
             failures.append("Delivery did not reserve its single provider body for the execution adapter")
         unconfirmed_context = validate_primary_route_context(
-            authorized_case["intent"],
+            authorized_intent,
             request_text="$dircreative 申请真实生成",
         )
         forged_intent = dict(
-            authorized_case["intent"],
+            authorized_intent,
             authorizations={"generation_authorization": "caller-forged"},
         )
         forged_receipt = select_stack(
@@ -4139,6 +4403,12 @@ def main() -> int:
     select_parser.add_argument("--request", default="", help="original request for primary-route validation")
     select_parser.add_argument("--handoff", type=Path, help="real ADCO Specialist Exchange handoff")
     select_parser.add_argument("--project-root", type=Path, help="ADCO project root")
+    select_parser.add_argument(
+        "--execution-project-root",
+        type=Path,
+        help="host-selected project root for a real asset execution packet",
+    )
+    select_parser.add_argument("--execution-task-id", help="host-bound execution task/thread id")
     select_parser.add_argument("--descriptor", type=Path, help="DIR specialist descriptor")
     select_parser.add_argument(
         "--calibration-sources",
@@ -4179,10 +4449,18 @@ def main() -> int:
         )
         return 0
     if command == "select":
-        intent = load_json(args.intent)
+        intent = load_json(
+            args.intent,
+            max_bytes=MAX_INTENT_BYTES,
+            label="intent",
+        )
         calibration_readback = None
         if args.calibration_sources:
-            source_documents = load_json(args.calibration_sources)
+            source_documents = load_json(
+                args.calibration_sources,
+                max_bytes=MAX_CALIBRATION_SOURCES_BYTES,
+                label="calibration sources",
+            )
             calibration = intent.get("humanization_calibration")
             profile = intent.get("humanization_profile")
             if not isinstance(calibration, dict) or not isinstance(source_documents, dict):
@@ -4198,6 +4476,8 @@ def main() -> int:
             handoff_path=args.handoff,
             project_root=args.project_root,
             descriptor_path=args.descriptor,
+            execution_project_root=args.execution_project_root,
+            execution_task_id=args.execution_task_id,
         )
         receipt = select_stack(
             intent,
@@ -4243,7 +4523,7 @@ def main() -> int:
             raise SkillStackError(f"unknown smoke case ids: {unknown}")
         receipts = [
             select_stack(
-                case_map[case_id]["intent"],
+                _fixture_intent(case_map[case_id]),
                 registry,
                 load_routing(),
                 dict(catalog),
@@ -4298,7 +4578,7 @@ def main() -> int:
     if case is None:
         raise SkillStackError(f"unknown case id: {args.case_id}")
     receipt = select_stack(
-        case["intent"],
+        _fixture_intent(case),
         registry,
         load_routing(),
         catalog,

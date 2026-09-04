@@ -287,9 +287,12 @@ def audit() -> tuple[list[str], dict[str, Any]]:
 
     schema = json.loads(STATE_SCHEMA.read_text(encoding="utf-8"))
     expected_state_fields = {
-        "project_id", "mode", "current_route", "locked_facts", "working_assumptions",
-        "active_outputs", "stale_outputs", "open_questions", "generation_authorized",
-        "client_delivery_approved",
+        "project_id", "mode", "current_route", "media_scope",
+        "image_generation_authorized", "video_generation_authorized",
+        "active_stage", "active_asset_id", "active_asset_role",
+        "stage_contract_reference", "stage_contract_sha256",
+        "asset_execution_gate_status", "locked_facts", "working_assumptions",
+        "active_outputs", "stale_outputs", "open_questions", "client_delivery_approved",
     }
     if set(schema.get("required", [])) != expected_state_fields:
         failures.append("compact state snapshot required fields drifted")
