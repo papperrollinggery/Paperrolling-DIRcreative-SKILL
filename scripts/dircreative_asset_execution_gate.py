@@ -1086,7 +1086,7 @@ def validate_packet(
             and (mode != "headless_safe" or master.get("body_mode") == "fully_headless")
         )
         prompt_markers = [
-            "three-quarter face close-up",
+            "front-facing face close-up",
             "far left",
             "single horizontal row",
             "Panel 1 front",

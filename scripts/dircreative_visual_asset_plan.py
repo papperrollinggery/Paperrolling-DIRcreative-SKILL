@@ -517,13 +517,17 @@ def normalized_perceptual_hash(width: int, height: int, rgba: bytes) -> str:
     return f"{bits:064x}"
 
 
-def normalized_raster_evidence(width: int, height: int, rgba: bytes) -> dict[str, str]:
+def normalized_raster_evidence(width: int, height: int, rgba: bytes) -> dict[str, Any]:
     expected_bytes = width * height * 4
     if len(rgba) != expected_bytes or expected_bytes > MAX_DECODED_BYTES:
         raise ValueError("normalized_pixel_buffer_invalid")
+    alpha = rgba[3::4]
     return {
         "pixel_sha256": normalized_pixel_sha256(width, height, rgba),
         "perceptual_hash": normalized_perceptual_hash(width, height, rgba),
+        "alpha_min": min(alpha),
+        "alpha_max": max(alpha),
+        "alpha_nonopaque_pixel_count": sum(value != 255 for value in alpha),
     }
 
 
@@ -3873,6 +3877,15 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
         generated["completion_claim"] = "visual_assets_complete"
         file_by_asset: dict[str, str] = {}
         source_index = 0
+        import dircreative_character_master_visual_gate as character_visual_gate
+
+        original_character_probe = character_visual_gate.run_probe
+        original_swift_tool_identity = character_visual_gate.swift_tool_identity
+        character_visual_gate.swift_tool_identity = lambda: {
+            "path": "/fixture/swift",
+            "sha256": "f" * 64,
+            "signature_policy": "fixture",
+        }
         for asset in generated["assets"]:
             target = temp_root / f"{asset['asset_id']}.png"
             if asset["role"] in DIRECT_ROLES:
@@ -4071,9 +4084,6 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
                     ),
                     structure_receipt,
                 )
-        import dircreative_character_master_visual_gate as character_visual_gate
-
-        original_character_probe = character_visual_gate.run_probe
         character_visual_gate.run_probe = lambda _image_bytes: (structure_probe, None)
         generated_errors, generated_metrics = validate_plan(
             generated,
@@ -4389,6 +4399,7 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
             encoding="utf-8",
         )
         character_visual_gate.run_probe = original_character_probe
+        character_visual_gate.swift_tool_identity = original_swift_tool_identity
 
         multi_inventory = copy.deepcopy(tvc_inventory)
         multi_inventory["generation_units"][0]["direct_input_min"] = 2

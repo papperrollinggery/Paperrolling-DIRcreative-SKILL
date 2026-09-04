@@ -7,9 +7,15 @@ import unittest
 import io
 import json
 import hashlib
+import struct
+import zlib
 from pathlib import Path
+from unittest.mock import patch
 
-from PIL import Image, ImageDraw
+try:
+    from PIL import Image, ImageDraw
+except ImportError:  # Pillow is optional for drawing-only fixture tests.
+    Image = ImageDraw = None  # type: ignore[assignment]
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -17,6 +23,25 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 import dircreative_character_master_visual_gate as gate  # noqa: E402
 import dircreative_media_forward_audit as media_audit  # noqa: E402
+
+
+def rgba_png(width: int, height: int, pixel: tuple[int, int, int, int]) -> bytes:
+    def chunk(kind: bytes, payload: bytes) -> bytes:
+        return (
+            struct.pack(">I", len(payload))
+            + kind
+            + payload
+            + struct.pack(">I", zlib.crc32(kind + payload) & 0xFFFFFFFF)
+        )
+
+    row = bytes(pixel) * width
+    payload = b"".join(b"\x00" + row for _ in range(height))
+    return (
+        b"\x89PNG\r\n\x1a\n"
+        + chunk(b"IHDR", struct.pack(">IIBBBBB", width, height, 8, 6, 0, 0, 0))
+        + chunk(b"IDAT", zlib.compress(payload))
+        + chunk(b"IEND", b"")
+    )
 
 
 def probe(full_body_count: int) -> dict:
@@ -57,6 +82,44 @@ def probe(full_body_count: int) -> dict:
 
 
 class CharacterMasterVisualGateTests(unittest.TestCase):
+    def test_transparent_character_master_cannot_receive_pass_receipt(self):
+        with tempfile.TemporaryDirectory() as raw:
+            image_path = Path(raw) / "transparent-master.png"
+            image_path.write_bytes(rgba_png(640, 640, (120, 140, 160, 128)))
+            evidence, error = gate.inspect_raster(image_path)
+        self.assertIsNone(error)
+        assert evidence is not None
+        self.assertEqual(evidence["alpha_min"], 128)
+        self.assertEqual(evidence["alpha_max"], 128)
+        self.assertEqual(evidence["alpha_nonopaque_pixel_count"], 640 * 640)
+        with patch.object(gate, "swift_tool_identity", return_value={"path": "/fixture/swift", "sha256": "f" * 64, "signature_policy": "fixture"}):
+            receipt = gate.make_receipt(
+                asset_id="CHAR-ALPHA",
+                asset_truth_sha256="a" * 64,
+                image_evidence=evidence,
+                probe=probe(4),
+                checked_at="2026-09-04T00:00:00Z",
+            )
+        self.assertEqual(receipt["status"], "blocked")
+        self.assertIn("character_master_requires_opaque_background", receipt["errors"])
+        receipt["status"] = "pass"
+        receipt["errors"] = []
+        receipt["receipt_sha256"] = gate.canonical_sha256(
+            {key: value for key, value in receipt.items() if key != "receipt_sha256"}
+        )
+        with patch.object(gate, "swift_tool_identity", return_value=receipt["vision_tool_identity"]):
+            errors = gate.validate_receipt(
+                receipt,
+                asset_id="CHAR-ALPHA",
+                asset_truth_sha256="a" * 64,
+                image_evidence=evidence,
+                expected_mode="headed_master",
+                expected_derived_from_asset_id=None,
+                expected_approved_source_master_sha256=None,
+            )
+        self.assertIn("character_master_visual_error_set_invalid", errors)
+        self.assertIn("character_master_visual_status_invalid", errors)
+
     def test_two_full_bodies_cannot_be_claimed_as_four_view_master(self):
         errors = gate.evaluate_probe(probe(2))
         self.assertIn("character_master_requires_four_full_bodies", errors)
@@ -134,18 +197,26 @@ class CharacterMasterVisualGateTests(unittest.TestCase):
         )
         value["right_face_count"] = 0
         self.assertEqual(gate.evaluate_probe(value, mode="headless_safe"), [])
-        receipt = gate.make_receipt(
-            asset_id="CHAR-HEADLESS",
-            asset_truth_sha256="d" * 64,
-            image_evidence={"sha256": "a" * 64, "pixel_sha256": "b" * 64},
-            probe=value,
-            checked_at="2026-09-04T00:00:00Z",
-            mode="headless_safe",
-            derived_from_asset_id="CHAR-BASE",
-            approved_source_master_sha256="c" * 64,
-        )
+        with patch.object(gate, "swift_tool_identity", return_value={"path": "/fixture/swift", "sha256": "f" * 64, "signature_policy": "fixture"}):
+            receipt = gate.make_receipt(
+                asset_id="CHAR-HEADLESS",
+                asset_truth_sha256="d" * 64,
+                image_evidence={
+                    "sha256": "a" * 64,
+                    "pixel_sha256": "b" * 64,
+                    "alpha_min": 255,
+                    "alpha_max": 255,
+                    "alpha_nonopaque_pixel_count": 0,
+                },
+                probe=value,
+                checked_at="2026-09-04T00:00:00Z",
+                mode="headless_safe",
+                derived_from_asset_id="CHAR-BASE",
+                approved_source_master_sha256="c" * 64,
+            )
         self.assertEqual(receipt["status"], "applied_unverified")
 
+    @unittest.skipUnless(Image is not None, "Pillow is required for drawing fixture tests")
     def test_four_thin_vertical_outlines_are_not_headless_bodies(self):
         image = Image.new("RGB", (1600, 900), "white")
         draw = ImageDraw.Draw(image)
@@ -165,6 +236,7 @@ class CharacterMasterVisualGateTests(unittest.TestCase):
             gate.evaluate_probe(vision, mode="headless_safe"),
         )
 
+    @unittest.skipUnless(Image is not None, "Pillow is required for drawing fixture tests")
     def test_four_solid_rectangles_are_not_headless_bodies(self):
         image = Image.new("RGB", (1600, 900), "white")
         draw = ImageDraw.Draw(image)
@@ -179,6 +251,7 @@ class CharacterMasterVisualGateTests(unittest.TestCase):
         vision.update(gate.foreground_layout(encoded.getvalue(), vision))
         self.assertLess(vision["right_full_height_component_count"], 4)
 
+    @unittest.skipUnless(Image is not None, "Pillow is required for drawing fixture tests")
     def test_portrait_face_must_overlap_component_in_both_axes(self):
         image = Image.new("RGB", (1600, 900), "white")
         draw = ImageDraw.Draw(image)
@@ -193,7 +266,13 @@ class CharacterMasterVisualGateTests(unittest.TestCase):
         self.assertEqual(layout["left_portrait_subject_height"], 0.0)
 
     def test_receipt_cannot_grant_completion_or_skip_semantic_review(self):
-        evidence = {"sha256": "a" * 64, "pixel_sha256": "b" * 64}
+        evidence = {
+            "sha256": "a" * 64,
+            "pixel_sha256": "b" * 64,
+            "alpha_min": 255,
+            "alpha_max": 255,
+            "alpha_nonopaque_pixel_count": 0,
+        }
         receipt = {
             "contract_id": gate.CONTRACT_ID,
             "status": "pass",
@@ -204,6 +283,11 @@ class CharacterMasterVisualGateTests(unittest.TestCase):
             "approved_source_master_sha256": None,
             "image_sha256": evidence["sha256"],
             "pixel_sha256": evidence["pixel_sha256"],
+            "raster_alpha": {
+                "alpha_min": 255,
+                "alpha_max": 255,
+                "alpha_nonopaque_pixel_count": 0,
+            },
             "checked_at": "2026-09-04T00:00:00Z",
             "vision_helper_sha256": gate.vision_helper_sha256(),
             "measurement_contract": {
@@ -225,43 +309,47 @@ class CharacterMasterVisualGateTests(unittest.TestCase):
                 "headless_silhouette_source": "four fixed right-side slots with foreground component heuristics; never self-passing",
                 "portrait_height_source": "left-slot foreground component containing the detected face center",
             },
-            "vision_tool_identity": gate.swift_tool_identity(),
+            "vision_tool_identity": {"path": "/fixture/swift", "sha256": "f" * 64, "signature_policy": "fixture"},
             "vision_probe": probe(4),
             "errors": [],
             "visual_orientation_material_review_required": True,
             "completion_claim_allowed": False,
         }
         receipt["receipt_sha256"] = gate.canonical_sha256(receipt)
-        self.assertEqual(
-            gate.validate_receipt(
-                receipt,
-                asset_id="CHAR-001",
-                asset_truth_sha256="c" * 64,
-                image_evidence=evidence,
-                expected_mode="headed_master",
-                expected_derived_from_asset_id=None,
-                expected_approved_source_master_sha256=None,
-            ),
-            [],
-        )
+        with patch.object(gate, "swift_tool_identity", return_value=receipt["vision_tool_identity"]):
+            self.assertEqual(
+                gate.validate_receipt(
+                    receipt,
+                    asset_id="CHAR-001",
+                    asset_truth_sha256="c" * 64,
+                    image_evidence=evidence,
+                    expected_mode="headed_master",
+                    expected_derived_from_asset_id=None,
+                    expected_approved_source_master_sha256=None,
+                ),
+                [],
+            )
         receipt["completion_claim_allowed"] = True
         receipt["receipt_sha256"] = gate.canonical_sha256(
             {key: value for key, value in receipt.items() if key != "receipt_sha256"}
         )
-        self.assertIn(
-            "character_master_visual_completion_authority_invalid",
-            gate.validate_receipt(
-                receipt,
-                asset_id="CHAR-001",
-                asset_truth_sha256="c" * 64,
-                image_evidence=evidence,
-                expected_mode="headed_master",
-                expected_derived_from_asset_id=None,
-                expected_approved_source_master_sha256=None,
-            ),
-        )
+        with patch.object(gate, "swift_tool_identity", return_value=receipt["vision_tool_identity"]):
+            self.assertIn(
+                "character_master_visual_completion_authority_invalid",
+                gate.validate_receipt(
+                    receipt,
+                    asset_id="CHAR-001",
+                    asset_truth_sha256="c" * 64,
+                    image_evidence=evidence,
+                    expected_mode="headed_master",
+                    expected_derived_from_asset_id=None,
+                    expected_approved_source_master_sha256=None,
+                ),
+            )
 
     def test_path_shadow_cannot_replace_system_swift(self):
+        if not gate.SYSTEM_SWIFT.is_file() or not gate.SYSTEM_CODESIGN.is_file():
+            self.skipTest("Apple Swift verification is unavailable on this host")
         with tempfile.TemporaryDirectory() as raw:
             fake = Path(raw) / "swift"
             fake.write_text("#!/bin/sh\necho fake\n", encoding="utf-8")

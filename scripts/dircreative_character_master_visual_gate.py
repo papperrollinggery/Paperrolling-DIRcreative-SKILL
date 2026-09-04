@@ -246,6 +246,30 @@ def expected_receipt_path(image_path: Path) -> Path:
     return image_path.with_suffix(".character-master-visual.json")
 
 
+def character_master_alpha_facts(image_evidence: dict[str, Any]) -> dict[str, int] | None:
+    values = {
+        "alpha_min": image_evidence.get("alpha_min"),
+        "alpha_max": image_evidence.get("alpha_max"),
+        "alpha_nonopaque_pixel_count": image_evidence.get("alpha_nonopaque_pixel_count"),
+    }
+    if not all(isinstance(value, int) and not isinstance(value, bool) for value in values.values()):
+        return None
+    return values  # type: ignore[return-value]
+
+
+def character_master_alpha_errors(image_evidence: dict[str, Any]) -> list[str]:
+    alpha = character_master_alpha_facts(image_evidence)
+    if alpha is None:
+        return ["character_master_alpha_evidence_missing"]
+    if (
+        alpha["alpha_min"] != 255
+        or alpha["alpha_max"] != 255
+        or alpha["alpha_nonopaque_pixel_count"] != 0
+    ):
+        return ["character_master_requires_opaque_background"]
+    return []
+
+
 def validate_receipt(
     receipt: Any,
     *,
@@ -268,6 +292,7 @@ def validate_receipt(
         "approved_source_master_sha256",
         "image_sha256",
         "pixel_sha256",
+        "raster_alpha",
         "checked_at",
         "vision_helper_sha256",
         "measurement_contract",
@@ -334,15 +359,19 @@ def validate_receipt(
         or receipt.get("pixel_sha256") != image_evidence.get("pixel_sha256")
     ):
         errors.append("character_master_visual_image_binding_invalid")
+    alpha_facts = character_master_alpha_facts(image_evidence)
+    if receipt.get("raster_alpha") != alpha_facts:
+        errors.append("character_master_visual_alpha_binding_invalid")
     probe_errors = evaluate_probe(
         receipt.get("vision_probe"),
         mode=str(receipt.get("mode")),
     )
-    if receipt.get("errors") != probe_errors:
+    expected_receipt_errors = [*probe_errors, *character_master_alpha_errors(image_evidence)]
+    if receipt.get("errors") != expected_receipt_errors:
         errors.append("character_master_visual_error_set_invalid")
     expected_status = (
         "blocked"
-        if probe_errors
+        if expected_receipt_errors
         else "applied_unverified"
         if receipt.get("mode") == "headless_safe"
         else "pass"
@@ -368,11 +397,12 @@ def make_receipt(
     approved_source_master_sha256: str | None = None,
 ) -> dict[str, Any]:
     probe_errors = evaluate_probe(probe, mode=mode)
+    receipt_errors = [*probe_errors, *character_master_alpha_errors(image_evidence)]
     receipt = {
         "contract_id": CONTRACT_ID,
         "status": (
             "blocked"
-            if probe_errors
+            if receipt_errors
             else "applied_unverified"
             if mode == "headless_safe"
             else "pass"
@@ -384,6 +414,7 @@ def make_receipt(
         "approved_source_master_sha256": approved_source_master_sha256,
         "image_sha256": image_evidence["sha256"],
         "pixel_sha256": image_evidence["pixel_sha256"],
+        "raster_alpha": character_master_alpha_facts(image_evidence),
         "checked_at": checked_at,
         "vision_helper_sha256": vision_helper_sha256(),
         "measurement_contract": {
@@ -407,7 +438,7 @@ def make_receipt(
         },
         "vision_tool_identity": swift_tool_identity(),
         "vision_probe": probe,
-        "errors": probe_errors,
+        "errors": receipt_errors,
         "visual_orientation_material_review_required": True,
         "completion_claim_allowed": False,
     }

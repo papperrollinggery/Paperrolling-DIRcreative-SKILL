@@ -4,6 +4,8 @@
 
 ## 0.8.0 - 2026-09-05
 
+- Defaults the primary character identity portrait to a frontal, level face shared by headed and headless variants. Neutral-background masters must be fully opaque; raster alpha facts are measured and bound to their review receipts without forbidding valid RGBA or flattening source images.
+- Keeps Apple Vision identity/probe mocks inside portable test fixtures so Linux CI does not claim a real macOS backend; Pillow-free tests still exercise opacity and receipt integrity.
 - Preserves the selected image craft owner during authorized execution, including clean-image and key-visual scenarios, while keeping missing packets and wrong media scope blocked.
 - Counts selected provider metadata once across craft and isolated contexts, preventing boundary-budget fallback from dropping required validators or collaborators without raising context limits.
 - Removes the first-image circular dependency: selected design stages can precede generated assets; complete asset/stress certification remains mandatory for video compilation. Adds from-zero coverage with no placeholder PNGs.

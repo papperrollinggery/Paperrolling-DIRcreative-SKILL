@@ -64,14 +64,14 @@ independent character redesign is not a state derivative.
 
 ## Headed master sheet contract
 
-The headed master is one physical image on a neutral plain background with even,
+The headed master is one physical image on a fully opaque neutral plain background with even,
 soft lighting and no cinematic grade. Use a wide canvas. The default layout is
 one horizontal row, never a 2x2 body grid: the dominant portrait sits at the far
 left, followed by front, both side profiles, and back at equal body scale. Keep
 front first and back last; either left/right profile order is valid when the
 manifest records the physical order accurately. It contains:
 
-1. one dominant, high-resolution three-quarter face close-up, framed from the
+1. one dominant, high-resolution front-facing face close-up, framed from the
    crown to the base of the neck with only minimal shoulder context;
 2. full-body front view, headed;
 3. full-body left profile, headed;
@@ -84,6 +84,11 @@ line, camera height, relaxed A-pose, anatomy, body proportions, garment hem,
 sleeve length, footwear, and lighting. The dominant face close-up owns fine identity;
 the full-body panels own build, silhouette, wardrobe construction, side-specific
 placement, and hair/body integration.
+
+Keep the primary face frontal and level, with both eyes and both sides of the
+face readable. This is the shared identity anchor for headed and headless
+variants. Supplemental angled face references are conditional on actual shot
+needs; they do not replace the frontal anchor by default.
 
 At the saved-file resolution, the portrait and every full-body subject must each
 span at least 75% of the canvas height. Reject a sheet whose views exist but are
@@ -118,7 +123,7 @@ The headless sheet must be derived from the approved headed master and remain on
 physical image. Preserve the same layout, proportions, ground line, clothing,
 accessories, footwear, and lighting. It contains:
 
-1. one dominant three-quarter face close-up: the only readable face;
+1. one dominant front-facing face close-up: the only readable face;
 2. headless full-body front;
 3. headless full-body left profile;
 4. headless full-body right profile;
@@ -185,11 +190,19 @@ need. Never silently drop or merge roles.
 
 ## Prompt template: headed master
 
+This template is a DIR source contract, not the formal image compiler. For a
+Studio pre-video asset, route the locked facts through the installed
+`jingzao-image-forge` visual spec and its prompt/reference preflight before the
+host image adapter is called. Jingzao owns how asymmetric hardware, panel
+visibility, references, local edits and material controls are expressed in the
+model-facing prompt. A direct DIR prompt is only a rough-planning fallback and
+cannot become a reviewed production master.
+
 ```text
 Create one professional photorealistic character master sheet based strictly on
-the approved identity and wardrobe facts. Neutral mid-gray seamless background,
+the approved identity and wardrobe facts. Fully opaque neutral mid-gray seamless background,
 soft even studio light, neutral expression, no cinematic grade, no text, no
-labels, no watermark. One unified sheet: one dominant three-quarter face
+labels, no watermark. One unified sheet: one dominant front-facing face
 close-up framed crown-to-neck at far left; then one horizontal row of four
 full-body headed views at identical scale and ground line — Panel 1 front,
 Panel 2 left profile, Panel 3 right profile, Panel 4 back. Every portrait and
@@ -199,13 +212,6 @@ points frame-left; right profile means the anatomical right side is visible and
 the nose points frame-right. Panels 2 and 3 are not interchangeable or mirror
 substitutes.
 
-This template is a DIR source contract, not the formal image compiler. For a
-Studio pre-video asset, route the locked facts through the installed
-`jingzao-image-forge` visual spec and its prompt/reference preflight before the
-host image adapter is called. Jingzao owns how asymmetric hardware, panel
-visibility, references, local edits and material controls are expressed in the
-model-facing prompt. A direct DIR prompt is only a rough-planning fallback and
-cannot become a reviewed production master.
 No 2x2 grid. Same person, exact body
 proportions, hair, outfit construction, accessories, footwear and side-specific
 placements in every panel. Use the approved pose lock exactly; do not append a
@@ -221,7 +227,7 @@ present in the approved asset description.
 Using the approved headed master as the sole source of face, body and wardrobe
 truth, create one derived headless-safe character sheet. Preserve identical body
 proportions, outfit, left/right placements, footwear, scale, ground line and
-neutral lighting. One dominant three-quarter face close-up is the only readable face.
+neutral lighting and a fully opaque background. One dominant front-facing face close-up is the only readable face.
 It sits at far left, followed by a single horizontal row of four equal-height
 full-body views — front, left profile, right profile, back — all fully headless
 from the neck opening upward and each at least 75% of canvas height. No 2x2
@@ -246,8 +252,9 @@ objects, no extra details, no watermark.
 
 Before promotion, inspect the actual saved files and verify:
 
-- the active master is one physical sheet;
-- the required dominant three-quarter face close-up and front/left/right/back body views exist;
+- the active master is one physical sheet with a fully opaque background;
+- RGBA alone is valid; nonopaque Alpha pixels are not valid for this neutral-background master;
+- the required dominant front-facing face close-up and front/left/right/back body views exist;
 - the body views form one horizontal row with front first, both profiles in the
   middle and back last rather than a 2x2 grid;
 - the portrait and each body span at least 75% of saved canvas height;
@@ -263,6 +270,9 @@ Before promotion, inspect the actual saved files and verify:
   pass with independent evidence before certification.
 
 ## Research basis
+
+DIR uses the frontal identity anchor above; the historical angled-portrait
+preference below is a source reference, not the active default.
 
 - HELL GRIND translated workflow: one board composed from a face close-up,
   headless front body and back body; dominant three-quarter face close-up preferred.

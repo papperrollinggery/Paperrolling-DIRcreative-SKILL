@@ -136,6 +136,12 @@ class AssetExecutionGateTests(unittest.TestCase):
         errors = gate.validate_packet(self.character_packet(prompt), repo_root=ROOT)
         self.assertIn("jingzao_asset_handoff_missing", errors)
 
+    def test_primary_face_defaults_to_frontal_and_opaque_for_identity(self):
+        prompt = self.canonical_character_prompt()
+        self.assertIn("front-facing face close-up", prompt)
+        self.assertIn("fully opaque", prompt)
+        self.assertNotIn("three-quarter face close-up", prompt)
+
     def test_direct_character_master_prompt_is_blocked_without_selected_image_workflow(self):
         prompt = self.canonical_character_prompt()
         self.assertIn(
