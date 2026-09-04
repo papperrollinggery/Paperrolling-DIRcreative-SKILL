@@ -280,6 +280,7 @@ Skill; see [review trust host configuration](docs/film-preproduction/review-trus
 - [`System plan`](docs/film-preproduction/01-system-plan.md) — 系统架构、角色、适配器和 QA 门
 - [`Runtime contracts`](docs/film-preproduction/runtime-contracts.md) — v2 单一合同所有者、上下文边界和兼容矩阵
 - [`Chat co-creation interface`](docs/film-preproduction/chat-co-creation-interface.md) — 结果优先的聊天呈现指南
+- [`Native adjustment panel PRD`](docs/film-preproduction/dir-native-adjustment-panel-prd.md) — 发布后的 Visual Workspace 全屏工作台产品规格，不是已实现功能
 - [`Director Room perspectives`](docs/film-preproduction/director-room-council-protocol.md) — 动态专业视角、真实分歧与 v1 只读边界
 - [`Live chat start protocol`](docs/film-preproduction/live-chat-start-protocol.md) — 粗想法、完整想法、测试和图片请求的入口
 - [`Film commercial quality standard`](docs/film-preproduction/film-commercial-quality-standard.md) — 影视与商业质量门

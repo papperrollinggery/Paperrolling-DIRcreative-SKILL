@@ -26,5 +26,6 @@ Use the root Skill as the only public entrypoint. External providers such as Sep
 
 ## Optional
 
+- [Native adjustment panel PRD](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/blob/main/docs/film-preproduction/dir-native-adjustment-panel-prd.md): Proposed fullscreen Visual Workspace project browser and evidence-bound adjustment loop; not yet implemented.
 - [Full documentation index](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/tree/main/docs/film-preproduction): Schemas, research, QA rules, integration contracts, and interface studies.
 - [Examples](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/tree/main/examples): Prompt-only film and commercial workflow fixtures.
