@@ -4,10 +4,12 @@ import json
 import unittest
 from pathlib import Path
 
-from jsonschema import Draft202012Validator
-
-
 ROOT = Path(__file__).resolve().parents[1]
+import sys
+
+sys.path.insert(0, str(ROOT / "scripts"))
+
+from dircreative_state_audit import _builtin_schema_errors
 
 
 class StateSnapshotMediaScopeTests(unittest.TestCase):
@@ -56,11 +58,13 @@ class StateSnapshotMediaScopeTests(unittest.TestCase):
     def test_pre_video_scope_cannot_authorize_video(self):
         snapshot = self.snapshot()
         snapshot["video_generation_authorized"] = True
-        errors = list(Draft202012Validator(self.schema()).iter_errors(snapshot))
+        schema = self.schema()
+        errors = _builtin_schema_errors(snapshot, schema, schema, "$")
         self.assertTrue(errors)
 
     def test_valid_scoped_state_passes_schema(self):
-        errors = list(Draft202012Validator(self.schema()).iter_errors(self.snapshot()))
+        schema = self.schema()
+        errors = _builtin_schema_errors(self.snapshot(), schema, schema, "$")
         self.assertEqual(errors, [])
 
 

@@ -20,7 +20,7 @@
 
 DIRcreative 不是“输入一句话、吐出一堆提示词”的黑盒。它先判断任务是局部修改、完整开发还是交付审计，再只加载对应合同。局部任务直接交付修改结果；只有真实方向冲突、生成授权或客户交付才停下来询问。
 
-当前源码候选版本为 `v0.8.0`；在对应 tag 与 GitHub Release 创建前，最新公开版仍是 [`v0.7.1`](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/releases/tag/v0.7.1)。本版修复全片前期从文字规划切换到真实图片资产时的执行断层：分离图片/视频授权，绑定跨任务用户范围、资产角色、权威真值、人物母版、依赖 DAG、媒体调用前置检查和真实生成证据；同时把去 AI 化规划与实际改写、Seedance 能力卡与权威剧本源、结构验证与视觉采用继续保持为不同状态。
+当前源码版本为 `v0.8.0`；已发布版本与下载以 [GitHub Releases](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/releases) 为准。本版修复全片前期从文字规划切换到真实图片资产时的执行断层：分离图片/视频授权，绑定跨任务用户范围、资产角色、权威真值、人物母版、依赖 DAG、媒体调用前置检查和真实生成证据；同时把去 AI 化规划与实际改写、Seedance 能力卡与权威剧本源、结构验证与视觉采用继续保持为不同状态。
 
 源码仓库包含 DIRcreative 根 Skill、19 个 `skills/dircreative/*` 内部子 Skill，以及 `ai-film-asset-stress-test`、`ai-film-production-ledger` 两个 P0 能力入口。正式 DIRcreative 安装包按安全设计只暴露根 `$dircreative`，其余入口会内部化后由 selector 路由；Skill Stack 还会发现宿主中已安装的外部专业 provider。这些依赖不会被复制进本仓库，也不能把“宿主可调用”表述成“GitHub 已内置”。ADCO 始终是独立外部编排方。
 
@@ -197,12 +197,14 @@ roles, performance instructions, and prompt surfaces for each target model.
 
 ### Layered humanization
 
-DIRcreative now diagnoses human-language work before editing. It distinguishes
-`write`, `review`, `refactor`, and `recreate`; inspects architecture or venue,
-discourse and surface in separate evidence-bearing passes; and selects the
-repair depth from the deepest confirmed defect rather than from a word list.
-Every finding needs a source-bound quote, cluster and whitelist verdict.
-Refactor/recreate runs Sepia diagnosis first; only a second call carrying the
+Clear, bounded dialogue and prose edits can be written directly while preserving
+facts and voice. They do not require a full humanization plan or Sepia call.
+Document-scale rewrites and demonstrated structural or discourse problems use
+the layered path: distinguish `write`, `review`, `refactor`, and `recreate`;
+inspect architecture or venue, discourse and surface separately; and select the
+repair depth from confirmed defects. Layered findings need a source-bound quote,
+cluster and whitelist verdict. When Sepia refactor/recreate is selected, diagnosis
+runs first; only a second call carrying the
 diagnosis hash, accepted findings and host-read voice/venue evidence may edit.
 Inline sources have a 64 KiB limit and the full evidence packet has a separately
 reported 128 KiB Studio budget:

@@ -129,6 +129,7 @@ class StoryboardPageAssemblerTests(unittest.TestCase):
             asset["visual_qa_receipt"] = review
         return plan, target
 
+    @unittest.skipUnless(assembler.Image is not None, "Pillow is required for storyboard assembly")
     def test_assembles_real_png_and_content_addressed_receipt(self):
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)
@@ -159,6 +160,7 @@ class StoryboardPageAssemblerTests(unittest.TestCase):
         self.assertEqual((evidence["width"], evidence["height"]), (1920, 1080))
         self.assertEqual(receipt["output_sha256"], evidence["sha256"])
 
+    @unittest.skipUnless(assembler.Image is not None, "Pillow is required for storyboard assembly")
     def test_missing_parent_visual_review_blocks_assembly(self):
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)
@@ -191,6 +193,7 @@ class StoryboardPageAssemblerTests(unittest.TestCase):
         self.assertEqual(errors, [])
         self.assertEqual(set(evidence_map), set(target["inherits_from"]))
 
+    @unittest.skipUnless(assembler.Image is not None, "Pillow is required for storyboard assembly")
     def test_output_and_receipt_must_be_distinct_new_files(self):
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)
@@ -208,6 +211,7 @@ class StoryboardPageAssemblerTests(unittest.TestCase):
         self.assertIn("assembly_output_receipt_collision", result["errors"])
         self.assertFalse(collision.exists())
 
+    @unittest.skipUnless(assembler.Image is not None, "Pillow is required for storyboard assembly")
     def test_existing_parent_frame_cannot_be_overwritten(self):
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)
@@ -228,6 +232,7 @@ class StoryboardPageAssemblerTests(unittest.TestCase):
         self.assertIn("assembly_output_must_be_new", result["errors"])
         self.assertEqual(current, original)
 
+    @unittest.skipUnless(assembler.Image is not None, "Pillow is required for storyboard assembly")
     def test_receipt_write_failure_rolls_back_new_output(self):
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)
@@ -259,6 +264,29 @@ class StoryboardPageAssemblerTests(unittest.TestCase):
                 )
             self.assertEqual(result["status"], "blocked")
             self.assertIn("assembly_receipt_write_or_readback_failed_output_rolled_back", result["errors"])
+            self.assertFalse(output.exists())
+            self.assertFalse(receipt.exists())
+
+    def test_pillow_unavailable_is_tool_blocked_without_writing(self):
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            plan, target = self.prepared_plan(root)
+            plan_bytes = (json.dumps(plan, ensure_ascii=False, sort_keys=True) + "\n").encode()
+            output = root / "unavailable.png"
+            receipt = root / "unavailable.receipt.json"
+            with mock.patch.object(assembler, "Image", None), mock.patch.object(
+                assembler, "ImageDraw", None
+            ), mock.patch.object(assembler, "ImageFont", None), mock.patch.object(
+                assembler, "ImageOps", None
+            ):
+                result = assembler.assemble(
+                    plan_bytes,
+                    base_dir=root,
+                    asset_id=target["asset_id"],
+                    output_path=output,
+                    receipt_path=receipt,
+                )
+            self.assertEqual(result["status"], "TOOL_BLOCKED")
             self.assertFalse(output.exists())
             self.assertFalse(receipt.exists())
 

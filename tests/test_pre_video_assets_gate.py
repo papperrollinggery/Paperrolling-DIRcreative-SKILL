@@ -209,14 +209,23 @@ class PreVideoAssetsGateTests(unittest.TestCase):
                             for index in range(4)
                         ],
                     }
-                    structure_receipt = character_gate.make_receipt(
-                        asset_id=asset["asset_id"],
-                        asset_truth_sha256=asset["truth_sha256"],
-                        image_evidence=evidence,
-                        probe=structure_probe,
-                        checked_at=checked_at,
-                        mode="headed_master",
-                    )
+                    with mock.patch.object(
+                        character_gate,
+                        "swift_tool_identity",
+                        return_value={
+                            "path": "/fixture/swift",
+                            "sha256": "f" * 64,
+                            "signature_policy": "fixture",
+                        },
+                    ):
+                        structure_receipt = character_gate.make_receipt(
+                            asset_id=asset["asset_id"],
+                            asset_truth_sha256=asset["truth_sha256"],
+                            image_evidence=evidence,
+                            probe=structure_probe,
+                            checked_at=checked_at,
+                            mode="headed_master",
+                        )
                     visual.atomic_write_json(
                         (root / asset["generated_file"]).with_suffix(
                             ".character-master-visual.json"
@@ -228,6 +237,14 @@ class PreVideoAssetsGateTests(unittest.TestCase):
                 character_gate,
                 "run_probe",
                 return_value=(structure_probe, None),
+            ), mock.patch.object(
+                character_gate,
+                "swift_tool_identity",
+                return_value={
+                    "path": "/fixture/swift",
+                    "sha256": "f" * 64,
+                    "signature_policy": "fixture",
+                },
             ):
                 result = gate.evaluate(
                     plan,

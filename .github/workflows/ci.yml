@@ -30,6 +30,9 @@ jobs:
           python3 --version
           ruby --version
 
+      - name: Optional image and schema test backends
+        run: python3 -m pip install "Pillow==12.2.0" "jsonschema==4.26.0"
+
       - name: Restore annotated release tag
         if: startsWith(github.ref, 'refs/tags/v')
         run: |
@@ -56,7 +59,9 @@ jobs:
         env:
           PYTHONDONTWRITEBYTECODE: "1"
           DIRCREATIVE_FORCE_BUILTIN_SCHEMA_VALIDATOR: "1"
-        run: python3 scripts/dircreative_state_audit.py self-test
+        run: |
+          python3 scripts/dircreative_state_audit.py self-test
+          python3 -S -m unittest tests.test_state_snapshot_media_scope tests.test_compact_state_migration
 
       - name: Dependency-free handoff validation
         env:

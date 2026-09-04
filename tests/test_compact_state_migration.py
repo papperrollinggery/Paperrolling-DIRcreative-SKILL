@@ -5,13 +5,11 @@ import sys
 import unittest
 from pathlib import Path
 
-from jsonschema import Draft202012Validator
-
-
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
 import dircreative_compact_state_migrate as migrate  # noqa: E402
+from dircreative_state_audit import _builtin_schema_errors  # noqa: E402
 
 
 class CompactStateMigrationTests(unittest.TestCase):
@@ -37,7 +35,7 @@ class CompactStateMigrationTests(unittest.TestCase):
         schema = json.loads(
             (ROOT / "skills/dircreative/runtime/state-snapshot.schema.json").read_text()
         )
-        self.assertEqual(list(Draft202012Validator(schema).iter_errors(result)), [])
+        self.assertEqual(_builtin_schema_errors(result, schema, schema, "$"), [])
 
     def test_true_legacy_authorization_fails_closed_to_scope_conflict(self):
         result = migrate.migrate_v20(self.legacy(True))
