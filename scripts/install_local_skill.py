@@ -982,7 +982,7 @@ def self_test() -> int:
         source_fixture = root / "source-safety"
         for item in PACKAGE_ITEMS:
             path = source_fixture / item
-            if item in {"README.md", "VERSION", "CHANGELOG.md"}:
+            if item in {"README.md", "llms.txt", "VERSION", "CHANGELOG.md"}:
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text("fixture\n", encoding="utf-8")
             else:
