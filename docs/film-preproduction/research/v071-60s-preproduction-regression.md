@@ -1,6 +1,7 @@
 # v0.7.1 60-second preproduction regression
 
-Date: 2026-09-04  
+Date: 2026-09-04
+
 Scope: a real local 60-second narrative project derived from the reference-video workflow; source media and project assets remain outside the public repository.
 
 ## Result
