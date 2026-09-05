@@ -26,6 +26,10 @@ HOST_CATALOG_PATH = ROOT / "tests/fixtures/skill-stack/host-catalog.json"
 MAIN_SKILL = SKILL_ROOT / "SKILL.md"
 MAX_INTENT_BYTES = 2 * 1024 * 1024
 MAX_CALIBRATION_SOURCES_BYTES = 2 * 1024 * 1024
+BUNDLED_PROVIDERS = {
+    "ai-film-asset-stress-test": ("# AI Film Asset Stress Test", "Authority: `validation_only`."),
+    "ai-film-production-ledger": ("# AI Film Production Ledger", "Authority: `record_only`."),
+}
 
 ID_RE = re.compile(r"^[a-z0-9][a-z0-9:._-]{0,127}$")
 ASSET_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9:._-]{0,127}$")
@@ -1239,20 +1243,35 @@ def _frontmatter_probe(
     return frontmatter, front_bytes, metadata.st_size
 
 
-def hydrate_entry(entry: CatalogEntry, registry: dict[str, Any]) -> CatalogEntry | None:
+def hydrate_entry(
+    entry: CatalogEntry,
+    registry: dict[str, Any],
+    *,
+    trusted_package_root: Path | None = None,
+) -> CatalogEntry | None:
     if entry.body_loaded:
         return entry
     if entry.skill_file is None:
         return None
+    if entry.skill_file.name == "INTERNAL_SKILL.md":
+        if trusted_package_root is None:
+            raise SkillStackError("internal_provider_requires_trusted_package")
+        expected = _bundled_provider_file(entry.skill_id, trusted_package_root, registry)
+        if expected != entry.skill_file:
+            raise SkillStackError("internal_provider_path_mismatch")
     text, data = _bounded_utf8(
         entry.skill_file,
         int(registry["discovery_contract"]["skill_body_bytes_max"]),
         "skill_body",
     )
-    frontmatter, front_bytes = _parse_frontmatter(
-        text,
-        int(registry["discovery_contract"]["frontmatter_bytes_max"]),
-    )
+    if entry.skill_file.name == "INTERNAL_SKILL.md":
+        _validate_internal_provider_text(entry.skill_id, text)
+        frontmatter, front_bytes = {"name": entry.skill_id}, 0
+    else:
+        frontmatter, front_bytes = _parse_frontmatter(
+            text,
+            int(registry["discovery_contract"]["frontmatter_bytes_max"]),
+        )
     version_match = re.search(
         r"(?ms)^metadata:\s*$.*?^\s{2}version:\s*[\"']?([^\"'\n]+)",
         text,
@@ -1270,12 +1289,49 @@ def hydrate_entry(entry: CatalogEntry, registry: dict[str, Any]) -> CatalogEntry
     )
 
 
+def _expanded_discovery_roots(
+    roots: Iterable[tuple[str, Path]],
+) -> tuple[list[tuple[str, Path]], list[dict[str, str]]]:
+    """Include exactly one .system layer inside each authorized root.
+
+    No other hidden directory is searched. Repeated roots refer to the same
+    discovery surface, while duplicate provider identities still fail closed.
+    """
+    expanded: list[tuple[str, Path]] = []
+    rejected: list[dict[str, str]] = []
+    seen: set[Path] = set()
+    for source_type, raw_root in roots:
+        candidates = [raw_root]
+        if raw_root.name != ".system" and not raw_root.is_symlink():
+            system = raw_root / ".system"
+            if system.exists() or system.is_symlink():
+                candidates.append(system)
+        for candidate in candidates:
+            try:
+                if candidate.is_symlink():
+                    raise SkillStackError("root_symlink")
+                resolved = candidate.resolve(strict=True)
+                if not resolved.is_dir():
+                    raise SkillStackError("root_not_directory")
+            except SkillStackError as exc:
+                rejected.append({"source_type": source_type, "reason": str(exc)})
+                continue
+            except OSError:
+                rejected.append({"source_type": source_type, "reason": "root_unavailable"})
+                continue
+            if resolved not in seen:
+                seen.add(resolved)
+                expanded.append((source_type, resolved))
+    return expanded, rejected
+
+
 def body_loader_for_roots(
     roots: Iterable[tuple[str, Path]],
     registry: dict[str, Any],
 ) -> BodyLoader:
     safe_roots: list[tuple[str, Path]] = []
-    for source_type, raw_root in roots:
+    expanded_roots, _rejected = _expanded_discovery_roots(roots)
+    for source_type, raw_root in expanded_roots:
         try:
             if raw_root.is_symlink():
                 continue
@@ -1287,25 +1343,18 @@ def body_loader_for_roots(
 
     def load(skill_id: str, entry: CatalogEntry) -> CatalogEntry | None:
         if entry.skill_file is not None:
-            try:
-                parent = entry.skill_file.parent
-                if parent.is_symlink() or entry.skill_file.is_symlink():
-                    return None
-                resolved_parent = parent.resolve(strict=True)
-                if not any(resolved_parent.is_relative_to(root) for _source, root in safe_roots):
-                    return None
-            except OSError:
-                return None
-            return hydrate_entry(entry, registry)
+            for _source, root in safe_roots:
+                try:
+                    relative = entry.skill_file.relative_to(root)
+                    resolve_runtime_path(relative.as_posix(), root=root, skill_root=root)
+                    return hydrate_entry(entry, registry)
+                except (OSError, ValueError, SkillStackError):
+                    continue
+            return None
         for source_type, root in safe_roots:
             candidate = root / skill_id / "SKILL.md"
             try:
-                parent = candidate.parent
-                if parent.is_symlink() or candidate.is_symlink():
-                    continue
-                resolved_parent = parent.resolve(strict=True)
-                if not resolved_parent.is_relative_to(root):
-                    continue
+                candidate = resolve_runtime_path(f"{skill_id}/SKILL.md", root=root, skill_root=root)
                 frontmatter, front_bytes, body_bytes = _frontmatter_probe(
                     candidate,
                     frontmatter_limit=int(registry["discovery_contract"]["frontmatter_bytes_max"]),
@@ -1361,8 +1410,8 @@ def discover_roots(
     openai_max = int(contract["openai_yaml_bytes_max"])
     catalog: dict[str, CatalogEntry] = {}
     collided_ids: set[str] = set()
-    rejected: list[dict[str, str]] = []
-    for source_type, raw_root in roots:
+    expanded_roots, rejected = _expanded_discovery_roots(roots)
+    for source_type, raw_root in expanded_roots:
         try:
             if raw_root.is_symlink():
                 raise SkillStackError("root_symlink")
@@ -1378,6 +1427,7 @@ def discover_roots(
         for child in sorted(root.iterdir(), key=lambda item: item.name.casefold()):
             if child.name.startswith("."):
                 continue
+            skill_id = child.name if valid_provider_id(child.name) else "invalid"
             try:
                 if child.is_symlink() or not child.is_dir():
                     raise SkillStackError("skill_directory_not_regular")
@@ -1415,7 +1465,7 @@ def discover_roots(
                     metadata_version=frontmatter.get("metadata.version"),
                 )
             except SkillStackError as exc:
-                rejected.append({"skill_id": child.name if valid_provider_id(child.name) else "invalid", "source_type": source_type, "reason": str(exc)})
+                rejected.append({"skill_id": skill_id, "source_type": source_type, "reason": str(exc)})
             except OSError:
                 rejected.append({"skill_id": child.name if valid_provider_id(child.name) else "invalid", "source_type": source_type, "reason": "skill_unavailable"})
     return catalog, rejected
@@ -1582,6 +1632,7 @@ def _base_context_bytes(
     routing: dict[str, Any],
     *,
     include_required: bool = True,
+    deliverable_layer: str | None = None,
 ) -> tuple[int, int]:
     routes = routing.get("routes", {})
     route = routes.get(route_id)
@@ -1589,7 +1640,10 @@ def _base_context_bytes(
         raise SkillStackError(f"unknown route_id: {route_id}")
     paths = [MAIN_SKILL, resolve_runtime_path(route["route_card"])]
     if include_required:
-        paths.extend(resolve_runtime_path(relative) for relative in route.get("required_files", []))
+        required = (["skills/dircreative/references/client-story.md"]
+                    if deliverable_layer == "client_story" and route_id == "film_development"
+                    else route.get("required_files", []))
+        paths.extend(resolve_runtime_path(relative) for relative in required)
     for path in paths:
         if not path.is_file():
             raise SkillStackError(f"missing context file: {path.name}")
@@ -2166,7 +2220,9 @@ def select_stack(
             humanization_calibration_source_document_sha256 = list(
                 calibration_readback.source_document_sha256
             )
-    internal_base_bytes, internal_base_files = _base_context_bytes(route_id, routing)
+    internal_base_bytes, internal_base_files = _base_context_bytes(
+        route_id, routing, deliverable_layer=route_context.deliverable_layer,
+    )
     external_base_bytes, external_base_files = _base_context_bytes(
         route_id,
         routing,
@@ -4373,6 +4429,111 @@ def _parse_roots(values: list[str]) -> list[tuple[str, Path]]:
     return roots
 
 
+def _bundled_provider_file(skill_id: str, package_root: Path, registry: dict[str, Any]) -> Path:
+    """Resolve only shipped private providers beneath the code-owned package."""
+    if skill_id not in BUNDLED_PROVIDERS:
+        raise SkillStackError("unknown_bundled_provider")
+    source_layout = (package_root / "skills/dircreative/SKILL.md").exists()
+    main_relative = "skills/dircreative/SKILL.md" if source_layout else "SKILL.md"
+    main = resolve_runtime_path(main_relative, root=package_root, skill_root=package_root)
+    frontmatter, _front, _body = _frontmatter_probe(
+        main,
+        frontmatter_limit=int(registry["discovery_contract"]["frontmatter_bytes_max"]),
+        body_limit=int(registry["discovery_contract"]["skill_body_bytes_max"]),
+    )
+    if frontmatter["name"] != "dircreative":
+        raise SkillStackError("bundled_provider_package_identity_invalid")
+    filename = "SKILL.md" if source_layout else "INTERNAL_SKILL.md"
+    return resolve_runtime_path(
+        f"skills/{skill_id}/{filename}", root=package_root, skill_root=package_root,
+    )
+
+
+def _validate_internal_provider_text(skill_id: str, text: str) -> None:
+    expected = BUNDLED_PROVIDERS.get(skill_id)
+    if expected is None or not text.startswith(expected[0] + "\n") or expected[1] not in text[:1024]:
+        raise SkillStackError("internal_provider_identity_invalid")
+
+
+def _bundled_provider_entry(skill_id: str, package_root: Path, registry: dict[str, Any]) -> CatalogEntry:
+    path = _bundled_provider_file(skill_id, package_root, registry)
+    contract = registry["discovery_contract"]
+    metadata_version = None
+    if path.name == "SKILL.md":
+        frontmatter, front_bytes, body_bytes = _frontmatter_probe(
+            path, frontmatter_limit=int(contract["frontmatter_bytes_max"]),
+            body_limit=int(contract["skill_body_bytes_max"]),
+        )
+        if frontmatter["name"] != skill_id:
+            raise SkillStackError("bundled_provider_identity_invalid")
+        metadata_version = frontmatter.get("metadata.version")
+    else:
+        # Internal files intentionally have no public Skill frontmatter. The
+        # exact allowlist, package identity and non-symlink path bind their ID.
+        metadata = path.lstat()
+        if not stat.S_ISREG(metadata.st_mode) or metadata.st_size > int(contract["skill_body_bytes_max"]):
+            raise SkillStackError("internal_provider_body_invalid")
+        with path.open("rb") as handle:
+            probe = handle.read(1024)
+        if b"\x00" in probe:
+            raise SkillStackError("internal_provider_body_invalid")
+        try:
+            text = probe.rsplit(b"\n", 1)[0].decode("utf-8")
+        except UnicodeDecodeError as exc:
+            raise SkillStackError("internal_provider_body_invalid") from exc
+        _validate_internal_provider_text(skill_id, text)
+        front_bytes, body_bytes = 0, metadata.st_size
+    return CatalogEntry(
+        skill_id=skill_id, source_type="bundled_provider", skill_file=path,
+        body_bytes=body_bytes, body_sha256=None, frontmatter_bytes=front_bytes,
+        openai_metadata={}, body_loaded=False, metadata_version=metadata_version,
+    )
+
+
+def load_runtime_catalog(
+    registry: dict[str, Any],
+    *,
+    roots: Iterable[tuple[str, Path]] = (),
+    catalog_path: Path | None = None,
+    package_root: Path = ROOT,
+) -> tuple[dict[str, CatalogEntry], list[dict[str, str]], BodyLoader]:
+    """Bind production discovery to authorized roots and exact package providers.
+
+    Host metadata takes precedence: an unavailable, malformed, or duplicated
+    declaration cannot be revived by package fallback. No discovered code runs.
+    """
+    roots = list(roots)
+    catalog, rejected = load_host_catalog(catalog_path, registry) if catalog_path else discover_roots(roots, registry)
+    blocked_ids = {row["skill_id"] for row in rejected if "skill_id" in row}
+    for skill_id in blocked_ids:
+        catalog.pop(skill_id, None)
+    bundled: dict[str, CatalogEntry] = {}
+    for skill_id in BUNDLED_PROVIDERS:
+        if skill_id in blocked_ids or (skill_id in catalog and catalog[skill_id].skill_file is not None):
+            continue
+        try:
+            entry = _bundled_provider_entry(skill_id, package_root, registry)
+        except (OSError, SkillStackError):
+            rejected.append({"skill_id": skill_id, "source_type": "bundled_provider", "reason": "bundled_provider_unavailable"})
+            continue
+        bundled[skill_id] = entry
+        if skill_id not in catalog:
+            catalog[skill_id] = entry
+    root_loader = body_loader_for_roots(roots, registry)
+
+    def load(skill_id: str, entry: CatalogEntry) -> CatalogEntry | None:
+        if skill_id in blocked_ids or entry.skill_id != skill_id:
+            return None
+        if skill_id in bundled and (entry.skill_file is None or entry.skill_file == bundled[skill_id].skill_file):
+            # Re-resolve at consumption time; discovery is not a body-read or
+            # adoption claim and cannot authorize a swapped symlink or body.
+            current = _bundled_provider_entry(skill_id, package_root, registry)
+            return hydrate_entry(current, registry, trusted_package_root=package_root)
+        return root_loader(skill_id, entry)
+
+    return catalog, rejected, load
+
+
 def _catalog_from_args(
     args: argparse.Namespace,
     registry: dict[str, Any],
@@ -4380,13 +4541,7 @@ def _catalog_from_args(
     catalog_path = getattr(args, "catalog", None)
     root_values = getattr(args, "root", None) or []
     roots = _parse_roots(root_values)
-    if catalog_path:
-        catalog, rejected = load_host_catalog(catalog_path, registry)
-        return catalog, rejected, body_loader_for_roots(roots, registry) if roots else None
-    if not root_values:
-        raise SkillStackError("a host catalog or authorized Skill root is required")
-    catalog, rejected = discover_roots(roots, registry)
-    return catalog, rejected, body_loader_for_roots(roots, registry)
+    return load_runtime_catalog(registry, roots=roots, catalog_path=catalog_path, package_root=ROOT)
 
 
 def main() -> int:

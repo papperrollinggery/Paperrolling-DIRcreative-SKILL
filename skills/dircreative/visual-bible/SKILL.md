@@ -7,6 +7,9 @@ description: Define visual continuity for characters, environments, props, wardr
 
 ## Required Knowledge
 
+Read only the reference needed for the active task, not this entire list.
+The root v2 route owns scope and authorization; legacy records do not add gates.
+
 - `docs/film-preproduction/chat-co-creation-interface.md`
 - `docs/film-preproduction/chat-inline-visualization-interface.md`
 - `docs/film-preproduction/schemas/visual-bible.yaml`
@@ -27,18 +30,15 @@ description: Define visual continuity for characters, environments, props, wardr
 
 ## Chat Surface
 
-Show visual style choices before locking the bible:
-
-- `阶段: 视觉风格`
-- `智能体创作内容`: 2-3 visual directions, continuity locks, material rules, avoid list.
-- `我的建议`: one style direction with production reason.
-- `用户确认点`: ask which visual direction should guide reference images.
-
-Do not move to image prompt compilation until the visual direction is confirmed.
+Return the recommended visual system and the identity, geography, material,
+lighting and palette rules needed for this project. Reuse an already selected
+style. Offer alternatives only when they produce materially different films and
+the user must choose. Internal design locks permit the next authorized stage;
+they do not imply user acceptance of media.
 
 ## Visual Decision Contract
 
-Use `skills/dircreative/assets/visualizations/stage-surface-registry.json#visual-lock-matrix`. Bind identity, environment, props, wardrobe, light, material, and drift risks to the visual-bible artifact; use fullscreen only when the continuity matrix cannot remain legible inline and preserve the table fallback.
+When visualization adds clarity, use `skills/dircreative/assets/visualizations/stage-surface-registry.json#visual-lock-matrix`. Bind identity, environment, props, wardrobe, light, material, and drift risks to the visual-bible artifact; use fullscreen only when the continuity matrix cannot remain legible inline and preserve the table fallback.
 
 ## Rules
 
@@ -53,5 +53,9 @@ Use `skills/dircreative/assets/visualizations/stage-surface-registry.json#visual
 - Do not write final image prompts.
 
 ## skill_run_receipt
+
+Persist the following only for a requested formal handoff, pause/resume or actual
+execution record. Ordinary work returns its result without a separate receipt.
+The next skill is advisory; the controller continues only the requested scope.
 
 Record visual bible gate status, missing assets, drift risks, and `next_recommended_skill: reference-image-planner`.

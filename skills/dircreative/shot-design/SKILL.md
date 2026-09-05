@@ -7,14 +7,14 @@ description: Convert script and breakdown into professional shot list, camera pl
 
 ## Required Knowledge
 
+Read only the reference needed for the active task, not this entire list.
+The root v2 route owns scope and authorization; legacy records do not add gates.
+
 - `docs/film-preproduction/schemas/prompt-ir.schema.json`
 - `docs/film-preproduction/prompt-authoring-standard-v1.md`
 - `docs/film-preproduction/chat-co-creation-interface.md`
 - `docs/film-preproduction/chat-inline-visualization-interface.md`
 - `docs/film-preproduction/professional-agent-voice-standard.md`
-- `docs/film-preproduction/production-demo-retrospective.md`
-- `docs/film-preproduction/council-adversarial-review.md`
-- `docs/film-preproduction/client-film-hard-gates.md`
 - `docs/film-preproduction/schemas/shot-list.yaml`
 - `docs/film-preproduction/shot-language-standard.md`
 - `docs/film-preproduction/research/film-production-glossary.md`
@@ -35,45 +35,21 @@ description: Convert script and breakdown into professional shot list, camera pl
 
 ## Chat Surface
 
-Show the shot plan as a compact table:
-
-- `阶段: 分镜头`
-- `智能体创作内容`: story section count versus shot/rhythm count, timecode, story beat, narrative purpose, shot type, lens, camera support, camera motion, focus, blocking, scene layers, continuity locks, audio, asset source, vertical framing, and model notes.
-- `用户确认点`: ask whether the shot structure passes before visual bible/reference planning.
-
-If there are multiple duration strategies, show 2-3 choices and ask one selection question.
-
-Use this chat preview shape, not a vague one-line storyboard:
-
-```text
-S01 00:00-00:03 | Hook / MS -> CU insert | 35mm then 85mm macro
-- 叙事任务: <story_beat + narrative_purpose>
-- 机位/镜头: <camera_angle + lens + camera_support + camera_motion + focus>
-- 主体调度: <start/end/path/eyeline/screen_direction/axis>
-- 构图层次: <foreground/midground/background/lighting/readable zone>
-- 声音剪辑: <ambience/SFX/music/silence/cut point>
-- 模型风险: <Seedance/Kling/Runway/Veo risk or split rule>
-```
-
-Use this visible storyboard shot-card text template for professional storyboard/motion pages:
-
-```text
-S03 00:18-00:24 | Narrative purpose: <why the shot exists>
-Lens/support/movement: <lens + rig + start/end camera target>
-Blocking/path: <subject start -> path -> end, eyeline, axis>
-Continuity: <prop/wardrobe/light lock>
-Sound/edit: <dialogue/ambience/SFX/music/cut point>
-Model risk: <likely misread + avoid clause>
-```
+Deliver the requested shot plan with canonical shot IDs, continuous timecodes,
+visible start/action/end, camera motivation, performance, sound and continuity.
+A bounded shot revision returns only the affected shot and necessary dependency
+changes. Complete technical shot tables use the detailed fields below; a client
+narrative board remains at its requested layer. Review internally and continue
+requested visual/asset work without a separate shot-approval round.
 
 ## Visual Decision Contract
 
-Use `skills/dircreative/assets/visualizations/stage-surface-registry.json#shot-density-timeline`. Keep the inline timeline compact; request fullscreen for 30 or more shots or dense inspection. Bind every displayed shot to the current shot-list artifact and preserve a table fallback.
+When visualization adds clarity, use `skills/dircreative/assets/visualizations/stage-surface-registry.json#shot-density-timeline`. Keep the inline timeline compact; request fullscreen for 30 or more shots or dense inspection. Bind every displayed shot to the current shot-list artifact and preserve a table fallback.
 
 ## Rules
 
 - One main action per shot.
-- Explain shot count and rhythm with professional reasoning before asking for approval.
+- Derive shot count from information, action and editing needs; explain a decision only when useful.
 - Distinguish `12 customer story sections` from the real shot/rhythm plan. Derive shot and panel counts from information, action and editing coverage, not a universal per-minute quota. Legacy client-contract count checks are a separate compatibility constraint, not the creative standard.
 - Every shot needs timecode, duration, story beat, narrative purpose, shot type, shot size, angle, lens, lens reason, camera support, camera motion, focus, composition, subject action, structured blocking, scene layers, continuity locks, audio fields, transitions, and model notes.
 - For client-facing storyboard/PPT work, every shot also needs seconds, camera position, emotional function, props/characters, asset source, vertical composition consideration, and reference motion or reference video for hero/expression-critical moments.
@@ -114,5 +90,9 @@ Use `skills/dircreative/assets/visualizations/stage-surface-registry.json#shot-d
 - Do not write image or video prompts.
 
 ## skill_run_receipt
+
+Persist the following only for a requested formal handoff, pause/resume or actual
+execution record. Ordinary work returns its result without a separate receipt.
+The next skill is advisory; the controller continues only the requested scope.
 
 Record shot gate status, overloaded shots, continuity risks, and `next_recommended_skill: visual-bible`.

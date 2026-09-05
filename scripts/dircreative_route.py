@@ -48,8 +48,8 @@ def action_text(request: str) -> str:
 def explicit_action_match(text: str, pattern: str) -> bool:
     """Accept an imperative only when it is not negated, conditional, or a question."""
     for match in re.finditer(pattern, text, flags=re.IGNORECASE):
-        before = text[max(0, match.start() - 36) : match.start()]
-        after = text[match.end() : match.end() + 48]
+        before = re.split(r"[。；;\n]", text[max(0, match.start() - 36) : match.start()])[-1]
+        after = re.split(r"[。；;\n]", text[match.end() : match.end() + 48])[0]
         if has(
             before,
             r"(?:不要|别|暂时别|暂不|先别|先不要|无需|不用|不需要|不可|不能|禁止|勿|"
@@ -74,6 +74,99 @@ def explicit_action_match(text: str, pattern: str) -> bool:
             continue
         return True
     return False
+
+
+def collaboration_contract(request: str, route: str, action: str, policy: dict[str, Any]) -> dict[str, Any]:
+    """Describe host collaboration intent; this function never dispatches a worker.
+
+    The selected route remains authoritative. Team names describe perspectives;
+    only affirmative collaboration or new-task instructions select host work.
+    """
+    config = policy["collaboration_policy"]
+    clauses = re.split(r"[。；;！？?!\n，,]", action_text(request))
+    groups: set[str] = set()
+    subagents_requested = False
+    threads_requested = False
+    joint_requested = False
+    for clause in clauses:
+        denied = has(clause, r"不要|不用|无需|不需要|禁止|别|\b(?:not|never)\b|don't")
+        if denied:
+            if has(clause, r"子代理|sub[- ]?agents?"):
+                subagents_requested = False
+            if has(clause, r"新任务|独立任务|线程|\b(?:tasks?|threads?)\b"):
+                threads_requested = False
+            if has(clause, r"联合|协作|并行|joint|parallel|collaborat"):
+                joint_requested = False
+            if has(clause, r"导演组|director\s+(?:team|room)"):
+                groups.discard("director")
+                joint_requested = False
+            if has(clause, r"创意组|creative\s+team"):
+                groups.discard("creative")
+                joint_requested = False
+            continue
+        # A historic report, explanation, conditional, or negated invocation is
+        # context, not a fresh delegation instruction. Inspect the instruction
+        # prefix: the assigned worker may legitimately explain or research how
+        # to solve the task after the user has explicitly requested dispatch.
+        target = re.search(r"调用|启用|启动|创建|新建|导演组|创意组|子代理|sub[- ]?agents?|threads?", clause, re.IGNORECASE)
+        prefix = clause[:target.start()] if target else clause
+        if has(prefix, r"如果|假如|是否|能否|可否|等.{0,12}(?:确认|批准).{0,8}(?:后|再)|"
+               r"之前|过去|上次|曾经|解释|如何|怎么|"
+               r"\b(?:if|unless|explain|previously)\b|how\s+to"):
+            continue
+        if has(clause, r"调用有问题|调用失败") and not has(prefix, r"请|帮我"):
+            continue
+        if has(clause, r"^(?:\s*\$dircreative\s*)?(?:请|帮我)?\s*(?:比较|介绍|说明|分析).{0,12}(?:导演组|创意组|子代理|新任务)"):
+            continue
+        requested_group = has(
+            clause,
+            r"(?:调用|启用|让|安排|召集|组织|使用|交给|由).{0,24}(?:导演组|创意组)|"
+            r"请\s*(?:导演组|创意组)|"
+            r"(?:导演组|创意组).{0,12}(?:请|负责|来做|来写|启用|联合|协作|并行)|"
+            r"(?:use|invoke|ask|engage).{0,24}(?:director|creative)\s+(?:room|team)",
+        )
+        if requested_group:
+            if has(clause, r"创意组|creative\s+team"):
+                groups.add("creative")
+            if has(clause, r"导演组|director\s+(?:room|team)"):
+                groups.add("director")
+            joint_requested |= has(clause, r"联合|并行|协作|joint|parallel|collaborat")
+        subagents_requested |= has(
+            clause,
+            r"(?:调用|启用|启动|使用|安排|让|用).{0,20}(?:子代理|sub[- ]?agents?)|"
+            r"请\s*(?:真实\s*)?(?:子代理|sub[- ]?agents?)|"
+            r"(?:子代理|sub[- ]?agents?).{0,12}(?:并行|协作|来做|负责|执行)|"
+            r"(?:use|spawn|start|invoke|dispatch).{0,20}sub[- ]?agents?",
+        )
+        threads_requested |= has(
+            clause,
+            r"(?:创建|新建|开启|启动|开)\s*(?:[一二两三四五六七八九十0-9]+\s*(?:个|条)?\s*)?"
+            r"(?:新的?|独立的?)?(?:任务|线程)|"
+            r"(?:使用|启用|创建|新建|用).{0,12}(?:真实\s*)?(?:Threads?\b|线程)|"
+            r"(?:create|start|open).{0,16}(?:new|separate|independent).{0,10}(?:tasks?|threads?)",
+        )
+    requested_mode = "threads" if threads_requested else "subagents" if subagents_requested or joint_requested else "perspectives"
+    blocked_context = route in {"source_maintenance", "invalid_specialist_exchange", "adco_specialist_exchange"}
+    dispatch_allowed = not blocked_context and action == "continue"
+    execution_mode = (
+        "none" if blocked_context else
+        "host_threads" if requested_mode == "threads" and dispatch_allowed else
+        "host_subagents" if requested_mode == "subagents" and dispatch_allowed else
+        "main_thread_perspectives"
+    )
+    return {
+        "requested_groups": sorted(groups),
+        "requested_mode": requested_mode,
+        "execution_mode": execution_mode,
+        "execution_status": "blocked_by_context" if blocked_context else "blocked_by_gate" if not dispatch_allowed else "not_dispatched",
+        "subagents_allowed": execution_mode == "host_subagents",
+        "threads_allowed": execution_mode == "host_threads",
+        "max_subagents": config["max_subagents"] if execution_mode == "host_subagents" else 0,
+        "nested_dispatch_allowed": False,
+        "dispatch_receipts": [],
+        "host_capability_check_required": execution_mode in {"host_threads", "host_subagents"},
+        "unavailable_host_action": config["unavailable_host_action"],
+    }
 
 
 GENERATION_DENIAL_RE = re.compile(
@@ -357,6 +450,12 @@ def classify_route(
 
 
     media_scope = classify_media_scope(request)["media_scope"]
+    # A prohibition on a side effect must not replace the requested text work.
+    # Historical denied/revoked approval records still follow the existing gate.
+    side_effect_intent = " ".join(
+        clause for clause in re.split(r"[。；;\n，,]", actionable)
+        if not has(clause, r"(?:不要|不用|无需|不需要|禁止|别).{0,8}(?:真实生成|发给客户|客户交付|发送客户)")
+    )
     pre_video_full_scope = media_scope == "scope_conflict" or has(
         actionable,
         r"(?:直到|完成|做到|走到).{0,16}(?:视频生成|生成视频)(?:之)?前.{0,24}(?:全部|全套|流程)|"
@@ -364,13 +463,13 @@ def classify_route(
     )
 
     if has(
-        actionable,
+        side_effect_intent,
         r"客户交付|客户可见|正式交付|发给客户|发送客户|client[- ]visible|"
         r"client delivery|send[- ]ready|send\s+to\s+(?:the\s+)?client",
     ):
         return "client_delivery", ["client_delivery_intent"]
     if has(
-        actionable,
+        side_effect_intent,
         r"真实生成|生成授权|授权生成|generation authorization|generation\s+authorized|"
         r"authorize (?:real )?generation",
     ) or (
@@ -433,7 +532,13 @@ def classify_route(
             "diagnosis_before_edit",
         ]
 
-    if has(
+    concept_decision_resolved = explicit_action_match(
+        actionable,
+        r"(?:方向|冲突).{0,12}(?:已经解决|已解决|已选定|已经选定)|"
+        r"(?:按|由).{0,12}(?:你的专业判断|你决定|你来定).{0,8}(?:选择|决定)?|"
+        r"concept\s+conflict\s+(?:is\s+)?resolved",
+    )
+    if not concept_decision_resolved and has(
         actionable,
         r"方向(?:互不兼容|不可兼容|冲突)|不可兼容(?:的)?(?:创意)?方向|incompatible (?:creative )?directions?|material concept conflict",
     ):
@@ -450,7 +555,7 @@ def classify_route(
         actionable,
         r"(?:整个|整支|整部|全片|全部|全套|逐一|每个)\s*(?:[0-9]+\s*个?)?"
         r"(?:广告片|品牌片|短片|TVC|film|commercial|脚本|镜头|分镜)|"
-        r"(?:这|共|全部)?\s*[0-9]+\s*(?:个\s*)?(?:镜头|分镜|镜)|"
+        r"(?:这|共|全部)?\s*(?:[2-9]|[1-9][0-9]+)\s*(?:个\s*)?(?:镜头|分镜|镜)|"
         r"[0-9]+\s*秒\s*(?:广告片|品牌片|TVC|film|commercial)",
     )
 
@@ -499,7 +604,21 @@ def classify_deliverable_layer(request: str, route: str) -> tuple[str | None, bo
         r"frame[- ]by[- ]frame\s*content|View\s*[/+|]\s*Storyline",
     ):
         return "frame_content_spec", False
-    compact_pages = has(text, r"一至两页|一到两页|一两页|1\s*(?:-|至|到)\s*2\s*页|两页")
+    compact_pages = has(text, r"一至两页|一到两页|一两页|1\s*(?:-|至|到)\s*2\s*页|两页|一页|1\s*页|单页")
+    clauses = re.split(r"[。；;!?！？\n，,]", text)
+    client_story_requested = any(explicit_action_match(
+        clause, r"(?:客户可读|客户|提案).{0,12}(?:故事|故事线)|client[- ](?:readable\s+)?stor(?:y|ies)",
+    ) for clause in clauses)
+    story_only = any(explicit_action_match(
+        clause, r"(?:只要|只写|只给|只输出|仅需|仅写|仅输出)\s*(?:纯)?(?:故事|故事线)|(?:story|narrative)[- ]only",
+    ) for clause in clauses)
+    additional_outputs = any(
+        explicit_action_match(clause, r"分镜|资产|镜头表|提示词|storyboard|shot\s*list|assets?|prompts?")
+        and has(clause, TECHNICAL_ACTION_RE.pattern)
+        for clause in clauses
+    )
+    if not additional_outputs and (client_story_requested and (compact_pages or story_only)):
+        return "client_story", False
     dual_story = has(text, r"双方向|两个方向|两种方向|两条方向|dual[- ]direction") and has(
         text, r"故事|故事线|story|客户|提案"
     )
@@ -538,6 +657,7 @@ def route_request(
             "reuse_known_brief": False,
             "state_persistence": "none",
             "threads_allowed": False,
+            "collaboration": collaboration_contract(request, route, "stop_skill_runtime", policy),
             "full_receipt_required": False,
             "deliverable_layer": None,
             "shot_matrix_allowed": False,
@@ -577,6 +697,9 @@ def route_request(
     required_files = list(config["required_files"])
     if "identity_state_contract_required" in reason_codes:
         required_files = ["skills/dircreative/references/character-master-sheet.md"]
+    elif deliverable_layer == "client_story":
+        required_files = ["skills/dircreative/references/client-story.md"]
+    collaboration = collaboration_contract(request, route, action, policy)
     return {
         "execution_context": execution_context,
         "mode": config["mode"],
@@ -596,7 +719,8 @@ def route_request(
         ),
         "reuse_known_brief": True,
         "state_persistence": persistence,
-        "threads_allowed": config["threads_allowed"],
+        "threads_allowed": collaboration["threads_allowed"],
+        "collaboration": collaboration,
         "full_receipt_required": config["full_receipt_required"],
         "deliverable_layer": deliverable_layer,
         "shot_matrix_allowed": shot_matrix_allowed,

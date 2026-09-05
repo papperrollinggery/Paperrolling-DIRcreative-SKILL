@@ -95,8 +95,8 @@ def main() -> int:
     route_ok, missing_route = has_all(
         studio_route,
         [
-            "at most one critical",
-            "Apply only the perspectives that can materially improve the result",
+            "at most three useful perspectives",
+            "one critical pass",
         ],
     )
     if routing_policy.get("performance_budgets", {}).get("studio", {}).get(
@@ -107,17 +107,8 @@ def main() -> int:
     if not route_ok:
         failures.append("Studio route missing bounded critical-review contract: " + ", ".join(missing_route))
 
-    subskill_failures = []
-    for path in [
-        "skills/dircreative/story-development/SKILL.md",
-        "skills/dircreative/script-treatment/SKILL.md",
-        "skills/dircreative/shot-design/SKILL.md",
-        "skills/dircreative/image-prompt-compiler/SKILL.md",
-    ]:
-        if "council-adversarial-review.md" not in read(path):
-            subskill_failures.append(path)
-    if subskill_failures:
-        failures.append("sub-skills missing council knowledge: " + ", ".join(subskill_failures))
+    # The five-view council below is a legacy fixture. Current stage modules
+    # use one bounded critical pass and must not import that fixed meeting.
 
     for term in ["反驳型议会审核", "用户视角", "影视专家视角", "产品经理视角", "Skill 开发者视角", "代码研究员视角"]:
         if term not in runbook or term not in rehearsal:

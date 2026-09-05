@@ -24,7 +24,7 @@ pending
 system_default
 ```
 
-## Required Gates
+## Historical V1 Gates
 
 | Gate | Required User Decision | Downstream Lock |
 | --- | --- | --- |
@@ -67,25 +67,18 @@ real_user_co_creation_verified: false
 
 This prevents a test fixture from being mistaken for a real co-creation session.
 
-## Live Run Rule
+## Recorded V1 Live Runs
 
-Live project runs must record:
+Existing v1 records used `run_type: live_user_run`,
+`simulated_choices_allowed: false` and `real_user_co_creation_verified: true`.
+These fields describe the old record only; they do not prove current acceptance.
+The v1 reader validates the historical gate sequence under its original schema.
+Do not create those eleven gates in a new run, reopen them on “继续”, or withhold
+current story/script/shot work until the old confirmations are replayed.
 
-```yaml
-run_type: live_user_run
-simulated_choices_allowed: false
-real_user_co_creation_verified: true
-```
+## Legacy Record Validation
 
-If any required creative gate is still `pending`, the next skill may draft options but must not mark downstream artifacts as `locked`.
-
-Live runs must resolve the earliest unresolved creative gate first. A user saying "可以", "继续", or "测试一下" is permission to continue the workflow, not permission to skip story, script, shot list, or visual bible review.
-
-Reference pack, clean-frame, image generation, and video prompt choices stay blocked until story/script/shot/visual bible gates are visible and approved.
-
-## QA Gate
-
-A run is not co-creation-ready unless:
+The read-only v1 validator checks its existing record for:
 
 - every required gate exists,
 - creative gates cannot use `system_default`,

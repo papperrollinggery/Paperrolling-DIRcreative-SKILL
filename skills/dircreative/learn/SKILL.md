@@ -7,6 +7,9 @@ description: Record reusable project learnings, prompt fixes, channel rules, and
 
 ## Required Knowledge
 
+Read only the reference needed for the active task, not this entire list.
+The root v2 route owns scope and authorization; legacy records do not add gates.
+
 - `docs/film-preproduction/prompt-pattern-registry.json`
 - `.dircreative/learnings.jsonl`
 - `.dircreative/timeline.jsonl`
@@ -36,5 +39,9 @@ description: Record reusable project learnings, prompt fixes, channel rules, and
   review, and source-maintenance boundaries; no autonomous global installation.
 
 ## skill_run_receipt
+
+Persist the following only for a requested formal handoff, pause/resume or actual
+execution record. Ordinary work returns its result without a separate receipt.
+The next skill is advisory; the controller continues only the requested scope.
 
 Record new learning keys, confidence, source, and `next_recommended_skill: checkpoint`.

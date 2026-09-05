@@ -265,6 +265,17 @@ def run_gate(
     if require_tag:
         archive_parity_cmd.append("--verify-remote-tag")
 
+    staged_runtime_cmd = [
+        "python3", "scripts/dircreative_acceptance_preflight.py", "--require-installed",
+        "--source-root", str(ROOT), "--install-target", str(target),
+    ]
+    archive_runtime_cmd = [
+        "python3", "scripts/dircreative_acceptance_preflight.py", "--require-installed",
+        "--source-root", str(ROOT), "--install-target", str(archive_install_target),
+    ]
+    if require_tag:
+        archive_runtime_cmd.append("--verify-remote-tag")
+
     steps = [
         Step("exact commit release preflight", preflight_cmd, ROOT),
         Step("repo validation", ["python3", "scripts/validate_project.py"], ROOT),
@@ -303,6 +314,8 @@ def run_gate(
             ],
             target,
         ),
+        Step("source staged runtime acceptance", staged_runtime_cmd, ROOT, depends_on="installed parity audit"),
+        Step("installed staged runtime acceptance", staged_runtime_cmd, target, depends_on="installed parity audit"),
         Step("installed rough idea status", ["python3", "scripts/dircreative_run.py", "status", "--example", "examples/live-user-sim-noodle"], target),
         Step("installed complete idea status", ["python3", "scripts/dircreative_run.py", "status", "--example", "examples/complete-idea-segmentation-test"], target),
         Step("installed goal-mode simulation status", ["python3", "scripts/dircreative_run.py", "status", "--example", "examples/goal-mode-simulation-test"], target),
@@ -334,6 +347,8 @@ def run_gate(
             archive_install_target,
             depends_on="release artifact install parity",
         ),
+        Step("source archive runtime acceptance", archive_runtime_cmd, ROOT, depends_on="release artifact install parity"),
+        Step("installed archive runtime acceptance", archive_runtime_cmd, archive_install_target, depends_on="release artifact install parity"),
     ]
     if args.media_forward_receipt:
         receipt = Path(args.media_forward_receipt).expanduser()

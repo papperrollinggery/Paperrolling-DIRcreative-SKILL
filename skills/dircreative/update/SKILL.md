@@ -7,6 +7,9 @@ description: Refresh model and prompt-pattern knowledge from official sources, G
 
 ## Required Knowledge
 
+Read only the reference needed for the active task, not this entire list.
+The root v2 route owns scope and authorization; legacy records do not add gates.
+
 - `docs/film-preproduction/sources/model-sources.yaml`
 - `docs/film-preproduction/sources/prompt-sources.yaml`
 - `docs/film-preproduction/research/model-adapter-notes.md`
@@ -34,5 +37,9 @@ description: Refresh model and prompt-pattern knowledge from official sources, G
 - Promote only after fixture QA improves.
 
 ## skill_run_receipt
+
+Persist the following only for a requested formal handoff, pause/resume or actual
+execution record. Ordinary work returns its result without a separate receipt.
+The next skill is advisory; the controller continues only the requested scope.
 
 Record checked sources, stale entries, update decisions, and `next_recommended_skill: checkpoint`.

@@ -7,6 +7,9 @@ description: Plan reference image pack roles, board types, and layout specs befo
 
 ## Required Knowledge
 
+Read only the reference needed for the active task, not this entire list.
+The root v2 route owns scope and authorization; legacy records do not add gates.
+
 - `docs/film-preproduction/schemas/prompt-ir.schema.json`
 - `docs/film-preproduction/asset-intake-and-state-standard-v1.md`
 - `docs/film-preproduction/prompt-authoring-standard-v1.md`
@@ -19,7 +22,6 @@ description: Plan reference image pack roles, board types, and layout specs befo
 - `docs/film-preproduction/research/tapnow-agentic-canvas-lessons.md`
 - `docs/film-preproduction/reference-locking-policy.md`
 - `docs/film-preproduction/reference-consistency-gate.md`
-- `docs/film-preproduction/client-film-hard-gates.md`
 - `docs/film-preproduction/co-creation-gate-policy.md`
 - `docs/film-preproduction/longform-decomposition-policy.md`
 - `docs/film-preproduction/capability-aware-generation-policy.md`
@@ -49,24 +51,16 @@ description: Plan reference image pack roles, board types, and layout specs befo
 
 ## Chat Surface
 
-Show the reference strategy as a user decision:
-
-- `阶段: 参考图方案`
-- `智能体创作内容`: number of boards/frames, each role, what each should contain.
-- `逐镜头素材合同`: for client-facing films, show whether each shot uses live action, UGC, reference video, existing Grok/ChatGPT/ImageGen image, prompt-only, or a new image prompt.
-- `广告参考图组`: product identity board, lighting/material/style board, storyboard/motion board, and clean frames for ad-film work.
-- `不能直接喂给视频模型`: list dense boards, labels, floor plans, storyboard boards, and direct-I2V risks.
-- `镜头运动策略`: show which board records camera movement, subject movement, timing, and transition logic.
-- `用户确认点`: ask whether to use the proposed pack, compress it, or split it further.
-- `生成策略选择`: show all-reference, hybrid, per-shot I2V, or minimal test when relevant.
-- `模型能力依据`: show exact capability card, version, status, provider surface, accessed date, and any official-source conflict; never show only a family alias.
-- `权利状态`: show which source, likeness, voice, brand/character, and music rights are verified, conditional, or blocked.
-
-Keep generated media authorization as a separate later question.
+Return the usable asset plan: each asset's purpose, source/reuse/derive/generate
+choice, reference role, dependent shots and necessary input policy. Explain the
+few choices that change quality or effort. Preserve the selected model and
+strategy; do not reopen either because several options exist. Separate planning
+boards from direct clean inputs. Reuse existing image authorization; ask only if
+an actual new side effect lacks it.
 
 ## Visual Decision Contract
 
-Use `skills/dircreative/assets/visualizations/stage-surface-registry.json#reference-asset-role-graph`. Bind every asset node to ID, role, status, shot binding, and current hash-bound source; visually distinguish planning-only from direct-video-input roles and preserve the Mermaid fallback.
+When visualization adds clarity, use `skills/dircreative/assets/visualizations/stage-surface-registry.json#reference-asset-role-graph`. Bind every asset node to ID, role, status, shot binding, and current hash-bound source; visually distinguish planning-only from direct-video-input roles and preserve the Mermaid fallback.
 
 ## Rules
 
@@ -135,22 +129,26 @@ Use `skills/dircreative/assets/visualizations/stage-surface-registry.json#refere
 - For 60s, 90s, and 180s targets, create global references once and sequence packs one at a time in hybrid mode.
 - Every reference asset needs exactly one primary production role.
 - Every planned board must have a visible role label or manifest role label, such as character reference, scene + camera movement reference, professional storyboard + motion map, or clean first/end frame.
-- A professional storyboard/motion page is mandatory once shot review is needed. Each shot cell must include timecode, duration, shot image region, detailed frame description, shot size, focal length, camera position, camera movement, subject blocking, sound, transition, and model risk.
+- A professional storyboard/motion page is required for explicitly requested whole-film coverage; a bounded shot review can use its existing shot card. Each shot cell must include timecode, duration, shot image region, detailed frame description, shot size, focal length, camera position, camera movement, subject blocking, sound, transition, and model risk.
 - A professional storyboard/motion page defaults to `planning_only`. A clean first/key/end frame is a separate, text-free asset; never imply a board crop is a clean frame.
 - Use dense boards for human review, Seedance, and Veo only when the direct input policy allows it.
 - Use clean first frames or start/end frame assets for Kling and Runway direct image-to-video inputs.
 - For any direct first-frame/start-end-frame workflow, plan the required clean frames for that selected mode.
 - Clean frames are separate assets or explicit clean-frame prompts, not hidden crops implied by a dense board.
-- Do not mark direct I2V as ready when clean frames are only planned; keep `asset_output.status` as `prompt_ready`, `external_pending`, or `generated_candidate` until the user locks real images.
+- Do not mark direct I2V as ready when clean frames are only planned; keep `asset_output.status` as `prompt_ready`, `external_pending`, or `generated_candidate` until real images pass the required independent visual review and host dependency adoption. Record user acceptance separately, only when it actually occurs.
 - Separate planning boards from direct model inputs when labels, arrows, floor plans, or panel borders could be misread.
-- Add `user_decision_gate` before locking visual direction, reference pack plan, identity/product references, environment/camera path, storyboard motion, and clean first frames.
-- Record the matching co-creation gate before treating a reference plan or clean frame as approved.
+- Only unresolved concept choices or unapproved real media actions need a v2 external gate. Preserve already granted scoped permissions.
+- Separate controller design decisions, independent media review and actual user acceptance; never manufacture the last.
 - Add `must_not_animate` rules for any board with labels, arrows, panel borders, floor plans, timing notes, or tables.
-- Add exact-card model pack recipes for Sora, Seedance, Kling, Runway, and Veo. Keep Kling VIDEO 3.0 separate from its legacy 5/10-second card; keep Runway Gen-4.5 generation, Aleph 2.0 Web, Aleph 2.0 API, and deprecated Gen-4 Aleph separate; use stable Veo 3.1 `*-001` cards instead of preview aliases.
+- Load the exact-card pack recipe for the selected model only. Keep Kling VIDEO 3.0 separate from its legacy 5/10-second card; keep Runway Gen-4.5 generation, Aleph 2.0 Web, Aleph 2.0 API, and deprecated Gen-4 Aleph separate; use stable Veo 3.1 `*-001` cards instead of preview aliases.
 - Layout spec must protect readability and video-model safety.
 - Represent the reference pack as asset nodes with explicit graph edges: planning-only, reference-only, or direct video input.
 - Preserve prompt optimizer provenance if an optimized prompt is produced: keep the JSON-first source intent and the optimized text output.
 
 ## skill_run_receipt
+
+Persist the following only for a requested formal handoff, pause/resume or actual
+execution record. Ordinary work returns its result without a separate receipt.
+The next skill is advisory; the controller continues only the requested scope.
 
 Record reference pack decision, visual output mode, execution capability, exact capability cards, source tiers/dates/conflicts, rights status, asset output statuses, rejected layouts, storyboard/clean-frame separation, direct input policy, optional canvas graph receipt, user decision gate status, QA status, and `next_recommended_skill: image-prompt-compiler`.

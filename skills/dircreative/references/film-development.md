@@ -115,13 +115,21 @@ generic language with observable choices, verify supplied/post-produced facts,
 and make the ending resolve the opening. Technical completeness cannot rescue a
 weak or misleading direction.
 
-All audience-facing treatment, screenplay, storyboard description, PPT, README
-and report copy receives the authored-voice pass in `copy-script.md` before
-delivery. A source-derived `VOICE PROFILE` protects project vocabulary,
-character voices and genre cadence. Use `dircreative_humanization_plan.py` to
-separate bounded cleanup from Sepia's layered narrative/professional operations.
-Diagnose by layer, attach quoted evidence, accept findings before editing, and
-bind recreation to a hashed preservation set. IDs, timecodes, literal SUPER,
-exact claims, technical fields and paste-ready model syntax are protected units;
-change one only when the task explicitly includes it and its own contract allows
-the change.
+Before delivery, read the actual prose for speakability, dramatic purpose,
+source fidelity and project voice using `copy-script.md`. Existing passages can
+establish a VOICE PROFILE; for new writing, a project-register choice is enough.
+A screenplay does not need a humanization plan merely because it is long.
+Use `humanization-workflow.md` and `dircreative_humanization_plan.py` only for a
+requested layered operation, demonstrated document-scale defect or explicitly
+selected provider. On that path, diagnose with quoted evidence, accept relevant
+findings within the authorized scope and bind recreation to its preservation
+set. Protect IDs, timecodes, literal SUPER, exact claims, technical fields and
+paste-ready model syntax.
+
+For explicit groups/parallel work follow `docs/film-preproduction/director-room-routing.md`.
+For a complete assignment, continue to each requested deliverable in the same
+work session. One first-round concept is a milestone, not whole-project completion.
+Maintain the shot/action/entity source once; derive the asset matrix, board page
+and model manifest from those IDs and facts. Change a source fact once and mark
+only its dependents stale. Keep completed work while reporting exact missing
+assets, reviews or tool access.

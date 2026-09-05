@@ -6,6 +6,8 @@ import hashlib
 import json
 import re
 import subprocess
+import sys
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -43,6 +45,121 @@ INTERNAL_SKILL_FILE = "INTERNAL_SKILL.md"
 IGNORED_TARGET_DIR_NAMES = {"__pycache__"}
 IGNORED_TARGET_FILE_NAMES = {".DS_Store"}
 IGNORED_TARGET_EXTENSIONS = {".pyc", ".pyo"}
+
+
+@dataclass(frozen=True)
+class InstalledRuntimeVerification:
+    required: bool
+    ok: bool
+    source_root: Path | None = None
+    install_target: Path | None = None
+    errors: tuple[str, ...] = ()
+    parity_output: str = ""
+
+    @property
+    def evidence(self) -> str:
+        if not self.required:
+            return "installation verification not requested; global installation was not inspected"
+        location = f"{self.install_target} against independent source {self.source_root}"
+        return location + ("; " + "; ".join(self.errors) if self.errors else "; identity, activation policy and package parity verified")
+
+
+def add_installed_runtime_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--require-installed", action="store_true", help="Verify the selected installation against independent canonical source.")
+    parser.add_argument("--install-target", "--target", dest="install_target", type=Path,
+                        help="Installation to verify; defaults to the formal Codex installation only when required.")
+    parser.add_argument("--source-root", type=Path,
+                        help="Independent source checkout. Required when this command runs from an installed package.")
+    parser.add_argument("--verify-remote-tag", action="store_true",
+                        help="Explicitly verify canonical remote tag metadata during installed parity.")
+
+
+def installed_runtime_cli_args(args: argparse.Namespace) -> list[str]:
+    if not args.require_installed:
+        return []
+    flags = ["--require-installed"]
+    if args.install_target is not None:
+        flags.extend(["--install-target", str(args.install_target.expanduser().resolve())])
+    if args.source_root is not None:
+        flags.extend(["--source-root", str(args.source_root.expanduser().resolve())])
+    if args.verify_remote_tag:
+        flags.append("--verify-remote-tag")
+    return flags
+
+
+def _installed_identity_errors(target: Path) -> list[str]:
+    """Read actual Skill identity and host activation metadata, not prose headings."""
+    try:
+        skill = target / "SKILL.md"
+        policy = target / "agents/openai.yaml"
+        if any(path.is_symlink() or not path.is_file() for path in (skill, policy)):
+            return ["installed root Skill and activation policy must be regular files"]
+        if skill.stat().st_size > 65536 or policy.stat().st_size > 65536:
+            return ["installed identity metadata exceeds its read limit"]
+        text = skill.read_text(encoding="utf-8")
+        match = re.match(r"\A---\r?\n(.*?)\r?\n---(?:\r?\n|$)", text, re.DOTALL)
+        if match is None:
+            return ["installed root Skill frontmatter is missing"]
+        ruby = (
+            "require 'yaml'; require 'json'; raw = JSON.parse(STDIN.read); "
+            "puts JSON.generate(raw.transform_values { |text| YAML.safe_load(text, permitted_classes: [], aliases: false) })"
+        )
+        proc = subprocess.run(["ruby", "-e", ruby],
+                              input=json.dumps({"skill": match.group(1), "activation": policy.read_text(encoding="utf-8")}),
+                              text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+        if proc.returncode != 0:
+            return ["installed identity or activation YAML is invalid"]
+        records = json.loads(proc.stdout)
+        metadata, activation = records.get("skill"), records.get("activation")
+        if not isinstance(metadata, dict) or metadata.get("name") != "dircreative" or not isinstance(metadata.get("description"), str) or not metadata["description"].strip():
+            return ["installed Skill identity must be dircreative with a nonempty description"]
+        if not isinstance(activation, dict):
+            return ["installed activation policy must be a mapping"]
+        gate = activation.get("policy", {})
+        interface = activation.get("interface", {})
+        if not isinstance(gate, dict) or gate.get("allow_implicit_invocation") is not False:
+            return ["installed activation policy must disable implicit invocation"]
+        prompt = interface.get("default_prompt") if isinstance(interface, dict) else None
+        if not isinstance(prompt, str) or re.search(r"\$dircreative(?![A-Za-z0-9_-])", prompt) is None:
+            return ["installed default prompt must explicitly invoke $dircreative"]
+    except (OSError, UnicodeDecodeError, ValueError):
+        return ["installed identity metadata could not be read"]
+    return []
+
+
+def verify_installed_runtime(
+    *, required: bool, source_root: Path | None = None, install_target: Path | None = None,
+    verify_remote_tag: bool = False, caller_root: Path = ROOT,
+) -> InstalledRuntimeVerification:
+    # Source-only audits must not probe or validate an unrelated global install.
+    if not required:
+        return InstalledRuntimeVerification(required=False, ok=True)
+    target = (install_target if install_target is not None else Path.home() / ".codex/skills/dircreative").expanduser().resolve()
+    source = (source_root if source_root is not None else caller_root).expanduser().resolve()
+    if source == target or installed_layout(source):
+        return InstalledRuntimeVerification(True, False, source, target,
+            ("independent source required: supply --source-root pointing to the canonical source checkout; an installed copy cannot certify itself",))
+    if not (source / "skills/dircreative/SKILL.md").is_file():
+        return InstalledRuntimeVerification(True, False, source, target,
+            ("independent source checkout is missing its root Skill; supply a valid --source-root",))
+    verifier = source / "scripts/dircreative_install_parity.py"
+    if (source / "scripts").is_symlink() or verifier.is_symlink() or not verifier.is_file():
+        return InstalledRuntimeVerification(True, False, source, target,
+            ("independent source verifier is missing or not a regular source file",))
+    identity_errors = _installed_identity_errors(target)
+    if identity_errors:
+        return InstalledRuntimeVerification(True, False, source, target, tuple(identity_errors))
+    command = [sys.executable, "-B", str(verifier), "--target", str(target), "--source-root", str(source)]
+    if verify_remote_tag:
+        command.append("--verify-remote-tag")
+    try:
+        proc = subprocess.run(command, cwd=source, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+    except OSError as exc:
+        return InstalledRuntimeVerification(True, False, source, target, (f"independent parity could not run: {exc}",))
+    output = (proc.stdout + "\n" + proc.stderr).strip()
+    ok = proc.returncode == 0 and "INSTALL_PARITY: PASS" in output.splitlines()
+    errors = () if ok else tuple(["independent installed parity failed", *[line[2:] for line in output.splitlines() if line.startswith("- ")][:3]])
+    return InstalledRuntimeVerification(True, ok, source, target, errors, output)
 
 
 def path_entry_exists(path: Path) -> bool:

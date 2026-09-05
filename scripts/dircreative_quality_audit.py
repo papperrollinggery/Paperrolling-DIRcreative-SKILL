@@ -251,8 +251,8 @@ def main() -> int:
         lambda: require_terms(
             humanized_copy_wiring,
             [
-                "Lead with the requested artifact or recommendation",
-                "Do not narrate routes, paths, Git, receipts, hashes, gates",
+                "Lead with the requested artifact",
+                "Do not expose",
                 "professional-agent-voice-standard.md",
                 "humanizer check",
                 "humanizer / humanizer-zh diagnostic review",

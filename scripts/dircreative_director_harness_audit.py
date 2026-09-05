@@ -96,24 +96,39 @@ def selection_cases(harness: dict[str, Any]) -> list[dict[str, Any]]:
     return [case for case in cases if isinstance(case, dict)]
 
 
-def select_perspectives(request: str, harness: dict[str, Any]) -> dict[str, Any]:
-    normalized = " ".join(request.split()).casefold()
-    for case in selection_cases(harness):
-        signals = case.get("signals", [])
-        if any(isinstance(signal, str) and signal.casefold() in normalized for signal in signals):
-            return {
-                "mode": case.get("mode"),
-                "director_room_used": case.get("director_room"),
-                "selected_perspectives": case.get("perspectives", []),
-                "optional_perspectives": case.get("optional_perspectives", []),
-                "reason_code": case.get("id"),
-            }
+def select_perspectives(
+    request: str, harness: dict[str, Any], *, primary_route: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Map professional judgments onto the primary route, never reroute it."""
+    from dircreative_route import has, route_request
+
+    route = primary_route if primary_route is not None else route_request(request)
+    route_id = route["route"]
+    selected: list[str] = []
+    optional: list[str] = []
+    if route["execution_context"] == "standalone_chat":
+        groups = route.get("collaboration", {}).get("requested_groups", [])
+        if route_id == "film_development":
+            if groups == ["creative"] or route["deliverable_layer"] == "client_story":
+                selected = ["narrative_strategy", "visual_production"]
+            else:
+                selected = ["narrative_strategy", "visual_production", "model_continuity"]
+        elif route_id in {"shot_optimization", "storyboard_review", "prompt_revision", "video_distillation"}:
+            selected = ["visual_production", "model_continuity"]
+        elif route_id == "copy_revision":
+            selected = ["narrative_strategy"]
+            if has(request, r"已有脚本|existing\s+script"):
+                optional = ["visual_production"]
+        elif route_id == "bounded_revision" and has(request, r"prompt|提示词"):
+            selected = ["visual_production", "model_continuity"]
+    known = set(harness.get("perspectives", {}))
     return {
-        "mode": "fast",
-        "director_room_used": False,
-        "selected_perspectives": [],
-        "optional_perspectives": [],
-        "reason_code": "no_director_room_evidence",
+        "mode": route["mode"],
+        "director_room_used": route["mode"] == "studio" and bool(selected),
+        "selected_perspectives": [item for item in selected if item in known],
+        "optional_perspectives": [item for item in optional if item in known],
+        "reason_code": "primary_route:" + route_id,
+        "collaboration": route.get("collaboration", {}),
     }
 
 

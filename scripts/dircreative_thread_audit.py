@@ -60,7 +60,10 @@ def git_worktrees(cleanup: dict[str, Any]) -> tuple[list[str], str]:
     return worktrees, "git"
 
 
-def build_failures(cleanup: dict[str, Any], objective: dict[str, Any], release: dict[str, Any]) -> tuple[list[str], dict[str, Any]]:
+def build_failures(
+    cleanup: dict[str, Any], objective: dict[str, Any], release: dict[str, Any],
+    *, check_git_worktrees: bool = False,
+) -> tuple[list[str], dict[str, Any]]:
     failures: list[str] = []
 
     cleanup_run = cleanup.get("run", {})
@@ -74,10 +77,14 @@ def build_failures(cleanup: dict[str, Any], objective: dict[str, Any], release: 
     objective_qa = objective.get("qa", {})
     release_boundary = release.get("run", {}).get("completion_boundary", {})
     release_qa = release.get("qa", {})
-    worktrees, worktree_source = git_worktrees(cleanup)
-    expected_main_worktree = cleanup.get("worktree_audit", {}).get("expected_main_worktree") or str(ROOT)
-    allowed_worktrees = {str(ROOT), str(expected_main_worktree)}
-    unexpected_worktrees = [worktree for worktree in worktrees if worktree not in allowed_worktrees]
+    # Old receipts certify only their recorded scope. Unrelated live worktrees
+    # are not evidence that a historical worker was left behind.
+    worktrees, worktree_source = (
+        git_worktrees(cleanup) if check_git_worktrees else ([], "historical_fixture_only")
+    )
+    expected_absent = set(cleanup.get("worktree_audit", {}).get("expected_absent_worktrees", []))
+    unexpected_worktrees = [worktree for worktree in worktrees if worktree in expected_absent]
+
 
     if cleanup_run.get("main_controller_thread", {}).get("pinned") is not True:
         failures.append("main controller thread is not recorded as pinned")
@@ -200,7 +207,7 @@ def main() -> int:
     parser.add_argument(
         "--check-git-worktrees",
         action="store_true",
-        help="Kept for explicit caller intent; git worktree audit is always checked when available.",
+        help="Check live presence of workers explicitly recorded as removed; unrelated worktrees are outside scope.",
     )
     args = parser.parse_args()
 
@@ -257,7 +264,7 @@ def main() -> int:
     cleanup = load_yaml(Path(args.dispatch_record))
     objective = load_yaml(OBJECTIVE_RECEIPT)
     release = load_yaml(RELEASE_RECEIPT)
-    failures, details = build_failures(cleanup, objective, release)
+    failures, details = build_failures(cleanup, objective, release, check_git_worktrees=args.check_git_worktrees)
 
     cleanup_run = details["cleanup_run"]
     cleanup_qa = details["cleanup_qa"]

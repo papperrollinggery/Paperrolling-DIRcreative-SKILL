@@ -391,7 +391,7 @@ def execute_case(case: dict[str, Any]) -> tuple[str, dict[str, Any]]:
         raise HeadlessAcceptanceError(f"fixture stopped before producing an answer: {case['id']}")
     loaded_files, context = load_route_context(route)
     harness = load_yaml(HARNESS_PATH).get("director_role_harness", {})
-    perspectives = select_perspectives(case["request"], harness)
+    perspectives = select_perspectives(case["request"], harness, primary_route=route)
     if route["mode"] == "fast":
         if perspectives["director_room_used"] is not False:
             raise HeadlessAcceptanceError("Fast headless case entered Director Room")
@@ -404,7 +404,7 @@ def execute_case(case: dict[str, Any]) -> tuple[str, dict[str, Any]]:
             raise HeadlessAcceptanceError("Studio film case skipped adaptive perspectives")
         if len(perspectives["selected_perspectives"]) > 3:
             raise HeadlessAcceptanceError("Studio headless case exceeded perspective budget")
-        if "Deliver a recommended concept and a usable first-round artifact" not in next(iter(context.values())):
+        if "Produce a recommended direction and usable first-round artifact" not in next(iter(context.values())):
             raise HeadlessAcceptanceError("Studio Route Card lost artifact-first contract")
 
     processors = {

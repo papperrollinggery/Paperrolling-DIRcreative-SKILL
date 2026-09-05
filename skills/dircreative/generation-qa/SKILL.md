@@ -7,6 +7,9 @@ description: Score generated outputs against story, continuity, reference, promp
 
 ## Required Knowledge
 
+Read only the reference needed for the active task, not this entire list.
+The root v2 route owns scope and authorization; legacy records do not add gates.
+
 - `docs/film-preproduction/schemas/prompt-ir.schema.json`
 - `docs/film-preproduction/prompt-authoring-standard-v1.md`
 - `docs/film-preproduction/asset-intake-and-state-standard-v1.md`
@@ -46,24 +49,20 @@ description: Score generated outputs against story, continuity, reference, promp
 
 ## Chat Surface
 
-Show QA as a customer-facing production decision:
-
-- `阶段: QA 与重试规则`
-- `客户可见预览`: what is currently pass/fail/pending in plain language.
-- `智能体创作内容`: self-QA result, smallest failed asset, and recommended retry route.
-- `后台证据`: mention failure IDs only as traceability, not as the main user task.
-- `用户确认点`: ask whether to retry the smallest failed asset, switch mode/model, or stop at prompt-only.
-
-Do not ask the user to inspect a failure taxonomy, YAML QA report, or raw prompt contract as the primary decision.
+Show the actual candidate when available, identify the visible defect and its
+impact, and state the smallest corrective action. Preserve successful work.
+Execute a bounded retry only within current authorization and retry limits;
+otherwise return the corrected prompt or exact blocker. Do not ask the user to
+inspect internal taxonomies, and do not ask for acceptance of a failed candidate.
 
 ## Visual Decision Contract
 
-Use `skills/dircreative/assets/visualizations/stage-surface-registry.json#qa-candidate-delta-comparison`. Bind candidates, passed and failed locks, blocker, smallest retry, and preserved artifacts to the QA report; failed QA exposes retry/stop/inspect, never lock or acceptance, and preserves a table fallback. When candidate images exist, render their verified previews before the delta table and keep the visible image, QA column, professional judgment, blocker, retry, and primary action synchronized to the same candidate. Label illustrative placeholders explicitly and never let them masquerade as usable candidates.
+When visualization adds clarity, use `skills/dircreative/assets/visualizations/stage-surface-registry.json#qa-candidate-delta-comparison`. Bind candidates, passed and failed locks, blocker, smallest retry, and preserved artifacts to the QA report; failed QA exposes retry/stop/inspect, never lock or acceptance, and preserves a table fallback. When candidate images exist, render their verified previews before the delta table and keep the visible image, QA column, professional judgment, blocker, retry, and primary action synchronized to the same candidate. Label illustrative placeholders explicitly and never let them masquerade as usable candidates.
 
 ## Rules
 
 - Decide whether to change prompt, reference image, shot design, model, or post-production.
-- Run `python3 scripts/dircreative_model_capability_audit.py` for capability/prompt contract changes. Require every E0-E6 negative fixture to fail for its expected ID and every positive control to pass.
+- For source-maintenance changes to capability/prompt contracts, run `python3 scripts/dircreative_model_capability_audit.py` and its E0-E6 controls. A production review checks the active output and relevant exact-card constraints only.
 - E0 rejects family aliases, `latest`, missing version/provider surface, stale cards, and unresolved cards.
 - E1 rejects forged S1 labels, S4-only evidence, or unscoped evidence used as authoritative capability truth.
 - E2 rejects native audio when the exact card/provider surface does not support the route; compare `desired_audio` with `generation_audio_route` and preserve official source conflicts.
@@ -116,11 +115,11 @@ Use `skills/dircreative/assets/visualizations/stage-surface-registry.json#qa-can
   a failure when it does not serve a deliberate pattern or match cut.
 - Reject any review-only widget, HTML page, local URL, or screenshot that is presented as a locked artifact without a DIRcreative receipt.
 - For longform work, localize failures to one sequence pack whenever possible.
-- Do not silently rewrite upstream locked artifacts; write revision requests.
+- Repair authorized defects at the smallest source and mark affected descendants stale. Ask only when a repair changes protected meaning, scope or a user-reserved lock.
 
 ## Prompt-system structural QA
 
-For prompt-only fixtures, run the deterministic audit before user delivery:
+For source-maintenance prompt fixtures, run the deterministic audit below. It is not a prerequisite for reviewing one production candidate:
 
 ~~~text
 PYTHONDONTWRITEBYTECODE=1 python3 scripts/dircreative_prompt_fixture_audit.py
@@ -147,5 +146,9 @@ When reviewing generated output later, add the following failure IDs to the exis
 Retry one layer only. Preserve source truth, product identity, composition locks, and output mode while changing the smallest failing artifact. Never ask the user to lock a candidate before self-QA passes.
 
 ## skill_run_receipt
+
+Persist the following only for a requested formal handoff, pause/resume or actual
+execution record. Ordinary work returns its result without a separate receipt.
+The next skill is advisory; the controller continues only the requested scope.
 
 Record E0-E6 positive/negative results, exact cards and deprecations, source tiers/dates/conflicts, rights and audio-route status, preserve/change overlap result, storyboard/clean-frame separation, optional macro activation, failure types, fixes, registry candidates, QA status, and `next_recommended_skill: learn`.
