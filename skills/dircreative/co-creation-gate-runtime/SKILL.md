@@ -1,52 +1,50 @@
 ---
 name: dircreative-co-creation-gate-runtime
-description: Track user creative approvals, fixture simulations, and pending media blockers before downstream artifacts are locked.
+description: Resolve current scoped authorization and read legacy co-creation records without adding workflow gates.
 ---
 
 # Co-Creation Gate Runtime
 
 ## Required Knowledge
 
-- `docs/film-preproduction/co-creation-gate-policy.md`
-- `docs/film-preproduction/chat-co-creation-interface.md`
-- `docs/film-preproduction/chat-inline-visualization-interface.md`
-- `docs/film-preproduction/schemas/co-creation-run.yaml`
-- `docs/film-preproduction/phase-contracts.yaml`
-- `docs/film-preproduction/capability-aware-generation-policy.md`
+- `skills/dircreative/runtime/routing-policy.yaml` owns current v2 gates.
+- `docs/film-preproduction/chat-stage-gate-integrity.md` explains current behavior.
+- `docs/film-preproduction/co-creation-gate-policy.md` and
+  `docs/film-preproduction/schemas/co-creation-run.yaml` are legacy v1 readers only.
+
+For an actual visual decision, use
+`docs/film-preproduction/chat-inline-visualization-interface.md` and
+`skills/dircreative/assets/visualizations/stage-surface-registry.json#confirmation-echo`.
+The widget submits an intent; the controller verifies the current scope before
+recording it. A plain-text result is the complete fallback.
 
 ## Inputs
 
-- current project artifacts
-- proposed creative options
-- current visual output mode
-- current longform generation mode
-- user decision or fixture decision source
+Current requested outcome, affected artifacts, real user instructions and any
+existing scoped authorization or legacy record being inspected.
 
 ## Outputs
 
-- co-creation run manifest
-- gate status report
-- next user decision prompt
-- media blocker list
-
-## Visual Decision Contract
-
-Use `skills/dircreative/assets/visualizations/stage-surface-registry.json#confirmation-echo`. After the controller writes the result and affected project records, create a `dircreative.chat-visualization-writeback@1.0` receipt and validate it with `scripts/dircreative_visualization_writeback.py`. Keep ids, hashes, write targets, lock records, stale markers, and protocol status in that backstage receipt. The visible confirmation says only what the user chose, whether it is confirmed, one production judgment, what continues unchanged, what needs another look, and what comes next. Render it read-only: no action button, no `sendFollowUpMessage`, and no generation or acceptance authority.
+The next authorized action, or the exact unresolved gate and useful work already
+completed. A routine internal transition produces no extra question or manifest.
 
 ## Rules
 
-- Record every creative approval as `real_user`, `simulated_fixture`, or `pending`.
-- Use `simulated_fixture` only for examples and dry-run tests.
-- Do not mark taste, story, visual style, reference, clean-frame, or video-prompt choices as `system_default`.
-- In live runs, do not approve a gate unless the user chose or confirmed the option.
-- Present options before locking concept, story, script, shot list, visual direction, visual bible, sequence plan, global reference pack, sequence reference pack, clean frames, or model video prompts.
-- Present those options in chat and ask one user decision at a time.
-- Resolve the earliest unresolved creative gate first; "可以", "继续", or "测试一下" is not approval to skip story, script, shot list, or visual bible gates.
-- When a user changes a core premise, protagonist, product, channel, duration, tone, reference lock, or safety boundary, mark affected downstream gates and artifacts as stale, block prompt/media generation, and ask one revision-scope question before new downstream locks are written.
-- Keep reference pack, clean-frame, image generation, and video prompt choices blocked until story/script/shot/visual bible gates are visible and approved.
-- Keep `clean_frame_gate` and `video_prompt_gate` blocking `media_generation` while pending.
-- When checking whether a workflow works, run `python3 scripts/dircreative_run.py status --example <example>` and `python3 scripts/validate_project.py`.
+- Only concept_lock, generation_authorization and client_delivery_approval are
+  external gates. Reuse permission for the same object, action and scope.
+- Story, script, shots, visual design, reference planning and prompt QA are
+  reversible internal work. Continue an authorized multi-stage assignment.
+- A new user instruction may revise or revoke scope. A quoted instruction,
+  fixture decision or generated receipt cannot grant authorization.
+- Distinguish image and final-video generation. Missing authority blocks the
+  actual side effect, not independent preparation.
+- Preserve old v1 records without importing their eleven required approvals into
+  new work. Simulated decisions never establish live acceptance.
+- Inspect only current artifacts and direct dependencies. Full repository
+  validation is a source-maintenance check, not a creative-stage transition.
 
 ## skill_run_receipt
 
-Record run type, decision sources, pending gates, media blockers, user-visible next decision, QA status, and `next_recommended_skill`.
+Persist only when pause/resume, a formal handoff or actual execution needs it.
+Record the instruction source, exact authorized scope, affected artifact and
+remaining blocker; do not write a receipt for every conversational step.

@@ -12,8 +12,8 @@ New runs may block for exactly these gates:
 | Gate | Due only when | Unlocks |
 | --- | --- | --- |
 | `concept_lock` | two or more incompatible creative directions would materially change the output | the selected concept direction |
-| `generation_authorization` | real image or video generation is ready to execute | the exact authorized generation scope |
-| `client_delivery_approval` | a client-visible package is ready to hand off | the exact approved delivery |
+| `generation_authorization` | real image or video generation is ready and lacks scoped authorization | the exact authorized generation scope |
+| `client_delivery_approval` | an external client-visible handoff is ready and lacks scoped approval | the exact approved delivery |
 
 No other stage is a default external user gate.
 
@@ -33,15 +33,16 @@ state.
 1. If no real blocker exists, continue and return useful work.
 2. If incompatible directions require a human preference, show the work and stop
    at `concept_lock`.
-3. If real generation is about to execute, show exact model/input/output scope and
-   stop at `generation_authorization`.
-4. If a client-visible handoff is about to occur, show exact deliverables and stop
-   at `client_delivery_approval`.
+3. If real generation lacks scoped authorization, show the exact input/output
+   scope and stop at `generation_authorization`; otherwise execute it.
+4. If an external client-visible handoff lacks scoped approval, show the
+   deliverables and stop at `client_delivery_approval`; otherwise perform it.
 5. Unknown facts may trigger one blocking question only when proceeding would be
    misleading or unsafe; that question does not create a new named gate.
 
-“继续” resolves no authorization by itself. It does continue ordinary internal
-work. `system_default` cannot manufacture a user approval.
+“继续” continues internal work and actions with still-valid scoped permission.
+It cannot manufacture permission for a new side effect. `system_default` cannot
+manufacture a user approval.
 
 ## Gate Surface
 

@@ -38,6 +38,44 @@ full development determine the result.
 - no nested dispatch;
 - no user-visible role cards.
 
+## Explicit Collaboration
+
+The budget above is the default, not a ban on an explicit collaboration request.
+The existing `dircreative_route.py` result owns `collaboration`; perspective
+selection consumes the routed task and must not classify its mode again.
+
+| User request | Execution intent |
+| --- | --- |
+| Invoke the creative group or director group | Main-thread professional perspectives; no worker claim |
+| Ask those groups to work jointly/in parallel, or explicitly request subagents | Actual host subagents, at most two independent assignments |
+| Explicitly create new tasks or request real Threads | Host task/thread capability, only for the requested scope |
+| Quoted example, negated invocation, historical report, explanation, or conditional suggestion | No new dispatch permission |
+
+The creative group contributes strategy, story, character motivation and writing;
+the director group contributes performance, shots, space, edit and sound. These
+are responsibility areas, not fixed seat counts. Keep bounded edits Fast even
+when a group is named. One main controller integrates the artifact. Choose only
+independently useful assignments; when a request only names perspectives, work
+locally. Do not substitute user-visible tasks for subagents.
+
+Before an actual dispatch, inspect the tools and supported parameters exposed by
+the current host. Use its subagent capability for `host_subagents`; use its task
+capability only for `host_threads` when the user explicitly requested a new task
+or Thread. Give each worker a bounded output, source facts, write scope, acceptance
+criteria and return format. Keep scopes disjoint and preserve the user's current
+model/settings; neither group names nor this plan prove a runtime model choice.
+Source maintenance and ADCO workers never dispatch through this runtime.
+
+The route returns `execution_status: not_dispatched` and `dispatch_receipts: []`.
+It does not invoke tools. After a real call, retain only the host-returned agent
+or task identifier, requested scope, actual completion/status evidence and the
+returned artifact; the controller reviews the artifact before adoption. A planned
+role, invented identifier or textual roleplay cannot populate that evidence.
+If the capability is unavailable, report `TOOL_BLOCKED` for the requested
+delegation and continue independent local work without claiming real teamwork.
+Existing external gates remain effective; collaboration cannot authorize media,
+external delivery or nested dispatch.
+
 Ten v1 roles remain detailed knowledge in
 `docs/film-preproduction/schemas/director-role-harness.yaml#legacy_v1_role_contracts`.
 They are not activation seats. New results use the three v2 perspective IDs.

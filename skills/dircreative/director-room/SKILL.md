@@ -51,6 +51,21 @@ meeting transcript.
   Council.
 - One controlling agent synthesizes the result. Threads default to zero; nested
   dispatch is forbidden.
+- Use the existing router's `collaboration` intent when collaboration is explicit.
+  Naming the creative/director groups uses professional perspectives. Asking
+  them to work jointly or explicitly requesting subagents permits up to two
+  useful, bounded host subagents; explicit new tasks or real Threads use the
+  host task capability instead. A group name never proves a worker ran.
+- Check the current host tools before dispatch. Give workers disjoint scopes,
+  locked facts, acceptance criteria and a concrete return artifact. Preserve the
+  current host model settings. Do not create a user task for a subagent request.
+- The route is only a plan: `not_dispatched` and an empty `dispatch_receipts` list
+  remain until actual host calls supply identifiers and result evidence. Review
+  the returned artifacts before adoption. Missing capability is `TOOL_BLOCKED`;
+  continue independent work and describe any local perspective pass accurately.
+- Negated/quoted/historical mentions do not dispatch. Maintenance and ADCO
+  workers do not open this runtime or start nested work. Explicit collaboration
+  does not expand a bounded artifact or satisfy a media/delivery gate.
 - Do not invent disagreement. When judgments align, record
   `no_material_conflict` and keep `disagreements: []`.
 - Record a disagreement only when competing choices have different material

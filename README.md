@@ -20,7 +20,7 @@
 
 DIRcreative 不是“输入一句话、吐出一堆提示词”的黑盒。它先判断任务是局部修改、完整开发还是交付审计，再只加载对应合同。局部任务直接交付修改结果；只有真实方向冲突、生成授权或客户交付才停下来询问。
 
-当前源码版本为 `v0.8.0`；已发布版本与下载以 [GitHub Releases](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/releases) 为准。本版修复全片前期从文字规划切换到真实图片资产时的执行断层：分离图片/视频授权，绑定跨任务用户范围、资产角色、权威真值、人物母版、依赖 DAG、媒体调用前置检查和真实生成证据；同时把去 AI 化规划与实际改写、Seedance 能力卡与权威剧本源、结构验证与视觉采用继续保持为不同状态。
+当前源码版本为 `v0.8.1`；已发布版本与下载以 [GitHub Releases](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/releases) 为准。本版修复全片前期从文字规划切换到真实图片资产时的执行断层：分离图片/视频授权，绑定跨任务用户范围、资产角色、权威真值、人物母版、依赖 DAG、媒体调用前置检查和真实生成证据；同时把去 AI 化规划与实际改写、Seedance 能力卡与权威剧本源、结构验证与视觉采用继续保持为不同状态。
 
 源码仓库包含 DIRcreative 根 Skill、19 个 `skills/dircreative/*` 内部子 Skill，以及 `ai-film-asset-stress-test`、`ai-film-production-ledger` 两个 P0 能力入口。正式 DIRcreative 安装包按安全设计只暴露根 `$dircreative`，其余入口会内部化后由 selector 路由；Skill Stack 还会发现宿主中已安装的外部专业 provider。这些依赖不会被复制进本仓库，也不能把“宿主可调用”表述成“GitHub 已内置”。ADCO 始终是独立外部编排方。
 
@@ -79,6 +79,8 @@ explicit $dircreative → direct judgment → Fast | Studio | Delivery
 - **响应式布局**：桌面端并排比较，窄屏自动改为可读的纵向流程。
 
 2026-07-14 对 `v0.4.0` 交互面的本地浏览器验收覆盖 **14 个页面、84 个响应式场景、0 个失败**；复现命令见 [Development and validation](#development-and-validation)。技术门禁证明界面和工作流按约定运行，但不会替代具体客户项目的真人创意验收。
+
+本轮工作流优化已修复显式组协作、否定请求、单页故事范围和系统/包内 Skill 发现链，并清理旧逐阶段确认。详见 [优化记录与验证边界](docs/film-preproduction/research/workflow-optimization-2026-09-05.md)。正式发布与安装以对应 Release 和实际验证结果为准；源码测试不代表媒体效果验收。
 
 ## Quick start
 
@@ -297,12 +299,12 @@ Skill; see [review trust host configuration](docs/film-preproduction/review-trus
 正式安装源是同一 GitHub Release 中的归档和 `SHA256SUMS`，再由该 tag 的精确、
 干净源码执行同进程验证与安装；不能运行归档内的 installer，也不能用 metadata
 自证。下面的信任链从 `v0.5.0` 起适用；更早版本不满足这条正式安装门。
-以下命令在 `v0.8.0` tag 与 Release 实际发布后生效。
+以下命令在 `v0.8.1` tag 与 Release 实际发布后生效。
 
 ```bash
-gh release download v0.8.0 \
+gh release download v0.8.1 \
   --repo papperrollinggery/Paperrolling-DIRcreative-SKILL \
-  --pattern 'dircreative-0.8.0.tar.gz' \
+  --pattern 'dircreative-0.8.1.tar.gz' \
   --pattern 'SHA256SUMS'
 ```
 
@@ -312,7 +314,7 @@ gh release download v0.8.0 \
 ```bash
 set -euo pipefail
 REPO_URL="https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL.git"
-TAG="v0.8.0"
+TAG="v0.8.1"
 EXPECTED_COMMIT="$(
   git ls-remote --exit-code --tags "$REPO_URL" \
     "refs/tags/$TAG" "refs/tags/$TAG^{}" |
@@ -324,7 +326,7 @@ EXPECTED_COMMIT="$(
     }
   '
 )"
-ARTIFACT="$(pwd)/dircreative-0.8.0.tar.gz"
+ARTIFACT="$(pwd)/dircreative-0.8.1.tar.gz"
 CHECKSUMS="$(pwd)/SHA256SUMS"
 VERIFY_ROOT="$(mktemp -d)"
 trap 'rm -rf "$VERIFY_ROOT"' EXIT

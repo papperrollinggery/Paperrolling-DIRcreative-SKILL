@@ -34,8 +34,9 @@ combinations, and a configurable per-asset test matrix.
 
 `certified` and `conditional` require a detached signature over the exact review
 receipt. The authority and public-key SHA-256 must already exist in the
-host-owned `skills/dircreative/runtime/review-trust-registry.json`; the generic
-CLI cannot select a new key or pin. The shipped registry is intentionally empty
+host-owned registry selected by `DIRCREATIVE_REVIEW_TRUST_REGISTRY` or
+`~/.codex/dircreative/review-trust-registry.json`; the generic
+CLI cannot select a new key or pin. The package registry is an empty compatibility fallback
 until a host administrator configures reviewer actor, authority kind, allowed
 purpose/source, key path, and key hash. The validator fails closed if
 OpenSSL, the signature, or the configured detached key is missing. A second

@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+## 0.8.1 - 2026-09-05
+
+- Fixes global installed-runtime acceptance to verify the actual target against an independent source checkout, adds source/installed entry checks to CI and release gates, and replaces the legacy operator prompt with v2 instructions.
+
+- Adds explicit creative/director collaboration intent with native subagent versus user-task boundaries; keeps primary routing authoritative through perspective selection and ADCO contexts.
+- Fixes negated side-effect routing, resolved-concept gates, one-shot scope, and single-page client-story expansion; adds isolated behavior regressions.
+- Restores bounded system and packaged-provider discovery without re-exposing internal Skills or reviving disabled/duplicate providers.
+- Removes mandatory stage confirmations and routine humanization cascades from active modules; preserves genre, source, asset, review and execution contracts.
+- Keeps controller IDs and hashes out of direct asset prompts while preserving their packet bindings, and scopes historical worktree checks to explicit removal evidence.
+- Preserves exact candidate Skill identity in isolated Codex text evaluations, requires an explicit model for live runs, and records requested identity separately from unattested actual identity.
+
 ## 0.8.0 - 2026-09-05
 
 - Defaults the primary character identity portrait to a frontal, level face shared by headed and headless variants. Neutral-background masters must be fully opaque; raster alpha facts are measured and bound to their review receipts without forbidding valid RGBA or flattening source images.

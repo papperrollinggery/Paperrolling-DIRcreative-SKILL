@@ -26,6 +26,14 @@ Card without a routing preflight.
    or external write. Selection never executes it; the existing authorization
    gate remains decisive.
 
+The production `load_runtime_catalog` path resolves the selected package's two
+internal capabilities (`ai-film-asset-stress-test`, `ai-film-production-ledger`)
+without exposing them as global Skills. A missing host catalog can discover an
+authorized Skill root and exactly its `.system` layer, where built-in imagegen
+may live. No recursive plugin/backup scan is needed. Host explicit unavailable
+or duplicate identities remain unavailable; a provider name alone never proves
+its body, tool, scope or review authority is usable.
+
 ## Mode caps
 
 | Mode | External bodies | Collaborators | Validator | Visible card |
@@ -178,3 +186,20 @@ actual application. Without that host readback, show `已选` with
 adds value, write:
 
 `本次无需额外 Skill，DIRcreative 足够。`
+
+## Production handoff completion
+
+For a selected provider, pass the exact requested outcome, stage, source facts,
+allowed changes, references with separate roles, output location/format and
+acceptance criteria. Read its actual body and only the references it selects for
+this case. Consume the resulting artifact, check it against the same source and
+return it through the existing manifest. Do not replace a compiled provider
+prompt with a locally paraphrased prompt after the handoff.
+
+At each asset stage, success is a usable design/spec/prompt or actual reviewed
+media, according to the request. `needs_followup` names the next required stage
+or missing gap; it is not an invitation to re-run the same selection indefinitely.
+For real generation, check the callable tool and required reviewer/readback
+before a large batch. If a host capability is missing, preserve completed design
+and prompt work and report that exact blocker. No amount of self-authored
+receipts can supply an unavailable host adoption.

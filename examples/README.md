@@ -1,8 +1,10 @@
 # Examples
 
-Examples are used as executable design fixtures.
+Examples are historical executable design fixtures, not the default current workflow.
 
-Each example should show the full chain from raw idea to structured preproduction artifacts:
+The older examples below preserve the full v1 chain for compatibility. New v2 tasks follow only their requested output set, reuse authorization and return usable work without mandatory stage confirmations. Current behavior is tested with raw requests in `tests/fixtures/content-first/cases.json`.
+
+The historical chain was:
 
 ```text
 idea intake

@@ -1,5 +1,29 @@
 # Live Chat Acceptance Runbook
 
+
+## V2 Operator Prompt
+
+Use this prompt for a new acceptance session. The historical checklist below
+remains a v1 fixture reader; it does not add approval stages or model limits.
+The acceptance pass must happen in chat. Technical success never supplies a
+user acceptance statement.
+
+```text
+我要做一次 DIRcreative 真实聊天验收。
+$dircreative 使用当前核验过的安装，在独立测试目录完成我给出的创作请求。
+先返回可用成果，复用完整brief与已有授权；普通故事、剧本、分镜和参考规划不逐项确认。
+按请求区分客户故事、技术前期和真实媒体。导演组与创意组的联合/并行请求使用真实可用子代理，不能模拟已派发。
+保持用户给出的故事时长、模型、人物、台词与来源；生成单元按所选模型当前能力和表演容量划分，不套固定15秒上限。
+仅实际未授权副作用或未解决关键方向需要询问；未授权图片/视频时只交付对应文本或提示词。
+没有真实用户明确接受，不写live-user-acceptance.yaml，不宣称用户验收通过。
+```
+
+## Historical V1 Acceptance Reference
+
+The following sections describe the retained v1 rehearsal and evidence format.
+Their fixed stages, confirmation sequence and council roster are not active
+instructions for new v2 sessions.
+
 Verified: 2026-05-17
 
 Purpose: run the final real-user acceptance pass without confusing it with a fixture, terminal demo, goal-mode simulation, or agent-only review.

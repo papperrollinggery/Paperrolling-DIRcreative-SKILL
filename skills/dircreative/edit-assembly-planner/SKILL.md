@@ -7,6 +7,9 @@ description: Convert sequence plans and generated clip receipts into edit assemb
 
 ## Required Knowledge
 
+Read only the reference needed for the active task, not this entire list.
+The root v2 route owns scope and authorization; legacy records do not add gates.
+
 - `docs/film-preproduction/longform-decomposition-policy.md`
 - `docs/film-preproduction/capability-aware-generation-policy.md`
 - `docs/film-preproduction/schemas/sequence-plan.yaml`
@@ -39,5 +42,9 @@ description: Convert sequence plans and generated clip receipts into edit assemb
 - Do not generate or edit videos.
 
 ## skill_run_receipt
+
+Persist the following only for a requested formal handoff, pause/resume or actual
+execution record. Ordinary work returns its result without a separate receipt.
+The next skill is advisory; the controller continues only the requested scope.
 
 Record clip availability, edit order, audio handoff, continuity risks, missing assets, retry priorities, QA status, and `next_recommended_skill: generation-qa`.

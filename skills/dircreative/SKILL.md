@@ -1,165 +1,128 @@
 ---
 name: dircreative
-description: "Use only after the user explicitly invokes $dircreative for film preproduction: story, script, storyboard, shot planning, visual systems, reference-image planning, and model-specific video prompts. ADCO mode accepts only a validated Specialist Exchange handoff. Do not use for maintaining, debugging, refactoring, testing, or evaluating the DIRcreative source repository; maintaining ADCO; ordinary code work; factual questions; or generic advertising requests without an explicit $dircreative invocation."
+description: "Use after explicit $dircreative for film concepts, stories, scripts, director or creative groups, shot/asset planning, reference-video analysis, and image/video prompts. Real media execution requires the corresponding authorization. Validated ADCO handoffs are supported. DIRcreative source maintenance is outside this Skill."
 ---
 
 # DIRcreative
 
-Make the film work better across story, image, sound, performance, continuity,
-and model behavior; keep control machinery subordinate to the result.
+Develop a film from the user's brief or existing material into usable creative
+work: story, script, performance, shots, visual assets, sound and model-specific
+prompts. With scoped authorization and available tools, execute and review the
+requested assets. A plan or prompt is not a generated image or finished video.
 
 ## Invocation Boundary
 
 Start only for explicit `$dircreative` or validated `adco.specialist-exchange`
-selecting `dircreative.film-preproduction`; real ADCO uses
-`adco specialist-handoff` and `adco specialist-adopt`. Misrouted DIR/ADCO
-maintenance becomes `source_maintenance` and stops Skill execution.
+selecting `dircreative.film-preproduction`. DIR/ADCO source maintenance becomes
+`source_maintenance` and stops Skill execution. Use an isolated fixture/project
+for runtime tests. Never modify project instructions to activate the Skill.
 
 ## Router Contract
 
-Choose an obvious standalone route directly; do not run a script before useful
-creative work:
-
-| Request | Mode / route | Route Card | Active stage reference |
-| --- | --- | --- | --- |
-| bounded copy or script change | Fast / `copy_revision` | `routes/fast-task.md` | `references/copy-script.md` |
-| one shot or a few storyboard frames | Fast / `shot_optimization` or `storyboard_review` | `routes/fast-task.md` | `references/shot-storyboard.md` |
-| bounded model prompt change | Fast / `prompt_revision` | `routes/fast-task.md` | `references/prompt-model.md` |
-| other bounded revision | Fast / `bounded_revision` | `routes/fast-task.md` | none |
-| analyze or distill a reference video / local clip into AI filmmaking methods | Studio / `video_distillation` | `routes/studio-development.md` | `references/video-distillation.md` |
-| recurring character, costume master sheet, headless derivative, or garment detail board | Studio / `film_development` | `routes/studio-development.md` | `references/character-master-sheet.md` |
-| complete or multi-output film work, including its visual asset plan | Studio / `film_development` | `routes/studio-development.md` | `references/film-development.md` |
-| real generation or client delivery | Delivery / `generation_authorization` or `client_delivery` | `routes/delivery-audit.md` | `references/generation-delivery.md` |
-| fully validated ADCO handoff | Delivery / `adco_specialist_exchange` | `routes/delivery-audit.md` | `references/specialist-exchange.md` plus the descriptor schema |
-
-Run `python3 scripts/dircreative_route.py --handoff <file> --project-root <dir>`
-only to validate an ADCO handoff, or use text routing for genuine mode ambiguity.
-A schema-only handoff fails closed; verify its descriptor, locked hashes, brief,
-capabilities, exchange index, snapshot, and isolated output/receipt scope. It is
-not a mandatory creative preflight.
-
-Read exactly one selected Route Card, then only the active task reference.
-Replace that reference instead of stacking stages. Optional
-model/source evidence is fetched only when a current claim or real execution
-depends on it.
-
-For an explicit project directory, new materials, or multi-file Studio output,
-also read `references/project-hygiene.md` after the first useful artifact. It is
-an operational reference, not a craft reference.
-
-## Startup Reads
-
+Choose an obvious route directly. Read exactly one selected Route Card and only
+the active task reference; replace stage references as the work progresses.
 There are zero unconditional protocol reads. An obvious Fast or Studio request needs no router tool call
-before the result and uses one Route Card and one task reference.
+before its useful artifact. Batch the selected Route Card and task reference in
+one read; reuse bodies already loaded.
+
+| Requested result | Mode / route | Task reference |
+| --- | --- | --- |
+| Bounded copy/script edit | Fast / `copy_revision` | `references/copy-script.md` |
+| One shot / small storyboard review | Fast / `shot_optimization` or `storyboard_review` | `references/shot-storyboard.md` |
+| Bounded prompt edit | Fast / `prompt_revision` | `references/prompt-model.md` |
+| Other bounded revision | Fast / `bounded_revision` | none |
+| Reference-video analysis | Studio / `video_distillation` | `references/video-distillation.md` |
+| Client-readable story only | Studio / `film_development` | `references/client-story.md` |
+| Connected film development | Studio / `film_development` | `references/film-development.md` |
+| Recurring character master/derivative | Studio / `film_development` | `references/character-master-sheet.md` |
+| Real generation / client delivery | Delivery / `generation_authorization` or `client_delivery` | `references/generation-delivery.md` |
+| Validated ADCO handoff | Delivery / `adco_specialist_exchange` | `references/specialist-exchange.md` plus descriptor schema |
+
+Route Cards: `routes/fast-task.md`, `routes/studio-development.md`,
+`routes/delivery-audit.md`. Run `scripts/dircreative_route.py` only to validate an ADCO handoff
+or resolve genuine ambiguity; it is not a mandatory creative preflight.
+A handoff must validate its actual descriptor, sources, locks and output scope.
+
+## Work from the requested outcome
+
+Reuse supplied facts and material. Determine the requested output set and current
+stage before expanding the work. A client story stops at story; a full
+preproduction request continues through its requested script, shots, assets and
+prompts. Complete all authorized stages without requiring a new message at each
+step. “先给一句概念” does not erase an accompanying whole-film assignment.
+
+- **Fast:** one bounded change, zero Threads or Director Room. Return the edit.
+- **Studio:** one controller, at most three dynamic professional perspectives
+  and one critical pass. Establish audience change, core action, dramatic cause,
+  visual/sound choices and continuity before technical matrices. Select only
+  the perspectives that change this result.
+- **Delivery:** validate the active asset/action and its dependencies; execute
+  authorized work, inspect the real result, then continue the dependency chain.
+  Check tool/reviewer/readback availability early in a real production request.
+
+Named 导演组/创意组 use the active craft card's professional judgments. For real
+joint/parallel work or ambiguous collaboration read
+`docs/film-preproduction/director-room-routing.md`. Perspectives, real subagents
+and new user tasks are distinct. Never simulate a claimed delegation. No nested
+ADCO dispatch; disclose an unavailable tool before substituting single-agent work.
 
 ## Intelligent Skill Stack
 
-Use one advisory stack: one craft owner, non-overlapping
-collaborators, at most one validator, and an execution adapter only for an
-authorized side effect. DIR or valid-handoff ADCO retains artifact/state.
-Keep the selected craft when attaching an execution adapter.
-Fast/Studio/Delivery load at most 1/3/1 bodies inside 14/20/30KB. Prefer the host
-catalog; scan only when absent, never run discovered code or expose paths.
-Liu/Sophia are explicit overlays; `ai-visual-production-director` is reference-
-only. Show the artifact first. Only the host may say “已用” after full body and
-hash verification. Only primary-route evidence authorizes ADCO handoff or gates.
-Read `references/visual-skill-stack.md` only for ambiguity or audit.
-
-## Execution Context
-
-`standalone_chat` owns response/state. `orchestrated_worker` requires a valid
-exchange; ADCO owns host truth, adoption, versions, client visibility, and
-cleanup. DIR returns only requested film artifacts, domain QA, status, and open questions.
-Nested dispatch is forbidden.
-
-## Modes
-
-### Fast
-
-Make one bounded change with zero Threads or Director Room. Preserve facts
-outside the edit and return the revised artifact immediately.
-
-### Studio
-
-Develop connected preproduction artifacts with one controller, at most three dynamic professional perspectives,
-one critical pass, and zero Threads by default. Lock the
-audience change, core action, brand role, start-action-end, physical/media rules,
-continuity, and sound/edit logic. Client stories stop at narrative; nine-grid
-storyboards are narrative beats. Only explicit technical/full-preproduction
-scope proceeds to shot and asset matrices. Whole-film work derives scene,
-identity, per-shot board, director-board, and model-input coverage before
-generation; representative images are never the whole film.
-Repeated assets use selected `asset_foundation` design stages before images;
-only a hash-bound, fully covered pass plus scoped post-image stress verdict may
-enter Seedance compilation.
-
-### Delivery
-
-Use strict evidence only when a real side effect, formal handoff, version, or
-client-visible asset is in scope, and bind it to the current artifact.
+Use the existing scenario/gaps/staged-pass selector, never a second router.
+One craft owner supplies the method; add only collaborators that fill a concrete
+gap and at most one validator. Attach an execution adapter only for an authorized
+side effect, preserving the selected craft and its exact output.
+Fast/Studio/Delivery load at most 1/3/1 external bodies inside 14/20/30 KB;
+account isolated contexts separately. Prefer the host catalog. Read
+`references/visual-skill-stack.md` when provider choice, discovery or a handoff
+needs inspection. The selector suggests/binds providers; “已用” requires actual
+full-body reading and application, not a returned name or echoed hash.
+Liu/Sophia are explicit overlays; `ai-visual-production-director` is reference-only.
 
 ## External User Gates
 
-The only v2 gates are `concept_lock` for incompatible directions,
+The only v2 gates are `concept_lock` for unresolved incompatible directions,
 `generation_authorization` for unapproved real generation, and
-`client_delivery_approval` for unapproved client-visible action. An explicit
-instruction for that action satisfies its gate; do not ask twice.
+`client_delivery_approval` for an unapproved client-visible action. Existing
+scoped authorization satisfies its gate; do not ask twice. “Continue” continues
+within that scope. Story/script/shot/visual/reference/prompt/QA are reversible
+internal states, not seven approvals. Historical v1 examples and internal
+modules cannot reinstate their old confirmation sequence.
 
-Story, script, shot, visual, reference, prompt, and QA states are reversible
-internal work. Reuse supplied brief facts. “Continue” continues. A bounded edit
-never returns to intake.
+Unknown facts block the affected claim or dependency. Label creative assumptions
+and continue independent work; do not invent facts or ask the user to validate
+every professional judgment. Image and final-video authorization are separate.
 
-## Compact State
+## State and truth
 
-Use `runtime/state-snapshot.schema.json` only when state must survive the answer.
-Fast stays in memory; Studio persists for pause/resume or multi-file output;
-Delivery persists for an actual handoff or execution record.
+`standalone_chat` owns its response/state. In `orchestrated_worker`, ADCO owns
+adoption, versions, visibility and cleanup; DIR returns requested film artifacts,
+domain QA, status and open questions. No nested dispatch.
 
-## Project Files
+Use `runtime/state-snapshot.schema.json` for pause/resume, multi-file output or
+execution records. Read `references/project-hygiene.md` for project files after
+the first useful artifact. Preserve one physical owner for identical bytes and
+one creative source; derive views and mark only affected dependencies stale.
 
-Use supplied materials in place with one physical owner for identical bytes.
-For project or multi-file scope, follow `references/project-hygiene.md`; moving,
-deleting, renaming, replacing, or writing target `AGENTS.md` still requires the
-trusted host's scoped authority. Runtime prompts or receipts never grant it.
+## Quality and completion
 
-## Chat Visualization
+Preserve source truth, project vocabulary, character voice and genre register.
+Use `references/copy-script.md` for language craft; ordinary writing needs no
+humanization plan. Read `references/humanization-workflow.md` for a requested
+layered diagnosis, demonstrated document-scale defect or explicit provider use.
 
-Use visualization only when clearer than prose or a small table. Verify the
-current surface and visible render; otherwise provide a complete table, Mermaid,
-image, or prose fallback. Offline render PASS or a file path does not prove host
-mounting; report `USER_VISIBLE=UNVERIFIED` until visible.
+Keep Prompt IR model-neutral and compile one selected model surface at a time.
+Preserve reference roles, locked acting, scene/support truth and preserve/change
+boundaries. Verify current model claims when relevant. Record final generation
+candidates in `ai-film-production-ledger`; it neither executes nor approves.
 
-## Sub-Capability Dispatch
+Whole-film coverage follows `references/film-development.md`. Initial design
+cannot require its own future image. `visual_assets_complete` requires real
+canonical PNGs, visual review and trusted host readback; it never means a finished
+video, user acceptance or client/broadcaster approval.
 
-Use the selected task reference as craft guidance, not as a checklist to expose.
-Do not enter adjacent stages speculatively. Preserve locked facts, mark only
-affected downstream material stale, and make the smallest complete change.
-
-Audience-facing prose uses the authored-voice rules in `references/copy-script.md`.
-For document-scale de-AI work, also read `references/humanization-workflow.md`;
-bind evidence, operation, guard and preservation. Keep source truth and voice;
-corpus markers do not authorize screenplay changes.
-
-Prompt work keeps Prompt IR model-neutral and applies one model surface at a
-time. Verify volatile model claims from current official evidence only when they
-affect the answer or execution.
-Record only final generation candidates in `ai-film-production-ledger`; runtime
-state remains project truth and the Ledger never executes or approves media.
-
-## Result Contract
-
-Lead with the requested artifact or recommendation, then only decision-changing
-judgment, assumptions, limits, or one indispensable question. Fast/Studio do not narrate
-routes, Git, receipts, gates, validation, or role meetings unless requested.
-Validate the task and direct dependencies; unrelated debt cannot downgrade it.
-
-Whole-film completeness binds every scene/shot to exact time, action, sound,
-continuity, entities, generation unit, and dependencies. A sample is never the
-whole film. `visual_assets_complete` also needs canonical, decodable,
-aspect-correct PNG evidence, bound visual review, and separate trusted host
-adoption/readback. Payload reviewer labels, IDs, hashes, and locks do not bypass it, and
-it never means master, client, or broadcaster approval.
-
-Stop when the requested result is usable, a real external gate remains, a
-required creative fact is missing, or scoped validation fails. Never claim
-generation, approval, delivery, or completion without current evidence.
+Lead with the requested artifact. Give only judgment, assumptions, limitations
+or a question that changes the result. Use visualization when clearer and verify
+the actual visible surface; otherwise give a complete readable fallback.
+Validate the current task and direct dependencies. Stop at a usable result or a
+specific real blocker; do not replace unfinished work with plans or receipts.

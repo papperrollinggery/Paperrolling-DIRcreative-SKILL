@@ -7,13 +7,13 @@ description: Convert selected concept into logline, beat sheet, treatment, and s
 
 ## Required Knowledge
 
+Read only the reference needed for the active task, not this entire list.
+The root v2 route owns scope and authorization; legacy records do not add gates.
+
 - `docs/film-preproduction/chat-co-creation-interface.md`
 - `docs/film-preproduction/chat-inline-visualization-interface.md`
 - `docs/film-preproduction/creative-copy-deck-capability.md`
 - `docs/film-preproduction/professional-agent-voice-standard.md`
-- `docs/film-preproduction/production-demo-retrospective.md`
-- `docs/film-preproduction/council-adversarial-review.md`
-- `docs/film-preproduction/client-film-hard-gates.md`
 - `docs/film-preproduction/schemas/story-package.yaml`
 - `docs/film-preproduction/research/channel-playbooks.md`
 
@@ -33,20 +33,17 @@ description: Convert selected concept into logline, beat sheet, treatment, and s
 
 ## Chat Surface
 
-Show the story as a short preview before moving to script:
-
-- `阶段: 故事创意`
-- `智能体创作内容`: logline, story engine, 5-8 beats, external pressure, irreversible choice, emotional turn, channel fit.
-- `客户可见故事预览`: for client-facing films, write 2 or more readable story paragraphs that can be read to the client. Do not output only route labels, page titles, or short beat names.
-- `用户确认点`: ask whether this story direction should become a script.
-
-Do not ask about visual style in the same message.
+Deliver the complete requested story, not a preview that withholds its ending.
+Use readable paragraphs, observable beats and enough dramatic or perceptual
+change for the genre and duration. Explain a recommendation only where it helps.
+If script development is also requested, continue after the internal story check.
+Use concept_lock only for an unresolved material choice reserved for the user.
 
 ## Quality Gate
 
-Pass only if the story has protagonist, goal, obstacle, stakes, emotional turn, channel fit, and visualizable beats.
+Review against the requested form. Causal drama needs protagonist, goal, obstacle, stakes and a meaningful turn. Lyrical/observational work needs perceptual, rhythmic or relational progression with an intentional ending. Every form must fit its channel/duration and contain screenable beats.
 
-The approved concept must also pass the substitutability check:
+Check whether the concept survives replacing the product, setting or relationship with an unrelated one. For a formal `distinctive` verdict under the source-bound schema, also apply the following recorded checks:
 
 - Record at least two alternatives with unique IDs and proximity reasons, then select the nearest one by ID into `swap_subject`.
 - Record `before_swap` and `after_swap` while holding concept wording and beat order constant.
@@ -58,7 +55,7 @@ The approved concept must also pass the substitutability check:
 
 Bind the story package to the approved fact, source-evidence, and inference IDs. The source arrays and IDs fail closed; preserve the audience-tension evidence and proposition facts used by the story. Every outline beat needs a unique ID plus `source_fact_ids` and `source_inference_ids` that resolve through the story binding. Keep inference-based creative moves labeled as professional judgment. Do not introduce an audience-facing commercial claim that is absent from the project's approved claim register.
 
-For narrative shorts, also require a professional story engine:
+For causal dramatic shorts, use the following story-engine checks when relevant:
 
 - external pressure that forces action now, not only atmosphere,
 - a hidden relationship engine, secret, misunderstanding, exchange, debt, or promise that changes the two-person dynamic,
@@ -67,9 +64,9 @@ For narrative shorts, also require a professional story engine:
 - a visible ending action that changes how the viewer reads the relationship,
 - a reason the setting is a plot device, not just a mood background.
 
-Reject story proposals that are only vibe, poster mood, soft dialogue, slice-of-life texture, or a gentle ending without conflict pressure and consequence.
+A dramatic story needs screenable change and consequence. An explicitly lyrical, observational or gentle film may build through perception, rhythm or relational change; do not force a secret, threat or irreversible event to satisfy a template.
 
-Fill the dramatic pressure card before approval:
+Use this dramatic pressure card internally when it exposes a real story weakness; do not add a second artifact merely to repeat the treatment:
 
 ```text
 Want:
@@ -86,23 +83,27 @@ Reject if the card contains abstractions instead of specific screenable facts.
 
 ## Visual Decision Contract
 
-Use `skills/dircreative/assets/visualizations/stage-surface-registry.json#story-beat-ribbon`. Bind the beginning, turn, proof, ending, tension, and downstream effect to the story package; submit approval or revision intent to the current story gate and preserve the Mermaid fallback.
+When visualization adds clarity, use `skills/dircreative/assets/visualizations/stage-surface-registry.json#story-beat-ribbon`. Bind the beginning, turn, proof, ending, tension, and downstream effect to the story package; submit approval or revision intent to the current story gate and preserve the Mermaid fallback.
 
 ## Rules
 
 - Keep the story executable for the target duration.
 - Make the audience tension, business objective, single-minded proposition, and avoid-cliches visible in the concept decision when the project has commercial intent.
 - Reject category cliches that reproduce an item in `avoid_cliches` without a project-specific reversal or consequence.
-- For client-facing relationship, anniversary, brand-story, storyboard, or PPT proposal work, pass the Story Gate in `client-film-hard-gates.md` before script work. Customer-readable story paragraphs are required; short labels are not enough.
+- Client story work needs readable, complete story paragraphs. Review story quality internally before expanding the requested script; do not require a separate user approval.
 - Preserve every source-brief requirement not explicitly removed by the user. If an old route, alternate direction, customer prop, story bone, character count, or client-provided object is not used, record it as `omitted_requirements_without_user_removal` and block downstream work.
 - If a prop list uses an ellipsis, treat it as examples. Expand the prop logic into each relevant character's role identity, prop, action, and shot function before approval.
 - Explain why the story direction fits the channel, duration, first-hook timing, emotional turn, and reference-pack needs.
 - If the user asks for visual exploration, story rebuild, formal lockable material, retry, thread/workflow audit, or live acceptance, name that intent before continuing.
-- Do not move to script, shot design, reference planning, or image generation until the story review passes story tension, causal escalation, and professional story engine checks.
+- Before dependent script/shot/asset work, review progression and ending against the requested form. Require tension/causal escalation for causal drama; use perception, rhythm and relationship changes for observational or lyrical work. Never add a forbidden crisis or reveal to satisfy the dramatic template.
 - Do not use visual polish to compensate for weak story or script work. When a story change invalidates downstream decisions, mark downstream visual assets as not locked before returning to story development.
-- Do not write a script until the story review passes.
+- Resolve actual story defects before dependent script work; a passed internal review is sufficient within the user-authorized scope.
 - Do not write shot lists or prompts.
 
 ## skill_run_receipt
+
+Persist the following only for a requested formal handoff, pause/resume or actual
+execution record. Ordinary work returns its result without a separate receipt.
+The next skill is advisory; the controller continues only the requested scope.
 
 Record source-binding status, alternatives considered, selected swap and before/after result, broken dependency IDs, independent reviewer receipt, concept substitutability verdict, story gate status, claim-boundary status, and `next_recommended_skill: script-treatment`.

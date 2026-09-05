@@ -7,6 +7,9 @@ description: Build global and per-sequence reference pack contracts for longform
 
 ## Required Knowledge
 
+Read only the reference needed for the active task, not this entire list.
+The root v2 route owns scope and authorization; legacy records do not add gates.
+
 - `docs/film-preproduction/longform-decomposition-policy.md`
 - `docs/film-preproduction/capability-aware-generation-policy.md`
 - `docs/film-preproduction/reference-locking-policy.md`
@@ -46,5 +49,9 @@ description: Build global and per-sequence reference pack contracts for longform
 - Do not generate images or videos.
 
 ## skill_run_receipt
+
+Persist the following only for a requested formal handoff, pause/resume or actual
+execution record. Ordinary work returns its result without a separate receipt.
+The next skill is advisory; the controller continues only the requested scope.
 
 Record global packs, sequence packs, output statuses, user gates, exact-card direct input policy, QA status, and `next_recommended_skill: image-prompt-compiler`.

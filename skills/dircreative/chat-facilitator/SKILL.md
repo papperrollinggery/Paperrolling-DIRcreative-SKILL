@@ -7,6 +7,9 @@ description: Present DIRcreative work result-first and stop only at a real v2 ex
 
 ## Required Knowledge
 
+Read only the reference needed for the active task, not this entire list.
+The root v2 route owns scope and authorization; legacy records do not add gates.
+
 - `docs/film-preproduction/chat-co-creation-interface.md`
 - `docs/film-preproduction/chat-stage-gate-integrity.md`
 - `docs/film-preproduction/live-chat-start-protocol.md`
@@ -57,11 +60,15 @@ Without a gate, return `artifact -> material assumptions -> next action`. With a
 gate, return `artifact preview -> professional judgment -> 用户确认点 -> one
 decision`. `智能体创作内容` and `阶段:` are optional labels, not proof of work.
 
-Use `skills/dircreative/assets/visualizations/stage-surface-registry.json#stage-context-strip`
+When visualization adds clarity, use `skills/dircreative/assets/visualizations/stage-surface-registry.json#stage-context-strip`
 only when a visual materially improves the active decision. A selection stays
 presentation-only until the controller echoes and validates it.
 
 ## skill_run_receipt
+
+Persist the following only for a requested formal handoff, pause/resume or actual
+execution record. Ordinary work returns its result without a separate receipt.
+The next skill is advisory; the controller continues only the requested scope.
 
 Fast with no file write needs no receipt. Otherwise record route, changed
 artifacts, assumptions, stale outputs, external gate if any, QA status, and next

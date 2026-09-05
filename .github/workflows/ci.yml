@@ -78,8 +78,12 @@ jobs:
           TARGET="$RUNNER_TEMP/dircreative-installed"
           python3 scripts/install_local_skill.py --target "$TARGET"
           python3 scripts/dircreative_install_parity.py --target "$TARGET"
+          python3 scripts/dircreative_acceptance_preflight.py --require-installed \
+            --source-root "$GITHUB_WORKSPACE" --install-target "$TARGET"
           cd "$TARGET"
           python3 scripts/validate_project.py --installed-package --allow-development-install
+          python3 scripts/dircreative_acceptance_preflight.py --require-installed \
+            --source-root "$GITHUB_WORKSPACE" --install-target "$TARGET"
 
       - name: Build, verify, and install exact-commit release artifact
         env:
@@ -127,9 +131,13 @@ jobs:
           python3 scripts/dircreative_install_parity.py \
             --target "$ARCHIVE_TARGET" \
             "${PARITY_ARGS[@]}"
+          python3 scripts/dircreative_acceptance_preflight.py --require-installed \
+            --source-root "$GITHUB_WORKSPACE" --install-target "$ARCHIVE_TARGET" "${PARITY_ARGS[@]}"
           (
             cd "$ARCHIVE_TARGET"
             python3 scripts/validate_project.py --installed-package
+            python3 scripts/dircreative_acceptance_preflight.py --require-installed \
+              --source-root "$GITHUB_WORKSPACE" --install-target "$ARCHIVE_TARGET" "${PARITY_ARGS[@]}"
           )
 
       - name: Installed archive ADCO v1 bilateral

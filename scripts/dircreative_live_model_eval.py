@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import shutil
@@ -75,8 +76,9 @@ def build_command(
     model: str,
     answer_path: Path,
     prompt: str,
+    reasoning_effort: str | None = None,
 ) -> list[str]:
-    return [
+    command = [
         codex_bin,
         "exec",
         "--ephemeral",
@@ -98,8 +100,11 @@ def build_command(
         "--json",
         "--output-last-message",
         str(answer_path),
-        prompt,
     ]
+    if reasoning_effort is not None:
+        command.extend(["-c", "model_reasoning_effort=" + json.dumps(reasoning_effort)])
+    # Stdin keeps long/private case material out of the process argument list.
+    return [*command, "-"]
 
 
 def self_test() -> int:
@@ -130,7 +135,8 @@ def main() -> int:
         description="Run real isolated Codex text-response forward evals against source DIRcreative."
     )
     parser.add_argument("--case", action="append", default=[], help="Case id; repeat or omit for all cases.")
-    parser.add_argument("--model", default="gpt-5.6-sol")
+    parser.add_argument("--model", help="Explicit host-supported model for live runs; no silent fallback.")
+    parser.add_argument("--reasoning-effort", help="Optional effort supported by the selected model.")
     parser.add_argument("--codex-bin", default=shutil.which("codex") or "codex")
     parser.add_argument("--codex-home", type=Path, help="Optional isolated CODEX_HOME containing valid auth.")
     parser.add_argument("--output-dir", type=Path, help="Directory for answers, JSONL events, and report.")
@@ -139,6 +145,8 @@ def main() -> int:
     args = parser.parse_args()
     if args.self_test:
         return self_test()
+    if not args.model:
+        parser.error("--model is required for live evaluation")
 
     payload = load_payload()
     cases = case_map()
@@ -158,7 +166,7 @@ def main() -> int:
     reports: list[dict[str, Any]] = []
     with tempfile.TemporaryDirectory(prefix="dircreative-live-eval-workspace-") as raw_workspace:
         workspace = Path(raw_workspace)
-        skill_target = workspace / ".agents/skills/dircreative-candidate"
+        skill_target = workspace / ".agents/skills/dircreative"
         install = subprocess.run(
             [sys.executable, str(ROOT / "scripts/install_local_skill.py"), "--target", str(skill_target)],
             cwd=ROOT,
@@ -173,14 +181,14 @@ def main() -> int:
             print(install.stderr or install.stdout, file=sys.stderr)
             return 1
         candidate_skill = skill_target / "SKILL.md"
-        candidate_text = candidate_skill.read_text(encoding="utf-8")
-        candidate_text = candidate_text.replace("name: dircreative\n", "name: dircreative-candidate\n", 1)
-        candidate_text = candidate_text.replace("$dircreative", "$dircreative-candidate")
-        candidate_skill.write_text(candidate_text, encoding="utf-8")
+        candidate_sha256 = hashlib.sha256(candidate_skill.read_bytes()).hexdigest()
+        source_sha256 = hashlib.sha256((ROOT / "skills/dircreative/SKILL.md").read_bytes()).hexdigest()
+        if candidate_sha256 != source_sha256:
+            raise RuntimeError("installed candidate entry differs from the frozen source")
         (workspace / "AGENTS.md").write_text(
             "# Isolated candidate evaluation\n\n"
-            "When a request invokes `$dircreative-candidate`, read and follow "
-            "`.agents/skills/dircreative-candidate/SKILL.md`. Resolve its relative paths inside that "
+            "When a request invokes `$dircreative`, read and follow "
+            "`.agents/skills/dircreative/SKILL.md`. Resolve its relative paths inside that "
             "candidate directory. Never read or invoke any global `dircreative` installation under "
             "`.skillshub`, `.codex/skills`, or `.codex/dev-skills`. Return the requested creative answer; "
             "do not discuss this evaluation harness.\n",
@@ -191,23 +199,29 @@ def main() -> int:
             case = cases[case_id]
             answer_path = output_dir / f"{case_id}.answer.md"
             events_path = output_dir / f"{case_id}.events.jsonl"
-            request = case["request"].replace("$dircreative", "$dircreative-candidate", 1)
-            command = build_command(args.codex_bin, workspace, args.model, answer_path, request)
+            request = case["request"]
+            command = build_command(args.codex_bin, workspace, args.model, answer_path, request, args.reasoning_effort)
             started = time.perf_counter()
             try:
                 proc = subprocess.run(
                     command,
                     cwd=workspace,
                     env=env,
-                    stdin=subprocess.DEVNULL,
+                    input=request,
                     text=True,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
                     timeout=args.timeout,
                     check=False,
                 )
-            except subprocess.TimeoutExpired:
+            except subprocess.TimeoutExpired as exc:
+                partial = exc.stdout or ""
+                if isinstance(partial, bytes):
+                    partial = partial.decode("utf-8", errors="replace")
+                events_path.write_text(partial, encoding="utf-8")
                 failures.append(f"{case_id}: live model timeout")
+                reports.append({"case_id": case_id, "status": "TOOL_BLOCKED", "reason": "timeout",
+                                "events_path": str(events_path), "elapsed_seconds": round(time.perf_counter() - started, 3)})
                 continue
             elapsed_seconds = round(time.perf_counter() - started, 3)
             events_path.write_text(proc.stdout, encoding="utf-8")
@@ -237,7 +251,7 @@ def main() -> int:
                 if any(blocked.casefold() in value.casefold() for value in command_texts)
             ]
             candidate_used = any(
-                ".agents/skills/dircreative-candidate/" in value
+                ".agents/skills/dircreative/" in value
                 for value in command_texts
             )
             if global_skill_paths:
@@ -247,7 +261,9 @@ def main() -> int:
             reports.append(
                 {
                     "case_id": case_id,
-                    "model": args.model,
+                    "requested_model": args.model,
+                    "requested_reasoning_effort": args.reasoning_effort,
+                    "actual_model": None,
                     "elapsed_seconds": elapsed_seconds,
                     "answer_path": str(answer_path),
                     "events_path": str(events_path),
@@ -264,7 +280,12 @@ def main() -> int:
 
     report = {
         "status": "PASS" if not failures else "FAIL",
-        "model": args.model,
+        "requested_model": args.model,
+        "requested_reasoning_effort": args.reasoning_effort,
+        "actual_model": None,
+        "model_identity_evidence": "request values only; exec events do not attest an actual model",
+        "candidate_skill_sha256": candidate_sha256,
+        "source_skill_sha256": source_sha256,
         "evaluation_scope": "real model text-response behavior only; image/video generation is not executed or claimed",
         "media_generation_evaluated": False,
         "runtime_boundary": "isolated repo-local source package; read-only ephemeral Codex exec; no global Skill update",

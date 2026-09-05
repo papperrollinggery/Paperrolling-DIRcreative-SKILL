@@ -2083,15 +2083,9 @@ def validate_skills() -> None:
     require(len(root_text.splitlines()) <= 220, "root skill exceeds 220-line router budget")
     require(len(root_text.encode("utf-8")) <= 16 * 1024, "root skill exceeds 16 KiB router budget")
     for heading in [
-        "## Invocation Boundary",
-        "## Router Contract",
-        "## Startup Reads",
-        "## Execution Context",
-        "## Modes",
-        "## External User Gates",
-        "## Compact State",
-        "## Sub-Capability Dispatch",
-        "## Result Contract",
+        "## Invocation Boundary", "## Router Contract", "## Work from the requested outcome",
+        "## Intelligent Skill Stack", "## External User Gates", "## State and truth",
+        "## Quality and completion",
     ]:
         require(heading in root_text, f"root router missing {heading}")
     for term in [
@@ -2215,8 +2209,15 @@ def validate_skills() -> None:
                 "修改第三句",
             ]:
                 require(term in text, f"chat facilitator missing v2 behavior: {term}")
-        for term in ["阶段:", "智能体创作内容", "用户确认点"]:
-            require(term in text, f"{skill_path} missing chat surface term: {term}")
+        # Current modules describe the result and conditional questions. The
+        # old stage-label/confirmation vocabulary belongs only to v1 fixtures.
+        for obsolete in (
+            'ask whether the brief is right before moving',
+            'ask which material to make next before any prompt compilation',
+            'Keep the question about script approval only',
+        ):
+            require(obsolete not in text, f"{skill_path} reinstates mandatory stage confirmation")
+
 
     prompt_compiler = require_path("skills/dircreative/image-prompt-compiler/SKILL.md").read_text(encoding="utf-8")
     video_adapter = require_path("skills/dircreative/video-model-adapter/SKILL.md").read_text(encoding="utf-8")
@@ -2257,9 +2258,9 @@ def validate_adco_native_integration_contract() -> None:
                 "orchestrated_worker",
                 "adco.specialist-exchange",
                 "dircreative.film-preproduction",
-                "ADCO owns host",
-                "DIR returns only requested film artifacts, domain QA, status, and open questions",
-                "Nested dispatch is forbidden",
+                "ADCO owns",
+                "domain QA, status and open questions",
+                "No nested dispatch",
             ],
         ),
         "ADCO integration doc": (
@@ -2718,13 +2719,13 @@ def validate_production_prompt_discipline() -> None:
         require("production-prompt-discipline.md" in skill_text, f"{skill_path} missing production prompt discipline knowledge")
         require("pre-delivery harness" in skill_text, f"{skill_path} missing pre-delivery harness rule")
     require(
-        "Use strict evidence only when a real side effect" in root,
-        "root router missing proportional Delivery audit boundary",
+        load_yaml(require_path("skills/dircreative/runtime/routing-policy.yaml"))["performance_budgets"]["delivery"]["scoped_validation_required"] is True,
+        "Delivery must validate its active scope",
     )
     for term in ["Add evidence only for a real side effect", "Hash and version only actual delivery inputs and outputs"]:
         require(term in delivery_route, f"Delivery Route Card missing proportional audit rule: {term}")
-    require("which material to make next" in image, "image prompt compiler missing material selection gate")
-    require("Do not infer the material type from a vague image request" in image, "image prompt compiler missing vague material request guard")
+    # Material role resolution reuses the active plan. Requiring the old
+    # selection-question wording here would reinstate a gate before every prompt.
     for term in ["character design locks", "scene layout locks", "prop continuity", "camera movement", "subject movement path", "emotional beat", "compact professional shot-card text", "lens/support/movement", "blocking/path", "sound or edit cue"]:
         require(term in image, f"image prompt compiler missing storyboard/motion field: {term}")
     require("change one variable at a time" in image, "image prompt compiler missing single-variable retry rule")
@@ -3360,14 +3361,8 @@ def validate_production_demo_retrospective() -> None:
     missing = [term for term in required_terms if term not in combined]
     require(not missing, f"{path} missing retrospective terms: {missing}")
 
-    for skill_path, skill_text in [
-        ("skills/dircreative/story-development/SKILL.md", story),
-        ("skills/dircreative/script-treatment/SKILL.md", script),
-        ("skills/dircreative/shot-design/SKILL.md", shot),
-        ("skills/dircreative/image-prompt-compiler/SKILL.md", image),
-    ]:
-        require("production-demo-retrospective.md" in skill_text, f"{skill_path} missing production demo retrospective knowledge")
-        require("council-adversarial-review.md" in skill_text, f"{skill_path} missing council adversarial review knowledge")
+    # The archived retrospective remains testable above. Current stage modules
+    # must not load its fixed meeting/confirmation workflow as required knowledge.
 
 
 def validate_council_adversarial_review() -> None:
@@ -5755,6 +5750,7 @@ def validate_thread_audit() -> None:
 
 def validate_chat_surface_contract() -> None:
     contract = load_yaml(require_path("docs/film-preproduction/chat-surface-contract.yaml"))
+    require(contract.get("validation_scope") == "legacy_v1_fixtures_only", "legacy chat audit must not govern current UX")
     required_top_level = {
         "version",
         "customer_facing_stages",
@@ -6593,6 +6589,14 @@ def validate_release_distribution_contract() -> None:
 
 
 def validate_specialized_capability_behavior_audits() -> None:
+    for pattern in (
+        "test_collaboration_routing.py", "test_skill_stack_provider_discovery.py",
+        "test_runtime_audit_scope.py", "test_asset_prompt_surface.py",
+        "test_installed_runtime_acceptance.py",
+    ):
+        proc = run(["python3", "-m", "unittest", "discover", "-s", "tests", "-p", pattern, "-v"])
+        require(proc.returncode == 0, f"runtime workflow regression {pattern} failed:\n{proc.stderr}\n{proc.stdout}")
+
     require_path("scripts/dircreative_humanization_plan.py")
     require_path("skills/dircreative/references/humanization-workflow.md")
     require_path("docs/film-preproduction/templates/humanization-plan.template.json")

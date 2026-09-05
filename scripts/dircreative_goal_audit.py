@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from dircreative_validation_harness import ROOT, has_terms, read
+from dircreative_install_parity import add_installed_runtime_arguments, verify_installed_runtime
 
 ACCEPTANCE_RECEIPT = ROOT / ".dircreative" / "runs" / "live-user-acceptance.yaml"
 ACCEPTANCE_TEMPLATE = ROOT / "docs" / "film-preproduction" / "templates" / "live-user-acceptance.template.yaml"
@@ -162,32 +163,38 @@ def live_user_acceptance_item(path: Path) -> AuditItem:
     )
 
 
-def installed_skill_item(require_installed: bool) -> AuditItem:
-    installed_skill = Path.home() / ".codex" / "skills" / "dircreative" / "SKILL.md"
-    if installed_skill.exists() and "Live Chat Start Contract" in installed_skill.read_text(encoding="utf-8"):
-        return AuditItem("installed local skill package", "PASS", str(installed_skill))
-    if require_installed:
-        return AuditItem("installed local skill package", "MISSING", str(installed_skill))
-    return AuditItem(
-        "installed local skill package",
-        "PASS",
-        "repo audit mode; release gate performs install and installed validation",
+def installed_skill_item(
+    require_installed: bool, *, source_root: Path | None = None,
+    install_target: Path | None = None, verify_remote_tag: bool = False,
+) -> AuditItem:
+    result = verify_installed_runtime(
+        required=require_installed, source_root=source_root, install_target=install_target,
+        verify_remote_tag=verify_remote_tag, caller_root=ROOT,
     )
+    return AuditItem("installed local skill package", "PASS" if result.ok else "MISSING", result.evidence)
+
+
+def completion_acceptance_item(path: Path, *, installation_verified: bool) -> AuditItem:
+    item = live_user_acceptance_item(path)
+    if item.status == "PASS" and not installation_verified:
+        return AuditItem(item.label, "NEEDS_VERIFICATION",
+                         item.evidence + "; historical acceptance does not verify the current candidate; request independent installed verification")
+    return item
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Audit DIRcreative against the active goal.")
-    parser.add_argument(
-        "--require-installed",
-        action="store_true",
-        help="Fail technical readiness if ~/.codex/skills/dircreative is missing or stale.",
-    )
+    add_installed_runtime_arguments(parser)
     parser.add_argument(
         "--acceptance-receipt",
         default=str(ACCEPTANCE_RECEIPT),
         help="Path to a live-user acceptance receipt. Defaults to .dircreative/runs/live-user-acceptance.yaml.",
     )
     args = parser.parse_args()
+    installation_item = installed_skill_item(
+        args.require_installed, source_root=args.source_root, install_target=args.install_target,
+        verify_remote_tag=args.verify_remote_tag,
+    )
     acceptance_receipt = Path(args.acceptance_receipt)
     if not acceptance_receipt.is_absolute():
         acceptance_receipt = ROOT / acceptance_receipt
@@ -347,9 +354,10 @@ def main() -> int:
             and has_terms(goal_autorun_output, ["GOAL_AUTORUN_AUDIT: PASS", "goal_autorun_dry_run_complete: true", "real_media_generated: false"]),
             "scripts/dircreative_goal_autorun_audit.py",
         ),
-        installed_skill_item(args.require_installed),
+        installation_item,
         live_acceptance_template_item(),
-        live_user_acceptance_item(acceptance_receipt),
+        completion_acceptance_item(acceptance_receipt,
+                                   installation_verified=args.require_installed and installation_item.status == "PASS"),
     ]
 
     invalid_acceptance = any(item.status == "INVALID" for item in items)

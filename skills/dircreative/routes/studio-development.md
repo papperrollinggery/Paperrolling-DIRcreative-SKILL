@@ -1,57 +1,53 @@
 # Studio Development Route Card
 
-Use for a complete concept, story plus script, script plus storyboard, or another
-connected preproduction output set.
+Use for connected film-development outputs. Reuse the brief and existing work;
+start at the stage needed to produce the requested result.
 
 ## Budget
 
 - One controller; zero Threads by default.
-- One task reference, at most three useful perspectives, at most one critical
-  pass, and zero full-project validation.
-- Zero routing or audit tool calls before an obvious standalone first artifact.
-- At least 70% of the answer should be film content or decision-useful craft.
+- One task reference, at most three useful perspectives and one critical pass.
+- Zero routing/audit calls before an obvious first artifact; no full-project
+  validation. At least 70% of the answer is usable film content or craft judgment.
+- Creative perspectives cover audience, concept and brand role; director
+  perspectives cover performance, camera and sound. Actual joint/parallel
+  dispatch follows `docs/film-preproduction/director-room-routing.md`.
 
 ## Execution
 
-1. Reuse supplied brief facts without asking for them again.
-2. Deliver a recommended concept and a usable first-round artifact before any
-   process explanation.
-3. Apply only the perspectives that can materially improve the result; integrate
-   their judgment instead of showing role cards or meeting minutes.
-   Keep one creative spine from audience tension through brand role, causal
-   story, visual motif, proof, and ending. Reject generic mood words, parallel
-   ideas that do not change the strategy, and unsupported UI/data/brand claims.
-4. Select the requested deliverable layer before expanding the work:
-   `client_story`, `narrative_storyboard`, `frame_content_spec`,
-   `technical_production`, or `full_preproduction`. A one-to-two-page client
-   story, nine-grid narrative, or frame-content specification stops at its own
-   layer. It must not acquire shot rows, asset slots, TN/CG ids, or a production
-   worksheet by default. Keep actual SUPER, UI/data, and proposal brand lines
-   separate; keep L1/L2/L3 and pending claims with ADCO/client evidence.
-5. Before any technical matrix, lock audience state change, one core action,
-   brand causal role, start-action-end, media/physical rules, continuity, and
-   sound/edit logic. For an explicitly requested whole film or complete
-   technical multi-output scope, derive and show the
-   visual asset matrix from the actual characters, products/critical props,
-   distinct scenes, approved shots, and generation units. It must include every
-   scene image, one individual storyboard frame per shot, complete director
-   storyboard coverage, and the clean model-input frames the selected strategy
-   needs. Reuse a locked supplied asset instead of regenerating it.
-   In a formal shot table, give every row its canonical `S01`-style ID and an
-   explicit continuous start-end timecode; do not hide the timeline in prose.
-6. Use `concept_lock` only when incompatible directions would create materially
-   different films. Do not manufacture alternatives or conflict.
-7. Validate current outputs and dependencies. Label a representative sample as
-   incomplete for whole-film coverage; `pre_video_assets` requires
-   `dircreative_pre_video_assets_gate.py` before return.
-8. Persist compact state only for a pause, cross-session resume, or multi-file
-   output that genuinely needs it. Delegation must pass the consistency-only
-   `dircreative_request_scope_contract.py`; it grants no authorization.
-9. For existing projects, inspect supplied materials in place. Do not copy a
-   source, reference, preview, or old immutable delivery merely to register it.
-   Put regenerable QA in a replace-current cache and make one organization offer
-   after the creative artifact when the read-only scan finds material disorder.
+1. Produce a recommended direction and usable first-round artifact. Do not
+   re-confirm a complete brief. Separate source facts from creative assumptions;
+   unavailable product evidence blocks its claim, not independent story work.
+2. Select the requested layer: `client_story`, `narrative_storyboard`,
+   `frame_content_spec`, `technical_production` or `full_preproduction`.
+   Client stories, nine-grid narratives and frame specs stop at their layer;
+   they do not automatically acquire shot rows or a production worksheet.
+   Preserve actual SUPER, UI/data, proposal brand lines and ADCO/client claims.
+3. Maintain one creative spine: audience tension, brand causal role, core action,
+   start-action-end, physical/media rules, visual motif, continuity and sound/edit
+   logic. Challenge substitutable ideas and unsupported claims with concrete
+   alternatives; repair the result in the same turn.
+4. For whole-film technical scope, derive assets from recurring identities,
+   products/critical props, distinct scenes, shots and generation units. Include
+   every scene image, one individual storyboard frame per shot, complete director
+   storyboard coverage and required clean model-input frames. Reuse valid supplied
+   assets. Assemble overview pages from approved frames; do not redraw the film.
+   A formal shot row carries its canonical ID and continuous start-end timecode.
+5. Continue through every authorized deliverable in dependency order. Use
+   `concept_lock` only for a remaining material conflict the user must decide.
+   Already selected directions and permission do not need another approval.
+   In real production scope, check execution/review capability before a large
+   asset build, then use the Delivery card for the active media call.
+6. Verify the current output and affected dependencies. Mark a representative
+   sample as incomplete for whole-film coverage. `pre_video_assets` requires
+   `dircreative_pre_video_assets_gate.py` before any completion claim; missing
+   media/review/readback remains an explicit blocker with usable work preserved.
+7. Persist compact state only for pause/resume or multi-file output. Delegation
+   uses the consistency-only `dircreative_request_scope_contract.py`; it cannot
+   grant authorization. Keep one authoritative source and derive linked views.
+8. Inspect project material in place. Follow `references/project-hygiene.md` for
+   file work. Keep regenerable QA in replace-current cache; do not duplicate
+   source files merely to register them.
 
-Do not narrate routes, paths, Git, receipts, hashes, gates, validation commands,
-or internal roles unless the user asks. `no_material_conflict` is an internal
-condition, not user-facing ceremony.
+Return the actual requested content and necessary limitations. Do not expose
+route labels, hashes, role meetings or validation machinery unless asked.

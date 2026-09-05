@@ -1,9 +1,9 @@
 # Layered humanization workflow
 
-Use this contract when the user wants text to sound authored, asks for de-AI
-editing, or requests a diagnosis of machine-shaped prose. It applies to film
-stories, treatments, scripts, storyboard descriptions, reports, README copy,
-release notes, tickets, and production communication.
+Use this contract for a requested layered de-AI operation, a demonstrated
+document-scale problem or explicit Sepia use. Ordinary new writing and bounded
+cleanup use `copy-script.md` directly; length alone does not select this workflow.
+It supports film stories, scripts and professional communication.
 
 The goal is not word replacement. Determine what makes the text feel generated,
 where that defect lives, and how much intervention the evidence supports. A
@@ -32,9 +32,10 @@ Build that plan with `scripts/dircreative_humanization_plan.py`. The planner bin
 
 Planner status is not execution status. Every ready plan starts with
 `execution_status=not_run`, `text_revision_applied=false`, and
-`completion_claim_allowed=false`. For a new screenplay, build the plan before
-the first full draft so the selected architecture/write owner actually governs
-the text. A later self-authored review cannot retroactively prove adoption.
+`completion_claim_allowed=false`. When this layered `write` path is selected,
+build its plan before the first draft so the chosen owner actually governs it.
+An ordinary new screenplay has no planner prerequisite. A later review cannot
+retroactively prove provider adoption.
 For new writing, an internally authored character/register note is a
 `project_register_contract`, not proof of a source-author VOICE PROFILE.
 
@@ -59,8 +60,8 @@ Short local edits can remain bounded, deriving constraints from the supplied
 passage without a two-sample author corpus. Chinese contextual or voice-sensitive
 edits use `shuorenhua`; an explicitly selected Chinese fidelity cleanup can use
 `de-AI-writing`; short English edits use DIR's bounded method. A long narrative,
-document-level revision, systemic defect, explicit Sepia request, or
-venue-specific professional document selects the layered Sepia route. The
+systemic document-level defect, explicit Sepia request, or demonstrated
+venue mismatch can justify the layered Sepia route. The
 provider is chosen from language, scope, defect depth, voice risk, and requested
 operation. Installation alone does not select a provider.
 
@@ -93,7 +94,12 @@ Do not choose depth from length alone. Length controls context and cost; defect
 location controls intervention. A long clean script remains unchanged, while a
 short structurally broken synopsis can require recreation.
 
-## Two-stage edit authorization
+## Two-stage edit contract
+
+Accepted finding IDs record the controller's scoped review judgment. An existing
+user instruction to revise permits the controller to accept justified findings;
+ask the user only if the proposed change exceeds that scope or changes protected
+meaning. This is not another mandatory user approval.
 
 For `refactor` and `recreate`, the first Sepia call is always `review` with
 findings-only authority. Its diagnosis artifact includes the actual source text

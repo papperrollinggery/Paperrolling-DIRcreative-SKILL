@@ -2,6 +2,18 @@
   "policy_version": "2.0",
   "default_mode": "studio",
   "default_execution_context": "standalone_chat",
+  "collaboration_policy": {
+    "default_execution_mode": "main_thread_perspectives",
+    "named_groups_are_worker_evidence": false,
+    "explicit_joint_groups_or_subagents": "host_subagents",
+    "explicit_new_tasks_or_threads": "host_threads",
+    "max_subagents": 2,
+    "nested_dispatch_allowed": false,
+    "host_capability_check_required": true,
+    "dispatch_receipt_source": "actual_host_tool_result_only",
+    "unavailable_host_action": "report_tool_blocked_and_continue_independent_local_work",
+    "route_defaults_do_not_override_explicit_collaboration": true
+  },
   "interaction_contract": {
     "external_user_gates": [
       "concept_lock",

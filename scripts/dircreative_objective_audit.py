@@ -5,9 +5,11 @@ import argparse
 from pathlib import Path
 
 from dircreative_validation_harness import ROOT, Requirement, has_terms, read, run
+from dircreative_install_parity import (
+    add_installed_runtime_arguments, installed_runtime_cli_args, verify_installed_runtime,
+)
 
 LIVE_ACCEPTANCE = ROOT / ".dircreative" / "runs" / "live-user-acceptance.yaml"
-INSTALLED_SKILL = Path.home() / ".codex" / "skills" / "dircreative" / "SKILL.md"
 
 
 def check(label: str, ok: bool, evidence: str, reason: str) -> Requirement:
@@ -20,7 +22,7 @@ def run_ok(cmd: list[str], cwd: Path = ROOT) -> tuple[bool, str]:
     return proc.returncode == 0, output
 
 
-def live_acceptance_requirement() -> Requirement:
+def live_acceptance_requirement(installation_args: list[str] | None = None) -> Requirement:
     if not LIVE_ACCEPTANCE.exists():
         return Requirement(
             "real user acceptance",
@@ -28,7 +30,12 @@ def live_acceptance_requirement() -> Requirement:
             ".dircreative/runs/live-user-acceptance.yaml",
             "The active goal still requires explicit real user approval of the chat experience.",
         )
-    ok, output = run_ok(["python3", "scripts/dircreative_goal_audit.py", "--require-installed"])
+    if "--require-installed" not in (installation_args or []):
+        return Requirement(
+            "real user acceptance", "NEEDS_VERIFICATION", ".dircreative/runs/live-user-acceptance.yaml",
+            "A receipt is present, but this candidate's installation has not been independently verified. Re-run with --require-installed, --install-target and --source-root; do not promote historical acceptance to current completion.",
+        )
+    ok, output = run_ok(["python3", "scripts/dircreative_goal_audit.py", *(installation_args or [])])
     return Requirement(
         "real user acceptance",
         "PASS" if ok and "GOAL_COMPLETE: YES" in output else "INVALID",
@@ -39,11 +46,7 @@ def live_acceptance_requirement() -> Requirement:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Audit DIRcreative against the active user objective.")
-    parser.add_argument(
-        "--require-installed",
-        action="store_true",
-        help="Require ~/.codex/skills/dircreative to be present and current enough to expose the live chat contract.",
-    )
+    add_installed_runtime_arguments(parser)
     args = parser.parse_args()
 
     root_skill = read("skills/dircreative/SKILL.md")
@@ -103,26 +106,14 @@ def main() -> int:
         ]
     )
 
-    installed_terms_ok = INSTALLED_SKILL.exists() and has_terms(
-        INSTALLED_SKILL.read_text(encoding="utf-8"),
-        ["DIRcreative", "Live Chat Start Contract", "chat-stage-gate-integrity.md", "pre_generation_contract.status: pass"],
+    installation = verify_installed_runtime(
+        required=args.require_installed, source_root=args.source_root, install_target=args.install_target,
+        verify_remote_tag=args.verify_remote_tag, caller_root=ROOT,
     )
-    parity_ok, parity_output = run_ok(["python3", "scripts/dircreative_install_parity.py"])
-    installed_ok = installed_terms_ok and parity_ok and "INSTALL_PARITY: PASS" in parity_output
-    if not args.require_installed and not installed_ok:
-        installed_status = Requirement(
-            "installed skill verification",
-            "PASS",
-            "scripts/dircreative_release_gate.py",
-            "Release gate installs and validates the local skill package; --require-installed enforces the local copy.",
-        )
-    else:
-        installed_status = check(
-            "installed skill verification",
-            installed_ok,
-            f"{INSTALLED_SKILL} + scripts/dircreative_install_parity.py",
-            "Installed Codex skill must expose the same chat-first contract, pre-generation guard, and package parity with the source repo.",
-        )
+    installed_status = check(
+        "installed skill verification", installation.ok, installation.evidence,
+        "Explicit installed verification requires runtime identity, activation policy and independent source parity; it does not grant user acceptance.",
+    )
 
     requirements = [
         check(
@@ -343,7 +334,7 @@ def main() -> int:
             "docs/film-preproduction/current-project-progress.md",
             "Each session must leave a clear completion estimate and remaining-time estimate.",
         ),
-        live_acceptance_requirement(),
+        live_acceptance_requirement(installed_runtime_cli_args(args)),
     ]
 
     invalid = any(item.status in {"MISSING", "INVALID"} for item in requirements)

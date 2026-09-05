@@ -7,13 +7,13 @@ description: Turn approved treatment into script-ready scenes, action, dialogue,
 
 ## Required Knowledge
 
+Read only the reference needed for the active task, not this entire list.
+The root v2 route owns scope and authorization; legacy records do not add gates.
+
 - `docs/film-preproduction/chat-co-creation-interface.md`
 - `docs/film-preproduction/chat-inline-visualization-interface.md`
 - `docs/film-preproduction/creative-copy-deck-capability.md`
 - `docs/film-preproduction/professional-agent-voice-standard.md`
-- `docs/film-preproduction/production-demo-retrospective.md`
-- `docs/film-preproduction/council-adversarial-review.md`
-- `docs/film-preproduction/client-film-hard-gates.md`
 - `docs/film-preproduction/schemas/story-package.yaml`
 - `docs/film-preproduction/research/audio-design-notes.md`
 - `docs/film-preproduction/research/film-production-glossary.md`
@@ -36,30 +36,28 @@ description: Turn approved treatment into script-ready scenes, action, dialogue,
 
 ## Chat Surface
 
-Show the script in a readable preview:
-
-- `阶段: 脚本预览`
-- `智能体创作内容`: timed script, scene objective, conflict pressure, action beats, turn/reveal, dialogue/no-dialogue policy, VO budget when used, audio intent.
-- `用户确认点`: ask whether the script direction passes before shot design.
-
-Keep the question about script approval only.
+Return the requested script with readable action, dialogue, voiceover and sound.
+Timing must support the actual performance capacity. For a script-and-shots
+request, review the script internally and continue to shot design. Ask only about
+a material unresolved direction or scope change.
 
 ## Copy Development Gate
 
-Run audience-facing copy in this order:
+Write with the supplied project/character voice and factual boundaries. When a
+specific existing voice is requested, derive a VOICE PROFILE from representative
+approved passages; new writing may use a project-register contract. Do not
+require 5-20 samples for an original screenplay.
 
-1. Collect 5 to 20 representative real samples when available; require `sample_id`, `source_ref`, `excerpt`, `why_representative`, and `recency`, and record any shortfall.
-2. Build exactly one source-derived `VOICE PROFILE` with the fields defined in `project.yaml`; cover all unique sample IDs or record `coverage_shortfall_reason`.
-3. Add DIR professional judgment: audience effect, channel fit, factual boundaries, tradeoff, and approved claim IDs.
-4. Run `de-AI-writing` as a fidelity-preserving refinement. Protect meaning, evidence, and claim boundaries; add no unsupported fact or conclusion.
-5. Run `humanizer` or `humanizer-zh` as a diagnostic only.
-6. Record manual craft review of rhythm, abstraction, and evidence alignment, then reconcile its status and trace clusters with `copy_execution`.
+Read `skills/dircreative/references/copy-script.md` for direct language craft.
+Use de-AI-writing, shuorenhua or layered Sepia only for an explicit request or a
+remaining diagnosed defect; do not run a mandatory rewrite-plus-detector cascade.
+`humanizer-zh` is diagnostic only. A phrase hit cannot prove authorship, override
+intentional style or create a blocking verdict without actual craft evidence.
 
-An AI-trace cluster triggers manual review. A word-list or phrase hit cannot fail copy by itself and cannot prove authorship. Preserve intentional voice, quotations, technical terms, and approved claims.
-
-The detected cluster set, diagnostic cluster set, manual-craft reviewed cluster set, and `copy_execution.ai_trace_clusters` must match. A cluster remains review-only, and the diagnostic may not add hidden blocking or authorship authority. Copy with no phrase hit can still require revision when manual craft review records repetitive rhythm, abstraction, or evidence detachment.
-
-Every `claim_id` used by audience-facing dialogue, voiceover, supers, captions, CTA, or deck copy must have `approval_status: approved` and verified evidence. `copy_execution.evidence_ids_used` must cover used-claim evidence through the story source bindings. Pending, rejected, unreviewed, missing, or dangling claims block the relevant line. Audience-facing text must be non-empty, and copy statuses must match the validated pipeline.
+When a formal copy_execution handoff is requested, bind samples, protected spans,
+findings, claim/evidence IDs and the providers actually applied to that schema.
+Pending or unsupported claims block their affected line. Never label a planned
+provider call or a self-filled status as executed.
 
 ## Deck Narrative Handoff
 
@@ -74,7 +72,7 @@ Routing rules:
 
 ## Visual Decision Contract
 
-Use `skills/dircreative/assets/visualizations/stage-surface-registry.json#script-timing-bands`. Bind time bands, dialogue, voiceover, audio, duration budget, and overrun to the current script artifact; approval and revision remain conversation intents with a table fallback.
+When visualization adds clarity, use `skills/dircreative/assets/visualizations/stage-surface-registry.json#script-timing-bands`. Bind time bands, dialogue, voiceover, audio, duration budget, and overrun to the current script artifact; approval and revision remain conversation intents with a table fallback.
 
 ## Rules
 
@@ -93,5 +91,9 @@ Use `skills/dircreative/assets/visualizations/stage-surface-registry.json#script
 - Do not write shot list or prompt files.
 
 ## skill_run_receipt
+
+Persist the following only for a requested formal handoff, pause/resume or actual
+execution record. Ordinary work returns its result without a separate receipt.
+The next skill is advisory; the controller continues only the requested scope.
 
 Record script scope, dialogue policy, copy source set and shortfalls, VOICE PROFILE coverage status, DIR judgment status, de-AI fidelity status, manual-craft status, humanizer review-only status, reconciled trace clusters, approved claim and evidence IDs used, deck claim/evidence/QA handoff status, and `next_recommended_skill: script-breakdown`.

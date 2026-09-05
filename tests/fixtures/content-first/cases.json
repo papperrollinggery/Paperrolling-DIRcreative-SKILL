@@ -67,7 +67,100 @@
         ["项目级", "整个项目", "全量"]
       ],
       "forbidden_contains": ["global PASS"]
+    },
+    {
+      "id": "creative_group_story_live",
+      "request": "$dircreative 请调用创意组，为虚构品牌“回声修理铺”写一页客户可读的故事。主题是父女用一台总慢两分钟的旧收音机重新开始说话，维修服务通过具体行动出现，不作性能承诺。30秒，温暖但不煽情，结尾要有可见动作。我已经授权你决定创作细节，只要完整故事，不要分镜和资产，不生成媒体。",
+      "expected_mode": "studio",
+      "expected_route": "film_development",
+      "minimum_answer_bytes": 450,
+      "minimum_useful_content_ratio": 0.7,
+      "maximum_process_narration_ratio": 0.15,
+      "maximum_questions": 0,
+      "maximum_tool_calls": 4,
+      "required_concepts": [
+        [
+          "回声修理铺"
+        ],
+        [
+          "收音机"
+        ],
+        [
+          "父",
+          "爸爸"
+        ],
+        [
+          "女儿"
+        ]
+      ],
+      "forbidden_contains": [
+        "阶段:",
+        "请选择方案",
+        "请确认",
+        "资产矩阵",
+        "S01",
+        "已生成图片"
+      ]
+    },
+    {
+      "id": "asset_prompt_only_live",
+      "request": "$dircreative 不要生成图片，只优化这条资产提示词并直接交付完整可复制版本：红漆铜铃悬挂在旧木梁下，白色麻绳穿过顶部铜环系住梁；铜铃底部悬空，铃体外侧没有托盘或底座，阴天院落的柔和天光。用于检查道具的形体和悬挂关系，单张16:9画面。不得新增人物、品牌或碑文。",
+      "expected_mode": "fast",
+      "expected_route": "prompt_revision",
+      "minimum_answer_bytes": 200,
+      "minimum_useful_content_ratio": 0.7,
+      "maximum_process_narration_ratio": 0.15,
+      "maximum_questions": 0,
+      "maximum_tool_calls": 3,
+      "required_concepts": [
+        [
+          "铜铃"
+        ],
+        [
+          "麻绳"
+        ],
+        [
+          "悬空"
+        ],
+        [
+          "16:9"
+        ]
+      ],
+      "forbidden_contains": [
+        "请确认",
+        "已生成",
+        "请选择",
+        "项目ID",
+        "SHA-256"
+      ]
+    },
+    {
+      "id": "source_voice_edit_live",
+      "request": "$dircreative 只改下面角色对白，保持“墟海”和“归潮灯”两个专名，不改事实或诗性语气，删掉解释腔，让她像是在挽留即将远行的人。原句：“我们需要通过守住归潮灯来实现让墟海记住回家的道路。”只给修改后的台词，不解释，不生成任何媒体。",
+      "expected_mode": "fast",
+      "expected_route": "copy_revision",
+      "minimum_answer_bytes": 24,
+      "minimum_useful_content_ratio": 0.8,
+      "maximum_process_narration_ratio": 0.1,
+      "maximum_questions": 0,
+      "maximum_tool_calls": 2,
+      "required_concepts": [
+        [
+          "墟海"
+        ],
+        [
+          "归潮灯"
+        ]
+      ],
+      "forbidden_contains": [
+        "请确认",
+        "VOICE PROFILE",
+        "执行流程",
+        "首先",
+        "通过守住"
+      ]
     }
+
   ],
   "process_terms": [
     ".dircreative",

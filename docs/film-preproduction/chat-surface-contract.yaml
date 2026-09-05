@@ -1,5 +1,6 @@
 {
   "version": "1.0.0",
+  "validation_scope": "legacy_v1_fixtures_only",
   "customer_facing_stages": [
     "阶段: 出图执行建议",
     "阶段: 视频生成建议",
