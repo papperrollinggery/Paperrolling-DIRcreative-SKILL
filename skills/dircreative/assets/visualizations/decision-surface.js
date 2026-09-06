@@ -34,6 +34,91 @@
     return node;
   }
 
+  const spatial = spec.spatial_render;
+  const cameraSelect = root.querySelector('[data-dc-spatial-camera]');
+  const phaseSelect = root.querySelector('[data-dc-spatial-phase]');
+  let currentSpatialView = null;
+  if (spatial) {
+    const colors = new Map((spatial.colors || []).map((e) => [e.color, e.color]));
+    const legend = root.querySelector('[data-dc-spatial-legend]');
+    const shortLabel = (label, max = 10) => String(label || '').length > max ? `${String(label).slice(0, max - 1)}…` : String(label || '');
+    const statesFor = (view) => view.entity_states || spec.presentation.spatial_scene?.entities?.map((entity) => ({...entity, position: view.entity_positions?.[entity.id]})) || (spatial.colors || []).map((entity) => ({...entity, position: view.entity_positions?.[entity.id]}));
+    const actorCode = (view, entity) => {
+      if (entity.marker_id) return entity.marker_id;
+      const actors = statesFor(view).filter((item) => item.kind !== 'prop' && item.visible !== false);
+      const index = actors.findIndex((item) => item.id === entity.id);
+      return index >= 0 && index < 26 ? String.fromCharCode(65 + index) : entity.id.slice(0, 2);
+    };
+    const isAtEntity = (view, point) => statesFor(view).some((entity) => entity.position && Math.hypot(entity.position[0] - point[0], entity.position[1] - point[1]) < .03);
+
+    function marker(defs, id, color) {
+      const node = svgNode('marker', {id, viewBox: '0 0 8 8', refX: 6.5, refY: 4, markerWidth: 6, markerHeight: 6, orient: 'auto'});
+      node.append(svgNode('path', {d: 'M 0 0 L 8 4 L 0 8 z', fill: color}));
+      defs.append(node);
+    }
+    function updateLegend(view) {
+      if (!legend) return;
+      legend.replaceChildren();
+      statesFor(view).filter((entity) => entity.visible !== false).forEach((entity) => {
+        const mark = document.createElement('span');
+        mark.style.color = colors.get(entity.color) || entity.color || 'var(--foreground, #1f2937)';
+        mark.textContent = entity.kind === 'prop' ? '◆ ' : '● ';
+        mark.setAttribute('aria-hidden', 'true');
+        const item = document.createElement('span');
+        const hand = entity.holder_hand ? `${entity.holder_hand === 'left' ? '左' : '右'}手` : '持有';
+        const holder = statesFor(view).find((candidate) => candidate.id === entity.holder);
+        const actor = entity.kind === 'prop' ? '' : `${actorCode(view, entity)} · `;
+        item.append(mark, document.createTextNode(`${actor}${shortLabel(entity.label || entity.id)}${entity.kind === 'prop' && entity.holder ? ` · ${shortLabel(entity.holder_label || holder?.label || entity.holder)}${hand}` : ''}`));
+        legend.append(item);
+      });
+    }
+    function drawFloorplan(svg, view) {
+      if (!svg) return;
+      const width = Math.max(280, Math.round(svg.getBoundingClientRect().width));
+      const height = Math.max(240, Math.round(width * .66));
+      const margin = 22;
+      const px = (p) => [margin + p[0] * (width - margin * 2), margin + p[1] * (height - margin * 2)];
+      svg.setAttribute('viewBox', `0 0 ${width} ${height}`); svg.setAttribute('height', height); svg.replaceChildren();
+      const defs = svgNode('defs'); marker(defs, `${root.id}-motion-arrow`, 'var(--foreground, #1f2937)'); svg.append(defs);
+      const group = svgNode('g'); const featureLabels = [];
+      const sourceFeatures = (spec.presentation.spatial_scene?.room?.features || []).map((feature) => ({points: [[feature.position[0]-feature.size[0]/2, feature.position[1]-feature.size[1]/2], [feature.position[0]+feature.size[0]/2, feature.position[1]-feature.size[1]/2], [feature.position[0]+feature.size[0]/2, feature.position[1]+feature.size[1]/2], [feature.position[0]-feature.size[0]/2, feature.position[1]+feature.size[1]/2]], closed: true, label: feature.label, dashed: ['inferred', 'unseen'].includes(feature.evidence)}));
+      const shapes = (view.top || []).some((shape) => shape.label) ? view.top || [] : sourceFeatures;
+      shapes.filter((shape) => !shape.entity_id && shape.color !== 'camera' && shape.closed).forEach((shape) => {
+        const points = shape.points.map(px); group.append(svgNode('polygon', {points: points.map((p) => p.join(',')).join(' '), stroke: 'var(--border)', fill: 'color-mix(in srgb, var(--muted) 18%, transparent)', 'stroke-width': 1.4, ...(shape.dashed ? {'stroke-dasharray': '5 4', 'data-dc-floor-inferred': 'true'} : {})}));
+        if (shape.label) { const center = points.reduce((total, point) => [total[0] + point[0] / points.length, total[1] + point[1] / points.length], [0, 0]); const top = Math.min(...points.map((point) => point[1])); const label = svgNode('text', {x: center[0], y: Math.max(14, top + 12), 'text-anchor': 'middle', fill: 'var(--foreground)', 'font-size': 12, 'font-weight': 500, 'data-dc-floor-label': 'feature'}, shortLabel(shape.label, 8)); group.append(label); featureLabels.push({label, points}); }
+      });
+      shapes.filter((shape) => shape.dashed && !shape.closed && shape.color !== 'camera').forEach((shape) => {
+        const points = shape.points.map(px); const isEyeline = shape.points.length === 2 && isAtEntity(view, shape.points.at(-1)); const color = colors.get(shape.color) || 'var(--muted-foreground, #64748b)';
+        group.append(svgNode('polyline', {points: points.map((p) => p.join(',')).join(' '), stroke: color, fill: 'none', 'stroke-width': isEyeline ? 1 : 2.2, opacity: isEyeline ? .45 : 1, ...(isEyeline ? {'stroke-dasharray': '3 4'} : {'marker-end': `url(#${root.id}-motion-arrow)`, 'data-dc-floor-motion': 'true'})}));
+        if (!isEyeline) group.append(svgNode('circle', {cx: points[0][0], cy: points[0][1], r: 4, fill: 'var(--background)', stroke: color, 'stroke-width': 1.5, 'data-dc-floor-motion-start': 'true'}));
+      });
+      const camera = shapes.find((shape) => shape.color === 'camera');
+      const cameraSpec = (spec.presentation.spatial_scene?.cameras || []).find((candidate) => candidate.shot_id === view.shot_id);
+      if (camera) { const points = camera.points.map(px); const center = [(points[0][0] + points[1][0]) / 2, (points[0][1] + points[1][1]) / 2]; const target = points[2]; const dx = target[0] - center[0], dy = target[1] - center[1], distance = Math.hypot(dx, dy) || 1, spread = distance * Math.tan((cameraSpec?.hfov_deg || 45) * Math.PI / 360), right = [-dy / distance * spread, dx / distance * spread]; const fov = [center, [target[0] + right[0], target[1] + right[1]], [target[0] - right[0], target[1] - right[1]]]; group.append(svgNode('polygon', {points: fov.map((point) => point.join(',')).join(' '), fill: 'color-mix(in srgb, var(--foreground) 10%, transparent)', stroke: 'var(--foreground)', 'stroke-width': 1.5, 'data-dc-floor-camera': 'true'})); group.append(svgNode('circle', {cx: center[0], cy: center[1], r: 10, fill: 'var(--background)', stroke: 'var(--foreground)', 'stroke-width': 2, 'data-dc-floor-camera-marker': 'true'})); group.append(svgNode('text', {x: center[0], y: center[1] + 4, 'text-anchor': 'middle', fill: 'var(--foreground)', 'font-size': 11, 'font-weight': 500, 'data-dc-floor-label': 'camera'}, `C${Math.max(1, (spatial.views || []).filter((item) => item.phase === view.phase).findIndex((item) => item.shot_id === view.shot_id) + 1)}`)); }
+      statesFor(view).filter((entity) => entity.kind !== 'prop' && entity.visible !== false && entity.position).forEach((entity) => {
+        const [x, y] = px(entity.position); const color = colors.get(entity.color) || entity.color || 'var(--foreground, #1f2937)'; group.append(svgNode('circle', {cx: x, cy: y, r: 13, fill: color, stroke: 'var(--background, #fff)', 'stroke-width': 2.5, 'data-dc-floor-entity': entity.id})); group.append(svgNode('text', {x, y: y + 4, 'text-anchor': 'middle', fill: 'white', 'font-size': 11, 'font-weight': 700}, actorCode(view, entity)));
+        if (Array.isArray(entity.facing) && Math.hypot(entity.facing[0], entity.facing[1]) > .001) { const magnitude = Math.hypot(entity.facing[0], entity.facing[1]); const ux = entity.facing[0] / magnitude, uy = entity.facing[1] / magnitude; group.append(svgNode('line', {x1: x + ux * 15, y1: y + uy * 15, x2: x + ux * 29, y2: y + uy * 29, stroke: 'white', 'stroke-width': 2.5, 'marker-end': `url(#${root.id}-motion-arrow)`, 'data-dc-floor-facing': 'true'})); }
+      });
+      statesFor(view).filter((entity) => entity.kind === 'prop' && entity.visible !== false && entity.position).forEach((entity) => { const [x, y] = px(entity.position); const color = colors.get(entity.color) || entity.color || 'var(--foreground, #1f2937)'; group.append(svgNode('path', {d: `M ${x} ${y - 7} L ${x + 7} ${y} L ${x} ${y + 7} L ${x - 7} ${y} Z`, fill: color, stroke: 'var(--background, #fff)', 'stroke-width': 2, 'data-dc-floor-prop': entity.id})); });
+      svg.append(group);
+      const overlaps = (a, b) => Math.min(a.x+a.width, b.x+b.width) - Math.max(a.x,b.x) > 1 && Math.min(a.y+a.height, b.y+b.height) - Math.max(a.y,b.y) > 1;
+      const blockers = [...svg.querySelectorAll('[data-dc-floor-entity], [data-dc-floor-facing], [data-dc-floor-prop], [data-dc-floor-motion], [data-dc-floor-camera-marker], [data-dc-floor-label="camera"]')];
+      featureLabels.forEach(({label, points}) => {
+        const center = points.reduce((total, point) => [total[0] + point[0] / points.length, total[1] + point[1] / points.length], [0, 0]); const minX = Math.min(...points.map((point) => point[0])), maxX = Math.max(...points.map((point) => point[0])), minY = Math.min(...points.map((point) => point[1])), maxY = Math.max(...points.map((point) => point[1]));
+        const choices = [[center[0], Math.max(14, minY + 12), 'middle'], [center[0], Math.min(height - 4, maxY + 14), 'middle'], [Math.max(4, minX - 4), center[1] + 4, 'end'], [Math.min(width - 4, maxX + 4), center[1] + 4, 'start'], [Math.max(4, minX - 4), Math.max(14, minY - 5), 'end'], [Math.min(width - 4, maxX + 4), Math.max(14, minY - 5), 'start'], [Math.max(4, minX - 4), Math.min(height - 4, maxY + 14), 'end'], [Math.min(width - 4, maxX + 4), Math.min(height - 4, maxY + 14), 'start']];
+        for (const [x, y, anchor] of choices) { label.setAttribute('x', x); label.setAttribute('y', y); label.setAttribute('text-anchor', anchor); const box = label.getBBox(); if (box.x >= 0 && box.y >= 0 && box.x + box.width <= width && box.y + box.height <= height && !blockers.some((node) => overlaps(box, node.getBBox()))) break; }
+      });
+    }
+    function drawProjection(svg, shapes) {
+      if (!svg || !shapes?.length) return;
+      const width = Math.max(240, Math.round(svg.getBoundingClientRect().width)); const height = width * 9 / 16; const px = (p) => [p[0] * width, p[1] * height]; svg.setAttribute('viewBox', `0 0 ${width} ${height}`); svg.setAttribute('height', height); svg.replaceChildren();
+      shapes.forEach((shape) => svg.append(svgNode(shape.closed ? 'polygon' : 'polyline', {points: shape.points.map(px).map((p) => p.join(',')).join(' '), stroke: colors.get(shape.color) || 'var(--foreground)', fill: shape.fill ? 'var(--background)' : 'none', 'stroke-width': shape.entity_id ? 1.6 : 1, ...(shape.entity_id ? {'data-entity-id': shape.entity_id} : {})}))); svg.append(svgNode('rect', {x: .5, y: .5, width: width - 1, height: height - 1, fill: 'none', stroke: 'var(--border)'}));
+    }
+    function candidateView() { const phase = phaseSelect?.value || 'initial'; if (cameraSelect) return spatial.views.find((view) => view.shot_id === cameraSelect.value && view.phase === phase); return spatial.overview?.find?.((view) => view.phase === phase) || spatial.overview || spatial.views?.find((view) => view.phase === phase) || spatial.views?.[0]; }
+    function drawSpatial() { currentSpatialView = candidateView(); if (!currentSpatialView) return; root.dataset.spatialShot = currentSpatialView.shot_id || 'overview'; root.dataset.spatialPhase = currentSpatialView.phase || 'initial'; drawFloorplan(root.querySelector('[data-dc-spatial-top]'), currentSpatialView); drawProjection(root.querySelector('[data-dc-spatial-frame]'), currentSpatialView.frame); updateLegend(currentSpatialView); const detail = root.querySelector('[data-dc-spatial-detail]'); if (detail) detail.textContent = `${currentSpatialView.label || '俯视讨论'}${cameraSelect ? ' · FOV 为设计示意' : ''}`; }
+    cameraSelect?.addEventListener('change', drawSpatial); phaseSelect?.addEventListener('change', drawSpatial); new ResizeObserver(drawSpatial).observe(root); drawSpatial();
+  }
+
   function drawStoryCurve() {
     if (!storyCurve || !curveData || !Array.isArray(curveData.series)) return;
     const width = Math.max(280, Math.round(storyCurve.getBoundingClientRect().width));
@@ -362,10 +447,18 @@
         ? selectedQaCandidate.conversation_intent
         : action.conversation_intent;
       const followUpTitle = selectedQaCandidate?.action_label || action.label;
-      const prompt = `${conversationIntent}${selection} 当前阶段：${spec.view.customer_stage_label}。请先重新核对当前项目记录和进度，再用用户能理解的语言说明：确认了什么、哪些内容继续沿用、哪些内容需要重看、接下来会看到什么。确认无冲突后再记录，并给出简洁确认。`;
+      const phaseLabel = currentSpatialView?.phase === 'initial' ? '起始' : currentSpatialView?.phase === 'final' ? '结束' : `第 ${currentSpatialView?.phase.split('-')[1]} 次${currentSpatialView?.phase.startsWith('transfer-') ? '交接' : '走位'}后`;
+      const spatialSelection = currentSpatialView ? ` 场景 ${spatial.scene_id}，修订 ${spatial.revision}，机位 ${currentSpatialView.shot_id}，${phaseLabel}状态。` : '';
+      const prompt = spec.interaction_mode && spec.interaction_mode !== 'decision'
+        ? `${conversationIntent}${spatialSelection}${selection}`
+        : `${conversationIntent}${selection} 当前阶段：${spec.view.customer_stage_label}。请先重新核对当前项目记录和进度，再用用户能理解的语言说明：确认了什么、哪些内容继续沿用、哪些内容需要重看、接下来会看到什么。确认无冲突后再记录，并给出简洁确认。`;
       if (window.openai && typeof window.openai.sendFollowUpMessage === 'function') {
-        await window.openai.sendFollowUpMessage({ prompt, title: followUpTitle });
-        if (status) status.textContent = '请求已发送；正在确认当前项目状态。';
+        try {
+          await window.openai.sendFollowUpMessage({ prompt, title: followUpTitle });
+          if (status) status.textContent = '请求已发送。';
+        } catch (error) {
+          if (status) status.textContent = `请求未发送，请在对话中输入：${prompt}`;
+        }
       } else if (status) {
         status.textContent = `当前表面不支持对话提交；请在聊天中输入：${prompt}`;
       }

@@ -3,7 +3,7 @@ source_registry:
   verified_date: "2026-08-29"
   accessed_on: "2026-08-29"
   purpose: "Versioned capability cards for image, video, editing, and canvas routes used by DIRcreative."
-  resolution_rule: "Select by capability_card_id + version + provider_surface; model-family aliases are never sufficient."
+  resolution_rule: "Select by capability_card_id + version + provider_surface; model-family aliases are never sufficient. A vendor-listed product entry does not establish another platform's surface or parameters, and no platform is opened or switched automatically."
   refresh_policy:
     refresh_before_production: true
     stale_after_days: 90
@@ -1166,6 +1166,94 @@ models:
       - "Google changes the Lite endpoint launch stage, audio, references, duration, or extension support."
     adapter_impact:
       - "Re-resolve the exact Lite card and re-run audio/reference evals."
+
+  - model_key: seedance
+    capability_card_id: seedance_2_5_tapnow_canvas_2026_09_06
+    display_name: "Seedance 2.5 on TapNow Canvas"
+    provider: tapnow
+    provider_surface: "TapNow Canvas video node, Seedance 2.5"
+    version: "2.5"
+    status: current
+    access_mode: documented_product
+    execution_mode: manual_canvas_submission
+    execution_verification_status: unverified
+    verified_on: "2026-09-06"
+    accessed_on: "2026-09-06"
+    last_verified: "2026-09-06"
+    source_type: "official_workflow_guide"
+    primary_url: "https://docs.tapnow.ai/en/docs/canvas/generate-and-edit-video"
+    secondary_url: "https://docs.tapnow.ai/en/docs/canvas/create-and-use-elements"
+    source:
+      primary:
+        tier: S3
+        type: official_workflow_guide
+        url: "https://docs.tapnow.ai/en/docs/canvas/generate-and-edit-video"
+        accessed_on: "2026-09-06"
+        claim_scope: "TapNow Canvas Seedance 2.5 node only"
+      supporting:
+        - tier: S3
+          type: official_workflow_guide
+          url: "https://docs.tapnow.ai/en/docs/canvas/create-and-use-elements"
+          accessed_on: "2026-09-06"
+          claim_scope: "TapNow elements in Reference mode only"
+        - tier: S3
+          type: official_workflow_guide
+          url: "https://docs.tapnow.ai/zh/docs/changelog"
+          accessed_on: "2026-09-06"
+          claim_scope: "TapNow v2.12.18 Seedance 2.5 4-30-second duration selector"
+    evidence_level: S3
+    official_or_primary_facts:
+      - "TapNow offers Frames, Omni Reference, and Video Edit methods for its Seedance 2.5 video node."
+      - "New tasks default to 720p; all three listed methods support manually selected 1080p."
+      - "Omni Reference accepts up to 30 images, 10 videos, and 10 audio clips."
+      - "The selected model requires a paid account and model access; a locked node is unavailable for that account."
+      - "Elements are available in Reference mode; TapNow Multi-shot UI mode does not support element references."
+      - "TapNow v2.12.18 documents a 4-30-second duration setting for Seedance 2.5."
+    reference_modes:
+      frames: supported
+      omni_reference: supported
+      video_edit: supported
+      storyboard_reference: conditional_inferred_from_omni_reference
+      element_reference: supported_only_in_reference_mode
+      multi_shot_with_elements: unsupported
+      maximum_image_references: 30
+      maximum_video_references: 10
+      maximum_audio_references: 10
+      maximum_total_references: 50
+      limit_scope: "TapNow Omni Reference only; inspect the current node before submission"
+    audio_route:
+      native_audio_supported: unverified
+      audio_reference_supported: true
+      generation_audio_route: unverified_at_tapnow_surface
+    duration:
+      kind: range
+      minimum_sec: 4
+      maximum_sec: 30
+      limit_scope: "TapNow v2.12.18 Seedance 2.5 canvas and Agent confirmation-card selector"
+    edit:
+      supported: true
+      methods: [Video Edit]
+      preserve_change_required: true
+    extension:
+      supported: unverified
+    rights:
+      gate: required
+      paid_account_and_model_access_required: true
+      generation_allowed_when_unverified: false
+    failure_modes:
+      - bytedance_launch_parameters_assumed_for_tapnow
+      - tapnow_multishot_ui_assumed_to_be_native_model_multishot
+      - element_reference_used_outside_reference_mode
+      - unverified_duration_or_audio_claimed_as_available
+    inferred_adapter_behavior:
+      - "Use this card only after the user selects TapNow; do not redirect a named platform to TapNow or another vendor surface."
+      - "Keep duration, native audio, pricing, account entitlement, and model-specific UI options unverified until read in the current node."
+      - "For elements, require Reference mode and use separate one-unit prompts when multi-shot UI would be needed."
+      - "A line-drawn narrative storyboard may be bound as an Omni Reference recipe for order, action, and camera guidance; this is an application inference, not an official guarantee of video behavior."
+    refresh_trigger:
+      - "TapNow changes Seedance 2.5 node methods, reference limits, default resolution, account access, or element compatibility."
+    adapter_impact:
+      - "Seedance prompt syntax remains compatible; block executable duration/native-audio claims until the actual TapNow node supplies them."
 
   - model_key: tapnow_canvas
     capability_card_id: tapnow_canvas_workflow_2026_07_10

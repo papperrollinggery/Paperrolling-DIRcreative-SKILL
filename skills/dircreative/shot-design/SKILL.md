@@ -46,6 +46,13 @@ requested visual/asset work without a separate shot-approval round.
 
 When visualization adds clarity, use `skills/dircreative/assets/visualizations/stage-surface-registry.json#shot-density-timeline`. Keep the inline timeline compact; request fullscreen for 30 or more shots or dense inspection. Bind every displayed shot to the current shot-list artifact and preserve a table fallback.
 
+For two-or-more-person blocking, movement, eyeline or reverse-shot discussion,
+use the root `spatial_discussion` layer and its current-host display contract.
+Keep world positions fixed across reverse shots: changing the view must not
+mirror the room. The displayed layout is presentation-only until a user adopts
+it; then update only the affected existing scene/shot facts and mark their
+derived references or prompts stale.
+
 ## Rules
 
 - One main action per shot.
@@ -55,6 +62,8 @@ When visualization adds clarity, use `skills/dircreative/assets/visualizations/s
 - For client-facing storyboard/PPT work, every shot also needs seconds, camera position, emotional function, props/characters, asset source, vertical composition consideration, and reference motion or reference video for hero/expression-critical moments.
 - The downstream professional storyboard/motion page must have one cell per approved shot and include shot image region, detailed frame description, shot size, focal length, camera position, camera movement, subject blocking, sound, transition, and model risk.
 - That cell is an index/representative, not a limit of one action drawing per shot. Detailed/full preproduction adds a `storyboard-coverage` sidecar with ordered action panels and declared reverse/eyeline pairs. A hard cut changes shot ID; successive action phases may share it. See `skills/dircreative/references/storyboard-coverage.md` at that stage.
+- Start with a readable narrative panel and action phase—pose, contact, object change and camera relation—then add only the short note or arrow needed to explain it. Annotated line boards can serve human review and a specifically supported storyboard/motion-reference route, never a literal clean-frame slot.
+- Keep an actual representative image for every approved shot. A review-approved storyboard panel may supply it only when it genuinely represents that shot and its panel-to-asset lineage is recorded; video-only downstream use does not silently remove that requirement.
 - Storyboard page writing must read like a director explaining the film: story purpose first, camera language second, material/source or confirmation point last. Do not make the page feel like a production table.
 - PPT storyboard pages may show 3-6 images per page, but the image regions must stay large, non-distorted, crop-safe, and readable. Captions belong under images and must carry story, camera, and source meaning.
 - The downstream professional storyboard/motion page must use the visible shot-card template. Do not approve thin cell text that lacks narrative purpose, lens/support/movement, blocking/path, continuity, sound/edit, and model risk.

@@ -23,7 +23,7 @@ start at the stage needed to produce the requested result.
    Client stories, nine-grid narratives and frame specs stop at their layer;
    they do not automatically acquire shot rows or a production worksheet.
    Preserve actual SUPER, UI/data, proposal brand lines and ADCO/client claims.
-3. Maintain one creative spine: audience tension, brand causal role, core action,
+3. Maintain one creative spine: audience tension, applicable brand role, core action,
    start-action-end, physical/media rules, visual motif, continuity and sound/edit
    logic. Challenge substitutable ideas and unsupported claims with concrete
    alternatives; repair the result in the same turn.
@@ -48,6 +48,9 @@ start at the stage needed to produce the requested result.
 8. Inspect project material in place. Follow `references/project-hygiene.md` for
    file work. Keep regenerable QA in replace-current cache; do not duplicate
    source files merely to register them.
+
+For `spatial_discussion`, use its task reference and current host display
+contract. Keep viewing presentation-only and finish the requested scope.
 
 Return the actual requested content and necessary limitations. Do not expose
 route labels, hashes, role meetings or validation machinery unless asked.

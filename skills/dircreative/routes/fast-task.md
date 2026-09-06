@@ -22,3 +22,7 @@ Use for one bounded copy, shot, storyboard, prompt, or existing-artifact change.
 Do not reopen intake, stage a confirmation sequence, persist state, or discuss
 paths, Git, gates, receipts, hashes, validation, and internal roles unless the
 user explicitly asks for that operational information.
+
+Do not escalate a prompt-only or single-shot revision merely because it mentions
+blocking, a reverse shot, or a camera. A request to compare or arrange a shared
+scene’s people/camera relationship uses the root `spatial_discussion` layer.

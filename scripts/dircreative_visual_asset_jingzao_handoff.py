@@ -65,6 +65,244 @@ def canonical_sha256(value: Any) -> str:
     )
 
 
+def spatial_layout_foundation_source(
+    export: dict[str, Any], project_root: Path
+) -> dict[str, Any]:
+    """Return the foundation-source record for one current spatial export.
+
+    This record is intentionally a reference-only deterministic layout.  It
+    cannot become an identity asset or count as a generated visual asset.
+    """
+    if not isinstance(export, dict):
+        raise ValueError("spatial layout export must be an object")
+    root = project_root.expanduser().resolve(strict=True)
+    source_binding = export if {"relative_path", "sha256"} <= set(export) else export.get("spatial_source")
+    if not isinstance(source_binding, dict):
+        raise ValueError("spatial layout export requires a bound spatial_source")
+    relative_export = source_binding.get("relative_path")
+    expected_export_hash = source_binding.get("sha256")
+    if not isinstance(relative_export, str) or not isinstance(expected_export_hash, str):
+        raise ValueError("spatial export binding is invalid")
+    try:
+        export_path = (root / relative_export).resolve(strict=True)
+        export_path.relative_to(root)
+    except (FileNotFoundError, RuntimeError, ValueError) as exc:
+        raise ValueError("spatial export path escapes project root") from exc
+    if sha256_bytes(export_path.read_bytes()) != expected_export_hash:
+        raise ValueError("spatial export source hash mismatch")
+    from dircreative_spatial_scene import read_export, validate_export
+
+    parsed = read_export(export_path, root)
+    if errors := validate_export(parsed, root):
+        raise ValueError("invalid spatial export: " + "; ".join(errors))
+    reference = parsed.get("reference")
+    if not isinstance(reference, dict) or (
+        not isinstance(reference.get("asset_id"), str)
+        or not isinstance(reference.get("relative_path"), str)
+        or not isinstance(reference.get("sha256"), str)
+        or reference.get("role") != "layout"
+        or reference.get("media_class") != "layout_reference"
+    ):
+        raise ValueError("spatial export layout reference is invalid")
+    return {
+        "asset_id": reference["asset_id"],
+        "source_kind": "deterministic_layout",
+        "role": "layout_reference",
+        "relative_path": reference["relative_path"],
+        "sha256": reference["sha256"],
+        "spatial_source": {
+            "relative_path": relative_export,
+            "sha256": expected_export_hash,
+        },
+    }
+
+
+def attach_spatial_layout(
+    spec: dict[str, Any],
+    export: dict[str, Any],
+    project_root: Path,
+    spec_path: Path,
+) -> dict[str, Any]:
+    """Attach one current deterministic layout export to an existing Jingzao spec.
+
+    ``export`` is normally the export artifact binding (``relative_path`` and
+    ``sha256``).  A wrapper with that binding in ``spatial_source`` is accepted
+    for callers that also carry the parsed export.  The spatial engine remains
+    the sole parser and verifier; this helper only turns its approved PNG into
+    the final, required Jingzao attachment.
+    """
+    if not isinstance(spec, dict) or not isinstance(export, dict):
+        raise ValueError("spatial layout requires object spec and export")
+    try:
+        root = project_root.expanduser().resolve(strict=True)
+        resolved_spec = spec_path.expanduser().resolve(strict=False)
+        resolved_spec.relative_to(root)
+    except (FileNotFoundError, RuntimeError, ValueError) as exc:
+        raise ValueError("spatial layout spec path is outside project root") from exc
+
+    source_binding = export if {"relative_path", "sha256"} <= set(export) else export.get("spatial_source")
+    if not isinstance(source_binding, dict):
+        raise ValueError("spatial layout export requires a bound spatial_source")
+    from dircreative_spatial_scene import read_export, validate_export
+
+    relative_export = source_binding.get("relative_path")
+    if not isinstance(relative_export, str):
+        raise ValueError("spatial export path is invalid")
+    export_path = (root / relative_export).resolve(strict=True)
+    try:
+        export_path.relative_to(root)
+    except ValueError as exc:
+        raise ValueError("spatial export path escapes project root") from exc
+    expected_export_hash = source_binding.get("sha256")
+    if not isinstance(expected_export_hash, str) or sha256_bytes(export_path.read_bytes()) != expected_export_hash:
+        raise ValueError("spatial export source hash mismatch")
+    parsed = read_export(export_path, root)
+    errors = validate_export(parsed, root)
+    if errors:
+        raise ValueError("invalid spatial export: " + "; ".join(errors))
+    reference = parsed.get("reference")
+    if not isinstance(reference, dict):
+        raise ValueError("spatial export is missing layout reference")
+    if (
+        reference.get("role") != "layout"
+        or reference.get("media_class") != "layout_reference"
+        or reference.get("primary_job") != "position_pose_occlusion"
+        or reference.get("source_kind") != "deterministic_render"
+        or reference.get("must_not_control")
+        != ["character_identity", "prop_identity", "material", "texture", "final_art_style"]
+    ):
+        raise ValueError("spatial export layout role is invalid")
+    image_relative = reference.get("relative_path")
+    image_hash = reference.get("sha256")
+    if not isinstance(image_relative, str) or not isinstance(image_hash, str):
+        raise ValueError("spatial export layout image binding is invalid")
+    image_path = (root / image_relative).resolve(strict=True)
+    try:
+        image_path.relative_to(root)
+    except ValueError as exc:
+        raise ValueError("spatial export layout image escapes project root") from exc
+    if sha256_bytes(image_path.read_bytes()) != image_hash:
+        raise ValueError("spatial export layout image hash mismatch")
+    try:
+        source_ref = os.path.relpath(image_path, resolved_spec.parent)
+    except ValueError as exc:
+        raise ValueError("cannot bind spatial image relative to Jingzao spec") from exc
+    updated = copy.deepcopy(spec)
+    inputs = updated.setdefault("inputs", [])
+    if not isinstance(inputs, list):
+        raise ValueError("Jingzao spec inputs must be a list")
+    layout_id = f"layout-{parsed.get('shot_id', '')}-{parsed.get('phase', '')}".strip("-")
+    if not layout_id or any(not isinstance(item, dict) for item in inputs):
+        raise ValueError("spatial export has no usable shot identity")
+    if any(item.get("id") == layout_id for item in inputs):
+        raise ValueError(f"Jingzao spec already binds spatial layout {layout_id}")
+    colors = parsed.get("color_binding")
+    color_sentence = parsed.get("prompt_binding")
+    if not isinstance(colors, list) or not isinstance(color_sentence, str) or not color_sentence.strip():
+        raise ValueError("spatial export color prompt binding is invalid")
+    inputs.append(
+        {
+            "id": layout_id,
+            "type": "image",
+            "role": "layout",
+            "description": (
+                "Use only for current position, pose, scale, occlusion and camera-side staging. "
+                + color_sentence.strip()
+                + " Do not use it for character identity, prop identity, material, texture, or final art style."
+            ),
+            "source_kind": "local_path",
+            "source_ref": source_ref,
+            "must_attach": True,
+        }
+    )
+    return updated
+
+
+def prepare_layout(
+    *, project_root: Path, spec_path: Path, export_path: Path, output_spec: Path, output_reference: Path
+) -> dict[str, Any]:
+    """Create derived Jingzao inputs for one current spatial layout export."""
+    root = project_root.expanduser().resolve(strict=True)
+
+    def inside(path: Path, *, exists: bool) -> Path:
+        candidate = path.expanduser().resolve(strict=exists)
+        candidate.relative_to(root)
+        return candidate
+
+    try:
+        source_spec = inside(spec_path, exists=True)
+        export_file = inside(export_path, exists=True)
+        target_spec = inside(output_spec, exists=False)
+        target_reference = inside(output_reference, exists=False)
+    except (FileNotFoundError, RuntimeError, ValueError) as exc:
+        raise ValueError("prepare-layout paths must stay inside project_root") from exc
+    if target_spec in {source_spec, export_file} or target_reference in {source_spec, export_file, target_spec}:
+        raise ValueError("prepare-layout outputs must be new files")
+    if target_spec.exists() or target_reference.exists():
+        raise ValueError("prepare-layout refuses to overwrite an existing output")
+    try:
+        spec = json.loads(source_spec.read_text(encoding="utf-8"))
+        if not isinstance(spec, dict):
+            raise ValueError("visual spec root is invalid")
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
+        raise ValueError("visual spec is unreadable") from exc
+    for item in spec.get("inputs", []):
+        if not isinstance(item, dict) or item.get("source_kind") != "local_path":
+            continue
+        source_ref = item.get("source_ref")
+        if not isinstance(source_ref, str):
+            raise ValueError("visual spec local input is invalid")
+        try:
+            source_file = (source_spec.parent / source_ref).resolve(strict=True)
+            source_file.relative_to(root)
+        except (FileNotFoundError, RuntimeError, ValueError) as exc:
+            raise ValueError("visual spec local input escapes project_root") from exc
+        item["source_ref"] = os.path.relpath(source_file, target_spec.parent)
+    binding = {
+        "relative_path": export_file.relative_to(root).as_posix(),
+        "sha256": sha256_bytes(export_file.read_bytes()),
+    }
+    updated = attach_spatial_layout(spec, binding, root, target_spec)
+    input_id = updated["inputs"][-1]["id"]
+    source = spatial_layout_foundation_source(binding, root)
+    reference = {
+        "input_id": input_id,
+        "asset_id": source["asset_id"],
+        "role": "layout",
+        "relative_path": source["relative_path"],
+        "sha256": source["sha256"],
+        "rights_status": "project_owned",
+        "approval_status": "reference_only_approved",
+        "spatial_source": source["spatial_source"],
+    }
+    spec_payload = (json.dumps(updated, ensure_ascii=False, indent=2, sort_keys=True) + "\n").encode("utf-8")
+    reference_payload = (json.dumps(reference, ensure_ascii=False, indent=2, sort_keys=True) + "\n").encode("utf-8")
+
+    def publish_new(path: Path, payload: bytes) -> None:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        descriptor, temporary_name = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
+        temporary = Path(temporary_name)
+        try:
+            with os.fdopen(descriptor, "wb") as handle:
+                handle.write(payload)
+                handle.flush()
+                os.fsync(handle.fileno())
+            os.link(temporary, path)  # atomic create; never replaces a raced user file
+        finally:
+            temporary.unlink(missing_ok=True)
+
+    published_spec = False
+    try:
+        publish_new(target_spec, spec_payload)
+        published_spec = True
+        publish_new(target_reference, reference_payload)
+    except OSError as exc:
+        if published_spec:
+            target_spec.unlink(missing_ok=True)
+        raise ValueError("prepare-layout could not publish both outputs") from exc
+    return {"spec": target_spec.relative_to(root).as_posix(), "reference": target_reference.relative_to(root).as_posix(), "input_id": input_id}
+
+
 def default_provider_roots() -> tuple[Path, ...]:
     return (
         Path.home() / ".codex/skills/jingzao-image-forge",
@@ -487,8 +725,7 @@ def validate(
         references = input_spec.get("reference_assets")
         if not isinstance(references, list) or any(
             not isinstance(item, dict)
-            or set(item)
-            != {
+            or not set(item).issubset({
                 "input_id",
                 "asset_id",
                 "role",
@@ -496,7 +733,11 @@ def validate(
                 "sha256",
                 "rights_status",
                 "approval_status",
-            }
+                "spatial_source",
+            })
+            or not {
+                "input_id", "asset_id", "role", "relative_path", "sha256", "rights_status", "approval_status"
+            }.issubset(item)
             for item in references
         ):
             errors.append("visual_asset_reference_assets_invalid")
@@ -521,14 +762,26 @@ def validate(
                 if payload is not None:
                     reference_payloads[str(item.get("input_id"))] = payload
                 source = foundation_source_by_id.get(str(item.get("asset_id")))
-                if (
+                is_layout = item.get("role") == "layout"
+                if is_layout:
+                    try:
+                        layout_source = spatial_layout_foundation_source(
+                            {"spatial_source": item.get("spatial_source")}, resolved_project
+                        )
+                        if (
+                            layout_source["asset_id"] != item.get("asset_id")
+                            or layout_source["relative_path"] != item.get("relative_path")
+                            or layout_source["sha256"] != item.get("sha256")
+                        ):
+                            raise ValueError("layout source mismatch")
+                    except (ImportError, OSError, RuntimeError, ValueError):
+                        errors.append(f"visual_asset_layout_reference_invalid:{item.get('input_id')}")
+                elif (
                     source is None
                     or source.get("relative_path") != item.get("relative_path")
                     or source.get("sha256") != item.get("sha256")
                 ):
-                    errors.append(
-                        f"visual_asset_reference_not_in_foundation:{item.get('input_id')}"
-                    )
+                    errors.append(f"visual_asset_reference_not_in_foundation:{item.get('input_id')}")
                 if item.get("rights_status") not in {
                     "user_provided",
                     "project_owned",
@@ -734,6 +987,28 @@ def validate(
 
 
 def main() -> int:
+    if len(sys.argv) > 1 and sys.argv[1] == "prepare-layout":
+        parser = argparse.ArgumentParser(description="Prepare a derived Jingzao spec and formal layout reference.")
+        parser.add_argument("prepare-layout")
+        parser.add_argument("--project-root", required=True, type=Path)
+        parser.add_argument("--spec", required=True, type=Path)
+        parser.add_argument("--export", required=True, type=Path)
+        parser.add_argument("--output-spec", required=True, type=Path)
+        parser.add_argument("--output-reference", required=True, type=Path)
+        args = parser.parse_args()
+        try:
+            result = prepare_layout(
+                project_root=args.project_root,
+                spec_path=args.spec,
+                export_path=args.export,
+                output_spec=args.output_spec,
+                output_reference=args.output_reference,
+            )
+        except (OSError, ValueError, ImportError) as exc:
+            print(json.dumps({"status": "blocked", "errors": [str(exc)]}, ensure_ascii=False))
+            return 1
+        print(json.dumps({"status": "prepared", **result}, ensure_ascii=False, indent=2))
+        return 0
     parser = argparse.ArgumentParser(description="Validate a formal DIR-to-Jingzao visual asset compile handoff.")
     parser.add_argument("handoff", type=Path)
     parser.add_argument("--project-root", required=True, type=Path)

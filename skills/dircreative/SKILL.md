@@ -30,6 +30,7 @@ one read; reuse bodies already loaded.
 | Bounded copy/script edit | Fast / `copy_revision` | `references/copy-script.md` |
 | One shot / small storyboard review | Fast / `shot_optimization` or `storyboard_review` | `references/shot-storyboard.md` |
 | Bounded prompt edit | Fast / `prompt_revision` | `references/prompt-model.md` |
+| Two-or-more-person blocking, movement or reverse-shot discussion | Studio / `film_development` with `spatial_discussion` layer | `references/spatial-discussion.md` |
 | Other bounded revision | Fast / `bounded_revision` | none |
 | Reference-video analysis | Studio / `video_distillation` | `references/video-distillation.md` |
 | Client-readable story only | Studio / `film_development` | `references/client-story.md` |
@@ -59,6 +60,10 @@ step. “先给一句概念” does not erase an accompanying whole-film assignm
 - **Delivery:** validate the active asset/action and its dependencies; execute
   authorized work, inspect the real result, then continue the dependency chain.
   Check tool/reviewer/readback availability early in a real production request.
+
+For `spatial_discussion`, read the current host Visualize contract and use its
+response surface or complete fallback. Camera switching is presentation-only;
+scene/shot facts remain authoritative. A concise prompt edit remains Fast.
 
 Named 导演组/创意组 use the active craft card's professional judgments. For real
 joint/parallel work or ambiguous collaboration read

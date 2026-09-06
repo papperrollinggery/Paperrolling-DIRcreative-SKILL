@@ -46,6 +46,13 @@ An explicit “generate now” instruction can satisfy generation authorization.
 planning request, ambiguous “prepare,” or missing rights cannot. If blocked, ask
 one question that names the exact missing authorization or input.
 
+An adopted spatial arrangement can supply a current layout/staging reference
+only after it is written to the existing scene/shot source and its affected
+exports are refreshed. Viewing, switching cameras, or trying positions in a
+discussion surface is presentation-only. “Adopt and generate a reference” uses
+the same `generation_authorization` scope; a still-valid authorization for that
+asset scope already satisfies it and must not be requested again.
+
 Once authorized:
 
 - First validate the canonical visual-plan JSON; CSV/Markdown never replaces it.
@@ -121,6 +128,9 @@ belong to the delivery acceptance contract.
 
 ## Client-visible delivery
 
+Deliver preparation materials as browsable files with an index. Create a ZIP only
+when requested; software release/install archives follow their existing protocol.
+
 Check the actual deliverable, not the whole archive:
 
 - correct artifact, version, format, openability, and intended audience;
@@ -132,6 +142,9 @@ Check the actual deliverable, not the whole archive:
 
 Hash or version real inputs and outputs only when identity matters to the handoff.
 Do not create hashes, receipts, records, or state files for hypothetical work.
+
+For current spatial controls, read `spatial-discussion.md` and use its
+`prepare-layout` path before the existing provider validation/compile.
 
 ## Scoped validation
 

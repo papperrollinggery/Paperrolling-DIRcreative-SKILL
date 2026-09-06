@@ -192,6 +192,8 @@ def semantic_errors(document: Any, project_root: Path = ROOT) -> list[str]:
 
     gate = document.get("stage_gate") if isinstance(document.get("stage_gate"), dict) else {}
     gate_id = gate.get("id")
+    spec_version = document.get("spec_version")
+    interaction_mode = document.get("interaction_mode") if spec_version == "1.1" else "decision"
     execution_context = document.get("execution_context")
     controller = document.get("controller") if isinstance(document.get("controller"), dict) else {}
     view = document.get("view") if isinstance(document.get("view"), dict) else {}
@@ -224,7 +226,10 @@ def semantic_errors(document: Any, project_root: Path = ROOT) -> list[str]:
         ],
         "interactions.actions",
     )
-    collect_visible({"decision_question": fallback.get("decision_question")}, "fallback")
+    collect_visible(
+        {"decision_question": fallback.get("decision_question"), "content": fallback.get("content")},
+        "fallback",
+    )
     for location, value in visible_strings:
         if BACKSTAGE_VISIBLE_RE.search(value):
             errors.append(f"customer-visible text leaks backstage term at {location}")
@@ -334,6 +339,66 @@ def semantic_errors(document: Any, project_root: Path = ROOT) -> list[str]:
             exists, _ = resolve_json_pointer(evidence_documents[artifact_id], f"#/{pointer_suffix}")
             if not exists:
                 errors.append(f"{label} references missing evidence content: {source_ref}")
+
+    spatial_scene = presentation.get("spatial_scene")
+    if document.get("view", {}).get("intent") == "blocking_camera":
+        if not isinstance(spatial_scene, dict):
+            errors.append("blocking_camera requires a complete current spatial_scene")
+        else:
+            from dircreative_spatial_scene import validate_scene
+            errors.extend(f"presentation spatial_scene invalid: {error}" for error in validate_scene(spatial_scene))
+    if spatial_scene is not None:
+        if not isinstance(spatial_scene, dict):
+            errors.append("presentation spatial_scene must be an object")
+        else:
+            spatial_refs = spatial_scene.get("source_refs")
+            if not isinstance(spatial_refs, list) or not spatial_refs:
+                errors.append("presentation spatial_scene requires source_refs")
+            else:
+                for source_ref in spatial_refs:
+                    validate_source_ref(source_ref, "spatial_scene")
+            scene_hash = spatial_scene.get("scene_state_sha256")
+            if not isinstance(scene_hash, str) or not SHA256_RE.fullmatch(scene_hash):
+                errors.append("presentation spatial_scene has invalid scene_state_sha256")
+            elif isinstance(spatial_refs, list):
+                bound_hashes = {
+                    artifact_map.get(str(source_ref).split("#/", 1)[0], {}).get("sha256")
+                    for source_ref in spatial_refs
+                    if isinstance(source_ref, str)
+                }
+                if scene_hash not in bound_hashes:
+                    errors.append("presentation spatial_scene scene_state_sha256 is not bound by source_refs")
+            if "entities" in spatial_scene or "cameras" in spatial_scene:
+                evidence_sources = {
+                    str(source_ref).split("#/", 1)[0]
+                    for source_ref in spatial_refs or []
+                    if isinstance(source_ref, str) and str(source_ref).split("#/", 1)[0] in evidence_documents
+                }
+                if not evidence_sources:
+                    errors.append("presentation spatial_scene snapshot requires an evidence_path source artifact")
+                else:
+                    snapshot = dict(spatial_scene)
+                    snapshot.pop("source_refs", None)
+                    snapshot.pop("scene_state_sha256", None)
+                    if not any(snapshot == evidence_documents[artifact_id] for artifact_id in evidence_sources):
+                        errors.append("presentation spatial_scene snapshot does not match bound evidence JSON")
+    if interaction_mode in {"adopt", "adopt_and_generate"}:
+        if not isinstance(spatial_scene, dict) or not isinstance(spatial_scene.get("entities"), list) or not isinstance(spatial_scene.get("cameras", []), list):
+            errors.append("adoption visualization requires a complete current spatial_scene")
+        else:
+            spatial_refs = spatial_scene.get("source_refs", [])
+            bound_artifacts = [
+                artifact_map.get(ref.split("#/", 1)[0])
+                for ref in spatial_refs
+                if isinstance(ref, str) and "#/" in ref
+            ]
+            if not bound_artifacts or any(
+                not isinstance(artifact, dict)
+                or not artifact.get("evidence_path")
+                or artifact.get("lifecycle_status") != "current"
+                for artifact in bound_artifacts
+            ):
+                errors.append("adoption visualization requires current evidence_path source artifacts")
 
     fields = presentation.get("fields") if isinstance(presentation.get("fields"), list) else []
     field_ids: set[str] = set()
@@ -704,7 +769,12 @@ def semantic_errors(document: Any, project_root: Path = ROOT) -> list[str]:
             errors.append(f"preview {index} image artifact is not bound to its option source_refs")
 
     actions = interactions.get("actions") if isinstance(interactions.get("actions"), list) else []
-    if not 1 <= len(actions) <= 2:
+    if interaction_mode == "presentation_only":
+        if gate:
+            errors.append("presentation_only visualization must not create a stage_gate")
+        if actions:
+            errors.append("presentation_only visualization must not expose write actions")
+    elif not 1 <= len(actions) <= 2:
         errors.append("interaction action count must be between 1 and 2")
     action_ids: set[str] = set()
     for index, action in enumerate(actions):
@@ -715,8 +785,12 @@ def semantic_errors(document: Any, project_root: Path = ROOT) -> list[str]:
         if action_id in action_ids:
             errors.append(f"duplicate action id: {action_id}")
         action_ids.add(action_id)
-        if action.get("target_gate_id") != gate_id:
+        if interaction_mode == "decision" and action.get("target_gate_id") != gate_id:
             errors.append(f"action {action_id} does not target current gate")
+        if interaction_mode == "adopt" and action.get("kind") not in {"adopt", "request_revision", "stop"}:
+            errors.append(f"adopt visualization action {action_id} has invalid kind")
+        if interaction_mode == "adopt_and_generate" and action.get("kind") not in {"adopt_and_generate", "request_revision", "stop"}:
+            errors.append(f"adopt_and_generate visualization action {action_id} has invalid kind")
         if has_placeholder_preview and action.get("kind") not in {"request_revision", "stop"}:
             errors.append("illustrative placeholder preview may only request a real candidate or stop")
     if interactions.get("max_actions") != 2:
@@ -730,7 +804,12 @@ def semantic_errors(document: Any, project_root: Path = ROOT) -> list[str]:
 
     if write_boundary.get("preview_only") is not True:
         errors.append("visualization must remain preview_only")
-    if write_boundary.get("confirmation_required") is not True:
+    if interaction_mode == "presentation_only":
+        if write_boundary.get("confirmation_required") is not False:
+            errors.append("presentation_only visualization must not require confirmation")
+        if write_boundary.get("possible_write_targets"):
+            errors.append("presentation_only visualization must not advertise write targets")
+    elif write_boundary.get("confirmation_required") is not True:
         errors.append("visualization must require confirmation")
     if write_boundary.get("writes_authoritative_state") is not False:
         errors.append("visualization cannot write authoritative state")
@@ -750,14 +829,17 @@ def semantic_errors(document: Any, project_root: Path = ROOT) -> list[str]:
         if write_boundary.get("write_owner") != "ad-creative-orchestrator":
             errors.append("orchestrated_worker write_owner must be ad-creative-orchestrator")
 
-    fallback_fields = set(fallback.get("required_visible_fields", []))
-    missing_fallback = sorted(REQUIRED_FALLBACK_FIELDS - fallback_fields)
-    if options and "options" not in fallback_fields:
-        missing_fallback.append("options")
-    if missing_fallback:
-        errors.append("fallback missing visible fields: " + ", ".join(missing_fallback))
-    if not isinstance(fallback.get("decision_question"), str) or not fallback.get("decision_question", "").strip():
-        errors.append("fallback requires a decision question")
+    if interaction_mode != "presentation_only":
+        fallback_fields = set(fallback.get("required_visible_fields", []))
+        missing_fallback = sorted(REQUIRED_FALLBACK_FIELDS - fallback_fields)
+        if options and "options" not in fallback_fields:
+            missing_fallback.append("options")
+        if missing_fallback:
+            errors.append("fallback missing visible fields: " + ", ".join(missing_fallback))
+        if not isinstance(fallback.get("decision_question"), str) or not fallback.get("decision_question", "").strip():
+            errors.append("fallback requires a decision question")
+    elif not isinstance(fallback.get("content"), str) or not fallback.get("content", "").strip():
+        errors.append("presentation_only fallback requires readable content")
 
     return errors
 
@@ -776,17 +858,20 @@ def customer_stage_label(value: Any) -> str:
 
 
 def render_fallback(document: dict[str, Any]) -> str:
-    gate = document["stage_gate"]
+    gate = document.get("stage_gate", {})
     view = document["view"]
     presentation = document["presentation"]
     fallback = document["fallback"]
     lines = [
         f"阶段: {view['customer_stage_label']}",
         "",
-        f"当前状态: {gate['status']}",
-        f"当前决定: {view['decision_prompt']}",
+        f"当前状态: {gate.get('status', '查看中')}",
         "",
     ]
+    if view.get("decision_prompt"):
+        lines.extend([f"当前决定: {view['decision_prompt']}", ""])
+    elif fallback.get("content"):
+        lines.extend([str(fallback["content"]), ""])
     options = presentation.get("options", [])
     if options:
         lines.extend(["| 选项 | 核心内容 | 制作权衡 |", "| --- | --- | --- |"])
@@ -895,7 +980,11 @@ def render_fallback(document: dict[str, Any]) -> str:
         lines.append("下游影响:")
         lines.extend(f"- {customer_stage_label(effect['stage'])}: {effect['effect']}" for effect in effects)
         lines.append("")
-    lines.append(f"用户确认点: {fallback['decision_question']}")
+    if document.get("interaction_mode") == "presentation_only":
+        if fallback.get("decision_question"):
+            lines.append(f"继续方式: {fallback['decision_question']}")
+    else:
+        lines.append(f"用户确认点: {fallback['decision_question']}")
     return "\n".join(lines)
 
 

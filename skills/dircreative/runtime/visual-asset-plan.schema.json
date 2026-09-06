@@ -104,7 +104,15 @@
           "shot_design": {"type": "string", "minLength": 12},
           "action": {"type": "string", "minLength": 12},
           "sound_edit": {"type": "string", "minLength": 12},
-          "continuity_model": {"type": "string", "minLength": 12}
+          "continuity_model": {"type": "string", "minLength": 12},
+          "scene_state_source": {
+            "type": "object", "additionalProperties": false,
+            "required": ["relative_path", "sha256"],
+            "properties": {
+              "relative_path": {"type": "string", "minLength": 1},
+              "sha256": {"$ref": "#/$defs/sha256"}
+            }
+          }
         }
       }
     },

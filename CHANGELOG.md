@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 0.9.0 - 2026-09-06
+
+- Route natural-language blocking, camera and reverse-shot discussions into the current host visualization contract, with a complete text fallback and no mandatory stage approval for viewing.
+- Derive interactive camera views and text-free layout references from the same revision-bound scene/shot state; reject stale sources, mismatched projections and unbound adoption.
+- Bind layout controls to the existing Jingzao and video-prompt paths, preserve reference sovereignty, and return explicit upload order with copyable prompts.
+- Keep bounded edits small and continue authorized full preproduction through the requested asset, storyboard, continuity and submission materials. Local rendering, real model generation, visual review and released installation remain separate evidence levels.
+
 ## 0.8.1 - 2026-09-05
 
 - Fixes global installed-runtime acceptance to verify the actual target against an independent source checkout, adds source/installed entry checks to CI and release gates, and replaces the legacy operator prompt with v2 instructions.

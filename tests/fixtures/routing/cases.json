@@ -110,6 +110,9 @@
     ,{"id":"generation_authorization_application_is_not_authorization","input":"$dircreative 我正在申请生成图片授权","media_scope":"planning_only","image_generation_authorized":false,"video_generation_authorized":false}
     ,{"id":"explicit_no_real_media_wins","input":"$dircreative 前期图片资产都做好，但不要实际生成任何媒体","media_scope":"prompt_only","image_generation_authorized":false,"video_generation_authorized":false}
     ,{"id":"english_generation_explanation_is_planning","input":"$dircreative Explain how to generate images.","media_scope":"planning_only","image_generation_authorized":false,"video_generation_authorized":false}
+    ,{"id":"two_person_spatial_discussion","input":"$dircreative 两人在同一个房间对话，我想看看站位和正反打怎么安排。","mode":"studio","route":"film_development","deliverable_layer":"spatial_discussion","shot_matrix_allowed":false,"required_files":["skills/dircreative/references/spatial-discussion.md"],"media_scope":"planning_only"}
+    ,{"id":"prompt_revision_stays_fast_with_spatial_words","input":"$dircreative 只把这个两人正反打镜头提示词改得简洁，别扩写。","mode":"fast","route":"prompt_revision","deliverable_layer":"bounded_output","shot_matrix_allowed":false,"media_scope":"planning_only"}
+    ,{"id":"local_blocking_change_uses_spatial_discussion","input":"$dircreative 只改甲绕桌走到门边，乙和房间不动。","mode":"studio","route":"film_development","deliverable_layer":"spatial_discussion","shot_matrix_allowed":false,"required_files":["skills/dircreative/references/spatial-discussion.md"],"media_scope":"planning_only"}
 
   ]
 }

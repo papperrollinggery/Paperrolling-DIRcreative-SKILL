@@ -207,8 +207,26 @@
         "source_hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
         "inherits_from": { "$ref": "#/$defs/stringArray" },
         "lock_evidence": { "type": "string" },
+        "spatial_source": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["relative_path", "sha256"],
+          "properties": {
+            "relative_path": { "$ref": "#/$defs/nonEmptyString" },
+            "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+          }
+        },
+        "spatial_context": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["shot_id", "phase"],
+          "properties": {
+            "shot_id": {"$ref": "#/$defs/nonEmptyString"},
+            "phase": {"$ref": "#/$defs/nonEmptyString"}
+          }
+        },
         "source_authorization": { "enum": ["user_provided", "project_owned", "unknown"] },
-        "role": { "enum": ["identity", "scene_fov", "style_material", "storyboard_motion", "clean_start", "clean_end", "product_detail", "motion", "audio", "ambiguous"] },
+        "role": { "enum": ["identity", "scene_fov", "style_material", "storyboard_motion", "clean_start", "clean_end", "product_detail", "motion", "audio", "layout_reference", "ambiguous"] },
         "locked": { "type": "boolean" },
         "reuse_action": { "enum": ["direct_reference", "edit", "derive", "planning_only", "unresolved"] },
         "preserve": { "$ref": "#/$defs/stringArray" },
@@ -223,6 +241,7 @@
       "required": ["platform_slot", "asset_id", "role", "direct_input_policy", "attached_to_run", "required_for_shot", "preserve", "anti_misread"],
       "properties": {
         "platform_slot": { "$ref": "#/$defs/nonEmptyString" },
+        "upload_order": { "type": "integer", "minimum": 1 },
         "asset_id": { "$ref": "#/$defs/nonEmptyString" },
         "role": { "$ref": "#/$defs/nonEmptyString" },
         "direct_input_policy": { "enum": ["allowed", "conditional", "planning_only"] },

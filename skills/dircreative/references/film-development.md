@@ -6,8 +6,9 @@ the requested creative result first.
 ## Build the film, not a meeting
 
 Lock supplied constraints without reasking. Build one direction around audience
-tension, opposing pressure, brand causal role, turn, consequence and visible
+tension, opposing pressure, turn, consequence and visible
 ending. Fit the real duration; generation-unit limits are production constraints.
+For branded work, give the brand a causal role.
 
 Each beat needs an observable start, decisive action and changed end motivating
 the next. Keep readable performance, camera, sound and continuity. Distinguish
@@ -38,7 +39,7 @@ visual/sound system and feasible route. A transcript or ledger is not the idea.
   timing, capabilities, or product ownership from a creative idea.
 
 Do not enter a shot or asset matrix until audience state change, one core action,
-brand causal role, start-action-end, media/physical rules, continuity logic, and
+brand role when applicable, start-action-end, media/physical rules, continuity logic, and
 sound/edit logic are explicit. Structural coverage proves production planning,
 not creative quality, client readability, asset authorization, or approval.
 
@@ -127,9 +128,3 @@ set. Protect IDs, timecodes, literal SUPER, exact claims, technical fields and
 paste-ready model syntax.
 
 For explicit groups/parallel work follow `docs/film-preproduction/director-room-routing.md`.
-For a complete assignment, continue to each requested deliverable in the same
-work session. One first-round concept is a milestone, not whole-project completion.
-Maintain the shot/action/entity source once; derive the asset matrix, board page
-and model manifest from those IDs and facts. Change a source fact once and mark
-only its dependents stale. Keep completed work while reporting exact missing
-assets, reviews or tool access.

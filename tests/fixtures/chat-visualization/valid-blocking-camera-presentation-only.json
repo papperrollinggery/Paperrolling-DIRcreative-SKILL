@@ -1,0 +1,196 @@
+{
+  "spec_version": "1.1",
+  "interaction_mode": "presentation_only",
+  "view_id": "blocking-camera-full-snapshot",
+  "execution_context": "standalone_chat",
+  "controller": {
+    "surface_owner": "dircreative",
+    "user_facing": true
+  },
+  "view": {
+    "intent": "blocking_camera",
+    "display_mode": "inline",
+    "customer_stage_label": "站位与镜位"
+  },
+  "source_truth": {
+    "artifacts": [
+      {
+        "artifact_id": "ROOM-01",
+        "version": "r1",
+        "sha256": "347735385dcb198c382d5e70ad5d265f80b9744963251290d186b9e220b03808",
+        "evidence_path": "examples/spatial-dialogue/scene.json",
+        "lifecycle_status": "current"
+      }
+    ]
+  },
+  "presentation": {
+    "spatial_scene": {
+      "scene_id": "ROOM-01",
+      "revision": "r1",
+      "description": "隔离设计示例：甲乙隔桌对话，机位从房间同侧完成主镜与正反打。",
+      "coordinate_system": "normalized_xy_design",
+      "room": {
+        "features": [
+          {
+            "id": "TABLE",
+            "label": "桌",
+            "position": [
+              0.5,
+              0.52
+            ],
+            "size": [
+              0.2,
+              0.27
+            ],
+            "height": 0.115,
+            "evidence": "designed",
+            "blocks_movement": true
+          },
+          {
+            "id": "DOOR",
+            "label": "门",
+            "position": [
+              0.16,
+              0.94
+            ],
+            "size": [
+              0.18,
+              0.025
+            ],
+            "height": 0.31,
+            "evidence": "designed"
+          }
+        ]
+      },
+      "entities": [
+        {
+          "id": "A",
+          "label": "甲",
+          "kind": "character",
+          "position": [
+            0.32,
+            0.52
+          ],
+          "facing": [
+            1,
+            0
+          ],
+          "gaze_target": "B",
+          "height": 0.28,
+          "support": "floor",
+          "color": "#587b9a",
+          "color_name": "灰蓝",
+          "asset_id": "A-identity"
+        },
+        {
+          "id": "B",
+          "label": "乙",
+          "kind": "character",
+          "position": [
+            0.68,
+            0.52
+          ],
+          "facing": [
+            -1,
+            0
+          ],
+          "gaze_target": "A",
+          "height": 0.28,
+          "support": "floor",
+          "color": "#ad756d",
+          "color_name": "灰红",
+          "asset_id": "B-identity"
+        }
+      ],
+      "relationship_axis": {
+        "entity_ids": [
+          "A",
+          "B"
+        ],
+        "side": -1
+      },
+      "paths": [],
+      "cameras": [
+        {
+          "shot_id": "S01",
+          "label": "主镜 · 双人",
+          "position": [
+            0.5,
+            0.02
+          ],
+          "look_at": [
+            0.5,
+            0.55
+          ],
+          "height": 0.25,
+          "target_height": 0.14,
+          "hfov_deg": 64,
+          "framing": "双人和桌子的完整关系"
+        },
+        {
+          "shot_id": "S02",
+          "label": "过甲肩 · 看乙",
+          "position": [
+            0.17,
+            0.33
+          ],
+          "look_at": [
+            0.68,
+            0.52
+          ],
+          "height": 0.255,
+          "target_height": 0.22,
+          "hfov_deg": 54,
+          "framing": "甲在近景边缘，乙为主读"
+        },
+        {
+          "shot_id": "S03",
+          "label": "过乙肩 · 看甲",
+          "position": [
+            0.83,
+            0.33
+          ],
+          "look_at": [
+            0.32,
+            0.52
+          ],
+          "height": 0.255,
+          "target_height": 0.22,
+          "hfov_deg": 54,
+          "framing": "乙在近景边缘，甲为主读"
+        }
+      ],
+      "source_refs": [
+        "ROOM-01#/revision"
+      ],
+      "scene_state_sha256": "347735385dcb198c382d5e70ad5d265f80b9744963251290d186b9e220b03808"
+    }
+  },
+  "interactions": {
+    "local": [
+      "select"
+    ],
+    "actions": [],
+    "max_actions": 2,
+    "deep_navigation": false,
+    "nested_scroll": false
+  },
+  "write_boundary": {
+    "preview_only": true,
+    "confirmation_required": false,
+    "writes_authoritative_state": false,
+    "write_owner": "dircreative",
+    "possible_write_targets": [],
+    "forbidden_claims": [
+      "lock",
+      "readiness",
+      "acceptance",
+      "completion",
+      "generation_authorization"
+    ]
+  },
+  "fallback": {
+    "format": "markdown",
+    "content": "隔离设计示例：甲乙隔桌对话，机位从房间同侧完成主镜与正反打。"
+  }
+}

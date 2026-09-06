@@ -9,7 +9,6 @@
     "view_id",
     "execution_context",
     "controller",
-    "stage_gate",
     "view",
     "source_truth",
     "presentation",
@@ -18,7 +17,8 @@
     "fallback"
   ],
   "properties": {
-    "spec_version": {"const": "1.0"},
+    "spec_version": {"enum": ["1.0", "1.1"]},
+    "interaction_mode": {"enum": ["presentation_only", "adopt", "adopt_and_generate"]},
     "view_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{2,127}$"},
     "execution_context": {"enum": ["standalone_chat", "orchestrated_worker"]},
     "controller": {
@@ -63,9 +63,9 @@
     "view": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["intent", "display_mode", "customer_stage_label", "decision_prompt"],
+      "required": ["intent", "display_mode", "customer_stage_label"],
       "properties": {
-        "intent": {"enum": ["confirm", "compare", "inspect", "timeline", "graph", "qa"]},
+        "intent": {"enum": ["confirm", "compare", "inspect", "timeline", "graph", "qa", "blocking_camera"]},
         "display_mode": {"enum": ["inline", "fullscreen", "fallback"]},
         "customer_stage_label": {"type": "string", "minLength": 1, "maxLength": 80},
         "decision_prompt": {"type": "string", "minLength": 1, "maxLength": 240}
@@ -86,11 +86,11 @@
     "presentation": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["fields", "options", "downstream_effects"],
+      "required": [],
       "properties": {
         "fields": {
           "type": "array",
-          "minItems": 1,
+          "minItems": 0,
           "items": {"$ref": "#/$defs/field"}
         },
         "options": {
@@ -124,6 +124,21 @@
               "effect": {"type": "string", "minLength": 1}
             }
           }
+        },
+        "spatial_scene": {
+          "type": "object",
+          "additionalProperties": true,
+          "required": ["scene_id", "scene_state_sha256", "source_refs"],
+          "properties": {
+            "scene_id": {"type": "string", "minLength": 1},
+            "scene_state_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+            "source_refs": {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": {"type": "string", "minLength": 3}
+            }
+          }
         }
       }
     },
@@ -139,7 +154,7 @@
         },
         "actions": {
           "type": "array",
-          "minItems": 1,
+          "minItems": 0,
           "maxItems": 2,
           "items": {"$ref": "#/$defs/action"}
         },
@@ -161,7 +176,7 @@
       ],
       "properties": {
         "preview_only": {"const": true},
-        "confirmation_required": {"const": true},
+        "confirmation_required": {"type": "boolean"},
         "writes_authoritative_state": {"const": false},
         "write_owner": {"enum": ["dircreative", "ad-creative-orchestrator"]},
         "possible_write_targets": {
@@ -179,16 +194,17 @@
     "fallback": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["format", "required_visible_fields", "decision_question"],
+      "required": ["format"],
       "properties": {
         "format": {"enum": ["markdown", "table", "mermaid"]},
         "required_visible_fields": {
           "type": "array",
-          "minItems": 4,
+          "minItems": 0,
           "uniqueItems": true,
           "items": {"type": "string", "minLength": 1}
         },
-        "decision_question": {"type": "string", "minLength": 1}
+        "decision_question": {"type": "string", "minLength": 1},
+        "content": {"type": "string", "minLength": 1}
       }
     }
   },
@@ -285,14 +301,73 @@
     "action": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "label", "kind", "target_gate_id", "conversation_intent"],
+      "required": ["id", "label", "kind", "conversation_intent"],
       "properties": {
         "id": {"type": "string", "minLength": 1},
         "label": {"type": "string", "minLength": 1, "maxLength": 80},
-        "kind": {"enum": ["submit_selection", "request_revision", "request_mix", "request_fullscreen", "retry_smallest", "stop", "pause_prompt_only"]},
-        "target_gate_id": {"type": "string", "minLength": 1},
+        "kind": {"enum": ["submit_selection", "request_revision", "request_mix", "request_fullscreen", "retry_smallest", "stop", "pause_prompt_only", "adopt", "adopt_and_generate"]},
+        "target_gate_id": {"type": ["string", "null"], "minLength": 1},
         "conversation_intent": {"type": "string", "minLength": 1, "maxLength": 1000}
       }
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"spec_version": {"const": "1.0"}}},
+      "then": {
+        "required": ["stage_gate"],
+        "properties": {
+          "view": {"required": ["decision_prompt"]},
+          "presentation": {
+            "required": ["fields", "options", "downstream_effects"],
+            "properties": {"fields": {"minItems": 1}}
+          },
+          "fallback": {
+            "required": ["required_visible_fields", "decision_question"],
+            "properties": {"required_visible_fields": {"minItems": 4}}
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"spec_version": {"const": "1.1"}}},
+      "then": {"required": ["interaction_mode"]}
+    },
+    {
+      "if": {
+        "properties": {
+          "spec_version": {"const": "1.1"},
+          "interaction_mode": {"const": "presentation_only"}
+        },
+        "required": ["interaction_mode"]
+      },
+      "then": {
+        "not": {"required": ["stage_gate"]},
+        "properties": {
+          "interactions": {"properties": {"actions": {"maxItems": 0}}},
+          "write_boundary": {
+            "properties": {
+              "confirmation_required": {"const": false},
+              "possible_write_targets": {"maxItems": 0}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "spec_version": {"const": "1.1"},
+          "interaction_mode": {"enum": ["adopt", "adopt_and_generate"]}
+        },
+        "required": ["interaction_mode"]
+      },
+      "then": {
+        "properties": {
+          "interactions": {"properties": {"actions": {"minItems": 1}}},
+          "write_boundary": {"properties": {"confirmation_required": {"const": true}}}
+        }
+      }
+    }
+  ]
 }

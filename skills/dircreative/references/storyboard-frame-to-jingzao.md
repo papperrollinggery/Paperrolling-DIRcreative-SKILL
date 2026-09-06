@@ -120,6 +120,13 @@ secondary roles explicitly and keep a `must_not_control` list.
   silently regain identity or topology authority.
 - Human planning boards stay outside generation inputs. Model-layout references
   may control position/direction only and must not leak diagram styling.
+- A deterministic spatial export enters as `layout` only when its PNG is the
+  actual attachment and `spatial_source` still resolves to the export whose
+  current scene-source and PNG hashes match. Its color-binding sentence names
+  positions, poses, occlusion, and camera side; it cannot control identity,
+  material, texture, or final art style. Bind its explicit continuous upload
+  order to the corresponding user-visible image slot; its position among valid
+  references follows that mapping rather than a fixed last-image rule.
 - If a camera/composition reference repeatedly contaminates canonical truth,
   remove or replace that reference and preserve the frame card instead of
   weakening the canonical asset.

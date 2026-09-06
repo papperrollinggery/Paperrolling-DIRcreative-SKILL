@@ -186,6 +186,46 @@ class CollaborationRoutingTests(unittest.TestCase):
                 self.assertNotEqual(result["deliverable_layer"], "client_story")
                 self.assertTrue(result["shot_matrix_allowed"])
 
+    def test_spatial_discussion_uses_existing_studio_selector_and_host_contract(self):
+        result = self.route("两人在同一个房间对话，我想看看站位和正反打怎么安排。")
+        self.assertEqual((result["mode"], result["route"]), ("studio", "film_development"))
+        self.assertEqual(result["deliverable_layer"], "spatial_discussion")
+        self.assertEqual(
+            result["required_files"],
+            ["skills/dircreative/references/spatial-discussion.md"],
+        )
+        self.assertFalse(result["shot_matrix_allowed"])
+        self.assertEqual(
+            result["spatial_discussion"],
+            {
+                "requested": True,
+                "interaction": "presentation_only",
+                "host_visualize_contract": "read_current_host_contract",
+                "scene_state_owner": "existing_scene_shot_artifacts",
+                "adoption": "explicit_user_intent_required",
+                "generation": "requires_existing_generation_authorization",
+            },
+        )
+
+    def test_full_preproduction_with_reverse_shots_is_not_collapsed_to_spatial_discussion(self):
+        result = self.route("给我做一支两人对话广告片的完整前期：故事、剧本、逐镜代表图、完整视频提示词和实际上传顺序，包含正反打。")
+        self.assertEqual((result["mode"], result["route"]), ("studio", "film_development"))
+        self.assertNotEqual(result["deliverable_layer"], "spatial_discussion")
+        self.assertTrue(result["shot_matrix_allowed"])
+        self.assertFalse(result["spatial_discussion"]["requested"])
+
+    def test_prompt_only_revision_does_not_enter_spatial_discussion(self):
+        result = self.route("只把这个两人正反打镜头提示词改得简洁，别扩写。")
+        self.assertEqual((result["mode"], result["route"]), ("fast", "prompt_revision"))
+        self.assertEqual(result["deliverable_layer"], "bounded_output")
+        self.assertFalse(result["spatial_discussion"]["requested"])
+
+    def test_local_blocking_change_enters_spatial_discussion_without_moving_unaffected_facts(self):
+        result = self.route("只改甲绕桌走到门边，乙和房间不动。")
+        self.assertEqual(result["deliverable_layer"], "spatial_discussion")
+        self.assertEqual(result["spatial_discussion"]["scene_state_owner"], "existing_scene_shot_artifacts")
+        self.assertEqual(result["spatial_discussion"]["adoption"], "explicit_user_intent_required")
+
 
 class ClientStoryContextTests(unittest.TestCase):
     def test_client_story_loads_only_its_small_craft_reference(self):

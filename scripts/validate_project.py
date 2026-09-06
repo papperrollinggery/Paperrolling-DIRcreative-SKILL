@@ -570,6 +570,12 @@ def validate_required_paths() -> None:
         "scripts/dircreative_visualization_dogfood.py",
         "scripts/dircreative_visualization_browser_audit.cjs",
         "scripts/dircreative_visualization_writeback.py",
+        "scripts/dircreative_spatial_scene.py",
+        "skills/dircreative/references/spatial-discussion.md",
+        "examples/spatial-dialogue/scene.json",
+        "tests/test_spatial_scene.py",
+        "tests/test_visualization_spec_spatial.py",
+        "tests/test_visualization_writeback_authorization.py",
         "scripts/dircreative_visualization_adco_audit.py",
         "scripts/dircreative_install_parity.py",
         "scripts/dircreative_state_audit.py",
@@ -4109,7 +4115,7 @@ def validate_chat_visualization_contract() -> None:
     adco = require_path("docs/film-preproduction/adco-integration-contract.md").read_text(encoding="utf-8")
     schema = require_path("docs/film-preproduction/schemas/chat-visualization-spec.schema.json").read_text(encoding="utf-8")
     writeback_schema = require_path("docs/film-preproduction/schemas/chat-visualization-writeback.schema.json").read_text(encoding="utf-8")
-    combined = f"{interface}\n{root_skill}\n{adco}\n{schema}\n{writeback_schema}"
+    combined = re.sub(r"\s+", " ", f"{interface}\n{root_skill}\n{adco}\n{schema}\n{writeback_schema}")
     required_terms = [
         "dircreative.chat-visualization@1.0",
         "one primary action",
@@ -4176,6 +4182,11 @@ def validate_chat_visualization_contract() -> None:
         writeback_proc.returncode == 0,
         f"chat visualization writeback self-test failed:\n{writeback_proc.stderr}\n{writeback_proc.stdout}",
     )
+    spatial_proc = run([
+        "python3", "-m", "unittest", "tests.test_spatial_scene",
+        "tests.test_visualization_spec_spatial", "tests.test_visualization_writeback_authorization",
+    ])
+    require(spatial_proc.returncode == 0, f"spatial source/export/adoption regressions failed:\n{spatial_proc.stderr}\n{spatial_proc.stdout}")
     adco_projection_proc = run(["python3", "scripts/dircreative_visualization_adco_audit.py", "--self-test"])
     require(
         adco_projection_proc.returncode == 0,

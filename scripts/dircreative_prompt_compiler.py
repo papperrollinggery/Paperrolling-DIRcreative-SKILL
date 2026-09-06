@@ -14,7 +14,11 @@ from typing import Any
 from dircreative_state_audit import _builtin_schema_errors
 from dircreative_model_capability_audit import REGISTRY_PATH, load_yaml
 from dircreative_adapters import AdapterContractError, get_adapter, shared_surface_errors
-from dircreative_adapters.base import INTERNAL_SURFACE_PATTERNS, clean as _clean
+from dircreative_adapters.base import (
+    INTERNAL_SURFACE_PATTERNS,
+    clean as _clean,
+    ordered_attached_references,
+)
 from dircreative_verify_release import read_relative_regular_file_once
 
 
@@ -196,6 +200,7 @@ class CompileResult:
     unit_prompts: list[str]
     adapter: str
     attached_slots: list[str]
+    upload_mapping: list[dict[str, Any]]
     postproduction_audio: list[str]
     unit_postproduction_audio: list[list[str]]
     structural_score: int
@@ -232,7 +237,44 @@ def terminal_surface_errors(text: str, allowed_slots: set[str] | None = None) ->
     return shared_surface_errors(text, allowed_slots or set())
 
 
-def semantic_errors(payload: dict[str, Any], *, verify_project_files: bool = True) -> list[str]:
+def spatial_export_prompt_ir_bindings(
+    export_binding: dict[str, Any], project_root: Path, *, platform_slot: str, upload_order: int
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Convert one verified spatial export into existing IR asset/reference shapes."""
+    from dircreative_spatial_scene import read_export, validate_export
+
+    root = project_root.resolve(strict=True)
+    path = (root / str(export_binding["relative_path"])).resolve(strict=True)
+    path.relative_to(root)
+    if hashlib.sha256(path.read_bytes()).hexdigest() != export_binding.get("sha256"):
+        raise ValueError("spatial export source hash mismatch")
+    export = read_export(path, root)
+    if validate_export(export, root):
+        raise ValueError("spatial export is invalid")
+    reference = export["reference"]
+    asset_id = str(reference["asset_id"])
+    asset = {
+        "asset_id": asset_id, "source_kind": "project_file", "source_locator": reference["relative_path"],
+        "source_hash": reference["sha256"], "spatial_source": dict(export_binding),
+        "spatial_context": {"shot_id": export["shot_id"], "phase": export["phase"]},
+        "source_authorization": "project_owned", "role": "layout_reference", "locked": True,
+        "reuse_action": "direct_reference", "preserve": ["position", "pose", "occlusion"], "may_change": [],
+        "do_not_copy_or_animate": ["character identity", "prop identity", "material", "final art style"],
+        "downstream_slots": [platform_slot],
+    }
+    reference_binding = {
+        "platform_slot": platform_slot, "upload_order": upload_order, "asset_id": asset_id,
+        "role": "layout reference for position, pose, occlusion, and camera-side staging",
+        "direct_input_policy": "allowed", "attached_to_run": True, "required_for_shot": True,
+        "preserve": ["position", "pose", "occlusion"],
+        "anti_misread": ["do not control identity, material, or final art style"],
+    }
+    return asset, reference_binding
+
+
+def semantic_errors(
+    payload: dict[str, Any], *, verify_project_files: bool = True, project_root: Path = ROOT
+) -> list[str]:
     errors = _schema_errors(payload)
     if errors:
         return errors
@@ -242,6 +284,10 @@ def semantic_errors(payload: dict[str, Any], *, verify_project_files: bool = Tru
     if len(asset_ids) != len(set(asset_ids)):
         errors.append("asset_id values must be unique")
     asset_map = {item["asset_id"]: item for item in assets}
+    try:
+        resolved_project_root = project_root.expanduser().resolve(strict=True)
+    except (FileNotFoundError, RuntimeError):
+        return ["project root is invalid"]
     for asset in assets:
         if asset["source_kind"] == "project_file":
             if not asset.get("source_hash"):
@@ -250,7 +296,7 @@ def semantic_errors(payload: dict[str, Any], *, verify_project_files: bool = Tru
                 locator = asset["source_locator"]
                 try:
                     payload_bytes = read_relative_regular_file_once(
-                        ROOT,
+                        resolved_project_root,
                         locator,
                         max_bytes=MAX_PROJECT_FILE_BYTES,
                         label=f"project_file asset {asset['asset_id']}",
@@ -261,6 +307,48 @@ def semantic_errors(payload: dict[str, Any], *, verify_project_files: bool = Tru
                     actual_hash = hashlib.sha256(payload_bytes).hexdigest()
                     if asset.get("source_hash") and actual_hash != asset["source_hash"]:
                         errors.append(f"project_file asset hash mismatch: {asset['asset_id']}")
+        if asset.get("role") == "layout_reference":
+            spatial_source = asset.get("spatial_source")
+            if (
+                asset.get("source_kind") != "project_file"
+                or asset.get("source_authorization") != "project_owned"
+                or asset.get("locked") is not True
+                or not isinstance(spatial_source, dict)
+            ):
+                errors.append(f"layout reference lacks a bound current spatial export: {asset['asset_id']}")
+                continue
+            try:
+                from dircreative_spatial_scene import read_export, validate_export
+
+                export_path = (resolved_project_root / spatial_source["relative_path"]).resolve(strict=True)
+                export_path.relative_to(resolved_project_root)
+                if hashlib.sha256(export_path.read_bytes()).hexdigest() != spatial_source.get("sha256"):
+                    raise ValueError("spatial export source hash mismatch")
+                export = read_export(export_path, resolved_project_root)
+                export_errors = validate_export(export, resolved_project_root)
+                reference = export.get("reference", {})
+                if not isinstance(reference, dict):
+                    raise ValueError("spatial export layout reference is invalid")
+            except (ImportError, KeyError, OSError, RuntimeError, ValueError):
+                errors.append(f"layout reference spatial export is invalid: {asset['asset_id']}")
+                continue
+            if export_errors:
+                errors.extend(f"layout reference spatial export: {error}" for error in export_errors)
+                continue
+            context = asset.get("spatial_context")
+            if not isinstance(context, dict) or (
+                export.get("shot_id") != context.get("shot_id")
+                or export.get("phase") != context.get("phase")
+            ):
+                errors.append(f"layout reference spatial context does not match current export: {asset['asset_id']}")
+                continue
+            if (
+                reference.get("relative_path") != asset.get("source_locator")
+                or reference.get("sha256") != asset.get("source_hash")
+                or reference.get("role") != "layout"
+                or reference.get("media_class") != "layout_reference"
+            ):
+                errors.append(f"layout reference does not match current export: {asset['asset_id']}")
 
     references = payload["references"]
     slots = [item["platform_slot"] for item in references]
@@ -277,6 +365,19 @@ def semantic_errors(payload: dict[str, Any], *, verify_project_files: bool = Tru
             errors.append(f"required reference is not attached: {item['platform_slot']}")
         if item["attached_to_run"] and not asset["locked"]:
             errors.append(f"attached reference asset is not locked: {item['asset_id']}")
+    attached = [item for item in references if item["attached_to_run"]]
+    uses_layout = any(asset_map.get(item["asset_id"], {}).get("role") == "layout_reference" for item in attached)
+    if uses_layout:
+        upload_orders = [item.get("upload_order") for item in attached]
+        if any(not isinstance(order, int) or isinstance(order, bool) for order in upload_orders):
+            errors.append("spatial upload mapping requires upload_order for every attached reference")
+        elif sorted(upload_orders) != list(range(1, len(attached) + 1)):
+            errors.append("spatial upload_order values must be continuous and unique")
+        for item in attached:
+            slot = str(item.get("platform_slot", ""))
+            match = re.fullmatch(r"@Image\s+(\d+)", slot)
+            if match and item.get("upload_order") != int(match.group(1)):
+                errors.append(f"spatial upload_order does not match platform slot: {slot}")
 
     entities = payload["entities"]
     entity_ids = [item["entity_id"] for item in entities]
@@ -433,6 +534,25 @@ def semantic_errors(payload: dict[str, Any], *, verify_project_files: bool = Tru
                     errors.append(f"capability {field} does not match resolved card")
             if selected.get("status") != "current":
                 errors.append("capability card is not current")
+            storyboard_references = [
+                item for item in attached
+                if asset_map.get(item.get("asset_id"), {}).get("role") == "storyboard_motion"
+            ]
+            for item in storyboard_references:
+                role_text = str(item.get("role", "")).lower()
+                if item.get("direct_input_policy") != "conditional":
+                    errors.append(f"storyboard reference must use conditional policy: {item['platform_slot']}")
+                if any(term in role_text for term in (
+                    "first frame", "clean first", "last frame", "clean end", "clean_start", "clean_end",
+                    "首帧", "尾帧", "第一帧", "末帧",
+                )):
+                    errors.append(f"storyboard reference cannot be a literal clean frame: {item['platform_slot']}")
+                if not item.get("anti_misread"):
+                    errors.append(f"storyboard reference needs an anti-misread clause: {item['platform_slot']}")
+                if selected.get("reference_modes", {}).get("storyboard_reference") not in {
+                    "conditional_with_explicit_role_binding", "conditional_inferred_from_omni_reference"
+                }:
+                    errors.append(f"selected provider surface does not support conditional storyboard reference: {item['platform_slot']}")
             if selected.get("model_key") == "seedance":
                 reference_modes = selected.get("reference_modes", {})
                 for media_label, field_name in (
@@ -470,6 +590,8 @@ def semantic_errors(payload: dict[str, Any], *, verify_project_files: bool = Tru
                         float(supported_range[0]) - 0.001 <= duration <= float(supported_range[1]) + 0.001
                     ):
                         errors.append(f"generation unit duration is unsupported by capability card: {unit['unit_id']}")
+                elif kind == "unverified":
+                    errors.append(f"generation unit duration is unverified for the selected provider surface: {unit['unit_id']}")
 
             route = payload["audio_plan"]["generation_route"]
             audio_contract = selected.get("audio_route", {})
@@ -484,8 +606,10 @@ def semantic_errors(payload: dict[str, Any], *, verify_project_files: bool = Tru
     return errors
 
 
-def validate_prompt_ir(payload: dict[str, Any], *, verify_project_files: bool = True) -> None:
-    errors = semantic_errors(payload, verify_project_files=verify_project_files)
+def validate_prompt_ir(
+    payload: dict[str, Any], *, verify_project_files: bool = True, project_root: Path = ROOT
+) -> None:
+    errors = semantic_errors(payload, verify_project_files=verify_project_files, project_root=project_root)
     if errors:
         raise PromptContractError("; ".join(errors))
 
@@ -507,10 +631,13 @@ def structural_score(payload: dict[str, Any]) -> int:
     return sum(10 for passed in checks if passed)
 
 
-def compile_prompt(payload: dict[str, Any], *, verify_project_files: bool = True) -> CompileResult:
-    validate_prompt_ir(payload, verify_project_files=verify_project_files)
+def compile_prompt(
+    payload: dict[str, Any], *, verify_project_files: bool = True, project_root: Path = ROOT
+) -> CompileResult:
+    validate_prompt_ir(payload, verify_project_files=verify_project_files, project_root=project_root)
     adapter_name = payload["generation_plan"]["selected_adapter"]
-    attached = [item for item in payload["references"] if item["attached_to_run"]]
+    attached = ordered_attached_references(payload)
+    assets_by_id = {item["asset_id"]: item for item in payload["intake"]["supplied_assets"]}
     units = sorted(
         payload["generation_plan"]["units"],
         key=lambda item: _time_value(item["time_start"]),
@@ -531,7 +658,17 @@ def compile_prompt(payload: dict[str, Any], *, verify_project_files: bool = True
         prompt=prompt,
         unit_prompts=unit_prompts,
         adapter=adapter_name,
-        attached_slots=sorted(item["platform_slot"] for item in attached),
+        attached_slots=[item["platform_slot"] for item in attached],
+        upload_mapping=[
+            {
+                "upload_order": item.get("upload_order"),
+                "platform_slot": item["platform_slot"],
+                "asset_id": item["asset_id"],
+                "role": item["role"],
+                "source_locator": assets_by_id[item["asset_id"]]["source_locator"],
+            }
+            for item in attached
+        ],
         postproduction_audio=postproduction_audio,
         unit_postproduction_audio=unit_postproduction_audio,
         structural_score=structural_score(payload),
@@ -565,10 +702,10 @@ def main() -> int:
     try:
         payload = load_prompt_ir(path)
         if args.action == "validate":
-            validate_prompt_ir(payload, verify_project_files=not args.skip_project_file_check)
+            validate_prompt_ir(payload, verify_project_files=not args.skip_project_file_check, project_root=path.parent)
             print(json.dumps({"status": "PASS", "prompt_ir": str(path)}, ensure_ascii=False, indent=2))
         else:
-            result = compile_prompt(payload, verify_project_files=not args.skip_project_file_check)
+            result = compile_prompt(payload, verify_project_files=not args.skip_project_file_check, project_root=path.parent)
             if args.action == "compile":
                 if len(result.unit_prompts) > 1 and args.unit_index is None:
                     raise PromptContractError("multi-unit Prompt IR requires --unit-index; compile and paste one generation unit at a time")

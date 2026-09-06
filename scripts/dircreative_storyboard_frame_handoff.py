@@ -198,6 +198,54 @@ def verify_artifact_file(
     return path
 
 
+def validate_spatial_source(
+    role: dict[str, Any], artifact_root: Path, frame_id: str, shot_id: str,
+    panel_phase: str | None, errors: list[str]
+) -> None:
+    """Ensure an optional layout sidecar still names the current scene export."""
+    binding = role.get("spatial_source")
+    if binding is None:
+        return
+    if not isinstance(binding, dict):
+        add_error(errors, "spatial_source_invalid", frame_id)
+        return
+    spatial_context = role.get("spatial_context")
+    if not isinstance(spatial_context, dict) or spatial_context.get("shot_id") != shot_id or (
+        panel_phase is not None and spatial_context.get("phase") != panel_phase
+    ):
+        add_error(errors, "spatial_context_mismatch", frame_id)
+        return
+    try:
+        from dircreative_spatial_scene import read_export, validate_export
+
+        export_path = contained_file(artifact_root, binding.get("relative_path"))
+        if export_path is None:
+            raise ValueError("spatial export path invalid")
+        if hashlib.sha256(export_path.read_bytes()).hexdigest() != binding.get("sha256"):
+            raise ValueError("spatial export hash mismatch")
+        export = read_export(export_path, artifact_root)
+        export_errors = validate_export(export, artifact_root)
+        reference = export.get("reference", {})
+        if not isinstance(reference, dict):
+            raise ValueError("spatial export layout reference is invalid")
+    except (ImportError, OSError, RuntimeError, ValueError):
+        add_error(errors, "spatial_source_invalid", frame_id)
+        return
+    for error in export_errors:
+        add_error(errors, "spatial_source_invalid", f"{frame_id}:{error}")
+    if export.get("shot_id") != spatial_context.get("shot_id") or export.get("phase") != spatial_context.get("phase"):
+        add_error(errors, "spatial_context_export_mismatch", frame_id)
+    attachment = role.get("attachment")
+    if (
+        not isinstance(attachment, dict)
+        or reference.get("relative_path") != attachment.get("relative_path")
+        or reference.get("sha256") != attachment.get("sha256")
+        or reference.get("role") != "layout"
+        or reference.get("media_class") != "layout_reference"
+    ):
+        add_error(errors, "spatial_layout_attachment_stale", frame_id)
+
+
 def validate_panel_bindings(
     document: dict[str, Any], artifact_root: Path | None
 ) -> list[str]:
@@ -543,6 +591,11 @@ def validate_truth_contracts(
                 code = "layout_identity_authority_unbounded"
                 if constraint_mode not in SPATIAL_CONSTRAINT_MODES or role["asset_id"] != constraint_asset_id:
                     add_error(errors, "layout_constraint_binding_invalid", f"{frame_id}:{role['asset_id']}")
+                validate_spatial_source(
+                    role, artifact_root, frame_id, str(frame.get("shot_id")),
+                    frame.get("panel_context", {}).get("phase") if isinstance(frame.get("panel_context"), dict) else None,
+                    errors,
+                )
             else:
                 missing_fields = SCENE_SOVEREIGN_FIELDS - set(role["must_not_control"])
                 code = "reference_background_authority_unbounded"

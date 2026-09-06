@@ -22,7 +22,7 @@ CSS_PATH = ASSET_ROOT / "decision-surface.css"
 JS_PATH = ASSET_ROOT / "decision-surface.js"
 FIXTURE_ROOT = ROOT / "tests/fixtures/chat-visualization"
 TITLE_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
-MAX_FRAGMENT_BYTES = 2_000_000
+MAX_FRAGMENT_BYTES = 1_000_000
 STAGES = ["需求", "方向", "故事", "脚本", "分镜", "视觉", "生成", "QA"]
 STAGE_INDEX = {
     "idea_intake_gate": 0,
@@ -140,6 +140,8 @@ def field_map(document: dict[str, Any]) -> dict[str, dict[str, Any]]:
 
 
 def stage_rail(document: dict[str, Any]) -> str:
+    if not document.get("stage_gate"):
+        return ""
     current = STAGE_INDEX.get(document["stage_gate"]["type"], 0)
     items = []
     for index, label in enumerate(STAGES):
@@ -606,7 +608,9 @@ def render_visual_board(document: dict[str, Any]) -> str:
 
 
 def render_primary_visual(document: dict[str, Any], project_root: Path) -> str:
-    gate_type = document["stage_gate"]["type"]
+    if document["view"]["intent"] == "blocking_camera":
+        return render_spatial_scene(document)
+    gate_type = document.get("stage_gate", {}).get("type")
     if gate_type in {"generation_qa_gate", "retry_gate"} and "qa_delta" in field_map(document):
         return render_qa_delta(document, project_root)
     if gate_type == "visual_direction_gate" and "visual_board" in field_map(document):
@@ -624,6 +628,44 @@ def render_primary_visual(document: dict[str, Any], project_root: Path) -> str:
     if document["view"]["intent"] == "timeline":
         return render_timeline(document)
     return render_facts(document)
+
+
+def render_spatial_scene(document: dict[str, Any]) -> str:
+    from dircreative_spatial_scene import require_scene, phases as scene_phases
+    scene = document["presentation"]["spatial_scene"]
+    require_scene(scene)
+    cameras = "".join(
+        f'<option value="{esc(c["shot_id"])}">{esc(c.get("label", c["shot_id"]))}</option>'
+        for c in scene.get("cameras", [])
+    )
+    phase_options = "".join(
+        f'<option value="{phase}">{"起始" if phase == "initial" else "结束" if phase == "final" else "第 " + phase.split("-")[1] + (" 次交接后" if phase.startswith("transfer-") else " 次走位后")}</option>'
+        for phase in scene_phases(scene)
+    )
+    phases = (
+        '<label class="form-label">动作状态<select class="form-select" data-dc-spatial-phase>'
+        f'{phase_options}</select></label>'
+        if scene.get("paths") or scene.get("transfers") else ""
+    )
+    camera_control = (
+        '<label class="form-label">机位<select class="form-select" data-dc-spatial-camera>'
+        f'{cameras}</select></label>' if scene.get("cameras") else ''
+    )
+    projection = (
+        '<details class="dc-spatial-projection" data-dc-spatial-projection>'
+        '<summary>机位人偶投影（辅助核对）</summary>'
+        '<svg data-dc-spatial-frame role="img" aria-label="从当前机位派生的辅助构图"></svg>'
+        '</details>' if scene.get("cameras") else ''
+    )
+    return (
+        f'<div class="viz-controls">{camera_control}{phases}</div>'
+        '<div class="dc-spatial-views">'
+        '<div class="dc-spatial-floorplan"><div class="text-small">俯视图 · 位置、朝向与动线</div><svg data-dc-spatial-top role="img" aria-label="当前场景俯视图"></svg></div>'
+        f'{projection}'
+        '</div><div class="dc-spatial-legend text-small" data-dc-spatial-legend></div>'
+        '<div class="text-small" data-dc-spatial-detail aria-live="polite"></div>'
+        '<span class="sr-only">设计坐标与简模构图；可比较机位、视线和动线，不能证明实际生成图的身份或接触质量。</span>'
+    )
 
 
 def render_effects(document: dict[str, Any]) -> str:
@@ -669,35 +711,56 @@ def render_fragment(document: dict[str, Any], project_root: Path = ROOT) -> str:
     data_id = f"dircreative-data-{digest}"
     css = CSS_PATH.read_text(encoding="utf-8").strip()
     script = JS_PATH.read_text(encoding="utf-8").replace("__ROOT_ID__", root_id).replace("__DATA_ID__", data_id).strip()
+    payload = document
+    if document["view"]["intent"] == "blocking_camera":
+        from dircreative_spatial_scene import view_payload
+        payload = dict(document, spatial_render=view_payload(document["presentation"]["spatial_scene"]))
+    interaction_mode = document.get("interaction_mode", "decision")
     header = (
         '<div class="dc-header"><div>'
         '<span class="viz-badge">当前决策</span> '
-        f'<span>{esc(document["view"]["decision_prompt"])}</span>'
+        f'<span>{esc(document["view"].get("decision_prompt", ""))}</span>'
         '</div><span class="text-small text-muted">预览选择，发送后再确认</span></div>'
     )
     status = "选择会先回到对话，确认当前进度后再继续。"
+    if interaction_mode != "decision":
+        header = ""
+        status = "" if interaction_mode == "presentation_only" else "采用请求会返回对话，使用当前场景版本继续。"
+    status_markup = f'<div class="dc-status text-small" data-dc-status role="status">{esc(status)}</div>' if status else ""
     fragment = (
         f'<div id="{root_id}" data-dircreative-visual="1">\n'
         f'<style>\n{css}\n</style>\n'
         f'{stage_rail(document)}\n{header}\n{render_primary_visual(document, project_root)}\n'
         f'{render_effects(document)}\n{render_actions(document)}\n'
-        f'<div class="dc-status text-small" data-dc-status role="status">{esc(status)}</div>\n'
-        f'<script type="application/json" id="{data_id}">{safe_inline_json(document)}</script>\n'
+        f'{status_markup}\n'
+        f'<script type="application/json" id="{data_id}">{safe_inline_json(payload)}</script>\n'
         f'<script>\n{script}\n</script>\n'
         '</div>\n'
     )
     if len(fragment.encode("utf-8")) > MAX_FRAGMENT_BYTES:
-        raise RenderError("rendered fragment exceeds 2 MB; create smaller review thumbnails")
+        raise RenderError("rendered fragment exceeds 1 MB; create smaller review thumbnails")
     return fragment
 
 
 def validate_output_path(path: Path, test_output: bool) -> None:
     if path.suffix != ".html" or not TITLE_RE.fullmatch(path.stem):
         raise RenderError("output must use a lowercase ASCII hyphenated .html filename")
-    if not test_output:
-        parts = set(path.expanduser().resolve().parts)
-        if ".codex" not in parts or "visualizations" not in parts:
-            raise RenderError("production output must be inside the thread-scoped .codex/visualizations directory")
+    if not test_output and not path.expanduser().is_absolute():
+        raise RenderError("production output must be an absolute path in a writable task-owned directory")
+
+
+def response_content_reference(output: Path, host_contract: Path) -> str:
+    """Prepare the reference only from the currently supplied host contract.
+
+    Returning text is not emission or mount evidence. The caller must include
+    it in this turn's response, as instructed by the host Skill it just read.
+    """
+    text = host_contract.read_text(encoding="utf-8")
+    marker = '{"path":"<absolute-path>/<title>.html"}'
+    template = next((line.strip() for line in text.splitlines() if marker in line), None)
+    if template is None or not template.endswith("") or not template.startswith("visualize"):
+        raise RenderError("current host contract does not expose the supported inline content reference; use fallback")
+    return template.replace(marker, json.dumps({"path": str(output.resolve())}, ensure_ascii=False, separators=(",", ":")))
 
 
 def write_fragment(
@@ -770,6 +833,7 @@ def self_test() -> list[str]:
         "valid-generation-qa-inline.json",
         "valid-image-prompt-handoff-inline.json",
         "valid-video-route-capability-inline.json",
+        "valid-blocking-camera-presentation-only.json",
     ]
     with tempfile.TemporaryDirectory(prefix="dircreative-visual-render-") as tmp:
         for filename in fixture_names:
@@ -867,6 +931,7 @@ def main() -> int:
     render_parser.add_argument("--test-output", action="store_true")
     render_parser.add_argument("--force", action="store_true")
     render_parser.add_argument("--project-root")
+    render_parser.add_argument("--host-contract", type=Path, help="Current host-provided Visualize SKILL.md; prepare response content without claiming emission or mount")
     subparsers.add_parser("self-test")
     args = parser.parse_args()
 
@@ -905,6 +970,13 @@ def main() -> int:
         )
     )
     print("NATIVE_VISUALIZATION=NOT_INVOKED")
+    if args.host_contract:
+        try:
+            print("RESPONSE_CONTENT_REFERENCE=" + response_content_reference(output, args.host_contract))
+            print("NEXT_ACTION=include the reference in this turn's response using the current host contract")
+        except (OSError, RenderError) as exc:
+            print(f"HOST_REFERENCE_UNAVAILABLE={exc}")
+            print("FALLBACK=" + str(document.get("fallback", {}).get("content", document.get("fallback", {}))))
     return 0
 
 

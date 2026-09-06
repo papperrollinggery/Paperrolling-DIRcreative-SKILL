@@ -49,6 +49,8 @@ shots:
         physical_consequence: ""
         final_state: ""
     blocking:
+      # Optional: bind the existing scene JSON used for spatial views/exports.
+      scene_state_source: {relative_path: "", sha256: ""}
       start_position: ""
       end_position: ""
       path: ""

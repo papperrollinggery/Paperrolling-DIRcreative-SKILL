@@ -19,6 +19,12 @@ Build a model-neutral intent before adapting the surface:
 - desired audio versus where audio will actually be generated or finished;
 - targeted avoid constraints for likely failures, not a generic negative dump.
 
+Templates supply structure only. Check compiled people, props, setting, camera,
+actions and sound against current facts. Delete old content; do not turn it into
+negative lists. Use `prompt-contamination-guard` if residue remains, preserving
+current reference/annotation boundaries. Keep internal IDs and QA/account notes
+outside copyable text. Input aliases must map to real files and selected nodes.
+
 ## Adaptation rules
 
 1. Use exactly one named model/version/provider surface when supplied. If current
@@ -32,6 +38,17 @@ Build a model-neutral intent before adapting the surface:
    chains rather than hiding them in prose.
 4. A storyboard is planning truth unless the exact model surface supports its
    direct role. Do not silently treat a dense board as a clean first frame.
+   A readable hand-drawn narrative board may be a conditional image reference
+   for shot order, action path, and camera direction when the exact card exposes
+   `storyboard_reference: conditional_with_explicit_role_binding`. The value
+   `conditional_inferred_from_omni_reference` permits a labeled trial from
+   documented image-reference input; its control effect remains unverified.
+   Bind that role with an anti-misread clause that forbids only storyboard production
+   marks—panel borders, shot labels, arrows, and production annotations—from
+   being reproduced. It never bans intentional in-world text or a requested
+   SUPER. It never substitutes for a clean
+   first/end frame. UI screenshots and ordinary management tables remain
+   planning-only.
 5. For edits, state the invariant and mutable subfield separately. Never ask one
    pass to both preserve and change the same property.
 6. Prompt revision alone does not require a rights audit, capability receipt,

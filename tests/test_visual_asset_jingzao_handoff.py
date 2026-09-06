@@ -6,6 +6,7 @@ import json
 import subprocess
 import sys
 import tempfile
+import types
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -16,6 +17,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 import dircreative_visual_asset_jingzao_handoff as handoff  # noqa: E402
 import dircreative_asset_foundation_pass as foundation  # noqa: E402
+import dircreative_spatial_scene as spatial  # noqa: E402
 
 
 def write_json(path: Path, value: object) -> dict[str, str]:
@@ -26,6 +28,175 @@ def write_json(path: Path, value: object) -> dict[str, str]:
 
 
 class VisualAssetJingzaoHandoffTests(unittest.TestCase):
+    def test_prepare_layout_cleans_first_output_when_second_publish_fails(self):
+        with tempfile.TemporaryDirectory() as raw:
+            project = Path(raw)
+            spec = project / "spec.json"
+            export = project / "export.json"
+            spec.write_text(json.dumps({"inputs": []}), encoding="utf-8")
+            export.write_text("{}", encoding="utf-8")
+            output_spec = project / "prepared/spec.json"
+            output_reference = project / "prepared/reference.json"
+            real_link = handoff.os.link
+            calls = 0
+
+            def fail_second_publish(source, target, *args, **kwargs):
+                nonlocal calls
+                calls += 1
+                if calls == 2:
+                    raise OSError("simulated second publish failure")
+                return real_link(source, target, *args, **kwargs)
+
+            with mock.patch.object(handoff, "attach_spatial_layout", return_value={"inputs": [{"id": "layout-S01", "type": "image"}]}), \
+                 mock.patch.object(handoff, "spatial_layout_foundation_source", return_value={
+                     "asset_id": "layout-S01", "relative_path": "layout.png", "sha256": "a" * 64,
+                     "spatial_source": {"relative_path": "export.json", "sha256": hashlib.sha256(export.read_bytes()).hexdigest()},
+                 }), \
+                 mock.patch.object(handoff.os, "link", side_effect=fail_second_publish):
+                with self.assertRaisesRegex(ValueError, "could not publish both outputs"):
+                    handoff.prepare_layout(
+                        project_root=project, spec_path=spec, export_path=export,
+                        output_spec=output_spec, output_reference=output_reference,
+                    )
+            self.assertFalse(output_spec.exists())
+            self.assertFalse(output_reference.exists())
+            self.assertEqual(list((project / "prepared").glob(".*")), [])
+
+    def test_deterministic_layout_registers_as_current_foundation_source(self):
+        with tempfile.TemporaryDirectory() as raw:
+            project = Path(raw)
+            scene_path = project / "spatial/scene.json"
+            scene_path.parent.mkdir()
+            scene_path.write_text(
+                (ROOT / "examples/spatial-dialogue/scene.json").read_text(), encoding="utf-8"
+            )
+            export = spatial.export_reference(scene_path, project, "S01", "initial", project / "spatial/refs")
+            export_path = next((project / "spatial/refs").glob("*.json"))
+            source = handoff.spatial_layout_foundation_source(
+                {
+                    "relative_path": export_path.relative_to(project).as_posix(),
+                    "sha256": hashlib.sha256(export_path.read_bytes()).hexdigest(),
+                },
+                project,
+            )
+            self.assertEqual(source["source_kind"], "deterministic_layout")
+            self.assertEqual(source["role"], "layout_reference")
+
+            template = json.loads(
+                (ROOT / "tests/fixtures/asset-foundation/valid-pass.json").read_text()
+            )
+            template["source_assets"].append(source)
+            document = foundation.materialize_fixture(template, project)
+            self.assertEqual(foundation.validate(document, artifact_root=project), [])
+
+            scene = json.loads(scene_path.read_text())
+            scene["revision"] = "r2"
+            scene_path.write_text(json.dumps(scene), encoding="utf-8")
+            self.assertIn(
+                "layout_source_binding_invalid: " + source["asset_id"],
+                foundation.validate(document, artifact_root=project),
+            )
+
+    def test_attach_spatial_layout_uses_verified_export_as_final_required_input(self):
+        with tempfile.TemporaryDirectory() as raw:
+            project = Path(raw)
+            layout = project / "spatial/layout-S01-initial.png"
+            layout.parent.mkdir(parents=True)
+            layout.write_bytes(b"deterministic layout png")
+            export_path = project / "spatial/export-S01-initial.json"
+            export_path.write_text("{}", encoding="utf-8")
+            export_binding = {
+                "relative_path": "spatial/export-S01-initial.json",
+                "sha256": hashlib.sha256(export_path.read_bytes()).hexdigest(),
+            }
+            fake_engine = types.ModuleType("dircreative_spatial_scene")
+            fake_engine.validate_export = lambda binding, root: []
+            fake_engine.read_export = lambda path, root: {
+                "shot_id": "S01",
+                "phase": "initial",
+                "reference": {
+                    "asset_id": "LAYOUT-S01-INITIAL",
+                    "relative_path": "spatial/layout-S01-initial.png",
+                    "sha256": hashlib.sha256(layout.read_bytes()).hexdigest(),
+                    "role": "layout",
+                    "media_class": "layout_reference",
+                    "primary_job": "position_pose_occlusion",
+                    "source_kind": "deterministic_render",
+                    "must_not_control": [
+                        "character_identity", "prop_identity", "material", "texture", "final_art_style"
+                    ],
+                },
+                "color_binding": [{"color": "blue", "entity_id": "A"}],
+                "prompt_binding": "Blue silhouette is A; preserve the shown position and occlusion.",
+            }
+            spec_path = project / "specs/frame.json"
+            result = None
+            with mock.patch.dict(sys.modules, {"dircreative_spatial_scene": fake_engine}):
+                result = handoff.attach_spatial_layout(
+                    {"inputs": [{"id": "identity", "type": "image"}]},
+                    export_binding,
+                    project,
+                    spec_path,
+                )
+            self.assertEqual(result["inputs"][-1]["role"], "layout")
+            self.assertEqual(result["inputs"][-1]["source_kind"], "local_path")
+            self.assertTrue(result["inputs"][-1]["must_attach"])
+            self.assertEqual(result["inputs"][-1]["source_ref"], "../spatial/layout-S01-initial.png")
+            self.assertIn("Blue silhouette is A", result["inputs"][-1]["description"])
+
+    def test_current_layout_source_replays_through_formal_jingzao_handoff(self):
+        with tempfile.TemporaryDirectory() as project_raw, tempfile.TemporaryDirectory() as provider_raw:
+            project = Path(project_raw)
+            scene_path = project / "spatial/scene.json"
+            scene_path.parent.mkdir()
+            scene_path.write_text(
+                (ROOT / "examples/spatial-dialogue/scene.json").read_text(), encoding="utf-8"
+            )
+            spatial.export_reference(scene_path, project, "S01", "initial", project / "spatial/refs")
+            export_path = next((project / "spatial/refs").glob("*.json"))
+            export_binding = {
+                "relative_path": export_path.relative_to(project).as_posix(),
+                "sha256": hashlib.sha256(export_path.read_bytes()).hexdigest(),
+            }
+            layout_source = handoff.spatial_layout_foundation_source(export_binding, project)
+            provider = Path(provider_raw) / "jingzao-image-forge"
+            document, _ = self.fixture(project, provider)
+            self.add_bound_reference(project, document)
+            request_path = project / document["input_spec"]["relative_path"]
+            request = json.loads(request_path.read_text())
+            prepared_spec = project / "prepared/layout-spec.json"
+            prepared_reference = project / "prepared/layout-reference.json"
+            proc = subprocess.run(
+                [sys.executable, str(ROOT / "scripts/dircreative_visual_asset_jingzao_handoff.py"),
+                 "prepare-layout", "--project-root", str(project), "--spec",
+                 str(project / document["output_spec"]["visual_generation_spec"]["relative_path"]),
+                 "--export", str(export_path), "--output-spec", str(prepared_spec),
+                 "--output-reference", str(prepared_reference)],
+                cwd=ROOT, capture_output=True, text=True, check=False,
+            )
+            self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+            layout_reference = json.loads(prepared_reference.read_text())
+            request["reference_assets"].append(layout_reference)
+            document["input_spec"] = write_json(request_path, request)
+            document["output_spec"]["visual_generation_spec"] = {
+                "relative_path": prepared_spec.relative_to(project).as_posix(),
+                "sha256": hashlib.sha256(prepared_spec.read_bytes()).hexdigest(),
+            }
+            compiled_path = project / document["output_spec"]["compiled_prompt_manifest"]["relative_path"]
+            compiled = json.loads(compiled_path.read_text())
+            compiled["imagegen_call_plan"].update(
+                required_input_ids=["identity-ref", layout_reference["input_id"]], expected_attachment_count=2
+            )
+            document["output_spec"]["compiled_prompt_manifest"] = write_json(compiled_path, compiled)
+            errors, _ = handoff.validate(
+                document,
+                project_root=project,
+                provider_root=provider,
+                trusted_provider_roots=(provider,),
+                allow_unsandboxed_test_replay=True,
+            )
+            self.assertEqual(errors, [])
+
     def fixture(self, project: Path, provider: Path, *, first_image: bool = False) -> tuple[dict, str]:
         provider.mkdir(parents=True, exist_ok=True)
         skill = (

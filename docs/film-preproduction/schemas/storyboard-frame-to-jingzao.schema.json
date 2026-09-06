@@ -208,7 +208,17 @@
           "uniqueItems": true,
           "items": {"type": "string", "minLength": 1}
         },
-        "attachment": {"$ref": "#/$defs/attachment_binding"}
+        "attachment": {"$ref": "#/$defs/attachment_binding"},
+        "spatial_source": {"$ref": "#/$defs/attachment_binding"},
+        "spatial_context": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["shot_id", "phase"],
+          "properties": {
+            "shot_id": {"type": "string", "minLength": 1},
+            "phase": {"type": "string", "minLength": 1}
+          }
+        }
       }
     },
     "truth_contract": {

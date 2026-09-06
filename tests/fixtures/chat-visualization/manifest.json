@@ -11,7 +11,8 @@
     "valid-generation-qa-inline.json",
     "valid-image-prompt-handoff-inline.json",
     "valid-video-route-capability-inline.json",
-    "valid-adco-worker-fallback.json"
+    "valid-adco-worker-fallback.json",
+    "valid-blocking-camera-presentation-only.json"
   ],
   "invalid": [
     {"file": "invalid-action-overflow.json", "expected_error": "interaction action count must be between 1 and 2"},

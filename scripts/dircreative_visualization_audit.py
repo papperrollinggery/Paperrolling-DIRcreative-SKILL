@@ -42,9 +42,9 @@ ACTION_KINDS = {
 def registry_errors() -> list[str]:
     registry = json.loads(REGISTRY.read_text(encoding="utf-8"))
     errors: list[str] = []
-    if registry.get("registry_version") != "1.0":
-        errors.append("registry_version must be 1.0")
-    if registry.get("spec_contract") != "dircreative.chat-visualization@1.0":
+    if registry.get("registry_version") not in {"1.0", "1.1"}:
+        errors.append("registry_version must be 1.0 or 1.1")
+    if registry.get("spec_contract") != f"dircreative.chat-visualization@{registry.get('registry_version')}":
         errors.append("registry spec_contract mismatch")
     surfaces = registry.get("surfaces") if isinstance(registry.get("surfaces"), list) else []
     skill_ids = {surface.get("skill_id") for surface in surfaces if isinstance(surface, dict)}
@@ -57,9 +57,9 @@ def registry_errors() -> list[str]:
         if not surface_id or surface_id in surface_ids:
             errors.append(f"missing or duplicate surface_id: {surface_id}")
         surface_ids.add(surface_id)
-        if not surface.get("gate_types"):
+        if surface.get("requires_gate", True) and not surface.get("gate_types"):
             errors.append(f"{surface_id} has no gate_types")
-        if len(surface.get("minimum_visible_fields", [])) < 4:
+        if surface.get("requires_gate", True) and len(surface.get("minimum_visible_fields", [])) < 4:
             errors.append(f"{surface_id} needs at least four visible fields")
         actions = set(surface.get("primary_action_kinds", [])) | set(surface.get("secondary_action_kinds", []))
         unknown = sorted(actions - ACTION_KINDS)
@@ -101,6 +101,20 @@ def main() -> int:
         print("[FAIL] invalid story curve time order")
     else:
         print("[PASS] invalid story curve time order rejected")
+
+    presentation_only_with_gate = copy.deepcopy(load_document(FIXTURE_ROOT / "valid-blocking-camera-presentation-only.json"))
+    presentation_only_with_gate["stage_gate"] = {
+        "id": "forged-layout-gate",
+        "type": "shot_list_approval_gate",
+        "status": "needs_user",
+        "decision_owner": "user",
+    }
+    presentation_only_errors = "\n".join(validate_document(presentation_only_with_gate))
+    if "presentation_only visualization must not create a stage_gate" not in presentation_only_errors:
+        failures.append("presentation-only visualization accepted a fabricated gate")
+        print("[FAIL] presentation-only fabricated gate")
+    else:
+        print("[PASS] presentation-only fabricated gate rejected")
 
     schema_action_overflow = load_document(FIXTURE_ROOT / "invalid-action-overflow.json")
     schema_action_overflow_errors = "\n".join(schema_errors(schema_action_overflow))

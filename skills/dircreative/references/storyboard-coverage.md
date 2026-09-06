@@ -31,6 +31,11 @@ multi-person blocking, transformations and pivotal expressions. Simple motion
 may use fewer images plus start/path/end and performance notes. Model freedom
 allows secondary movement, not invented story, people, objects or outcomes.
 
+Make the narrative drawing and action phase readable first: pose, contact,
+object change and camera relation. Short behavior notes and arrows may clarify
+a line drawing for human review and, where supported, storyboard or motion
+reference. They are guidance, never literal clean frames.
+
 Use `master-shot-camera-planning` for coherent staging and
 `professional-storyboard-director` for the board only when available and useful.
 Neither authorizes generation or expands scope.
@@ -70,6 +75,9 @@ declared eyeline relationships. `assets` also requires actual per-shot image
 coverage and all additional required phase images. PNGs must be contained,
 decodable, aspect-correct when specified and hash-matched. One unchanged image
 cannot prove different states in the same shot. A planned image stays missing.
+An approved shot still needs its actual representative image. It may derive from
+an accepted storyboard panel only when it genuinely represents that shot and
+the panel-to-asset lineage is recorded; video-only use does not waive this.
 
 For detailed/full preproduction, require both this sidecar and the legacy visual
 asset plan against the same shot-card identity before reporting combined visual

@@ -387,6 +387,51 @@ TECHNICAL_NEGATION_RE = re.compile(
 )
 
 
+def requests_spatial_discussion(request: str) -> bool:
+    """Identify a bounded staging/camera discussion without treating it as media execution.
+
+    This remains a Studio craft path because a useful response may need a
+    source-bound scene view.  It deliberately does not select a provider,
+    create a second router, write scene truth, or authorize generation.
+    """
+    text = action_text(request)
+    if has(
+        text,
+        r"(?:只|仅).{0,12}(?:修改|优化|精简|改写).{0,20}(?:提示词|prompt)|"
+        r"(?:提示词|prompt).{0,20}(?:简洁|精简|别扩写|不要扩写|修改|优化)",
+    ):
+        return False
+    # A whole-film/preproduction request may include blocking as one required
+    # craft layer.  It must retain the broader deliverable rather than being
+    # collapsed into a presentation-only staging discussion.
+    if has(
+        text,
+        r"(?:完整|全套|全部|全片|整支).{0,32}(?:前期|广告片|品牌片|短片|故事|剧本|分镜|视频提示词|上传顺序)|"
+        r"(?:故事|剧本).{0,24}(?:逐镜|分镜|视频提示词|上传顺序)|"
+        r"(?:full|complete).{0,32}(?:preproduction|film|commercial|script|storyboard|upload)",
+    ):
+        return False
+    spatial_subject = has(
+        text,
+        r"两人|二人|三人|多人|甲.{0,24}乙|乙.{0,24}甲|人物.{0,12}(?:对话|交接|遮挡|走位)|"
+        r"(?:对话|交接|遮挡).{0,12}(?:人物|角色|两人|二人|三人)|"
+        r"two\s+(?:people|characters)|multiple\s+characters",
+    )
+    spatial_intent = has(
+        text,
+        r"站位|走位|动线|空间关系|空间布局|俯视(?:图|布局)?|"
+        r"正反打|反打|过肩|关系轴|轴线|机位|镜位|(?:绕|走到).{0,12}(?:桌|门|窗|墙|吧台)|"
+        r"(?:桌|门|窗|墙|吧台).{0,12}(?:边|口|旁)|camera\s+(?:position|angle)|"
+        r"blocking|staging|shot[ -]?reverse[ -]?shot",
+    )
+    discussion_action = has(
+        text,
+        r"看看|展示|讨论|安排|怎么(?:拍|摆|走)|如何(?:拍|摆|走)|"
+        r"给我(?:看|一个).{0,16}(?:方案|示意)|show|discuss|plan|arrange",
+    )
+    return spatial_intent and (spatial_subject or discussion_action)
+
+
 def explicit_technical_request(text: str) -> bool:
     """Require an affirmative technical-deliverable request in the same clause."""
     clauses = re.split(r"[。；;!?！？\n，,]", text)
@@ -544,6 +589,12 @@ def classify_route(
     ):
         return "film_development", ["incompatible_creative_directions", "concept_lock_required"]
 
+    if requests_spatial_discussion(request):
+        return "film_development", [
+            "bounded_spatial_discussion",
+            "presentation_only_scene_view",
+        ]
+
     bounded = has(
         actionable,
         r"第三句|一句|一段|单镜头|这个镜头|一个镜头|少量分镜|局部分镜|局部|"
@@ -587,6 +638,8 @@ def classify_deliverable_layer(request: str, route: str) -> tuple[str | None, bo
         return "bounded_output", False
 
     text = action_text(request)
+    if requests_spatial_discussion(request):
+        return "spatial_discussion", False
     if has(
         text,
         r"人物母版|角色母版|人物设定(?:图|资产)|角色设定(?:图|资产)|"
@@ -697,6 +750,8 @@ def route_request(
     required_files = list(config["required_files"])
     if "identity_state_contract_required" in reason_codes:
         required_files = ["skills/dircreative/references/character-master-sheet.md"]
+    elif deliverable_layer == "spatial_discussion":
+        required_files = ["skills/dircreative/references/spatial-discussion.md"]
     elif deliverable_layer == "client_story":
         required_files = ["skills/dircreative/references/client-story.md"]
     collaboration = collaboration_contract(request, route, action, policy)
@@ -724,6 +779,14 @@ def route_request(
         "full_receipt_required": config["full_receipt_required"],
         "deliverable_layer": deliverable_layer,
         "shot_matrix_allowed": shot_matrix_allowed,
+        "spatial_discussion": {
+            "requested": deliverable_layer == "spatial_discussion",
+            "interaction": "presentation_only" if deliverable_layer == "spatial_discussion" else None,
+            "host_visualize_contract": "read_current_host_contract" if deliverable_layer == "spatial_discussion" else None,
+            "scene_state_owner": "existing_scene_shot_artifacts" if deliverable_layer == "spatial_discussion" else None,
+            "adoption": "explicit_user_intent_required" if deliverable_layer == "spatial_discussion" else None,
+            "generation": "requires_existing_generation_authorization" if deliverable_layer == "spatial_discussion" else None,
+        },
         **media_scope,
         "reason_codes": reason_codes,
     }

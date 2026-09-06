@@ -465,6 +465,8 @@ async function auditPage(browser, pageSpec, outputDir, viewport, theme, mode = '
 async function main() {
   const outputDir = path.resolve(argument('--output-dir', '/tmp/dircreative-chat-visualizations'));
   const chrome = argument('--chrome', chromium.executablePath());
+  const spatialPage = argument('--spatial-page', null);
+  if (spatialPage) return auditSpatialPage(spatialPage, outputDir, chrome);
   const manifest = JSON.parse(fs.readFileSync(path.join(outputDir, 'manifest.json'), 'utf8'));
   if (!fs.existsSync(chrome)) throw new Error(`Playwright browser executable not found: ${chrome}. Run: npx playwright install chromium`);
   const browser = await chromium.launch({ headless: true, executablePath: chrome });
@@ -501,6 +503,96 @@ async function main() {
   console.log(`failures: ${failures.length}`);
   for (const failure of failures) console.log(`- ${failure}`);
   console.log(`CHAT_VISUALIZATION_BROWSER_AUDIT: ${failures.length ? 'FAIL' : 'PASS'}`);
+  process.exitCode = failures.length ? 1 : 0;
+}
+
+async function auditSpatialPage(source, outputDir, chrome) {
+  fs.mkdirSync(outputDir, {recursive: true});
+  const browser = await chromium.launch({headless: true, executablePath: chrome});
+  const results = [];
+  try {
+    for (const width of [736, 360, 320]) for (const theme of ['light', 'dark']) for (const mode of ['default', 'large-text']) {
+      const page = await browser.newPage({viewport: {width, height: 1100}, colorScheme: theme});
+      const errors = [];
+      page.on('pageerror', (e) => errors.push(e.message));
+      await page.goto(pathToFileURL(path.resolve(source)).href, {waitUntil: 'load'});
+      const frame = page.frames().find((f) => f !== page.mainFrame()) || page.mainFrame();
+      if (mode === 'large-text') await frame.addStyleTag({content: '[data-dircreative-visual] { font-size: 1.5rem !important; }'});
+      const snapshot = await frame.locator('script[type="application/json"]').textContent();
+      const data = JSON.parse(snapshot);
+      const cameraControl = frame.locator('[data-dc-spatial-camera]');
+      const hasCamera = await cameraControl.count() > 0;
+      const views = data.spatial_render.views || [];
+      const overview = Array.isArray(data.spatial_render.overview) ? data.spatial_render.overview : [data.spatial_render.overview].filter(Boolean);
+      const shots = hasCamera ? [...new Set(views.map((v) => v.shot_id))] : [overview[0]?.shot_id || 'overview'];
+      let previousFrame = null;
+      const selected = [];
+      for (const shot of shots) {
+        if (hasCamera) await cameraControl.selectOption(shot);
+        const state = await frame.locator('[data-dircreative-visual]').evaluate((root) => ({
+          shot: root.dataset.spatialShot,
+          frame: root.querySelector('[data-dc-spatial-frame]')?.innerHTML || '',
+          top: root.querySelector('[data-dc-spatial-top]').innerHTML,
+          detail: root.querySelector('[data-dc-spatial-detail]').textContent,
+          overflow: document.documentElement.scrollWidth-document.documentElement.clientWidth,
+          actions: root.querySelectorAll('[data-dc-action]').length,
+          floor: (() => {
+            const svg = root.querySelector('[data-dc-spatial-top]');
+            const boxes = [...svg.querySelectorAll('[data-dc-floor-label], [data-dc-floor-entity], [data-dc-floor-prop]')].map((node) => {
+              const box = node.getBBox(); return {kind: node.getAttribute('data-dc-floor-label') || node.getAttribute('data-dc-floor-entity') || node.getAttribute('data-dc-floor-prop'), x: box.x, y: box.y, width: box.width, height: box.height};
+            });
+            const collisions = [];
+            for (let i = 0; i < boxes.length; i += 1) for (let j = i + 1; j < boxes.length; j += 1) {
+              const a = boxes[i], b = boxes[j];
+              const overlap = Math.min(a.x+a.width,b.x+b.width) - Math.max(a.x,b.x) > 1 && Math.min(a.y+a.height,b.y+b.height) - Math.max(a.y,b.y) > 1;
+              if (overlap && (a.kind === 'feature' || b.kind === 'feature' || a.kind === 'start' || b.kind === 'start')) collisions.push(`${a.kind}/${b.kind}`);
+            }
+            const vb = svg.viewBox.baseVal;
+            const clipped = boxes.filter((box) => box.x < -1 || box.y < -1 || box.x + box.width > vb.width + 1 || box.y + box.height > vb.height + 1).map((box) => box.kind);
+            return {entities: svg.querySelectorAll('[data-dc-floor-entity]').length, props: svg.querySelectorAll('[data-dc-floor-prop]').length, camera: svg.querySelectorAll('[data-dc-floor-camera]').length, motion: svg.querySelectorAll('[data-dc-floor-motion]').length, features: svg.querySelectorAll('[data-dc-floor-label="feature"]').length, inferred: svg.querySelectorAll('[data-dc-floor-inferred]').length, collisions, clipped};
+          })(),
+        }));
+        if (state.shot !== shot) errors.push(`${hasCamera ? 'camera' : 'overview'} selection did not propagate: ${shot}`);
+        if (!state.top.includes('data-dc-floor-entity')) errors.push(`floorplan is missing person markers: ${shot}`);
+        if (hasCamera && (!state.frame.includes('polygon') || !state.top.includes('data-dc-floor-camera'))) errors.push(`missing camera projection or FOV: ${shot}`);
+        if (hasCamera && previousFrame && previousFrame === state.frame) errors.push(`camera projection did not change: ${shot}`);
+        if (state.overflow > 1) errors.push(`horizontal overflow: ${state.overflow}`);
+        if (state.floor.collisions.length) errors.push(`floorplan label collision ${shot}: ${state.floor.collisions.join(',')}`);
+        if (state.floor.clipped.length) errors.push(`floorplan clipped labels ${shot}: ${state.floor.clipped.join(',')}`);
+        const expectedFeatures = (data.presentation?.spatial_scene?.room?.features || []).length;
+        const expectedInferred = (data.presentation?.spatial_scene?.room?.features || []).filter((feature) => ['inferred', 'unseen'].includes(feature.evidence)).length;
+        if (state.floor.features !== expectedFeatures) errors.push(`floorplan landmark count ${state.floor.features} != ${expectedFeatures}: ${shot}`);
+        if (state.floor.inferred !== expectedInferred) errors.push(`floorplan inferred landmark count ${state.floor.inferred} != ${expectedInferred}: ${shot}`);
+        if (hasCamera && state.floor.camera !== 1) errors.push(`floorplan camera marker count ${state.floor.camera}: ${shot}`);
+        if (data.interaction_mode === 'presentation_only' && state.actions) errors.push('viewing exposed adoption actions');
+        if (await frame.locator('script[type="application/json"]').textContent() !== snapshot) errors.push('camera switch mutated source snapshot');
+        const screenshot = path.join(outputDir, `spatial-${shot}-${width}-${theme}-${mode}.png`);
+        await page.screenshot({path: screenshot, fullPage: true});
+        selected.push({shot, detail: state.detail, screenshot});
+        previousFrame = state.frame;
+      }
+      if (await frame.locator('[data-dc-spatial-phase]').count()) {
+        const phases = await frame.locator('[data-dc-spatial-phase] option').evaluateAll((options) => options.map((option) => option.value));
+        for (const phase of phases) {
+          await frame.locator('[data-dc-spatial-phase]').selectOption(phase);
+          const phaseState = await frame.locator('[data-dircreative-visual]').evaluate((root) => { const svg = root.querySelector('[data-dc-spatial-top]'); const boxes = [...svg.querySelectorAll('[data-dc-floor-label="feature"], [data-dc-floor-entity], [data-dc-floor-facing], [data-dc-floor-prop], [data-dc-floor-motion], [data-dc-floor-camera-marker], [data-dc-floor-label="camera"]')].map((node) => ({node, box: node.getBBox(), label: node.getAttribute('data-dc-floor-label') === 'feature'})); const overlap = (a,b) => Math.min(a.x+a.width,b.x+b.width)-Math.max(a.x,b.x)>1 && Math.min(a.y+a.height,b.y+b.height)-Math.max(a.y,b.y)>1; const collisions = boxes.filter((item) => item.label).flatMap((item, index) => boxes.slice(index + 1).filter((other) => overlap(item.box, other.box)).map(() => 'label overlap')); const vb = svg.viewBox.baseVal; const clipped = boxes.filter((item) => item.label && (item.box.x < 0 || item.box.y < 0 || item.box.x+item.box.width > vb.width || item.box.y+item.box.height > vb.height)).length; return {phase: root.dataset.spatialPhase, top: svg.innerHTML, collisions, clipped}; });
+          if (phaseState.phase !== phase) errors.push(`phase selection did not propagate: ${phase}`);
+          if (!phaseState.top.includes('data-dc-floor-entity')) errors.push(`phase floorplan missing people: ${phase}`);
+          if (phaseState.collisions.length || phaseState.clipped) errors.push(`phase floorplan label layout failed: ${phase}`);
+          if (await frame.locator('script[type="application/json"]').textContent() !== snapshot) errors.push('phase switch mutated source snapshot');
+          const activeShot = await frame.locator('[data-dircreative-visual]').getAttribute('data-spatial-shot');
+          await page.screenshot({path: path.join(outputDir, `spatial-${activeShot}-${width}-${theme}-${mode}-${phase}.png`), fullPage: true});
+        }
+      }
+      results.push({width, theme, mode, selected, errors});
+      await page.close();
+    }
+  } finally { await browser.close(); }
+  const failures = results.flatMap((r) => r.errors);
+  const evidence = {status: failures.length ? 'fail' : 'pass', evidence_level: 'real_browser_local_preview', native_mount_verified: false, source: path.resolve(source), results, failures};
+  fs.writeFileSync(path.join(outputDir, 'spatial-browser-audit.json'), JSON.stringify(evidence, null, 2)+'\n');
+  console.log(`SPATIAL_BROWSER_AUDIT: ${evidence.status.toUpperCase()} (${results.length} width/theme cases; ${failures.length} errors)`);
+  for (const failure of failures) console.log(failure);
   process.exitCode = failures.length ? 1 : 0;
 }
 

@@ -60,16 +60,26 @@
         "sha256": {"$ref": "#/$defs/sha256"}
       }
     },
+    "spatial_export_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["relative_path", "sha256"],
+      "properties": {
+        "relative_path": {"type": "string", "minLength": 1, "pattern": "^[A-Za-z0-9._/-]+$"},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
     "source_asset": {
       "type": "object",
       "additionalProperties": false,
       "required": ["asset_id", "source_kind", "role", "relative_path", "sha256"],
       "properties": {
         "asset_id": {"$ref": "#/$defs/id"},
-        "source_kind": {"enum": ["canonical_asset", "planning_only"]},
-        "role": {"enum": ["canonical", "planning_only"]},
+        "source_kind": {"enum": ["canonical_asset", "planning_only", "deterministic_layout"]},
+        "role": {"enum": ["canonical", "planning_only", "layout_reference"]},
         "relative_path": {"type": "string", "minLength": 1, "pattern": "^[A-Za-z0-9._/-]+$"},
-        "sha256": {"$ref": "#/$defs/sha256"}
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "spatial_source": {"$ref": "#/$defs/spatial_export_binding"}
       }
     },
     "stage": {

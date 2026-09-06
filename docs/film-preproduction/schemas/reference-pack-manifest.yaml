@@ -61,11 +61,11 @@ execution_capabilities:
     available: false
 
 user_decision_gate:
-  required: true
-  status: "pending | approved | needs_revision"
+  required: false
+  status: "not_required | pending | approved | needs_revision"
   options_presented: 0
   selected_option: ""
-  user_lock_required_before_video_adapter: true
+  user_lock_required_before_video_adapter: false
   can_mix_options: true
   batch_skip_per_sequence_gate: false
   accepted_risk: []
@@ -98,7 +98,7 @@ assets:
     inherits_from: []
     reuse_action: "direct_reference | edit | derive | planning_only | unresolved"
     locked: false
-    role: "master_reference_board | identity_product_board | character_identity_reference | environment_camera_board | scene_geography_camera_fov_reference | storyboard_motion_board | professional_storyboard_motion_map | style_material_board | lighting_material_style_board | clean_first_frame | clean_end_frame | motion_reference_video | audio_reference | element_reference"
+    role: "master_reference_board | identity_product_board | character_identity_reference | environment_camera_board | scene_geography_camera_fov_reference | layout_reference | storyboard_motion_board | professional_storyboard_motion_map | style_material_board | lighting_material_style_board | clean_first_frame | clean_end_frame | motion_reference_video | audio_reference | element_reference"
     primary_job: ""
     supports: []
     visible_role_label: ""
@@ -107,7 +107,9 @@ assets:
     fov_source_shot_id: ""
     duplicate_policy: "no_duplicate_visual_truth | inherits_locked_source | deliberate_repetition"
     source_prompt_or_file: ""
-    media_class: "planning_board | clean_frame | reusable_asset | motion_reference | audio_reference"
+    media_class: "planning_board | layout_reference | clean_frame | reusable_asset | motion_reference | audio_reference"
+    # Layout sidecar: current scene revision, selected camera, image hash and roles.
+    spatial_source: {relative_path: "", sha256: ""}
     rights:
       status: "verified | conditional | unverified | blocked"
       owner_or_license_basis: ""

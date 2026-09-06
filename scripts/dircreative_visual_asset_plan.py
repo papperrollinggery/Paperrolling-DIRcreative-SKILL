@@ -1847,7 +1847,7 @@ def parse_inventory(
         "continuity_model",
     }
     for card in raw_cards:
-        if not isinstance(card, dict) or set(card) != card_fields:
+        if not isinstance(card, dict) or set(card) - {"scene_state_source"} != card_fields:
             raise ValueError("shot card field set is invalid")
         shot_id = card.get("shot_id")
         duration_seconds = card.get("duration_seconds")
@@ -1918,9 +1918,25 @@ def parse_inventory(
             "action": card_map[shot_id]["action"],
             "sound_edit": card_map[shot_id]["sound_edit"],
             "continuity_model": card_map[shot_id]["continuity_model"],
+            **({"scene_state_source": card_map[shot_id]["scene_state_source"]} if "scene_state_source" in card_map[shot_id] else {}),
         }
         for shot_id in shot_ids
     ]
+
+    for truth in shot_truth:
+        if "scene_state_source" not in truth:
+            continue
+        from dircreative_spatial_scene import contained, require_scene, sha256 as spatial_sha256
+        source = truth["scene_state_source"]
+        if not isinstance(source, dict) or set(source) != {"relative_path", "sha256"}:
+            raise ValueError("shot scene_state_source must bind one scene file")
+        scene_path = contained(base_dir, source["relative_path"])
+        if spatial_sha256(scene_path) != source["sha256"]:
+            raise ValueError("shot scene_state_source is stale")
+        scene_state = load_json(scene_path)
+        require_scene(scene_state)
+        if scene_state["scene_id"] != truth["scene_id"] or truth["shot_id"] not in {c["shot_id"] for c in scene_state["cameras"]}:
+            raise ValueError("shot scene_state_source scene or camera mismatch")
 
     declared_unit_for_shot: dict[str, str] = {}
     for unit_id, unit in unit_map.items():
@@ -2539,7 +2555,7 @@ def validate_plan(
             "sound_edit",
             "continuity_model",
         }
-        if not isinstance(truth, dict) or set(truth) != expected_fields:
+        if not isinstance(truth, dict) or set(truth) - {"scene_state_source"} != expected_fields:
             errors.append(f"shot_truth_invalid:{index}")
             continue
         shot_id = truth.get("shot_id")

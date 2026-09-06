@@ -848,3 +848,12 @@
     transition: none;
   }
 }
+[data-dircreative-visual] .dc-spatial-views { margin: 16px 0 8px; }
+[data-dircreative-visual] .dc-spatial-floorplan { min-width: 0; }
+[data-dircreative-visual] .dc-spatial-views svg { display: block; width: 100%; }
+[data-dircreative-visual] .dc-spatial-floorplan svg { border: 1px solid var(--border, #94a3b8); border-radius: 8px; background: var(--background, #fff); }
+[data-dircreative-visual] .dc-spatial-projection { margin-top: 10px; color: var(--muted-foreground); }
+[data-dircreative-visual] .dc-spatial-projection summary { cursor: pointer; font-size: .875rem; }
+[data-dircreative-visual] .dc-spatial-projection svg { margin-top: 8px; }
+[data-dircreative-visual] .dc-spatial-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 10px; }
+[data-dircreative-visual] .dc-spatial-legend > span { min-width: 0; }

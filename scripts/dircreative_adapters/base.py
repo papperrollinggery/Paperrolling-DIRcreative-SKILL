@@ -65,6 +65,29 @@ def clean(value: Any) -> str:
     return re.sub(r"\s+", " ", str(value)).strip().rstrip(".")
 
 
+def ordered_attached_references(payload: dict[str, Any]) -> list[dict[str, Any]]:
+    """Return attachments in the actual upload order.
+
+    Spatial layouts bind to ``upload_order`` rather than the accidental order
+    of entries in JSON.  Contracts without that field retain their authored
+    order for compatibility with existing adapters.
+    """
+    attached = [
+        (index, item)
+        for index, item in enumerate(payload.get("references", []))
+        if isinstance(item, dict) and item.get("attached_to_run")
+    ]
+
+    def key(entry: tuple[int, dict[str, Any]]) -> tuple[int, int]:
+        index, item = entry
+        order = item.get("upload_order")
+        if isinstance(order, int) and not isinstance(order, bool) and order >= 1:
+            return (0, order)
+        return (1, index)
+
+    return [item for _, item in sorted(attached, key=key)]
+
+
 def time_value(raw: Any) -> float:
     if isinstance(raw, (int, float)) and not isinstance(raw, bool) and math.isfinite(float(raw)):
         return float(raw)
@@ -141,7 +164,7 @@ class PromptAdapter:
 
     def validate_capability(self, payload: dict[str, Any]) -> list[str]:
         errors: list[str] = []
-        attached = [item for item in payload.get("references", []) if item.get("attached_to_run")]
+        attached = ordered_attached_references(payload)
         maximum = self.CONTRACT.maximum_references
         if maximum is not None and len(attached) > maximum:
             errors.append(
@@ -280,7 +303,7 @@ class PromptAdapter:
         return [clean(unit["audio_handoff"])]
 
     def _render(self, payload: dict[str, Any]) -> AdapterRender:
-        attached = [item for item in payload["references"] if item["attached_to_run"]]
+        attached = ordered_attached_references(payload)
         entity_names = {item["entity_id"]: item["external_name"] for item in payload["entities"]}
         sections: list[str] = []
         if attached:

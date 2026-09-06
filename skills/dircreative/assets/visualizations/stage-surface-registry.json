@@ -1,7 +1,23 @@
 {
-  "registry_version": "1.0",
-  "spec_contract": "dircreative.chat-visualization@1.0",
+  "registry_version": "1.1",
+  "spec_contract": "dircreative.chat-visualization@1.1",
+  "legacy_spec_contract": "dircreative.chat-visualization@1.0",
+  "presentation_policy": "Gate types and decision fields below describe legacy decision views. A v1.1 presentation_only view creates no gate or action; adopt and adopt_and_generate use the existing controller and authorization.",
   "surfaces": [
+    {
+      "surface_id": "spatial-blocking-camera",
+      "skill_id": "shot-design",
+      "gate_types": [],
+      "requires_gate": false,
+      "intent": "blocking_camera",
+      "interaction_modes": ["presentation_only", "adopt", "adopt_and_generate"],
+      "preferred_mode": "inline",
+      "minimum_visible_fields": ["spatial_scene"],
+      "primary_action_kinds": [],
+      "secondary_action_kinds": [],
+      "optional_action_kinds": ["adopt", "adopt_and_generate"],
+      "fallback": "markdown"
+    },
     {
       "surface_id": "stage-context-strip",
       "skill_id": "chat-facilitator",

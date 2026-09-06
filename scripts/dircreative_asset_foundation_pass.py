@@ -99,6 +99,42 @@ def verify_source_file(
         add_error(errors, "source_asset_hash_mismatch", str(source.get("asset_id")))
 
 
+def verify_deterministic_layout_source(
+    source: dict[str, Any], *, artifact_root: Path, errors: list[str]
+) -> None:
+    """Bind a foundation layout reference to the current spatial export."""
+    if source.get("source_kind") != "deterministic_layout":
+        return
+    if source.get("role") != "layout_reference" or not isinstance(source.get("spatial_source"), dict):
+        add_error(errors, "layout_source_binding_invalid", str(source.get("asset_id")))
+        return
+    binding = source["spatial_source"]
+    try:
+        raw = read_relative_regular_file_once(
+            artifact_root, binding["relative_path"], max_bytes=8 * 1024 * 1024,
+            label="spatial layout export",
+        )
+        if hashlib.sha256(raw).hexdigest() != binding.get("sha256"):
+            raise ValueError("spatial export hash mismatch")
+        from dircreative_spatial_scene import read_export, validate_export
+
+        export_path = (artifact_root.resolve(strict=True) / binding["relative_path"]).resolve(strict=True)
+        export_path.relative_to(artifact_root.resolve(strict=True))
+        export = read_export(export_path, artifact_root)
+        if validate_export(export, artifact_root):
+            raise ValueError("spatial export validation failed")
+        reference = export.get("reference")
+        if not isinstance(reference, dict) or (
+            reference.get("relative_path") != source.get("relative_path")
+            or reference.get("sha256") != source.get("sha256")
+            or reference.get("role") != "layout"
+            or reference.get("media_class") != "layout_reference"
+        ):
+            raise ValueError("spatial export reference mismatch")
+    except (ImportError, KeyError, OSError, RuntimeError, ValueError):
+        add_error(errors, "layout_source_binding_invalid", str(source.get("asset_id")))
+
+
 def validate_stage_artifact_payload(
     document: dict[str, Any],
     stage: dict[str, Any],
@@ -188,7 +224,14 @@ def source_provenance_errors(document: dict[str, Any]) -> list[str]:
         for item in source_assets
         if item.get("source_kind") == "planning_only" and item.get("role") == "planning_only"
     }
-    if canonical_records != canonical or planning_records != planning:
+    layout_records = {
+        str(item.get("asset_id"))
+        for item in source_assets
+        if item.get("source_kind") == "deterministic_layout" and item.get("role") == "layout_reference"
+    }
+    if canonical_records != canonical or planning_records != planning or (
+        layout_records & (canonical | planning)
+    ):
         add_error(errors, "source_asset_role_mismatch", str(document.get("pass_id")))
     provenance_by_path: dict[str, tuple[Any, Any]] = {}
     provenance_by_hash: dict[str, tuple[Any, Any]] = {}
@@ -299,6 +342,7 @@ def semantic_errors(document: dict[str, Any], *, artifact_root: Path | None) -> 
     if artifact_root is not None:
         for source in document.get("source_assets", []):
             verify_source_file(source, artifact_root=artifact_root, errors=errors)
+            verify_deterministic_layout_source(source, artifact_root=artifact_root, errors=errors)
 
     target_shots = set(document.get("target_shot_ids", []))
     stress = document.get("stress_test_binding", {})
@@ -427,6 +471,7 @@ def validate_design(
                 raise ValueError("source hash mismatch")
         except (OSError, ValueError):
             errors.append("asset_design_source_invalid")
+        verify_deterministic_layout_source(source, artifact_root=artifact_root, errors=errors)
     return list(dict.fromkeys(errors))
 
 

@@ -1,0 +1,27 @@
+{
+  "scene_id": "THREE-PERSON-HANDOFF",
+  "revision": "r1",
+  "description": "隔离设计示例：甲把钥匙交给乙；门前的丙先向左让开，乙再从桌右侧绕到门前。",
+  "coordinate_system": "normalized_xy_design",
+  "room": {"features": [
+    {"id": "TABLE", "label": "桌", "position": [0.5, 0.52], "size": [0.22, 0.26], "height": 0.12, "evidence": "designed", "blocks_movement": true},
+    {"id": "DOOR", "label": "门", "position": [0.22, 0.93], "size": [0.18, 0.025], "height": 0.3, "evidence": "designed"}
+  ]},
+  "entities": [
+    {"id": "A", "label": "甲", "kind": "character", "position": [0.33, 0.52], "facing": [1, 0], "gaze_target": "B", "height": 0.28, "support": "floor", "color": "#587b9a", "color_name": "灰蓝", "asset_id": "A-identity"},
+    {"id": "B", "label": "乙", "kind": "character", "position": [0.67, 0.52], "facing": [-1, 0], "gaze_target": "A", "height": 0.28, "support": "floor", "color": "#ad756d", "color_name": "灰红", "asset_id": "B-identity"},
+    {"id": "C", "label": "丙", "kind": "character", "position": [0.22, 0.86], "facing": [0, -1], "gaze_target": "B", "height": 0.27, "support": "floor", "color": "#708b68", "color_name": "灰绿", "asset_id": "C-identity"},
+    {"id": "KEY", "label": "钥匙", "kind": "prop", "position": [0.37, 0.52], "holder": "A", "support": "A", "color": "#b08a45", "color_name": "旧黄铜", "asset_id": "key-identity", "elevation": 0.16, "holder_hand": "right"}
+  ],
+  "relationship_axis": {"entity_ids": ["A", "B"], "side": -1},
+  "transfers": [
+    {"prop_id": "KEY", "from_holder": "A", "to_holder": "B", "position": [0.5, 0.52, 0.16], "trigger": "甲越过桌沿把钥匙交到乙右手。", "to_hand": "right", "order": 1}
+  ],
+  "paths": [
+    {"entity_id": "C", "points": [[0.22, 0.86], [0.1, 0.78]], "trigger": "乙离桌前，丙先向左让开门前通道。", "final_facing": [1, 0], "order": 2},
+    {"entity_id": "B", "points": [[0.67, 0.52], [0.75, 0.72], [0.5, 0.82], [0.22, 0.88]], "trigger": "乙收好钥匙，从桌右侧绕到已腾空的门前。", "final_facing": [0, 1], "final_gaze_target": "DOOR", "order": 3}
+  ],
+  "cameras": [
+    {"shot_id": "S01", "label": "主镜", "position": [0.5, 0.04], "look_at": [0.48, 0.62], "height": 0.26, "target_height": 0.16, "hfov_deg": 64, "framing": "交钥匙、丙让路和乙到门前的关系。"}
+  ]
+}

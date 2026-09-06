@@ -11,15 +11,14 @@
     "controller",
     "source_view",
     "conversation_intent",
-    "gate_result",
     "artifact_writes",
-    "lock_effects",
     "downstream_effects",
     "next_stage",
     "authority"
   ],
   "properties": {
-    "receipt_version": {"const": "dircreative.chat-visualization-writeback@1.0"},
+    "receipt_version": {"enum": ["dircreative.chat-visualization-writeback@1.0", "dircreative.chat-visualization-writeback@1.1"]},
+    "interaction_mode": {"enum": ["adopt", "adopt_and_generate"]},
     "receipt_id": {"type": "string", "minLength": 1, "maxLength": 160},
     "execution_context": {"enum": ["standalone_chat", "orchestrated_worker"]},
     "controller": {
@@ -35,12 +34,12 @@
     "source_view": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["spec_path", "spec_sha256", "view_id", "gate_id"],
+      "required": ["spec_path", "spec_sha256", "view_id"],
       "properties": {
         "spec_path": {"$ref": "#/$defs/relativePath"},
         "spec_sha256": {"$ref": "#/$defs/sha256"},
         "view_id": {"type": "string", "minLength": 1},
-        "gate_id": {"type": "string", "minLength": 1}
+        "gate_id": {"type": ["string", "null"], "minLength": 1}
       }
     },
     "conversation_intent": {
@@ -63,7 +62,9 @@
             "request_mix",
             "retry_smallest",
             "stop",
-            "pause_prompt_only"
+            "pause_prompt_only",
+            "adopt",
+            "adopt_and_generate"
           ]
         },
         "selected_option_id": {"type": ["string", "null"], "minLength": 1},
@@ -83,6 +84,54 @@
         "conflict": {"type": ["string", "null"], "minLength": 1}
       }
     },
+    "adoption_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_refs", "source_revision", "write_evidence_refs"],
+      "properties": {
+        "source_refs": {"$ref": "#/$defs/stringList"},
+        "source_revision": {"type": "string", "minLength": 1},
+        "write_evidence_refs": {"$ref": "#/$defs/stringList"}
+      }
+    },
+    "generation_authorization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["authorization_id", "record_revision", "state_path", "state_sha256", "thread_snapshot_path", "thread_snapshot_sha256", "scope_hash", "status", "controller_check"],
+      "properties": {
+        "authorization_id": {"type": "string", "minLength": 1},
+        "record_revision": {"type": "integer", "minimum": 1},
+        "state_path": {"$ref": "#/$defs/relativePath"},
+        "state_sha256": {"$ref": "#/$defs/sha256"},
+        "thread_snapshot_path": {"$ref": "#/$defs/relativePath"},
+        "thread_snapshot_sha256": {"$ref": "#/$defs/sha256"},
+        "scope_hash": {"$ref": "#/$defs/sha256"},
+        "status": {"const": "inherited"},
+        "controller_check": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["thread_id", "confirmation_id", "authorized_by", "authorized_by_type"],
+          "properties": {
+            "thread_id": {"type": "string", "minLength": 1},
+            "confirmation_id": {"type": "string", "minLength": 1},
+            "authorized_by": {"type": "string", "minLength": 1},
+            "authorized_by_type": {"enum": ["human", "controller"]}
+          }
+        }
+      }
+    },
+    "generation_request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scene_id", "shot_ids", "asset_ids", "expected_output_kind", "model_id"],
+      "properties": {
+        "scene_id": {"type": "string", "minLength": 1},
+        "shot_ids": {"$ref": "#/$defs/stringList"},
+        "asset_ids": {"$ref": "#/$defs/stringList"},
+        "expected_output_kind": {"type": "string", "minLength": 1},
+        "model_id": {"type": "string", "minLength": 1}
+      }
+    },
     "artifact_writes": {
       "type": "array",
       "minItems": 1,
@@ -96,7 +145,18 @@
           "path": {"$ref": "#/$defs/relativePath"},
           "change_kind": {"enum": ["created", "updated", "preserved"]},
           "before_sha256": {"anyOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]},
-          "after_sha256": {"$ref": "#/$defs/sha256"}
+          "after_sha256": {"$ref": "#/$defs/sha256"},
+          "source_scene": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["scene_id", "revision", "scene_state_sha256", "source_refs"],
+            "properties": {
+              "scene_id": {"type": "string", "minLength": 1},
+              "revision": {"type": "string", "minLength": 1},
+              "scene_state_sha256": {"$ref": "#/$defs/sha256"},
+              "source_refs": {"$ref": "#/$defs/stringList"}
+            }
+          }
         }
       }
     },
@@ -142,7 +202,7 @@
         "visual_action_wrote_state": {"const": false},
         "controller_revalidated_source": {"const": true},
         "artifact_hashes_verified": {"const": true},
-        "generation_authorized": {"const": false}
+        "generation_authorized": {"type": "boolean"}
       }
     }
   },
@@ -158,5 +218,47 @@
       "uniqueItems": true,
       "items": {"type": "string", "minLength": 1}
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"receipt_version": {"const": "dircreative.chat-visualization-writeback@1.0"}}},
+      "then": {"required": ["gate_result", "lock_effects"]}
+    },
+    {
+      "if": {"properties": {"receipt_version": {"const": "dircreative.chat-visualization-writeback@1.1"}}},
+      "then": {"required": ["interaction_mode"]}
+    },
+    {
+      "if": {
+        "properties": {
+          "receipt_version": {"const": "dircreative.chat-visualization-writeback@1.1"},
+          "interaction_mode": {"const": "adopt"}
+        },
+        "required": ["interaction_mode"]
+      },
+      "then": {
+        "required": ["adoption_evidence"],
+        "properties": {
+          "conversation_intent": {"properties": {"action_kind": {"const": "adopt"}}},
+          "authority": {"properties": {"generation_authorized": {"const": false}}}
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "receipt_version": {"const": "dircreative.chat-visualization-writeback@1.1"},
+          "interaction_mode": {"const": "adopt_and_generate"}
+        },
+        "required": ["interaction_mode"]
+      },
+      "then": {
+        "required": ["adoption_evidence", "generation_authorization", "generation_request"],
+        "properties": {
+          "conversation_intent": {"properties": {"action_kind": {"const": "adopt_and_generate"}}},
+          "authority": {"properties": {"generation_authorized": {"const": true}}}
+        }
+      }
+    }
+  ]
 }

@@ -308,6 +308,7 @@ def validate_registry() -> tuple[dict[str, dict[str, Any]], dict[str, Any], str]
         "veo_3_1_fast_generate_001_vertex_api",
         "veo_3_1_lite_generate_001_vertex_api",
         "tapnow_canvas_workflow_2026_07_10",
+        "seedance_2_5_tapnow_canvas_2026_09_06",
     }
     require(required_cards.issubset(cards), f"missing cards: {sorted(required_cards - set(cards))}")
     return cards, registry, f"{len(cards)} versioned cards validated at runtime date {date.today().isoformat()}"
@@ -401,6 +402,11 @@ def validate_known_capabilities(cards: dict[str, dict[str, Any]]) -> str:
     tapnow = cards["tapnow_canvas_workflow_2026_07_10"]
     require(tapnow["status"] == "workflow_only", "TapNow canvas must remain workflow-only")
     require(tapnow["reference_modes"].get("underlying_model_capability") == "must_resolve_separately", "TapNow must delegate model capability")
+    tapnow_seedance = cards["seedance_2_5_tapnow_canvas_2026_09_06"]
+    require(tapnow_seedance["provider_surface"] == "TapNow Canvas video node, Seedance 2.5", "TapNow Seedance surface drifted")
+    require(tapnow_seedance["duration"].get("minimum_sec") == 4 and tapnow_seedance["duration"].get("maximum_sec") == 30, "TapNow Seedance duration must remain 4-30 seconds")
+    require(tapnow_seedance["audio_route"].get("native_audio_supported") == "unverified", "TapNow Seedance audio must remain unverified")
+    require(tapnow_seedance["reference_modes"].get("multi_shot_with_elements") == "unsupported", "TapNow elements must stay Reference-mode-only")
     return "provider-specific invariants validated"
 
 

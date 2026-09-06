@@ -12,7 +12,8 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
-from dircreative_visualization_spec import load_document
+from dircreative_state_audit import canonical_authorization_scope, load_state as load_runtime_state, validate_state
+from dircreative_visualization_spec import load_document, validate_document
 
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA = ROOT / "docs/film-preproduction/schemas/chat-visualization-writeback.schema.json"
@@ -50,6 +51,97 @@ def resolve_relative(root: Path, value: str) -> Path:
     return candidate
 
 
+def validate_inherited_generation_authorization(
+    receipt: dict[str, Any],
+    project_root: Path,
+    spec: dict[str, Any] | None,
+) -> list[str]:
+    """Bind an adopt-and-generate receipt to the current state authority.
+
+    The state audit remains the owner of confirmation and revocation semantics;
+    this adapter only proves that the requested spatial export is inside that
+    already-current authority. It cannot independently identify the user.
+    """
+    failures: list[str] = []
+    authorization = receipt.get("generation_authorization")
+    request = receipt.get("generation_request")
+    if not isinstance(authorization, dict) or not isinstance(request, dict):
+        return ["adopt_and_generate requires a state-bound authorization and generation request"]
+    try:
+        state_path = resolve_relative(project_root, str(authorization.get("state_path", "")))
+        snapshot_path = resolve_relative(project_root, str(authorization.get("thread_snapshot_path", "")))
+    except ValueError as exc:
+        return [str(exc)]
+    if not state_path.is_file() or sha256(state_path) != authorization.get("state_sha256"):
+        failures.append("generation authorization state hash mismatch")
+        return failures
+    if not snapshot_path.is_file() or sha256(snapshot_path) != authorization.get("thread_snapshot_sha256"):
+        failures.append("generation authorization thread snapshot hash mismatch")
+        return failures
+    try:
+        state = load_runtime_state(state_path)
+        thread_snapshot = load_runtime_state(snapshot_path)
+    except ValueError as exc:
+        return [f"generation authorization evidence is unreadable: {exc}"]
+    state_findings, _ = validate_state(project_root, state, thread_snapshot=thread_snapshot)
+    blocking_findings = [
+        finding
+        for finding in state_findings
+        if finding.lane == "current" and finding.severity == "P0" and finding.code != "live_host_attestation_required"
+    ]
+    if blocking_findings:
+        failures.append("generation authorization state integrity failed")
+        return failures
+    record_id = authorization.get("authorization_id")
+    records = {
+        record.get("record_id"): record
+        for record in state.get("records", [])
+        if isinstance(record, dict) and isinstance(record.get("record_id"), str)
+    }
+    record = records.get(record_id)
+    payload = record.get("generation_authorization") if isinstance(record, dict) else None
+    current_ids = state.get("current", {}).get("generation_authorization_ids", [])
+    if (
+        not isinstance(record, dict)
+        or record_id not in current_ids
+        or record.get("kind") != "generation_authorization"
+        or record.get("lifecycle") != "active"
+        or record.get("revision") != authorization.get("record_revision")
+        or not isinstance(payload, dict)
+    ):
+        failures.append("generation authorization record is not current")
+        return failures
+    canonical_scope = canonical_authorization_scope(payload)
+    if payload.get("scope_hash") != canonical_scope or authorization.get("scope_hash") != canonical_scope:
+        failures.append("generation authorization scope hash mismatch")
+    if payload.get("status") != "active":
+        failures.append("generation authorization is not active")
+    controller_check = authorization.get("controller_check")
+    if not isinstance(controller_check, dict) or any(
+        controller_check.get(key) != payload.get(key)
+        for key in ("thread_id", "confirmation_id", "authorized_by", "authorized_by_type")
+    ):
+        failures.append("generation authorization controller check is not bound to the authority record")
+    spatial = spec.get("presentation", {}).get("spatial_scene", {}) if isinstance(spec, dict) else {}
+    if not isinstance(spatial, dict) or request.get("scene_id") != spatial.get("scene_id"):
+        failures.append("generation request scene does not match adopted spatial scene")
+    cameras = spatial.get("cameras") if isinstance(spatial, dict) else None
+    camera_shots = {camera.get("shot_id") for camera in cameras if isinstance(camera, dict)} if isinstance(cameras, list) else set()
+    request_shots = request.get("shot_ids") if isinstance(request.get("shot_ids"), list) else []
+    if not camera_shots or not request_shots or not set(request_shots).issubset(camera_shots):
+        failures.append("generation request shots are not current adopted spatial shots")
+    request_assets = request.get("asset_ids") if isinstance(request.get("asset_ids"), list) else []
+    if not request_assets or request.get("scene_id") not in request_assets:
+        failures.append("generation request must bind the adopted scene as an authorized asset")
+    if not set(request_assets).issubset(set(payload.get("asset_ids", []))):
+        failures.append("generation request assets exceed authorization scope")
+    if request.get("expected_output_kind") not in set(payload.get("expected_output_kinds", [])):
+        failures.append("generation request output kind exceeds authorization scope")
+    if request.get("model_id") not in set(payload.get("model_ids", [])):
+        failures.append("generation request model exceeds authorization scope")
+    return failures
+
+
 def schema_errors(receipt: Any) -> list[str]:
     schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
     if os.environ.get("DIRCREATIVE_FORCE_BUILTIN_SCHEMA_VALIDATOR"):
@@ -75,6 +167,8 @@ def semantic_errors(receipt: Any, project_root: Path) -> list[str]:
         return ["receipt must be an object"]
     failures: list[str] = []
     context = receipt.get("execution_context")
+    receipt_version = receipt.get("receipt_version")
+    interaction_mode = receipt.get("interaction_mode") if isinstance(receipt_version, str) and receipt_version.endswith("@1.1") else "decision"
     controller = receipt.get("controller", {})
     expected_owner = "dircreative" if context == "standalone_chat" else "ad-creative-orchestrator"
     expected_facing = context == "standalone_chat"
@@ -99,6 +193,9 @@ def semantic_errors(receipt: Any, project_root: Path) -> list[str]:
             loaded = load_document(spec_path)
             if isinstance(loaded, dict):
                 spec = loaded
+                spec_failures = validate_document(spec, project_root=project_root)
+                if spec_failures:
+                    failures.append("source visualization spec is invalid: " + "; ".join(spec_failures))
             else:
                 failures.append("source visualization spec must be an object")
 
@@ -108,12 +205,17 @@ def semantic_errors(receipt: Any, project_root: Path) -> list[str]:
         if source.get("view_id") != spec.get("view_id"):
             failures.append("source view_id does not match visualization spec")
         gate = spec.get("stage_gate", {})
-        if source.get("gate_id") != gate.get("id"):
-            failures.append("source gate_id does not match visualization spec")
+        if interaction_mode == "decision":
+            if source.get("gate_id") != gate.get("id"):
+                failures.append("source gate_id does not match visualization spec")
+        elif source.get("gate_id") is not None:
+            failures.append("gate-less adoption receipt must not bind a stage_gate")
         if spec.get("execution_context") != context:
             failures.append("writeback execution_context does not match visualization spec")
         if spec.get("write_boundary", {}).get("write_owner") != expected_owner:
             failures.append("visualization write owner does not match writeback controller")
+        if interaction_mode != "decision" and spec.get("interaction_mode") != interaction_mode:
+            failures.append("writeback interaction_mode does not match visualization spec")
         actions = {
             item.get("id"): item
             for item in spec.get("interactions", {}).get("actions", [])
@@ -125,7 +227,7 @@ def semantic_errors(receipt: Any, project_root: Path) -> list[str]:
         else:
             if intent.get("action_kind") != action.get("kind"):
                 failures.append("conversation intent action_kind does not match source action")
-            if action.get("target_gate_id") != source.get("gate_id"):
+            if interaction_mode == "decision" and action.get("target_gate_id") != source.get("gate_id"):
                 failures.append("source action does not target the receipt gate")
         option_ids = {
             item.get("id")
@@ -139,18 +241,48 @@ def semantic_errors(receipt: Any, project_root: Path) -> list[str]:
     action_kind = intent.get("action_kind")
     selected = intent.get("selected_option_id")
     result_selected = gate_result.get("selected_option_id")
-    if action_kind == "submit_selection":
+    if interaction_mode == "decision" and action_kind == "submit_selection":
         if not selected or selected != result_selected or gate_result.get("status") != "approved":
             failures.append("submit_selection requires the same selected option and an approved gate result")
-    elif action_kind in {"request_revision", "request_mix"}:
+    elif interaction_mode == "decision" and action_kind in {"request_revision", "request_mix"}:
         if gate_result.get("status") != "needs_revision":
             failures.append(f"{action_kind} requires needs_revision gate result")
-    if gate_result.get("status") == "approved" and gate_result.get("conflict") is not None:
+    if interaction_mode == "decision" and gate_result.get("status") == "approved" and gate_result.get("conflict") is not None:
         failures.append("approved gate result cannot carry a conflict")
-    if gate_result.get("status") != "approved" and receipt.get("next_stage", {}).get("status") == "ready":
+    if interaction_mode == "decision" and gate_result.get("status") != "approved" and receipt.get("next_stage", {}).get("status") == "ready":
         failures.append("next stage cannot be ready while the current gate is unresolved")
 
+    if interaction_mode in {"adopt", "adopt_and_generate"}:
+        if intent.get("decision_source") != "real_user" or not str(intent.get("submitted_text", "")).strip() or not intent.get("user_confirmation_id"):
+            failures.append("adoption requires explicit real-user conversation intent")
+        adoption = receipt.get("adoption_evidence", {})
+        source_refs = adoption.get("source_refs") if isinstance(adoption, dict) else None
+        if not isinstance(source_refs, list) or not source_refs:
+            failures.append("adoption requires source binding evidence")
+        elif spec is not None:
+            spatial = spec.get("presentation", {}).get("spatial_scene", {})
+            expected_refs = set(spatial.get("source_refs", [])) if isinstance(spatial, dict) else set()
+            if expected_refs and not set(source_refs).issubset(expected_refs):
+                failures.append("adoption source_refs are not bound to the current spatial scene")
+            for source_ref in source_refs:
+                if not isinstance(source_ref, str) or "#/" not in source_ref:
+                    failures.append("adoption source_refs must be JSON-pointer bindings")
+        if not isinstance(adoption, dict) or not str(adoption.get("source_revision", "")).strip():
+            failures.append("adoption requires source revision evidence")
+        elif spec is not None:
+            spatial = spec.get("presentation", {}).get("spatial_scene", {})
+            if isinstance(spatial, dict) and spatial.get("revision") is not None and adoption.get("source_revision") != spatial.get("revision"):
+                failures.append("adoption source_revision does not match the current spatial scene")
+        if interaction_mode == "adopt_and_generate":
+            authorization = receipt.get("generation_authorization", {})
+            if not isinstance(authorization, dict) or authorization.get("status") != "inherited":
+                failures.append("adopt_and_generate must inherit an existing generation authorization")
+            failures.extend(validate_inherited_generation_authorization(receipt, project_root, spec))
+        elif receipt.get("generation_authorization") is not None:
+            failures.append("adopt must not create or attach generation authorization")
+
     seen_artifacts: set[str] = set()
+    write_records: dict[str, dict[str, Any]] = {}
     for index, artifact in enumerate(receipt.get("artifact_writes", [])):
         if not isinstance(artifact, dict):
             continue
@@ -158,6 +290,7 @@ def semantic_errors(receipt: Any, project_root: Path) -> list[str]:
         if artifact_id in seen_artifacts:
             failures.append(f"duplicate artifact write: {artifact_id}")
         seen_artifacts.add(str(artifact_id))
+        write_records[str(artifact_id)] = artifact
         try:
             artifact_path = resolve_relative(project_root, str(artifact.get("path", "")))
         except ValueError as exc:
@@ -181,13 +314,44 @@ def semantic_errors(receipt: Any, project_root: Path) -> list[str]:
         if change_kind == "preserved" and before != after:
             failures.append(f"preserved artifact requires equal before/after hashes: {artifact_id}")
 
+    if interaction_mode in {"adopt", "adopt_and_generate"}:
+        adoption = receipt.get("adoption_evidence", {})
+        evidence_refs = adoption.get("write_evidence_refs", []) if isinstance(adoption, dict) else []
+        if not evidence_refs or not set(evidence_refs).issubset(seen_artifacts):
+            failures.append("adoption requires write evidence that names written artifacts")
+        spatial = spec.get("presentation", {}).get("spatial_scene", {}) if isinstance(spec, dict) else {}
+        for artifact_id in evidence_refs:
+            artifact = write_records.get(str(artifact_id), {})
+            linkage = artifact.get("source_scene") if isinstance(artifact, dict) else None
+            if not isinstance(linkage, dict) or not isinstance(spatial, dict) or any(
+                linkage.get(key) != spatial.get(key)
+                for key in ("scene_id", "scene_state_sha256")
+            ) or linkage.get("revision") != adoption.get("source_revision") or set(linkage.get("source_refs", [])) != set(adoption.get("source_refs", [])):
+                failures.append("adoption write evidence is not linked to the adopted scene revision")
+                continue
+            try:
+                written = resolve_relative(project_root, str(artifact.get("path", "")))
+                written_payload = load_runtime_state(written)
+            except ValueError:
+                failures.append("adoption write evidence is not readable JSON")
+                continue
+            if written_payload.get("source_scene") != linkage:
+                failures.append("adoption write content is not linked to the adopted scene revision")
+
     lock_effects = receipt.get("lock_effects", {})
-    if set(lock_effects.get("created", [])) & set(lock_effects.get("preserved", [])):
+    if interaction_mode == "decision" and set(lock_effects.get("created", [])) & set(lock_effects.get("preserved", [])):
         failures.append("a lock cannot be both created and preserved")
     downstream = receipt.get("downstream_effects", {})
     categories = [set(downstream.get(name, [])) for name in ("stale", "preserved", "blocked")]
     if any(categories[i] & categories[j] for i in range(3) for j in range(i + 1, 3)):
         failures.append("a downstream artifact cannot be stale, preserved, and/or blocked at the same time")
+    authority = receipt.get("authority", {})
+    if interaction_mode == "decision" and authority.get("generation_authorized") is not False:
+        failures.append("legacy visualization writeback cannot authorize generation")
+    if interaction_mode == "adopt" and authority.get("generation_authorized") is not False:
+        failures.append("adoption without generation must not authorize generation")
+    if interaction_mode == "adopt_and_generate" and authority.get("generation_authorized") is not True:
+        failures.append("adopt_and_generate must prove inherited generation authorization")
     return failures
 
 
@@ -237,7 +401,7 @@ def render_confirmation_fragment(receipt: dict[str, Any], project_root: Path) ->
     failures = validate_receipt(receipt, project_root)
     if failures:
         raise ValueError("invalid writeback receipt: " + "; ".join(failures))
-    result = receipt["gate_result"]
+    result = receipt.get("gate_result", {"status": "approved", "rationale": "已按你的明确意图写入当前修订。", "conflict": None})
     intent = receipt["conversation_intent"]
     downstream = receipt["downstream_effects"]
     next_stage = receipt["next_stage"]
@@ -262,7 +426,10 @@ def render_confirmation_fragment(receipt: dict[str, Any], project_root: Path) ->
     )
     css = CSS_PATH.read_text(encoding="utf-8").strip()
     conflict = result.get("conflict")
-    status = f"你的选择已经确认。下一步先展示{next_stage['label']}内容，不会自动开始生成。"
+    if receipt.get("interaction_mode") == "adopt_and_generate":
+        status = f"你的选择已经确认。控制器会在既有授权范围内继续{next_stage['label']}。"
+    else:
+        status = f"你的选择已经确认。下一步先展示{next_stage['label']}内容，不会自动开始生成。"
     if conflict:
         status = f"当前未写入新的批准结果：{conflict}"
     spec_path = resolve_relative(project_root, receipt["source_view"]["spec_path"])
