@@ -54,6 +54,26 @@ INPUT_SPEC_FIELDS = {
 }
 REPAIR_PRESERVE_REQUIREMENT = "Change only the listed visible defects in the supplied image. Preserve all other established subject identity, shape, proportions, materials, colors, visual medium and unrequested details."
 REPAIR_INTENT = "Edit the attached image using the listed corrections; retain its established visual design."
+PROVIDER_REVIEW_SCOPES = {
+    "length_and_reference_complexity_only",
+    "surface_risk_length_and_reference_complexity",
+}
+
+
+def provider_review_approved(review: Any) -> bool:
+    """Accept the provider's documented soft-review scopes, never contamination."""
+    if not isinstance(review, dict) or not isinstance(review.get("reasons", []), list):
+        return False
+    return (
+        review.get("status") == "approved" and isinstance(review.get("approval_scope"), str)
+        and review.get("approval_scope") in PROVIDER_REVIEW_SCOPES
+        and not any(str(reason) == "empty_prompt" or str(reason).startswith("context_residue:")
+                    for reason in review.get("reasons", []))
+    )
+
+
+def provider_review_ready(review: Any) -> bool:
+    return isinstance(review, dict) and (review.get("status") == "ready" or provider_review_approved(review))
 
 
 def sha256_bytes(payload: bytes) -> str:
@@ -1034,6 +1054,9 @@ def validate(
                     )
 
     output = document["output_spec"]
+    capsule_payload: bytes | None = None
+    if output.get("style_capsule") is not None:
+        capsule_payload = read_binding(resolved_project, output["style_capsule"], "jingzao_style_capsule", errors)
     spec = load_json_bytes(
         read_binding(resolved_project, output["visual_generation_spec"], "visual_generation_spec", errors),
         "visual_generation_spec",
@@ -1144,6 +1167,16 @@ def validate(
                 json.dumps(spec, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
                 encoding="utf-8",
             )
+            capsule_args: list[str] = []
+            if capsule_payload is not None:
+                capsule_path = replay_project / output["style_capsule"]["relative_path"]
+                capsule_path.parent.mkdir(parents=True, exist_ok=True)
+                try:
+                    with capsule_path.open("xb") as handle:
+                        handle.write(capsule_payload)
+                except FileExistsError:
+                    return ["jingzao_style_capsule_replay_path_collision"], None
+                capsule_args = ["--style-capsule", str(capsule_path)]
             reference_by_id = {
                 str(item.get("input_id")): item
                 for item in reference_assets
@@ -1185,10 +1218,7 @@ def validate(
             if replay_validation != validation_receipt or replay_validation != {"valid": True, "errors": []}:
                 return ["jingzao_validation_replay_mismatch"], None
             declared_review = compiled.get("prompt_review") if isinstance(compiled, dict) else None
-            approve_length_review = isinstance(declared_review, dict) and (
-                declared_review.get("status") == "approved"
-                and declared_review.get("approval_scope") == "length_and_reference_complexity_only"
-            )
+            approve_provider_review = provider_review_approved(declared_review)
             replay_compiled, compile_error = run_json_command(
                 isolated_python_command(
                     replay_provider / "scripts/compile_prompt.py",
@@ -1197,7 +1227,8 @@ def validate(
                     "openai",
                     "--format",
                     "json",
-                    *(["--approve-review"] if approve_length_review else []),
+                    *capsule_args,
+                    *(["--approve-review"] if approve_provider_review else []),
                 ),
                 cwd=replay_provider,
                 label="jingzao_compile_prompt_replay",
@@ -1234,10 +1265,7 @@ def validate(
         else:
             errors.append("jingzao_compiled_prompt_missing")
         review = compiled.get("prompt_review", {})
-        if review.get("status") != "ready" and not (
-            review.get("status") == "approved"
-            and review.get("approval_scope") == "length_and_reference_complexity_only"
-        ):
+        if not provider_review_ready(review):
             errors.append("jingzao_prompt_review_not_ready")
         call_plan = compiled.get("imagegen_call_plan", {})
         if call_plan.get("status") != "ready" or call_plan.get("errors") not in ([], None):

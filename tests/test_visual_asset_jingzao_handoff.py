@@ -844,8 +844,48 @@ class VisualAssetJingzaoHandoffTests(unittest.TestCase):
                         self.assertEqual(prompt, expected_prompt)
                     else:
                         self.assertIn("jingzao_compilation_replay_mismatch", errors)
-                        if case in {"surface_risk_scope", "unreviewed"}:
+                        if case == "unreviewed":
                             self.assertIn("jingzao_prompt_review_not_ready", errors)
+
+    def test_documented_provider_soft_review_scopes_do_not_allow_blocking_residue(self):
+        for scope in ('length_and_reference_complexity_only','surface_risk_length_and_reference_complexity'):
+            review={'status':'approved','approval_scope':scope,'reasons':['surface_risk_language:ultra detailed']}
+            self.assertTrue(handoff.provider_review_ready(review))
+            for reasons in (['context_residue:previous attempt'],['empty_prompt'],None):
+                self.assertFalse(handoff.provider_review_ready({**review,'reasons':reasons}))
+            self.assertFalse(handoff.provider_review_ready({**review,'status':'blocked'}))
+        self.assertFalse(handoff.provider_review_ready({'status':'approved','approval_scope':'all_risks'}))
+
+    def test_style_capsule_is_bound_and_replayed_without_becoming_an_image_reference(self):
+        with tempfile.TemporaryDirectory() as raw:
+            root=Path(raw);project=root/'project';project.mkdir();provider=root/'provider/jingzao-image-forge'
+            document,_=self.fixture(project,provider,first_image=True)
+            capsule={'style_capsule':'1.0','visual_rules':{'palette_logic':['Ivory and vivid turquoise by character role'],
+                'texture_material_logic':['Fine woven pattern across broad garment panels; translucent folds retain depth.']}}
+            capsule_path=project/'style.json'
+            document['output_spec']['style_capsule']=write_json(capsule_path,capsule)
+            script=provider/'scripts/compile_prompt.py'
+            text=script.read_text().replace("ids=[item", "if '--style-capsule' in sys.argv:\n    capsule=json.load(open(sys.argv[sys.argv.index('--style-capsule')+1])); prompt+='\\nSTYLE '+json.dumps(capsule,sort_keys=True)\nids=[item",1)
+            script.write_text(text)
+            record=next(x for x in document['provider_runtime_files'] if x['relative_path']=='scripts/compile_prompt.py')
+            record.update(sha256=hashlib.sha256(script.read_bytes()).hexdigest(),bytes=script.stat().st_size)
+            spec_path=project/document['output_spec']['visual_generation_spec']['relative_path']
+            proc=subprocess.run([sys.executable,str(script),str(spec_path),'--style-capsule',str(capsule_path)],capture_output=True,text=True,check=True)
+            compiled=json.loads(proc.stdout)
+            document['output_spec']['compiled_prompt_manifest']=write_json(project/'style-compiled.json',compiled)
+            sha=hashlib.sha256(compiled['prompt'].encode()).hexdigest()
+            document['output_spec']['prompt_sha256']=sha;document['delivery_consumption']['consumed_prompt_sha256']=sha
+            def check(doc):
+                return handoff.validate(doc,project_root=project,provider_root=provider,
+                    trusted_provider_roots=(provider,),allow_unsandboxed_test_replay=True)
+            errors,prompt=check(document)
+            self.assertEqual(errors,[])
+            self.assertIn('Ivory and vivid turquoise',prompt)
+            self.assertEqual(compiled['imagegen_call_plan']['expected_attachment_count'],0)
+            missing=copy.deepcopy(document);missing['output_spec'].pop('style_capsule')
+            self.assertIn('jingzao_compilation_replay_mismatch',check(missing)[0])
+            capsule_path.write_text(json.dumps({**capsule,'visual_rules':{}}))
+            self.assertIn('jingzao_style_capsule_hash_mismatch',check(document)[0])
 
     def test_arbitrary_file_cannot_replace_asset_foundation_pass(self):
         with tempfile.TemporaryDirectory() as project_raw, tempfile.TemporaryDirectory() as provider_raw:

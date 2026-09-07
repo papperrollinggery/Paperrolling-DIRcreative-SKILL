@@ -76,6 +76,7 @@
       "required": ["visual_generation_spec", "validation_receipt", "compiled_prompt_manifest", "prompt_sha256"],
       "properties": {
         "visual_generation_spec": {"$ref": "#/$defs/artifact_binding"},
+        "style_capsule": {"$ref": "#/$defs/artifact_binding"},
         "validation_receipt": {"$ref": "#/$defs/artifact_binding"},
         "compiled_prompt_manifest": {"$ref": "#/$defs/artifact_binding"},
         "prompt_sha256": {"$ref": "#/$defs/sha256"}
