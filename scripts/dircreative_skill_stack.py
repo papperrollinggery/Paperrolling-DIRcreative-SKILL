@@ -2477,7 +2477,11 @@ def select_stack(
                     "sha256": hashlib.sha256(payload).hexdigest(),
                     "bytes": len(payload),
                     "context_scope": "isolated_handoff_contract",
-                    "host_action": "independent_full_read_hash_verify_and_apply_before_handoff",
+                    "host_action": (
+                        "hash_verify_and_run_existing_handoff_validator_without_loading_source"
+                        if role == "output_validator"
+                        else "independent_full_read_hash_verify_and_apply_before_handoff"
+                    ),
                 }
             )
     base_bytes, base_files = external_base_bytes, external_base_files
@@ -3272,7 +3276,7 @@ def select_stack(
         int(item["body_bytes"]) + _metadata_bytes([item])
         for item in slots
         if item.get("context_scope") == "isolated_handoff_contract"
-    ) + sum(int(item["bytes"]) for item in handoff_read_requests) + (
+    ) + sum(int(item["bytes"]) for item in handoff_read_requests if item["role"] != "output_validator") + (
         len(
             json.dumps(
                 handoff_read_requests,
@@ -3535,6 +3539,7 @@ def select_stack(
                 mode_contract.get("isolated_method_context_bytes_max", 0)
             ),
             "isolated_handoff_context_bytes": isolated_handoff_context_bytes,
+            "handoff_validator_execution_bytes": sum(int(item["bytes"]) for item in handoff_read_requests if item["role"] == "output_validator"),
             "isolated_handoff_reference_count": len(handoff_read_requests),
             "isolated_handoff_context_budget_bytes": int(
                 mode_contract.get("isolated_handoff_context_bytes_max", 0)
@@ -4108,7 +4113,8 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
                     or int(context.get("isolated_craft_reference_count", 0)) != 6
                     or int(context.get("isolated_craft_reference_bytes", 0)) < 71000
                     or int(context.get("total_bytes", 0)) > 20000
-                    or int(context.get("isolated_handoff_context_bytes", 0)) < 30000
+                    or int(context.get("isolated_handoff_context_bytes", 0)) < sum(int(item["bytes"]) for item in handoff_requests if item["role"] != "output_validator")
+                    or int(context.get("handoff_validator_execution_bytes", 0)) != sum(int(item["bytes"]) for item in handoff_requests if item["role"] == "output_validator")
                     or int(context.get("isolated_handoff_context_bytes", 0)) > 86016
                     or int(context.get("aggregate_accounted_bytes", 0))
                     != int(context.get("total_bytes", 0))
@@ -4142,7 +4148,8 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
                     or int(context.get("isolated_validator_context_bytes", 0)) < 23000
                     or int(context.get("isolated_validator_context_bytes", 0)) > 65536
                     or int(context.get("total_bytes", 0)) > 20000
-                    or int(context.get("isolated_handoff_context_bytes", 0)) < 40000
+                    or int(context.get("isolated_handoff_context_bytes", 0)) < sum(int(item["bytes"]) for item in handoff_requests if item["role"] != "output_validator")
+                    or int(context.get("handoff_validator_execution_bytes", 0)) != sum(int(item["bytes"]) for item in handoff_requests if item["role"] == "output_validator")
                     or int(context.get("isolated_handoff_context_bytes", 0)) > 86016
                     or int(context.get("aggregate_accounted_bytes", 0))
                     != int(context.get("total_bytes", 0))

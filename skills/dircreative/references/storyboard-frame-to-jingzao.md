@@ -13,6 +13,11 @@ an absolute Codex JSONL under `~/.codex/sessions`, outside producer-writable
 artifacts. Unregistered copies, overlapping roots and producer-written host
 logs fail closed. CLI callers cannot extend the trusted catalog.
 
+Read the contract and schema for authoring; hash-verify and run the existing
+validator through its normal validation entrypoint. Its Python implementation
+is executable tooling, not mandatory model-reading material for each frame.
+Source inspection remains available for diagnosing an actual validator error.
+
 ## Ownership and execution
 
 - DIRcreative owns story purpose, canonical shots/timecodes, continuity states,

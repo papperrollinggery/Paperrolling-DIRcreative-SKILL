@@ -11,6 +11,7 @@
 - Fix first-output registration for standalone asset plans without falsely claiming completed media. Clarify first-pass reference/design preparation, conditional negative prompts, clean-image label policy and dependency-scoped rework; update only project-level maintenance guidance.
 - Keep requested five-view coverage. Support explicit nonhuman character identity/state without human-anatomy probes, and allow source-bound authored 2D layout references without pretending they are measured spatial exports.
 - Forward hash-bound Jingzao style capsules through asset and narrative-frame replay. Accept its two documented nonblocking review scopes without stripping style detail, while keeping exact compilation checks and detected contamination blocks.
+- Keep handoff validators as hash-verified executable tools instead of mandatory model-reading material. Preserve full contract/schema reads and existing context budgets; validator code growth no longer blocks ordinary frame selection.
 - These changes remove demonstrated workflow failures; structural checks do not establish universal first-pass image quality or pixel-perfect editing.
 
 ## 0.9.3 - 2026-09-07
