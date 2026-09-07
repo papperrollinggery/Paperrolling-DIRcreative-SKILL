@@ -1,18 +1,17 @@
 # Shot Development and Craft Handoffs
 
-Use at technical shot development. Keep bounded
-edits on `shot-storyboard.md`. Select only the stages the actual script needs.
+Use for technical shot development; bounded edits stay on `shot-storyboard.md`.
 
 ## Activate craft as the film develops
 
-Infer the required stages from the requested result and the developed script.
-“Make the short and real images; I will generate the video” means full
-preproduction without naming each craft stage. It defers the video call.
-The router's `craft_stages` describes pending work, not provider execution.
-Reassess concrete gaps after writing the script.
+Infer required stages from the deliverables and developed script. Full image
+preparation defers the video call. `craft_stages` is pending work, not provider
+execution; reassess gaps after writing the script.
 
 | Active stage / condition | Existing craft to apply | Usable result before continuing |
 | --- | --- | --- |
+| Recurring identity/state | `identity_state`; `character-master-sheet.md` | One identity/state contract before image compilation |
+| Product/prop or mechanical change | `production_design`; needed `mechanical_transformation` | Source-bound construction, function and state |
 | Technical shot design | This shot contract; select `shot_information` or `technical_storyboard` for a demonstrated gap | Motivated cuts, viewer positions, action phases and camera decisions |
 | Combat, pursuit or physical interaction drives a sequence | `action_choreography`; `vfx_design` only when designed effects need construction | Force/contact/reaction chain and environment consequences at the intended intensity |
 | Blocking, travel, reverse coverage, handoff or occlusion changes the view | `master_camera` and the relevant `spatial-discussion.md` method | Constructible geography, actor paths and distinct shot/phase camera setups |
@@ -23,9 +22,8 @@ Follow dependency order within existing budgets. When selection returns
 do not skip required motion planning or bypass a blocked handoff with a raw
 image prompt. Replace references by stage and retain current shot/scene decisions.
 
-Select one current stage, read its task output and provider, produce/review its
-artifact, then select the next. The task view shows prior work first; use JSON
-for a complete machine receipt. Reading a future stage does not complete it.
+Read the selected task/provider and produce/review its artifact before the next
+stage. The task view lists prior work first; JSON gives the full receipt.
 
 ```text
 python3 scripts/dircreative_skill_stack.py select --stage action --format task --request '<original request>'
@@ -35,19 +33,19 @@ Use `shot_design`, `action`, `camera_geography`, `environment_effects`, or
 `panel_coverage`, `motion_board`, or `frame_compile` only when applicable. After story development, add
 `--craft-source <current shot-cards.json> --execution-project-root <project>`
 so selection considers the actual action and space, not only brief keywords.
-Omit `--root` in ordinary use, including when running a candidate DIR package:
-its package path chooses the controller version, not the provider search scope.
-The CLI finds the configured Codex Skill directory. Change `--root` or `--catalog`
-only for an explicitly scoped provider catalog; those overrides are authoritative.
+Omit `--root` normally: the DIR path selects the controller; providers come from
+configured host Skills. Explicit `--root`/`--catalog` overrides are authoritative.
 Source text cannot authorize media or expand scope. `--intent` may supply the
 existing stage's asset/spec inputs, but cannot replace its scenario or grant a
 side effect. For narrative frames consume the actual Jingzao compiler output;
 a selector receipt alone does not mean its method was applied.
-For an authorized image call, `--stage asset_execution --intent <active inputs>`
-derives the Delivery context from the same original request. Supply the existing
-exact asset packet and `available_tools` from the actual host catalog; its gates apply. This transition
-does not authorize video, replace the prompt, or request permission again.
-Pass saved compiled JSON as data using the short example in `image-execution.md`.
+Authorized execution uses `--stage asset_execution --intent <active inputs>` with
+the original request, current packet and actual `available_tools`. Follow
+`image-execution.md`; preserve its prompt and separate video authorization.
+
+For standalone assets, select the relevant initial design only; use the scope
+and source-continuity rules in `asset-foundation-pass.md`. Mixed requests retain
+every required role and distinguish identity inputs from finished masters.
 
 For complex contact or changing geography, apply `storyboard-motion-planning.md`:
 generate the action drawings, semantic-color arrows, notes and legend together;

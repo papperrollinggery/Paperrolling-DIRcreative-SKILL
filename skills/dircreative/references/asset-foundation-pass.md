@@ -7,6 +7,26 @@ Persist the pass with
 `docs/film-preproduction/schemas/asset-foundation-pass.schema.json` and validate
 it using `python3 scripts/dircreative_asset_foundation_pass.py validate <pass> --artifact-root <root>`.
 
+## Initial design and source scope
+
+Independent asset requests use `scope: asset_only` and the existing
+`asset_pass_scope: initial_design` stage selection. This only prepares the relevant
+design pass (`in_progress`, no side effect); it cannot certify the pass, skip
+stress/review, or authorize media. Do not require screenplay/timed-shot artifacts
+for a standalone character or scene. In mixed storyboard-and-asset work, enumerate
+every recurring identity and critical scene/prop from the authorized story before
+the first generation. A supplied portrait is an identity input unless direct reuse
+was selected; it is not evidence that the remaining characters or views exist.
+
+Compare the current source, scene heading and adjacent state before making a
+state-dependent asset or prompt. Resolve meaningful contradictions from actual
+source/user evidence; leave an unresolved conflict attached to its affected work
+and continue independent work. Ordinary unspecified craft details remain design
+judgments. Do not silently turn a review suggestion into the production source.
+Offscreen, cropped and occluded characters retain their established presence and
+state until the source establishes an exit or change.
+
+
 ## Before the first image
 
 An asset being created cannot supply its own completed image or stress report.

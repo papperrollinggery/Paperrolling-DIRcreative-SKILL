@@ -338,7 +338,7 @@ class VisualAssetJingzaoHandoffTests(unittest.TestCase):
             "scripts/compile_prompt.py": (
                 "import json,sys\n"
                 "spec=json.load(open(sys.argv[1]))\n"
-                "prompt='Goal:\\n'+spec['intent']\n"
+                "prompt='Goal:\\n'+spec['intent']+''.join('\\n'+x for x in (spec.get('constraints',{}).get('must_preserve',[])+spec.get('constraints',{}).get('must_change',[])))\n"
                 "ids=[item['id'] for item in spec.get('inputs',[])]\n"
                 "print(json.dumps({'prompt':prompt,'prompt_review':{'status':'ready'},'imagegen_call_plan':{'status':'ready','errors':[],'required_input_ids':ids,'expected_attachment_count':len(ids)}}))\n"
             ),
@@ -481,11 +481,12 @@ class VisualAssetJingzaoHandoffTests(unittest.TestCase):
             "intent": purpose,
             "inputs": [],
         }
+        spec = handoff.prepare_role_spec(spec, active)
         spec_binding = write_json(project / "visual-spec.json", spec)
         validation_binding = write_json(
             project / "validation.json", {"valid": True, "errors": []}
         )
-        prompt = "Goal:\n" + purpose
+        prompt = "Goal:\n" + purpose + "".join("\n" + item for item in spec["constraints"]["must_preserve"])
         compiled = {
             "prompt": prompt,
             "prompt_review": {"status": "ready"},
@@ -763,7 +764,7 @@ class VisualAssetJingzaoHandoffTests(unittest.TestCase):
                 "review={'status':'approved' if approved else 'review_required',"
                 "'approval_scope':'length_and_reference_complexity_only' if approved else 'none',"
                 "'reasons':['prompt_length'], 'required_reference_count':len(ids)}\n"
-                "print(json.dumps({'prompt':'Goal:\\n'+spec['intent'],'prompt_review':review,"
+                "print(json.dumps({'prompt':'Goal:\\n'+spec['intent']+''.join('\\n'+x for x in spec.get('constraints',{}).get('must_preserve',[])),'prompt_review':review,"
                 "'imagegen_call_plan':{'status':'ready' if approved else 'review_required',"
                 "'errors':[], 'required_input_ids':ids,'expected_attachment_count':len(ids)}}))\n"
             )

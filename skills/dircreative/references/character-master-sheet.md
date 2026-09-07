@@ -18,6 +18,15 @@ and source-master hash. A derived sheet is another control surface for the same
 character, not permission to redesign the face, body, hair, outfit, accessory,
 or left/right placement.
 
+Keep this master's purpose and appearance state about visible identity, wardrobe
+and persistent physical condition. Handheld story-prop custody, acting, travel and
+screen position belong in shot continuity, not the identity generation goal.
+Standard master views have readable empty hands; a separate prop asset owns the
+story object. Before compiling, reconcile the purpose, subject, pose and exclusions:
+an instruction to hold an object cannot coexist with a prop-free master setting.
+Preserve the original held/handed-over state in the shot cards when repairing this
+asset description; do not alter the story to resolve an asset-role conflict.
+
 Generate the headed master as one coherent image in one model pass from the
 locked identity and wardrobe/body sources. Do not build the ordinary character
 master by manually pasting a portrait beside separately rendered bodies. The
@@ -199,7 +208,7 @@ model-facing prompt. A direct DIR prompt is only a rough-planning fallback and
 cannot become a reviewed production master.
 
 ```text
-Create one professional photorealistic character master sheet based strictly on
+Create one professional character master sheet based strictly on
 the approved identity and wardrobe facts. Fully opaque neutral mid-gray seamless background,
 soft even studio light, neutral expression, no cinematic grade, no text, no
 labels, no watermark. One unified sheet: one dominant front-facing face

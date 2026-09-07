@@ -542,14 +542,16 @@ class AssetExecutionGateTests(unittest.TestCase):
             spec_path = project / document["output_spec"]["visual_generation_spec"]["relative_path"]
             document["output_spec"]["visual_generation_spec"] = write_json(
                 spec_path,
-                {
+                gate.visual_asset_jingzao_handoff.prepare_role_spec({
                     "visual_generation_spec": "1.0",
                     "mode": "create",
                     "intent": CHARACTER_PURPOSE,
                     "inputs": [],
-                },
+                }, CHARACTER_ASSET),
             )
-            prompt = "Goal:\n" + CHARACTER_PURPOSE
+            prompt = "Goal:\n" + CHARACTER_PURPOSE + "".join(
+                "\n" + item for item in gate.visual_asset_jingzao_handoff.canonical_asset_role_requirements(CHARACTER_ASSET)
+            )
             compiled_path = project / document["output_spec"]["compiled_prompt_manifest"]["relative_path"]
             document["output_spec"]["compiled_prompt_manifest"] = write_json(
                 compiled_path,

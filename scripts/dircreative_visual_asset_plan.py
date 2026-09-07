@@ -15,6 +15,7 @@ from datetime import datetime, timezone
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
+from dircreative_verify_release import read_relative_regular_file_once
 
 try:
     from jsonschema import Draft202012Validator
@@ -64,6 +65,8 @@ VISUAL_QA_RULESET = "dircreative-role-truth-review-v2"
 VISUAL_QA_RECEIPT_VERSION = "2.0"
 VISUAL_REVIEW_MANIFEST_VERSION = "1.0"
 SCOPED_VISUAL_REVIEW_MANIFEST_VERSION = "1.1"
+SELF_CHECK_MANIFEST_VERSION = "1.2"
+SELF_CHECK_RULESET = "dircreative-executor-role-self-check-v1"
 SCHEMA_VERSION = "2.3"
 FUTURE_TIMESTAMP_TOLERANCE_SECONDS = 300
 TRUSTED_VISUAL_REVIEW_ADOPTION_REQUIRED = (
@@ -141,6 +144,7 @@ ASSET_OPTIONAL_FIELDS = {
     "approved_source_master_sha256",
     "character_contract_sha256",
 }
+ASSET_EXECUTION_FIELDS = {"execution_task_id", "candidate_self_check", "candidate_repair_source"}
 CHARACTER_MODES = {"headed_master", "headed_state", "headless_safe"}
 COMPILE_ROUTES = {"direct_concise", "selected_skill_handoff", "deterministic_assembly"}
 COVERAGE_FIELDS = {
@@ -947,6 +951,260 @@ def visual_review_subject_sha256(
 
 def visual_review_rubric_id(role: str) -> str:
     return f"dircreative-{role}-review-v1"
+
+
+def candidate_check_ids(asset: dict[str, Any]) -> list[str]:
+    common = ["saved_pixels_and_detail", "truth_and_reference_match", "artifacts_and_downstream_fit"]
+    by_role = {
+        "character_identity_reference": ["frontal_portrait", "front_body", "left_profile", "right_profile", "back_body", "identity_and_proportions", "wardrobe_material_and_side_details", "mode_and_source_preservation"],
+        "product_identity_board": ["silhouette_scale_and_construction", "material_function_and_exact_graphics"],
+        "prop_continuity_board": ["shape_interface_and_orientation", "state_and_custody", "reference_role_boundary"],
+        "scene_geography_camera_fov_reference": ["landmarks_entrances_and_scale", "axis_camera_and_support", "empty_scene_and_projection"],
+        "lighting_material_style_board": ["light_sources_and_material_response", "palette_exposure_and_role_boundary"],
+        "professional_storyboard_motion_map": ["panel_coverage_and_phase", "camera_and_spatial_continuity", "contact_counterforce_and_consequence", "annotations_and_reference_boundary"],
+        "storyboard_frame": ["camera_depth_and_frozen_phase", "action_contact_and_environment", "neighbor_custody_and_persistent_state"],
+        "clean_first_frame": ["camera_depth_and_frozen_phase", "action_contact_and_environment", "neighbor_custody_and_persistent_state", "clean_input_preserves_intended_effects"],
+        "clean_key_frame": ["camera_depth_and_frozen_phase", "action_contact_and_environment", "neighbor_custody_and_persistent_state", "clean_input_preserves_intended_effects"],
+        "clean_end_frame": ["camera_depth_and_frozen_phase", "action_contact_and_environment", "neighbor_custody_and_persistent_state", "clean_input_preserves_intended_effects"],
+    }
+    role = asset.get("role")
+    if role not in by_role:
+        raise ValueError("candidate_self_check_role_unknown")
+    return [*common, *by_role[role]]
+
+
+def record_candidate_output(
+    payload: dict[str, Any], *, base_dir: Path, asset_id: str,
+    image_path: Path, execution_task_id: str, checked_at: str | None = None,
+    repair_source: dict[str, Any] | None = None, project_root: Path | None = None,
+) -> dict[str, Any]:
+    """Register saved bytes in the existing plan. Even failed visual candidates remain real."""
+    if not isinstance(execution_task_id, str) or not ID_RE.fullmatch(execution_task_id):
+        raise ValueError("execution_task_id_invalid")
+    truth = copy.deepcopy(payload)
+    truth["completion_claim"] = "none"
+    if validate_plan(truth, base_dir=base_dir, _validate_recorded_assets=False)[0]:
+        raise ValueError("visual_asset_plan_invalid")
+    candidate = copy.deepcopy(payload)
+    asset = next((item for item in candidate["assets"] if item["asset_id"] == asset_id), None)
+    if asset is None or asset.get("action") not in {"generate", "derive"}:
+        raise ValueError("candidate_output_requires_generated_asset")
+    if asset.get("status") in {"user_locked", "reused_locked"}:
+        raise ValueError("locked_asset_requires_a_new_candidate_version")
+    root = base_dir.resolve(strict=True)
+    # Validate the supplied lexical path too: resolving it first would conceal symlinks.
+    if image_path.is_absolute():
+        try:
+            relative = image_path.relative_to(base_dir.absolute()).as_posix()
+        except ValueError:
+            relative = image_path.relative_to(root).as_posix()
+    else:
+        relative = image_path.as_posix()
+    raw = read_relative_regular_file_once(root, relative, max_bytes=MAX_RASTER_FILE_BYTES, label="saved image")
+    evidence, reason = inspect_raster(root / relative)
+    if evidence is None or evidence["sha256"] != hashlib.sha256(raw).hexdigest():
+        raise ValueError("candidate_raster_invalid:" + str(reason or "changed_during_read"))
+    if asset.get("generated_pixel_sha256") and (
+        evidence["sha256"] == asset.get("generated_sha256")
+        or evidence["pixel_sha256"] == asset["generated_pixel_sha256"]
+        or relative == asset.get("generated_file")
+    ):
+        raise ValueError("candidate_requires_new_output_pixels_and_path")
+    if repair_source is not None:
+        source_root = (project_root or base_dir).resolve(strict=True)
+        expected = build_candidate_repair_source(
+            project_root=source_root, visual_plan_binding=repair_source.get("source_plan"),
+            asset_id=asset_id, changes=repair_source.get("changes"),
+        )
+        if repair_source != expected:
+            raise ValueError("candidate_repair_source_binding_mismatch")
+        old_raw = read_relative_regular_file_once(source_root, expected["source_plan"]["relative_path"], max_bytes=8 * 1024 * 1024, label="repair source plan")
+        if json.loads(old_raw) != payload or (source_root / expected["source_plan"]["relative_path"]).parent != root:
+            raise ValueError("candidate_repair_record_plan_mismatch")
+        asset["candidate_repair_source"] = copy.deepcopy(expected)
+    else:
+        asset.pop("candidate_repair_source", None)
+    now = checked_at or datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    if not timestamp_in_review_window(now, not_before=str(payload["truth_locked_at"])):
+        raise ValueError("candidate_timestamp_invalid")
+    asset.update(status="generated_candidate", generated_file=relative,
+                 generated_sha256=evidence["sha256"], generated_pixel_sha256=evidence["pixel_sha256"],
+                 generated_perceptual_hash=evidence["perceptual_hash"],
+                 technical_receipt=make_technical_receipt(asset_id, evidence, checked_at=now),
+                 visual_qa_receipt=None, execution_task_id=execution_task_id, candidate_self_check=None)
+    candidate["completion_claim"] = "none"
+    return candidate
+
+
+def candidate_self_check_template(payload: dict[str, Any], asset_id: str) -> dict[str, Any]:
+    """An explicit pending template, never a prefilled passing review."""
+    asset = next(item for item in payload["assets"] if item["asset_id"] == asset_id)
+    return {
+        "schema_version": SELF_CHECK_MANIFEST_VERSION, "ruleset": SELF_CHECK_RULESET,
+        "review_subject_sha256": visual_review_subject_sha256(payload, scope_asset_ids=[asset_id]),
+        "scope_asset_ids": [asset_id], "reviewed_at": None,
+        "reviewer_type": "executor_self_check", "reviewer_id": None,
+        "review_task_id": None,
+        "assets": [{
+            "asset_id": asset_id, "role": asset["role"], "file_sha256": asset["generated_sha256"],
+            "pixel_sha256": asset["generated_pixel_sha256"], "truth_sha256": asset["truth_sha256"],
+            "rubric_id": visual_review_rubric_id(asset["role"]),
+            "decision": "pending", "viewed_file": asset["generated_file"],
+            "observations": [{"check_id": key, "result": "unverified", "observed": ""}
+                             for key in candidate_check_ids(asset)],
+        }],
+    }
+
+
+def validate_candidate_self_check(
+    manifest: Any, *, payload: dict[str, Any], asset_id: str, base_dir: Path,
+) -> list[str]:
+    """Validate recorded observations and machine checks; does not grant visual QA authority."""
+    if not isinstance(payload, dict) or not isinstance(payload.get("assets"), list):
+        return ["candidate_self_check_plan_invalid"]
+    asset = next((item for item in payload["assets"] if isinstance(item, dict) and item.get("asset_id") == asset_id), None)
+    if not isinstance(asset, dict) or not isinstance(manifest, dict):
+        return ["candidate_self_check_invalid"]
+    if not isinstance(asset.get("technical_receipt"), dict):
+        return ["candidate_self_check_technical_missing"]
+    expected = candidate_self_check_template(payload, asset_id)
+    if set(manifest) != set(expected) or any(manifest.get(key) != expected[key] for key in (
+        "schema_version", "ruleset", "review_subject_sha256", "scope_asset_ids", "reviewer_type",
+    )):
+        return ["candidate_self_check_identity_or_truth_mismatch"]
+    if (not isinstance(manifest.get("reviewer_id"), str) or not ID_RE.fullmatch(manifest["reviewer_id"])
+        or not isinstance(manifest.get("review_task_id"), str) or not ID_RE.fullmatch(manifest["review_task_id"])
+        or not timestamp_in_review_window(manifest.get("reviewed_at"), not_before=str(asset.get("technical_receipt", {}).get("checked_at")))):
+        return ["candidate_self_check_reviewer_or_timestamp_invalid"]
+    entries = manifest.get("assets")
+    if not isinstance(entries, list) or len(entries) != 1 or not isinstance(entries[0], dict):
+        return ["candidate_self_check_coverage_invalid"]
+    entry = entries[0]; template = expected["assets"][0]
+    if set(entry) != set(template) or any(entry.get(key) != template[key] for key in (
+        "asset_id", "role", "file_sha256", "pixel_sha256", "truth_sha256", "rubric_id", "viewed_file",
+    )):
+        return ["candidate_self_check_asset_binding_invalid"]
+    observations = entry.get("observations")
+    if not isinstance(observations, list) or any(not isinstance(item, dict) for item in observations):
+        return ["candidate_self_check_observations_missing"]
+    required = candidate_check_ids(asset)
+    if [item.get("check_id") for item in observations] != required:
+        return ["candidate_self_check_role_coverage_invalid"]
+    for item in observations:
+        if (set(item) != {"check_id", "result", "observed"}
+            or item.get("result") not in {"pass", "fail", "not_applicable"}
+            or not isinstance(item.get("observed"), str) or len(item["observed"].strip()) < 12):
+            return ["candidate_self_check_observation_invalid"]
+        if item["result"] == "not_applicable" and (
+            asset.get("role") == "character_identity_reference"
+            or item["check_id"] in {"saved_pixels_and_detail", "truth_and_reference_match", "artifacts_and_downstream_fit"}
+        ):
+            return ["candidate_self_check_required_observation_not_applicable"]
+    if entry.get("decision") not in {"checked", "retry", "reject"}:
+        return ["candidate_self_check_decision_invalid"]
+    if entry["decision"] == "checked" and any(item["result"] == "fail" for item in observations):
+        return ["candidate_self_check_failed_observation"]
+    image = contained_file(asset.get("generated_file"), base_dir)
+    evidence, reason = inspect_raster(image) if image is not None else (None, "missing")
+    if evidence is None or evidence["sha256"] != asset.get("generated_sha256") or evidence["pixel_sha256"] != asset.get("generated_pixel_sha256"):
+        return ["candidate_self_check_pixels_changed:" + str(reason or "hash")]
+    technical = validate_technical_receipt(asset.get("technical_receipt"), asset_id=asset_id, evidence=evidence, truth_locked_at=str(payload["truth_locked_at"]))
+    if technical:
+        return ["candidate_self_check_technical_invalid:" + technical]
+    if entry["decision"] != "checked":
+        return ["candidate_self_check_requires_repair"]
+    profile = payload.get("delivery_profile", {})
+    if payload.get("scope") == "asset_only" or asset.get("role") in DELIVERY_FRAME_ROLES:
+        width, height = profile.get("raster_width"), profile.get("raster_height")
+        if isinstance(width, int) and isinstance(height, int) and width > 0 and height > 0:
+            if abs((evidence["width"] / evidence["height"]) / (width / height) - 1) > DELIVERY_ASPECT_RATIO_TOLERANCE:
+                return ["candidate_self_check_delivery_aspect_mismatch"]
+    if asset.get("role") == "character_identity_reference":
+        from dircreative_character_master_visual_gate import load_character_master_receipt
+        receipt, problems = load_character_master_receipt(asset, base_dir=base_dir, image_evidence=evidence)
+        if problems or not isinstance(receipt, dict) or receipt.get("status") not in {"pass", "applied_unverified"}:
+            return ["candidate_self_check_character_structure_failed", *problems]
+    return []
+
+
+def pending_candidate_self_checks(payload: dict[str, Any], *, base_dir: Path, execution_task_id: str) -> list[str]:
+    """Pending candidates belong to this active plan, not to a caller-chosen task ID.
+
+    Older assets without a registration remain readable through their existing
+    QA/dependency checks. A resumed task cannot hide a newly registered candidate.
+    """
+    errors: list[str] = []
+    for asset in payload.get("assets", []):
+        if "execution_task_id" not in asset:
+            continue
+        binding = asset.get("candidate_self_check")
+        asset_id = asset["asset_id"]
+        if not isinstance(binding, dict) or set(binding) != {"relative_path", "sha256"}:
+            errors.append(f"candidate_postcheck_required:{asset_id}"); continue
+        try:
+            raw = read_relative_regular_file_once(base_dir, binding["relative_path"], max_bytes=1024 * 1024, label="candidate self-check")
+            if hashlib.sha256(raw).hexdigest() != binding["sha256"]:
+                raise ValueError("hash mismatch")
+            problems = validate_candidate_self_check(json.loads(raw), payload=payload, asset_id=asset_id, base_dir=base_dir)
+        except (OSError, ValueError, TypeError, KeyError):
+            problems = ["candidate_self_check_unreadable_or_changed"]
+        errors.extend(f"candidate_postcheck_failed:{asset_id}:{problem}" for problem in problems)
+    return errors
+
+
+def build_candidate_repair_source(
+    *, project_root: Path, visual_plan_binding: Any, asset_id: str, changes: Any,
+) -> dict[str, Any]:
+    """Bind a same-asset edit base to an actual current retry, without approval or a self-DAG."""
+    if not isinstance(visual_plan_binding, dict) or set(visual_plan_binding) != {"relative_path", "sha256"}:
+        raise ValueError("candidate_repair_plan_binding_invalid")
+    root = project_root.resolve(strict=True)
+    raw = read_relative_regular_file_once(root, visual_plan_binding["relative_path"], max_bytes=8 * 1024 * 1024, label="candidate repair plan")
+    if hashlib.sha256(raw).hexdigest() != visual_plan_binding["sha256"]:
+        raise ValueError("candidate_repair_plan_changed")
+    plan = json.loads(raw)
+    base = (root / visual_plan_binding["relative_path"]).parent
+    if validate_plan(plan, base_dir=base)[0]:
+        raise ValueError("candidate_repair_plan_invalid")
+    asset = next((item for item in plan["assets"] if item["asset_id"] == asset_id), None)
+    if (not isinstance(asset, dict) or asset.get("status") != "generated_candidate"
+        or asset.get("action") not in {"generate", "derive"}
+        or asset.get("role") not in {"character_identity_reference", "product_identity_board", "prop_continuity_board", "scene_geography_camera_fov_reference", "lighting_material_style_board"}
+        or asset.get("visual_qa_receipt") is not None):
+        raise ValueError("candidate_repair_requires_unapproved_current_asset")
+    if asset.get("role") == "character_identity_reference" and asset.get("character_mode") != "headed_master":
+        raise ValueError("candidate_repair_character_requires_current_headed_master")
+    review_binding = asset.get("candidate_self_check")
+    if not isinstance(review_binding, dict) or set(review_binding) != {"relative_path", "sha256"}:
+        raise ValueError("candidate_repair_requires_recorded_self_check")
+    review_raw = read_relative_regular_file_once(base, review_binding["relative_path"], max_bytes=1024 * 1024, label="candidate repair self-check")
+    if hashlib.sha256(review_raw).hexdigest() != review_binding["sha256"]:
+        raise ValueError("candidate_repair_self_check_changed")
+    review = json.loads(review_raw)
+    if validate_candidate_self_check(review, payload=plan, asset_id=asset_id, base_dir=base) != ["candidate_self_check_requires_repair"]:
+        raise ValueError("candidate_repair_self_check_invalid")
+    entry = review["assets"][0]
+    if entry["decision"] != "retry":
+        raise ValueError("candidate_repair_requires_retry_decision")
+    failed = {item["check_id"] for item in entry["observations"] if item["result"] == "fail"}
+    if (not isinstance(changes, list) or not changes or len(changes) > len(failed)
+        or any(not isinstance(item, dict) or set(item) != {"check_id", "instruction"}
+               or not isinstance(item.get("check_id"), str) or item["check_id"] not in failed
+               or not isinstance(item.get("instruction"), str) or not 12 <= len(item["instruction"].strip()) <= 4096 for item in changes)
+        or len({item["check_id"] for item in changes}) != len(changes)):
+        raise ValueError("candidate_repair_changes_must_target_observed_failures")
+    relative_image = (base / asset["generated_file"]).relative_to(root).as_posix()
+    image_raw = read_relative_regular_file_once(root, relative_image, max_bytes=MAX_RASTER_FILE_BYTES, label="candidate repair image")
+    if hashlib.sha256(image_raw).hexdigest() != asset["generated_sha256"]:
+        raise ValueError("candidate_repair_image_changed")
+    return {
+        "contract_id": "candidate_repair_source_v1", "project_id": plan["project_id"],
+        "asset_id": asset_id, "truth_sha256": asset["truth_sha256"],
+        "source_plan": copy.deepcopy(visual_plan_binding),
+        "source_image": {"relative_path": relative_image, "sha256": asset["generated_sha256"], "pixel_sha256": asset["generated_pixel_sha256"]},
+        "self_check": {"relative_path": (base / review_binding["relative_path"]).relative_to(root).as_posix(), "sha256": review_binding["sha256"]},
+        "changes": copy.deepcopy(changes),
+    }
 
 
 def validate_visual_review_manifest(
@@ -2842,7 +3100,7 @@ def validate_plan(
         if (
             not isinstance(asset, dict)
             or not ASSET_FIELDS.issubset(asset)
-            or set(asset) - ASSET_FIELDS - ASSET_OPTIONAL_FIELDS
+            or set(asset) - ASSET_FIELDS - ASSET_OPTIONAL_FIELDS - ASSET_EXECUTION_FIELDS
         ):
             errors.append(f"asset_field_set_mismatch:{index}")
             continue
@@ -2851,6 +3109,25 @@ def validate_plan(
             errors.append(f"asset_id_invalid:{index}")
             continue
         assets.append(asset)
+        if "execution_task_id" in asset and (
+            not isinstance(asset["execution_task_id"], str) or not ID_RE.fullmatch(asset["execution_task_id"])
+        ):
+            errors.append(f"asset_execution_task_id_invalid:{asset_id}")
+        if asset.get("candidate_self_check") is not None:
+            binding = asset["candidate_self_check"]
+            if (not isinstance(binding, dict) or set(binding) != {"relative_path", "sha256"}
+                or not isinstance(binding.get("relative_path"), str)
+                or not isinstance(binding.get("sha256"), str) or not SHA256_RE.fullmatch(binding["sha256"])
+                or "execution_task_id" not in asset):
+                errors.append(f"asset_candidate_self_check_binding_invalid:{asset_id}")
+        if "candidate_repair_source" in asset:
+            source = asset["candidate_repair_source"]
+            if (not isinstance(source, dict) or source.get("contract_id") != "candidate_repair_source_v1"
+                or source.get("project_id") != payload.get("project_id")
+                or source.get("asset_id") != asset_id or source.get("truth_sha256") != asset.get("truth_sha256")
+                or not isinstance(source.get("source_image"), dict)
+                or source["source_image"].get("pixel_sha256") == asset.get("generated_pixel_sha256")):
+                errors.append(f"asset_candidate_repair_lineage_invalid:{asset_id}")
         asset_ids.append(asset_id)
         role = asset.get("role")
         if role not in ROLES:

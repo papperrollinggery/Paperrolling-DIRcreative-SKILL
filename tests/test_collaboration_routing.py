@@ -269,11 +269,130 @@ class CollaborationRoutingTests(unittest.TestCase):
         for request in (
             "只把这个武侠打斗镜头提示词改得简洁，别扩写。",
             "请为客户写一页武侠故事，只要故事，不要分镜和资产。",
-            "请生成一张人物母版。",
             "审查 DIRcreative 源码的动作分镜路由。",
         ):
             with self.subTest(request=request):
                 self.assertEqual(self.route(request)["craft_stages"], [])
+
+
+class NaturalAssetRoutingTests(unittest.TestCase):
+    def route(self, request):
+        return route_request(request)
+
+    def test_original_nine_grid_and_asset_requests_keep_both_deliverables(self):
+        for request in (
+            "生成一段《将夜》的九宫格剧情。1分钟左右，给我分镜头和相关资产就好了。使用Dirskil。",
+            "$dircreative 生成一段《将夜》的九宫格剧情。1分钟左右，给我分镜头和相关资产就好了。",
+            "$dircreative 请写九格故事板，并准备相关角色、环境和道具参考资产。",
+        ):
+            with self.subTest(request=request):
+                result = self.route(request)
+                self.assertEqual(result["route"], "film_development")
+                self.assertEqual(result["deliverable_layer"], "narrative_storyboard")
+                self.assertFalse(result["shot_matrix_allowed"])
+                stages = {item["stage"]: item for item in result["craft_stages"]}
+                self.assertIn("identity_state", stages)
+                self.assertIn("production_design", stages)
+                self.assertIn("camera_geography", stages)
+                self.assertNotIn("shot_design", stages)
+                self.assertEqual(stages["identity_state"]["task_reference"], "skills/dircreative/references/character-master-sheet.md")
+                self.assertFalse(result["video_generation_authorized"])
+
+    def test_scoped_asset_design_does_not_acquire_a_whole_film(self):
+        cases = (
+            ("$dircreative 为短片从零设计一位反复出场的女信使，没有人物素材，先给我人物资产设计方案。", "identity_state", "asset_foundation"),
+            ("$dircreative 请制作一个古代女信使的人物资产，供后续多个镜头统一人物外观，图片现在生成。", "identity_state", "asset_foundation"),
+            ("$dircreative 给这个茶馆做场景参考图，包含入口、柜台、后门的关系，以及两人对话的正反打机位，图片现在生成。", "camera_geography", "asset_foundation"),
+            ("$dircreative 为机械短片设计折叠盾从前臂展开的结构与分阶段参考图，铰链、锁止、手腕接触要讲得通，先给方案。", "mechanical_transformation", "mechanical_transformation"),
+        )
+        for request, stage, scenario in cases:
+            with self.subTest(stage=stage):
+                result = self.route(request)
+                self.assertEqual(result["route"], "film_development")
+                self.assertFalse(result["shot_matrix_allowed"])
+                stages = {item["stage"]: item for item in result["craft_stages"]}
+                self.assertNotIn("shot_design", stages)
+                self.assertNotIn("frame_compile", stages)
+                self.assertEqual(stages[stage]["selection_intent"]["scenario_id"], scenario)
+
+    def test_character_state_design_keeps_the_character_reference(self):
+        for request in (
+            "$dircreative 已有人物母版，只把外套换成棉袍，脸和身材不变，生成新服装状态图片。",
+            "$dircreative 沿用已给的人物母版，生成淋湿且左袖破损的状态资产，不改变人物身份。",
+        ):
+            with self.subTest(request=request):
+                result = self.route(request)
+                stage = next((item for item in result["craft_stages"] if item["stage"] == "identity_state"), None)
+                self.assertIsNotNone(stage)
+                self.assertEqual(stage["task_reference"], "skills/dircreative/references/character-master-sheet.md")
+                self.assertFalse(result["shot_matrix_allowed"])
+
+    def test_negated_assets_and_standalone_portraits_do_not_create_masters(self):
+        for request in (
+            "$dircreative 请设计一张女信使的独立肖像海报，不需要角色母版，不出图。",
+            "$dircreative 现在直接出图：女信使单张肖像海报，不需要角色母版。",
+            "$dircreative 只写九宫格剧情，不要角色资产、场景资产和道具资产，不出图。",
+            "$dircreative 请做人物资产方案，但不要场景资产和道具资产。",
+        ):
+            with self.subTest(request=request):
+                result = self.route(request)
+                stages = [item["stage"] for item in result["craft_stages"]]
+                if "请做人物资产" not in request:
+                    self.assertNotIn("identity_state", stages)
+                    self.assertNotIn("skills/dircreative/references/character-master-sheet.md", result["required_files"])
+                self.assertNotIn("camera_geography", stages)
+                self.assertNotIn("production_design", stages)
+
+    def test_related_assets_do_not_restore_explicitly_excluded_roles(self):
+        result = self.route("$dircreative 给我九宫格剧情和相关资产，不需要人物资产，只要场景和道具。")
+        stages = [item["stage"] for item in result["craft_stages"]]
+        self.assertNotIn("identity_state", stages)
+        self.assertIn("production_design", stages)
+        self.assertIn("camera_geography", stages)
+
+    def test_prompt_shorthand_keeps_the_specific_fast_reference(self):
+        result = self.route("$dircreative 只把这个打斗提示词改短，保留原动作和反打机位，不扩写、不出图。")
+        self.assertEqual(result["route"], "prompt_revision")
+        self.assertEqual(result["craft_stages"], [])
+        self.assertEqual(result["required_files"], ["skills/dircreative/references/prompt-model.md"])
+
+    def test_reusing_text_does_not_start_asset_readback(self):
+        result = self.route("$dircreative 沿用现有故事，只润色第三句文案。")
+        self.assertEqual(result["route"], "copy_revision")
+        self.assertEqual(result["craft_stages"], [])
+
+    def test_shortening_a_character_prompt_does_not_restart_character_design(self):
+        result = self.route("$dircreative 精简这个人物母版提示词，保留五个视图。")
+        self.assertEqual(result["route"], "prompt_revision")
+        self.assertEqual(result["craft_stages"], [])
+
+    def test_reuse_request_exposes_readback_without_requiring_new_character_design(self):
+        result = self.route("$dircreative 做一部完整短片，图片真实生成好，视频我自己做。已给人物、场景和道具图片，沿用这些素材，只生成缺少的分镜图片。")
+        stages = {item["stage"]: item for item in result["craft_stages"]}
+        self.assertIn("asset_readback", stages)
+        self.assertEqual(stages["asset_readback"]["task_reference"], "skills/dircreative/references/image-execution.md")
+        self.assertNotIn("identity_state", stages)
+
+    def test_mixed_reuse_preserves_new_roles_and_new_identities(self):
+        cases = [
+            ("沿用已有人物母版，并给茶馆制作新的场景参考图，图片现在生成。", "camera_geography", "identity_state"),
+            ("沿用已给场景图片，同时给新角色制作人物资产，图片现在生成。", "identity_state", "camera_geography"),
+            ("复用已有人物资产，并为另一个新人物制作母版，图片现在生成。", "identity_state", None),
+        ]
+        for request, wanted, absent in cases:
+            with self.subTest(request=request):
+                stages = {item["stage"] for item in self.route("$dircreative " + request)["craft_stages"]}
+                self.assertIn("asset_readback", stages)
+                self.assertIn(wanted, stages)
+                if absent:
+                    self.assertNotIn(absent, stages)
+
+    def test_local_state_change_does_not_rebuild_all_supplied_asset_roles(self):
+        result = self.route("$dircreative 已给人物、场景和道具图片，沿用这些素材，只生成淋湿且左袖破损的状态资产，图片现在生成。")
+        stages = {item["stage"] for item in result["craft_stages"]}
+        self.assertIn("identity_state", stages)
+        self.assertNotIn("production_design", stages)
+        self.assertNotIn("camera_geography", stages)
 
 
 class ClientStoryContextTests(unittest.TestCase):

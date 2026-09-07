@@ -23,7 +23,7 @@ Persist and validate the machine packet with
   manifest and remains responsible for Prompt IR validation, exact capability
   card resolution, direct-input policy, rights, QA, retry, and status.
 
-For a Seedance 2.5 target, apply the installed `mr-li-seedance-25` 1.9.0 method
+For a Seedance 2.5 target, apply the installed `mr-li-seedance-25` 2.0 method
 first: confirm the project visual baseline, identify speaking-role voice inputs,
 estimate real performance capacity, bind assets/audio once per requested scope,
 and preserve its heading-free natural-paragraph format. The method body and its
@@ -38,7 +38,26 @@ Target intent alone never establishes model facts; the exact card/version/surfac
 DIR ownership, asset gate, handoff validator and preflight remain authoritative.
 If the provider is absent, retain the converter and report non-adoption.
 Encode that branch as `method_application.status: not_applied` with the observed
-version and reason; never forge a 1.9.0 application block to satisfy the schema.
+version and reason; never forge a 2.0 application block to satisfy the schema.
+
+Read the current body and four production references: `prompt-writing`,
+`continuity-and-duration`, `context-protocol`, `segment-ending`. Replace this pack
+per stage; do not add regression instructions, changelog or aggregate runtime.
+The host body-read request carries DIR ownership; selection is not adoption.
+
+Use the 2.0 continuity, natural-ending, voice and medium-aware methods. DIR retains
+its adopted source, five-view human master, canonical IDs, camera decisions,
+reference promotion, state and authorization. Focal-length preferences remain
+advisory. Do not import onboarding, repeated menus, foreign character layouts or
+a second controller. Existing explicit creation/adoption authority needs no new
+provider approval.
+
+Optional previews use DIR narrative-frame/coverage roles and inherited all/key/skip
+scope; they do not block prompt delivery or become clean/model inputs automatically.
+Supported annotated references retain DIR's explicit promotion/QA/Prompt IR gates.
+Keep current IDs and project paths. Apply the chosen medium: 2D work does not
+acquire photographic blur, grain or atmosphere by default. Inspect pixels and
+native detail separately.
 
 ## Required input packet
 
@@ -141,6 +160,15 @@ scene > model-layout > composition.
 
 ## Unit compilation
 
+- Seedance 2.5 `authoritative_script.next_source_start` binds the first still unmade
+  source line, exact text and line hash; `null` requires actual scene-coverage
+  review. The final export unit uses `source_line:N`/`segment_only` if source
+  remains. The validator checks real locators and completion consistency, not
+  full narrative coverage or an automatic end-of-scene assumption.
+- Known character voice bindings carry `voice_owner_entity_id` and their applicable
+  unit scope. Each speaking unit needs one usable scoped voice when available;
+  silent units cannot attach it. Planned/unavailable/planning-only audio creates
+  no binding requirement or repeated question. Verify media before execution.
 - Compile one locally rebased generation unit at a time.
 - Preserve shot IDs and time ranges outside or alongside the prompt so the edit
   assembly remains traceable.
@@ -195,3 +223,9 @@ Return:
 Run `ai-video-prompt-preflight` after conversion when validation is requested.
 Generated video review and edit assembly remain later stages; the converter
 must not claim that prompt export produced a video.
+
+Keep prompt delivery, optional saving, image work and video execution as separate
+existing artifact states. A later image/video/save failure does not rewind an
+already delivered source cursor. A prompt revision preserves its unit ID and
+marks only affected images or descendants stale. Display the requested prompt
+or usable files; do not substitute a successful manifest for the user's result.

@@ -5,6 +5,7 @@ import argparse
 import hashlib
 import json
 import tempfile
+import copy
 from pathlib import Path
 from typing import Any
 
@@ -31,6 +32,11 @@ from dircreative_visual_asset_plan import (
     validate_plan,
     validate_technical_receipt,
     validate_visual_qa_receipt,
+    pending_candidate_self_checks,
+    record_candidate_output,
+    candidate_self_check_template,
+    validate_candidate_self_check,
+    atomic_write_json,
 )
 
 
@@ -752,6 +758,16 @@ def _verified_visual_asset_jingzao_prompt(
     if not isinstance(document, dict) or document.get("fixture_only") is not False:
         errors.append("jingzao_asset_handoff_not_production")
         return None
+    if packet.get("candidate_repair") != document.get("candidate_repair"):
+        errors.append("candidate_repair_packet_handoff_mismatch")
+        return None
+    if document.get("candidate_repair") is not None and (
+        not isinstance(document["candidate_repair"], dict) or document["candidate_repair"].get("source_plan") != {
+        "relative_path": packet.get("visual_plan", {}).get("path"),
+        "sha256": packet.get("visual_plan", {}).get("sha256"),
+    }):
+        errors.append("candidate_repair_current_plan_path_mismatch")
+        return None
     planning_binding = packet.get("motion_planning")
     if isinstance(planning_binding, dict) and "target" in planning_binding:
         if document.get("motion_planning") != planning_binding:
@@ -1257,6 +1273,8 @@ def validate_packet(
         (role in JINGZAO_FORMAL_ASSET_ROLES or annotated_storyboard_handoff or planning_image_handoff)
         and compile_route == "selected_skill_handoff"
     )
+    if packet.get("candidate_repair") is not None and not uses_formal_asset_jingzao:
+        errors.append("candidate_repair_requires_formal_asset_edit_handoff")
     if uses_formal_asset_jingzao and active_plan_asset is not None:
         formal_asset_jingzao_prompt = _verified_visual_asset_jingzao_prompt(
             packet,
@@ -1403,14 +1421,193 @@ def validate_packet(
     return list(dict.fromkeys(errors))
 
 
+def _read_bound_json(root: Path, binding: dict[str, Any], *, path_key: str = "relative_path") -> dict[str, Any]:
+    raw = read_relative_regular_file_once(root, binding[path_key], max_bytes=MAX_JINGZAO_HANDOFF_BYTES, label="call binding")
+    if hashlib.sha256(raw).hexdigest() != binding.get("sha256"):
+        raise ValueError("image_call_binding_hash_mismatch")
+    value = json.loads(raw)
+    if not isinstance(value, dict):
+        raise ValueError("image_call_binding_not_object")
+    return value
+
+
+def prepare_image_call(
+    packet: dict[str, Any], *, project_root: Path, reference_delivery: dict[str, Any],
+    execution_task_id: str, repo_root: Path = ROOT, request_text: str | None = None,
+    retry_failed_asset: bool = False,
+    _trusted_jingzao_provider_roots: tuple[Path, ...] | None = None,
+    _allow_unsandboxed_jingzao_replay_for_tests: bool = False,
+) -> dict[str, Any]:
+    """Live gate plus one exact native argument set; never executes or approves media."""
+    errors = validate_packet(
+        packet, project_root=project_root, repo_root=repo_root,
+        execution_task_id=execution_task_id, request_text=request_text,
+        _trusted_jingzao_provider_roots=_trusted_jingzao_provider_roots,
+        _allow_unsandboxed_jingzao_replay_for_tests=_allow_unsandboxed_jingzao_replay_for_tests,
+    )
+    result = {"preflight_status": "blocked", "errors": errors, "imagegen_arguments": None,
+              "authorization_authority": "none", "generated": False}
+    if not execution_task_id:
+        errors.append("execution_task_id_required")
+    if errors:
+        return result
+    try:
+        plan = _read_bound_json(project_root, packet["visual_plan"], path_key="path")
+        plan_dir = (project_root / packet["visual_plan"]["path"]).parent
+        pending = pending_candidate_self_checks(plan, base_dir=plan_dir, execution_task_id=execution_task_id)
+        permitted_retry = f"candidate_postcheck_failed:{packet['asset_id']}:candidate_self_check_requires_repair"
+        # A reviewed rejection can be repaired in place with a new candidate;
+        # no missing, stale or structurally invalid review is silently skipped.
+        errors.extend(error for error in pending if not (retry_failed_asset and error == permitted_retry))
+        refs: list[dict[str, Any]] = []
+        formal = packet.get("jingzao_asset_handoff")
+        frame_binding = packet.get("jingzao_handoff")
+        if isinstance(formal, dict):
+            document = _read_bound_json(project_root, formal, path_key="path")
+            inputs = _read_bound_json(project_root, document["input_spec"])
+            refs = inputs["reference_assets"]
+            compiled = _read_bound_json(project_root, document["output_spec"]["compiled_prompt_manifest"])
+            if compiled.get("prompt") != packet["prompt"]:
+                errors.append("image_call_prompt_changed")
+        elif isinstance(frame_binding, dict):
+            document = _read_bound_json(project_root, frame_binding, path_key="path")
+            output = document["output_spec"]
+            manifest = _read_bound_json(project_root, {"relative_path": output["prompt_manifest_relative_path"], "sha256": output["prompt_manifest_sha256"]})
+            frame = next((item for item in manifest.get("frame_prompts", []) if item.get("asset_id") == packet["asset_id"]), None)
+            if not isinstance(frame, dict) or frame.get("prompt") != packet["prompt"]:
+                raise ValueError("image_call_frame_prompt_changed")
+            inputs = frame.get("reference_inputs")
+            if not isinstance(inputs, list):
+                raise ValueError("image_call_frame_reference_inputs_missing")
+            refs = [{**item, "input_id": item.get("input_id", item.get("source_id"))} for item in inputs]
+        delivery = reference_delivery.get("imagegen_call_plan") if isinstance(reference_delivery, dict) else None
+        if not isinstance(delivery, dict) or delivery.get("status") != "ready" or delivery.get("errors") not in (None, []):
+            raise ValueError("image_call_reference_delivery_not_ready")
+        expected_ids = [item["input_id"] for item in refs]
+        expected_paths = []
+        for item in refs:
+            raw = read_relative_regular_file_once(project_root, item["relative_path"], max_bytes=MAX_JINGZAO_SEALED_FILE_BYTES, label="image call reference")
+            if hashlib.sha256(raw).hexdigest() != item["sha256"]:
+                raise ValueError("image_call_reference_changed")
+            expected_paths.append(str((project_root / item["relative_path"]).resolve(strict=True)))
+        if delivery.get("required_input_ids") != expected_ids or delivery.get("expected_attachment_count") != len(expected_ids):
+            raise ValueError("image_call_reference_order_mismatch")
+        expected_mechanism = "referenced_image_paths" if expected_paths else "none"
+        if delivery.get("mechanism") != expected_mechanism:
+            raise ValueError("image_call_reference_mechanism_mismatch")
+        if delivery.get("argument") != (expected_paths if expected_paths else None):
+            raise ValueError("image_call_reference_arguments_mismatch")
+        args = {"prompt": packet["prompt"]}
+        if expected_paths:
+            args["referenced_image_paths"] = expected_paths
+        if errors:
+            return result
+        return {**result, "preflight_status": "ready", "errors": [], "imagegen_arguments": args,
+                "imagegen_arguments_sha256": canonical_packet_sha256(args),
+                "packet_sha256": canonical_packet_sha256(packet),
+                "visual_plan_path": str((project_root / packet["visual_plan"]["path"]).resolve(strict=True)),
+                "visual_plan_sha256": packet["visual_plan"]["sha256"],
+                "execution_task_id": execution_task_id, "asset_id": packet["asset_id"],
+                "candidate_repair": copy.deepcopy(packet.get("candidate_repair")),
+                "post_call_action": "record the exact saved PNG, then inspect and check-output before another call"}
+    except (OSError, ValueError, KeyError, TypeError) as exc:
+        errors.append(str(exc))
+        return result
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Validate one DIRcreative asset execution packet before a media call.")
-    parser.add_argument("packet", type=Path)
+    parser.add_argument("packet", type=Path, nargs="?")
     parser.add_argument("--repo-root", type=Path, default=ROOT)
     parser.add_argument("--project-root", required=True, type=Path)
     parser.add_argument("--execution-task-id")
     parser.add_argument("--request", help="original authorized request; required for early motion-board drawing")
+    actions = parser.add_mutually_exclusive_group()
+    actions.add_argument("--prepare-call", action="store_true")
+    actions.add_argument("--record-output", action="store_true")
+    actions.add_argument("--check-output", action="store_true")
+    parser.add_argument("--reference-delivery", type=Path)
+    parser.add_argument("--retry-failed-asset", action="store_true", help="Allow a new candidate only for this asset's explicitly reviewed retry/reject result.")
+    parser.add_argument("--plan", type=Path)
+    parser.add_argument("--expected-plan-sha256", help="Exact plan hash returned by prepare-call; required when recording its output.")
+    parser.add_argument("--asset-id")
+    parser.add_argument("--image", type=Path)
+    parser.add_argument("--self-check-manifest", type=Path)
+    parser.add_argument("--candidate-repair-binding", type=Path, help="Verified same-asset repair binding returned before the actual edit call.")
+    parser.add_argument("--output", type=Path)
     args = parser.parse_args()
+    if args.record_output or args.check_output:
+        if not args.plan or not args.asset_id or not args.output or (args.record_output and (not args.image or not args.execution_task_id or not args.expected_plan_sha256)) or (args.check_output and not args.self_check_manifest):
+            parser.error("record/check requires --plan --asset-id --output and the actual image/task/expected plan hash or self-check manifest")
+        try:
+            root = args.project_root.resolve(strict=True)
+            def project_path(value: Path) -> Path:
+                if not value.is_absolute():
+                    return root / value
+                try:
+                    relative = value.relative_to(args.project_root.absolute())
+                except ValueError:
+                    relative = value.relative_to(root)
+                return root / relative
+
+            plan_path = project_path(args.plan)
+            plan_path.relative_to(root)
+            raw = read_relative_regular_file_once(root, plan_path.relative_to(root).as_posix(), max_bytes=MAX_VISUAL_PLAN_BYTES, label="candidate plan")
+            if args.record_output and hashlib.sha256(raw).hexdigest() != args.expected_plan_sha256:
+                raise ValueError("candidate_plan_changed_since_prepare")
+            plan = json.loads(raw)
+            structural = copy.deepcopy(plan)
+            if not isinstance(structural, dict):
+                raise ValueError("visual_asset_plan_invalid")
+            structural["completion_claim"] = "none"
+            if validate_plan(structural, base_dir=plan_path.parent, _validate_recorded_assets=False)[0]:
+                raise ValueError("visual_asset_plan_invalid")
+            output = project_path(args.output)
+            if output.parent.resolve() != plan_path.parent.resolve() or output.exists():
+                raise ValueError("candidate_plan_output_must_be_new_in_same_evidence_root")
+            if args.record_output:
+                image = project_path(args.image)
+                repair_source = None
+                if args.candidate_repair_binding is not None:
+                    repair_path = project_path(args.candidate_repair_binding)
+                    repair_raw = read_relative_regular_file_once(root, repair_path.relative_to(root).as_posix(), max_bytes=MAX_PACKET_BYTES, label="candidate repair binding")
+                    repair_source = json.loads(repair_raw)
+                    if not isinstance(repair_source, dict):
+                        raise ValueError("candidate_repair_binding_must_be_object")
+                    if repair_source.get("source_plan") != {"relative_path": plan_path.relative_to(root).as_posix(), "sha256": args.expected_plan_sha256}:
+                        raise ValueError("candidate_repair_record_plan_mismatch")
+                updated = record_candidate_output(plan, base_dir=plan_path.parent, asset_id=args.asset_id,
+                                                  image_path=image, execution_task_id=args.execution_task_id,
+                                                  repair_source=repair_source, project_root=root)
+                atomic_write_json(output, updated)
+                asset = next(item for item in updated["assets"] if item["asset_id"] == args.asset_id)
+                print(json.dumps({"status": "postcheck_required", "output": str(output),
+                                  "saved_image": {"relative_path": asset["generated_file"], "sha256": asset["generated_sha256"],
+                                                  "pixel_sha256": asset["generated_pixel_sha256"],
+                                                  "width": asset["technical_receipt"]["width"], "height": asset["technical_receipt"]["height"]},
+                                  "self_check_template": candidate_self_check_template(updated, args.asset_id),
+                                  "visual_qa_approved": False}, ensure_ascii=False, indent=2))
+                return 0
+            manifest_path = project_path(args.self_check_manifest)
+            relative = manifest_path.relative_to(plan_path.parent).as_posix()
+            manifest_raw = read_relative_regular_file_once(plan_path.parent, relative, max_bytes=1024 * 1024, label="candidate self-check")
+            manifest = json.loads(manifest_raw)
+            problems = validate_candidate_self_check(manifest, payload=plan, asset_id=args.asset_id, base_dir=plan_path.parent)
+            updated = copy.deepcopy(plan)
+            asset = next(item for item in updated["assets"] if item["asset_id"] == args.asset_id)
+            asset["candidate_self_check"] = {"relative_path": relative, "sha256": hashlib.sha256(manifest_raw).hexdigest()}
+            # Preserve real failed candidates and their observations for repair.
+            atomic_write_json(output, updated)
+            print(json.dumps({"status": "self_checked" if not problems else "postcheck_failed",
+                              "output": str(output), "errors": problems, "visual_qa_approved": False}, ensure_ascii=False))
+            return 0 if not problems else 1
+        except (OSError, ValueError, KeyError, TypeError, StopIteration) as exc:
+            print(json.dumps({"status": "blocked", "errors": [str(exc)]}, ensure_ascii=False))
+            return 1
+    if args.packet is None:
+        parser.error("packet required for validation or prepare-call")
+    if args.prepare_call and (not args.reference_delivery or not args.execution_task_id):
+        parser.error("prepare-call requires --reference-delivery and --execution-task-id")
     try:
         if args.packet.stat().st_size > MAX_PACKET_BYTES:
             raise ValueError("packet_too_large")
@@ -1421,6 +1618,14 @@ def main() -> int:
             label="asset execution packet",
         )
         packet = json.loads(packet_bytes.decode("utf-8"))
+        if args.prepare_call:
+            delivery_path = args.reference_delivery.resolve(strict=True)
+            delivery_raw = read_relative_regular_file_once(delivery_path.parent, delivery_path.name, max_bytes=MAX_PACKET_BYTES, label="reference delivery")
+            result = prepare_image_call(packet, repo_root=args.repo_root.resolve(), project_root=args.project_root.resolve(),
+                                        reference_delivery=json.loads(delivery_raw), execution_task_id=args.execution_task_id,
+                                        request_text=args.request, retry_failed_asset=args.retry_failed_asset)
+            print(json.dumps(result, ensure_ascii=False, indent=2))
+            return 0 if result["preflight_status"] == "ready" else 1
         errors = validate_packet(
             packet,
             repo_root=args.repo_root.resolve(),

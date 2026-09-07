@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## 0.9.3 - 2026-09-07
+
+- Route natural storyboard-and-asset requests and independent character, state, scene and mechanical work into the existing design stages. Preserve mixed reuse/new-asset scope, negations, quoted story facts and bounded text/portrait work without granting generation from source text.
+- Compile canonical asset-role requirements into the real Jingzao spec before execution. Keep the five-view human master, chosen artistic medium and valid create/ratio choices; replace stale DIR role/mode clauses when preparing a derivative.
+- Prepare one current, validated native argument set and bind output registration to its exact plan hash. Record real candidates, require role-specific executor observations and the character structural probe before continuing, and retain failed candidates for focused repair. Self-check remains separate from independent QA, host adoption and user approval.
+- Integrate the audited external `mr-li-seedance-25` 2.0 body and four production references within the existing context budget. Preserve DIR source, camera, asset, state and authorization ownership; keep provider tutorials, historical rules and aggregate runtime out of the selected compilation context.
+- Ground the next unmade source cursor in the actual script, reject repeated consumed dialogue locators, and validate applicable voice bindings by speaker and generation unit. Keep the Seedance 2.0 surface independent of the 2.5 method contract.
+- Carry forward source-continuity checks, medium-aware quality, planning/reference-role separation and requested-output reconciliation through existing DIR stages; do not replace these with metadata claims or a second controller/ledger.
+
 ## 0.9.2 - 2026-09-07
 
 - Supply the real Noto CJK font dependency in Linux CI so the annotated-storyboard regression runs with readable Chinese glyphs; preserve the missing-font runtime guard and all workflow tests.

@@ -130,7 +130,7 @@ REALISTIC_BODY_PAD = {
     "imagegen": 19000,
     "score-and-mix-picture": 9950,
     "convert-script-to-seedance": 7680,
-    "mr-li-seedance-25": 20927,
+    "mr-li-seedance-25": 30523,
     "production-design-worldbuilding": 4430,
     "minimum-visual-bible": 5000,
     "character-continuity-bible": 5000,
@@ -153,11 +153,23 @@ JINGZAO_REFERENCE_PAD = {
     "references/cinematic-shot-design.md": 7767,
 }
 MR_LI_REFERENCE_PAD = {
-    "references/visual-baseline-and-tags.md": 10727,
-    "references/prompt-writing.md": 9247,
-    "references/continuity-and-duration.md": 3795,
-    "references/format-samples.md": 4141,
-    "references/full-flow-regression.md": 7020,
+    "references/prompt-writing.md": 12730,
+    "references/continuity-and-duration.md": 4859,
+    "references/context-protocol.md": 5909,
+    "references/segment-ending.md": 1839,
+}
+MR_LI_APPLICATION_CONTRACT = {
+    "authority": "isolated_method_only",
+    "output_mode": "bounded_seedance_prompt",
+    "source_owner": "dircreative",
+    "asset_contract_owner": "dircreative",
+    "state_owner": "dircreative",
+    "may_rewrite_source": False,
+    "may_expand_scope": False,
+    "source_policy": "current_adopted_source_and_adjacent_continuity",
+    "camera_policy": "locked_camera_before_advisory_focal_preference",
+    "storyboard_policy": "dircreative_roles_and_promotion_gate",
+    "user_gates": "inherit_existing_dir_authorization",
 }
 SEPIA_REFERENCE_PAD = {
     "references/narrative-pass.md": 11705,
@@ -576,7 +588,7 @@ def stage_selection_intent(
     supplied = supplemental or {}
     if not isinstance(supplied, dict):
         raise SkillStackError("intent must be an object")
-    protected = ("scenario_id", "mode", "route_id", "media", "real_side_effect", "downstream_use", "active_stage")
+    protected = ("scenario_id", "mode", "route_id", "media", "real_side_effect", "downstream_use", "active_stage", "asset_pass_id", "asset_pass_scope", "asset_pass_status")
     if any(key in supplied and supplied[key] != derived.get(key) for key in protected):
         raise SkillStackError("intent conflicts with the derived craft stage")
     intent = {**derived, **supplied}
@@ -995,7 +1007,10 @@ def validate_registry(registry: dict[str, Any]) -> list[str]:
         ):
             failures.append(f"{skill_id}: invalid collaborator context contract")
         application_contract = provider.get("application_contract")
-        if application_contract is not None and (
+        if skill_id == "mr-li-seedance-25":
+            if application_contract != MR_LI_APPLICATION_CONTRACT:
+                failures.append("mr-li-seedance-25: invalid DIR method ownership contract")
+        elif application_contract is not None and (
             not isinstance(application_contract, dict)
             or application_contract.get("authority") != "diagnostic_only"
             or application_contract.get("output_mode") != "findings_only"
@@ -1053,14 +1068,14 @@ def validate_registry(registry: dict[str, Any]) -> list[str]:
         mr_li.get("mode_allowlist") != ["studio"]
         or mr_li.get("reference_pack") != list(MR_LI_REFERENCE_PAD)
         or mr_li.get("collaborator_context_cost") != "isolated_method_contract"
-        or mr_li.get("required_metadata_version") != "1.9.0"
-        or int(mr_li.get("minimum_body_bytes", 0)) < 20000
+        or mr_li.get("required_metadata_version") != "2.0"
+        or int(mr_li.get("minimum_body_bytes", 0)) < 30000
         or "visual_baseline_gate" not in mr_li.get("capabilities", [])
         or "natural_paragraph_delivery" not in mr_li.get("capabilities", [])
         or "prewrite_capacity_gate" not in mr_li.get("capabilities", [])
         or "speaker_change_cut_logic" not in mr_li.get("capabilities", [])
     ):
-        failures.append("mr-li-seedance-25 1.9.0 routing contract drifted")
+        failures.append("mr-li-seedance-25 2.0 routing contract drifted")
     sepia = providers.get("sepia", {})
     if (
         sepia.get("provider_roles") != ["craft_owner"]
@@ -1903,9 +1918,9 @@ def _render_skill_card(mode: str, slots: list[dict[str, Any]], suggested: list[s
         return ["本次无需额外 Skill，DIRcreative 足够。"]
     if mode == "fast":
         if used:
-            line = f"本次 Skill 配置：已用 `${used[0]['skill_id']}`"
+            line = f"本次 Skill 配置：已选 `${used[0]['skill_id']}`，待宿主实际采用"
         else:
-            line = "本次 Skill 配置：DIRcreative 已完成"
+            line = "本次 Skill 配置：使用 DIRcreative"
         if suggested:
             line += f"；下一步建议 `${suggested[0]}`。"
         else:
@@ -1920,7 +1935,7 @@ def _render_skill_card(mode: str, slots: list[dict[str, Any]], suggested: list[s
         "execution_adapter": "执行适配器",
     }
     for item in used:
-        lines.append(f"- {role_labels[item['role']]}：`${item['skill_id']}` — 已实际读取并采用")
+        lines.append(f"- {role_labels[item['role']]}：`${item['skill_id']}` — 已选，采用状态未验证")
     if suggested and len(lines) < 5:
         lines.append("- 建议：" + "、".join(f"`${item}`" for item in suggested[:3]) + " — 未读取正文")
     return lines[:5]
@@ -2002,6 +2017,17 @@ def select_stack(
         scenario = {**scenario, "validator_required": True}
     intent["gaps"] = list(dict.fromkeys(requested_gaps))
     staged_passes = scenario.get("staged_passes", [])
+    if intent.get("asset_pass_scope") is not None:
+        if (
+            scenario_id != "asset_foundation" or intent["asset_pass_scope"] != "initial_design"
+            or intent.get("asset_pass_status") != "in_progress"
+            or intent.get("real_side_effect") is not False
+            or intent.get("asset_pass_id") not in {"identity_state", "production_design", "camera_geography", "material_response", "constraint_assignment"}
+        ):
+            raise SkillStackError("initial asset design scope cannot certify assets or execute media")
+        # validate_design already accepts a bounded pre-image stage set. Do not
+        # demand an unrelated character pass before designing a new empty scene.
+        staged_passes = [item for item in staged_passes if item["pass_id"] == intent["asset_pass_id"]]
     active_asset_pass: dict[str, Any] | None = None
     active_asset_pass_id: str | None = None
     next_asset_pass_id: str | None = None
@@ -3612,14 +3638,14 @@ def _write_mock_skill(root: Path, skill_id: str, body_pad: int = 0) -> None:
     skill_dir = root / skill_id.replace(":", "__")
     skill_dir.mkdir(parents=True)
     nested_metadata = (
-        '\nmetadata:\n  version: "1.9.0"\n  display-version-name: "Seedance 2.5 method"'
+        '\nmetadata:\n  version: "2.0"\n  display-version-name: "Seedance 2.5 method"'
         if skill_id == "mr-li-seedance-25"
         else '\nmetadata:\n  version: "0.5.0"'
         if skill_id == "sepia"
         else ""
     )
-    if skill_id == "mr-li-seedance-25" and body_pad < 20000:
-        body_pad = 20000
+    if skill_id == "mr-li-seedance-25" and body_pad < 30000:
+        body_pad = 30000
     body = (
         f"---\nname: {skill_id}\ndescription: Deterministic test provider.{nested_metadata}\n---\n\n# Test\n"
     ) + ("x" * body_pad)
@@ -4136,8 +4162,8 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
                 if (
                     int(context.get("isolated_craft_context_bytes", 0)) < 40000
                     or int(context.get("isolated_craft_context_bytes", 0)) > 131072
-                    or int(context.get("isolated_craft_reference_count", 0)) != 5
-                    or int(context.get("isolated_craft_reference_bytes", 0)) < 26000
+                    or int(context.get("isolated_craft_reference_count", 0)) != len(MR_LI_REFERENCE_PAD)
+                    or int(context.get("isolated_craft_reference_bytes", 0)) < sum(MR_LI_REFERENCE_PAD.values())
                     or int(context.get("aggregate_accounted_bytes", 0))
                     != int(context.get("total_bytes", 0))
                     + int(context.get("isolated_craft_context_bytes", 0))
@@ -4145,7 +4171,7 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
                     != set(MR_LI_REFERENCE_PAD)
                     or any(not item.get("sha256") for item in reference_requests)
                 ):
-                    failures.append("realistic Seedance 1.9.0 references were not isolated and budgeted")
+                    failures.append("realistic mr-li 2.0 references were not isolated and budgeted")
             if case_id == "p54_seedance25_fast_priority":
                 context = receipt.get("context") or {}
                 if (
@@ -4168,7 +4194,7 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
                 if (
                     int(context.get("isolated_method_context_bytes", 0)) < 40000
                     or int(context.get("isolated_method_context_bytes", 0)) > 65536
-                    or int(context.get("isolated_method_reference_count", 0)) != 5
+                    or int(context.get("isolated_method_reference_count", 0)) != len(MR_LI_REFERENCE_PAD)
                     or {item.get("relative_path") for item in method_requests}
                     != set(MR_LI_REFERENCE_PAD)
                     or int(context.get("total_bytes", 0)) > 20000
@@ -4180,7 +4206,7 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
                     + int(context.get("isolated_handoff_context_bytes", 0))
                     + int(context.get("execution_adapter_context_bytes", 0))
                 ):
-                    failures.append(f"{case_id}: Seedance 1.9.0 method context was not isolated")
+                    failures.append(f"{case_id}: Seedance 2.0 method context was not isolated")
             if case_id in {
                 "p59_sepia_narrative_refactor",
                 "p60_sepia_professional_review",

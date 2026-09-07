@@ -2,7 +2,46 @@
 
 Use for initial motion drawings or exact compiled image calls. Replace the shared
 Delivery guide at this image step; reuse its authorization and completion limits.
-The existing asset execution gate still applies.
+The existing asset execution gate still applies. A canonical asset call must prepare
+its current arguments, register the saved file and finish its role self-check
+before another asset call. These helpers enforce this controlled path; they do
+not intercept arbitrary raw host-tool calls or grant visual approval.
+
+## New foundation assets
+
+First derive the current inventory/plan and complete the selected initial design
+pass. Recurring human identities each need their own character-master contract;
+“related assets” does not mean one shared portrait or a pair of single views.
+Keep single-portrait/poster work on its bounded image path.
+
+Prepare the original Jingzao spec with the current role **before** validating
+and compiling it:
+
+```text
+python3 scripts/dircreative_visual_asset_jingzao_handoff.py prepare-role-spec --project-root PROJECT --visual-plan PLAN --asset-id C01 --spec source-spec.json --output role-spec.json
+```
+
+Use the returned spec for the installed Jingzao validator, compiler and reference
+delivery. This inserts the canonical character/product/prop/scene/style contract
+into actual compiler inputs while preserving the chosen medium, mode and ratio.
+Reconcile other spec fields with that contract; a contradictory layout or stale
+subject description is a repair, not an acceptable alternate instruction. Narrative
+frames and temporary motion drawings keep their own existing compilation contracts.
+A generic `ready` compile lacking the current role requirements cannot pass the
+formal handoff. Do not patch its final prompt or invent a passed asset image.
+
+For a reviewed failed foundation candidate, keep its current asset and use
+`prepare-candidate-repair --project-root PROJECT --visual-plan PLAN
+--expected-plan-sha256 HASH --asset-id C01 --spec SOURCE_SPEC --changes CHANGES
+--output-spec REPAIR_SPEC --output-binding REPAIR_BINDING`. `CHANGES` is a JSON
+array of `{ "check_id": "frontal_portrait", "instruction": "<observed correction>" }`
+targeting failed observations. Reconcile the source spec for the actual edit;
+use Jingzao's `source_matched` surface policy when existing texture is sound.
+Compile the returned edit spec with the installed provider. Put its returned
+`reference_asset` in the asset request and identical `candidate_repair` bindings
+in the new handoff and packet. This candidate is the sole `base_edit_source`,
+not an approved parent or a self-dependency. The current headed master keeps its
+mode and truth; crop/pose repair does not become a headless or state derivative.
 
 ## Existing foundation images
 
@@ -111,37 +150,95 @@ The default native-board path and other units retain their own requirements.
   compatible after their risk source is hash-bound; they need no scene/support
   manifest, spatial layout, or semantic truth review.
 
-## Transfer compiled data to the image tool
+## Transfer current validated arguments and register the output
 
-After the current execution packet passes, read the saved compiler result as
-data; do not copy, shorten or retype its prompt. A board's compiled JSON is one
-object; a production manifest stores each frame at `frames[].compiled`. Select
-the intended frame in memory. Run Jingzao's `reference_delivery.py` on that same
-spec for the current tool, inspect the actual references, and retain its result.
-Use its resolved local paths. Conversation references require fresh window
-confirmation immediately before submission.
+Freeze the current packet and use Jingzao's `reference_delivery.py` for that same
+spec/tool. Inspect the actual local references. `--prepare-call` revalidates the
+packet, source plan, compiler replay and ordered local attachments; it returns
+one `imagegen_arguments` object. Pass it unchanged in the same host call. Current
+canonical assets use local files; unresolved conversation references must first
+follow their existing provenance/materialization path.
+For a prepared same-asset repair, add `--retry-failed-asset` to `--prepare-call`.
 
-For the current Codex tool, this host-side example reads a single compiled leaf
-and that spec's latest reference delivery, then submits the exact string:
+This Codex example uses actual paths returned by the selected stage. `destination`
+is a new candidate path within the plan's evidence root, and `nextPlan` is a new
+revision beside `currentPlan`. Preserve the original generated file.
 
 ```javascript
 // @exec: {"yield_time_ms": 120000}
-const reads = await Promise.all([
-  tools.exec_command({cmd: "cat '/absolute/project/compiled.json'", max_output_tokens: 14000}),
-  tools.exec_command({cmd: "cat '/absolute/project/reference-delivery.json'", max_output_tokens: 4000})
-]);
-if (reads.some(r => r.exit_code !== 0)) throw new Error("compiled inputs unreadable");
-const c = JSON.parse(reads[0].output), p = JSON.parse(reads[1].output).imagegen_call_plan;
-const ids = c.attachments.filter(a => a.must_attach).map(a => a.input_id);
-if (!['ready', 'approved'].includes(c.prompt_review.status) || p.status !== 'ready' ||
-    JSON.stringify(ids) !== JSON.stringify(p.required_input_ids) ||
-    !['none', 'referenced_image_paths', 'num_last_images_to_include'].includes(p.mechanism))
-  throw new Error("current prompt/reference plan is not ready");
-const args = {prompt: c.prompt, ...(p.mechanism === 'none' ? {} : {[p.mechanism]: p.argument})};
-generatedImage(await tools.image_gen__imagegen(args));
+const gate = "/absolute/current-package/scripts/dircreative_asset_execution_gate.py";
+const project = "/absolute/project", task = "current-task-id";
+const packet = project + "/packet.json", refs = project + "/reference-delivery.json";
+const nextPlan = project + "/visual-plan-02.json";
+const destination = project + "/candidates/C01-v01.png";
+const quote = s => "'" + String(s).replaceAll("'", "'\\''") + "'";
+const run = argv => tools.exec_command({cmd: argv.map(quote).join(" "), max_output_tokens: 16000});
+const prepared = await run(["python3", gate, packet, "--project-root", project,
+  "--prepare-call", "--reference-delivery", refs, "--execution-task-id", task]);
+if (prepared.exit_code !== 0) throw new Error(prepared.output);
+const call = JSON.parse(prepared.output);
+if (call.preflight_status !== "ready" || !call.imagegen_arguments) throw new Error("asset call blocked");
+const repairArgs = [];
+if (call.candidate_repair) {
+  const binding = project + "/C01-repair-call-binding.json"; // New path for this attempt.
+  const saved = await run(["python3", "-c",
+    "from pathlib import Path\nimport sys\nwith Path(sys.argv[1]).open('x') as f: f.write(sys.argv[2])",
+    binding, JSON.stringify(call.candidate_repair)]);
+  if (saved.exit_code !== 0) throw new Error(saved.output);
+  repairArgs.push("--candidate-repair-binding", binding);
+}
+const result = await tools.image_gen__imagegen(call.imagegen_arguments);
+generatedImage(result);
+const match = String(result.output_hint || "").match(/\bas (\/[^\n]+\.png) by default\./);
+if (!match) throw new Error("No exact saved PNG in the actual tool result; resolve before continuing");
+const copy = await run(["python3", "-c",
+  "from pathlib import Path\nimport shutil,sys\nsrc,dst=map(Path,sys.argv[1:])\ndst.parent.mkdir(parents=True,exist_ok=True)\nwith src.open('rb') as a, dst.open('xb') as b: shutil.copyfileobj(a,b)",
+  match[1], destination]);
+if (copy.exit_code !== 0) throw new Error(copy.output);
+const recorded = await run(["python3", gate, "--project-root", project, "--record-output",
+  "--plan", call.visual_plan_path, "--asset-id", call.asset_id, "--image", destination,
+  "--expected-plan-sha256", call.visual_plan_sha256,
+  "--execution-task-id", task, "--output", nextPlan, ...repairArgs]);
+if (recorded.exit_code !== 0) throw new Error(recorded.output);
+text(recorded.output);
 ```
 
-Replace paths with the actual current artifacts. Truncated JSON fails parsing;
-load it safely instead of supplying a summary. The tool accepts these prompt
-and reference arguments, not Jingzao's whole `parameters` object. This transfer
-does not grant authorization or visual approval; record the actual call/result.
+The output-hint pattern is the currently observed native response, not a promise
+of a stable path API. A missing/changed result or failed registration stops the
+chain; do not guess the newest file, report success, or start another asset.
+Registration rechecks the exact prepared plan hash. If source truth changes while
+generation runs, keep the real output but do not attach it to the changed truth;
+review the change and reprepare the affected work.
+The returned PNG dimensions describe saved pixels, not native detail gain.
+
+## Inspect each candidate before continuing
+
+`--record-output` returns a blank `self_check_template` and records the real image
+as `generated_candidate`, even when the picture is poor. Open that exact saved
+PNG. Fill the returned observations from what is actually visible; do not prefill
+`pass` from the prompt, existence, a preview thumbnail or a structural result.
+Characters explicitly check the frontal portrait, front, left, right, back,
+identity/scale and wardrobe side details. Other roles check their actual geometry,
+state, camera/contact, source facts and intended medium. Run the existing character
+visual probe and bind its real sidecar for character candidates.
+
+Save the completed template as an executor self-check manifest, then:
+
+```text
+python3 scripts/dircreative_asset_execution_gate.py --project-root PROJECT --check-output --plan visual-plan-02.json --asset-id C01 --self-check-manifest C01-self-check.json --output visual-plan-03.json
+```
+
+Use the returned plan revision for the next packet and carry it in the existing
+project state. Old plan snapshots remain history, never a shortcut around a
+pending/failed current candidate. The gate checks all registered candidates in
+that plan; changing task ID does not clear them. A reviewed `retry`/`reject` may
+be repaired with `--retry-failed-asset` for that same asset. Missing or stale checks
+still block; unrelated assets do not become artificial parents.
+
+Self-check observations are explicit executor statements, not authenticated
+proof that a host displayed the image. A successful self-check does not set
+`visual_qa_approved`, independent QA, user adoption, or delivery completion.
+Those retain their existing manifest/trust/readback checks. Temporary motion
+images remain registered in coverage, as above, and receive their existing actual
+picture review before continuing. Image failure affects the image state; it does
+not rewind an already delivered prompt or occupy a new narrative unit ID.

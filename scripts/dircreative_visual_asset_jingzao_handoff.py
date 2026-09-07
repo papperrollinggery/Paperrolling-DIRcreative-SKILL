@@ -20,7 +20,7 @@ except ImportError:  # pragma: no cover
 
 from dircreative_state_audit import _builtin_schema_errors
 from dircreative_verify_release import read_relative_regular_file_once
-from dircreative_visual_asset_plan import validate_plan
+from dircreative_visual_asset_plan import validate_plan, build_candidate_repair_source
 from dircreative_storyboard_coverage import resolve_planning_image_target, planning_image_spec_errors
 import dircreative_asset_foundation_pass as asset_foundation_pass
 
@@ -52,6 +52,7 @@ INPUT_SPEC_FIELDS = {
     "asset_foundation_pass",
     "reference_assets",
 }
+REPAIR_PRESERVE_REQUIREMENT = "Change only the listed visible defects in the supplied image. Preserve all other established subject identity, shape, proportions, materials, colors, visual medium and unrequested details."
 
 
 def sha256_bytes(payload: bytes) -> str:
@@ -64,6 +65,118 @@ def canonical_sha256(value: Any) -> str:
             "utf-8"
         )
     )
+
+
+def canonical_asset_role_requirements(asset: dict[str, Any]) -> list[str]:
+    """Generation constraints, derived from DIR truth before provider compilation.
+
+    These are ordinary supported Jingzao spec values, not compiler metadata or
+    an extra post-compile prompt. Narrative/planning contracts keep their own
+    existing compiler and are deliberately outside this foundation helper.
+    """
+    from dircreative_prompt_compiler import ASSET_ROLE_RULES
+
+    role = asset.get("role")
+    if role != "character_identity_reference":
+        return [ASSET_ROLE_RULES[role]] if role in ASSET_ROLE_RULES else []
+    mode = asset.get("character_mode", "headed_master")
+    if mode not in {"headed_master", "headed_state", "headless_safe"}:
+        raise ValueError("character_master_mode_invalid")
+    requirements = [
+        "One physical master sheet for exactly one character identity and one appearance state; never combine different characters on this sheet.",
+        "One dominant front-facing crown-to-neck face close-up at the far left, level and readable with both eyes visible.",
+        "Four full-body views in one horizontal row after the portrait: front, anatomical left profile with nose pointing frame-left, anatomical right profile with nose pointing frame-right, and back. Front first and back last; both side profiles are required and are not mirror substitutes.",
+        "The portrait and each full-body subject occupy at least 75% of the saved canvas height; equal body scale, shared ground line, complete head-to-toe framing and separated silhouettes.",
+        "Preserve this character's identity, body proportions, hair, garment construction and materials, footwear, anatomical left/right detail placement, and the declared pose and appearance state in every view.",
+        "Use a fully opaque neutral background with readable even lighting; no extra identity, undeclared prop, costume variant, text, label, border or watermark.",
+    ]
+    if mode == "headless_safe":
+        requirements[2] = "Four full-body views in one horizontal row after the portrait: front, anatomical left profile, anatomical right profile, and back. Front first and back last; both side profiles are required and are not mirror substitutes."
+        requirements.append("The left portrait is the only readable face. All four bodies are fully headless, preserving natural hands, wrists, cuffs, rear collar and inner back neckline from the approved headed source.")
+    else:
+        requirements.append("All four full-body views are headed, including a complete anatomically readable head and back view.")
+    if mode != "headed_master":
+        requirements.append("Derive from the attached approved headed master; change only the declared state or headless treatment and preserve all other identity and wardrobe details.")
+    return requirements
+
+
+def known_asset_role_requirements() -> set[str]:
+    """Only clauses owned by this compiler; custom artistic constraints are untouched."""
+    from dircreative_prompt_compiler import ASSET_ROLE_RULES
+    clauses = set(ASSET_ROLE_RULES.values())
+    for mode in ("headed_master", "headed_state", "headless_safe"):
+        clauses.update(canonical_asset_role_requirements({
+            "role": "character_identity_reference", "character_mode": mode,
+        }))
+    return clauses
+
+
+def prepare_role_spec(spec: dict[str, Any], asset: dict[str, Any]) -> dict[str, Any]:
+    """Apply canonical role constraints to an existing spec without changing its mode/ratio."""
+    if not isinstance(spec, dict) or spec.get("intent") != asset.get("purpose"):
+        raise ValueError("visual_asset_spec_purpose_mismatch")
+    prepared = copy.deepcopy(spec)
+    constraints = prepared.setdefault("constraints", {})
+    if not isinstance(constraints, dict):
+        raise ValueError("visual_asset_spec_constraints_invalid")
+    preserved = constraints.setdefault("must_preserve", [])
+    if not isinstance(preserved, list) or not all(isinstance(item, str) for item in preserved):
+        raise ValueError("visual_asset_spec_preservation_invalid")
+    required = canonical_asset_role_requirements(asset)
+    if not required:
+        return prepared
+    known = known_asset_role_requirements()
+    constraints["must_preserve"] = list(dict.fromkeys([
+        *required, *(item for item in preserved if item not in known),
+    ]))
+    return prepared
+
+
+def role_spec_errors(spec: Any, asset: dict[str, Any]) -> list[str]:
+    required = canonical_asset_role_requirements(asset)
+    if not required:
+        return []
+    constraints = spec.get("constraints") if isinstance(spec, dict) else None
+    preserved = constraints.get("must_preserve") if isinstance(constraints, dict) else None
+    if not isinstance(preserved, list) or not all(isinstance(item, str) for item in preserved) or any(item not in preserved for item in required):
+        return ["visual_asset_role_requirements_missing"]
+    if set(preserved).intersection(known_asset_role_requirements()) - set(required):
+        return ["visual_asset_role_requirements_stale"]
+    return []
+
+
+def candidate_repair_reference(binding: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "input_id": "candidate-repair-base", "asset_id": binding["asset_id"], "role": "base_edit_source",
+        "relative_path": binding["source_image"]["relative_path"], "sha256": binding["source_image"]["sha256"],
+        "rights_status": "project_owned", "approval_status": "candidate_repair_only",
+    }
+
+
+def prepare_candidate_repair_spec(
+    spec: dict[str, Any], binding: dict[str, Any], *, project_root: Path, output_spec: Path,
+) -> dict[str, Any]:
+    expected = build_candidate_repair_source(project_root=project_root, visual_plan_binding=binding.get("source_plan"), asset_id=binding.get("asset_id"), changes=binding.get("changes"))
+    if binding != expected:
+        raise ValueError("candidate_repair_source_binding_mismatch")
+    root = project_root.resolve(strict=True)
+    target = output_spec if output_spec.is_absolute() else root / output_spec
+    target.relative_to(root)
+    plan = json.loads(read_relative_regular_file_once(root, binding["source_plan"]["relative_path"], max_bytes=MAX_JSON_BYTES, label="repair plan"))
+    asset = next(item for item in plan["assets"] if item["asset_id"] == binding["asset_id"])
+    if spec.get("inputs") not in (None, []):
+        raise ValueError("candidate_repair_requires_unambiguous_single_base_spec")
+    prepared = prepare_role_spec(spec, asset)
+    prepared["mode"] = "edit"
+    prepared["inputs"] = [{
+        "id": "candidate-repair-base", "type": "image", "role": "base_edit_source",
+        "source_kind": "local_path", "source_ref": os.path.relpath(root / binding["source_image"]["relative_path"], target.parent),
+        "must_attach": True, "description": "The current image to edit; preserve unrequested visual features while applying the listed corrections.",
+    }]
+    prepared["constraints"]["must_change"] = [item["instruction"] for item in binding["changes"]]
+    if REPAIR_PRESERVE_REQUIREMENT not in prepared["constraints"]["must_preserve"]:
+        prepared["constraints"]["must_preserve"].append(REPAIR_PRESERVE_REQUIREMENT)
+    return prepared
 
 
 def spatial_layout_foundation_source(
@@ -571,6 +684,9 @@ def validate(
         errors,
     )
     active = document["active_asset"]
+    plan_asset: dict[str, Any] | None = None
+    repair = document.get("candidate_repair")
+    verified_repair: dict[str, Any] | None = None
     annotated_storyboard = False
     planning_resolution: dict[str, Any] | None = None
     if isinstance(visual_plan, dict):
@@ -632,6 +748,17 @@ def validate(
             )
             if active.get("role") == "professional_storyboard_motion_map" and not annotated_storyboard and planning_resolution is None:
                 errors.append("visual_asset_annotated_storyboard_strategy_invalid")
+    if repair is not None:
+        try:
+            expected_repair = build_candidate_repair_source(
+                project_root=resolved_project, visual_plan_binding=document["visual_plan"],
+                asset_id=active["asset_id"], changes=repair.get("changes") if isinstance(repair, dict) else None,
+            )
+            if repair != expected_repair or active.get("operation") != "edit" or "motion_planning" in document:
+                raise ValueError("candidate_repair_source_or_operation_mismatch")
+            verified_repair = expected_repair
+        except (OSError, ValueError, KeyError, TypeError) as exc:
+            errors.append("candidate_repair_invalid:" + str(exc))
 
     stack_request_bytes = read_binding(
         resolved_project,
@@ -795,6 +922,8 @@ def validate(
             errors.append("visual_asset_reference_assets_invalid")
         else:
             reference_assets = references
+            if verified_repair is not None and references != [candidate_repair_reference(verified_repair)]:
+                errors.append("candidate_repair_reference_set_mismatch")
             input_ids = [item.get("input_id") for item in references]
             source_asset_ids = [item.get("asset_id") for item in references]
             reference_paths = [item.get("relative_path") for item in references]
@@ -828,7 +957,7 @@ def validate(
                             raise ValueError("layout source mismatch")
                     except (ImportError, OSError, RuntimeError, ValueError):
                         errors.append(f"visual_asset_layout_reference_invalid:{item.get('input_id')}")
-                elif not annotated_storyboard and planning_resolution is None and (
+                elif verified_repair is None and not annotated_storyboard and planning_resolution is None and (
                     source is None
                     or source.get("relative_path") != item.get("relative_path")
                     or source.get("sha256") != item.get("sha256")
@@ -842,6 +971,9 @@ def validate(
                 }:
                     errors.append(f"visual_asset_reference_rights_invalid:{item.get('input_id')}")
                 expected_approvals = (
+                    {"candidate_repair_only"}
+                    if verified_repair is not None
+                    else
                     {"user_locked", "reused_locked"}
                     if isinstance(source, dict) and source.get("source_kind") == "canonical_asset"
                     else {"reference_only_approved"}
@@ -874,6 +1006,15 @@ def validate(
     )
     spec_inputs_by_id: dict[str, dict[str, Any]] = {}
     if isinstance(spec, dict) and isinstance(input_spec, dict):
+        if verified_repair is not None:
+            constraints = spec.get("constraints", {})
+            if (spec.get("mode") != "edit"
+                or not isinstance(constraints, dict)
+                or constraints.get("must_change") != [item["instruction"] for item in verified_repair["changes"]]
+                or REPAIR_PRESERVE_REQUIREMENT not in constraints.get("must_preserve", [])):
+                errors.append("candidate_repair_spec_scope_mismatch")
+        if plan_asset is not None:
+            errors.extend(role_spec_errors(spec, plan_asset))
         if planning_resolution is not None:
             errors.extend(planning_image_spec_errors(spec, planning_resolution["panels"]))
         if spec.get("intent") != input_spec.get("purpose"):
@@ -1028,6 +1169,18 @@ def validate(
         candidate = compiled.get("prompt")
         if isinstance(candidate, str) and candidate.strip():
             prompt = candidate
+            if verified_repair is not None and any(
+                " ".join(text.split()) not in " ".join(candidate.split())
+                for text in [REPAIR_PRESERVE_REQUIREMENT, *[item["instruction"] for item in verified_repair["changes"]]]
+            ):
+                errors.append("candidate_repair_compiler_dropped_edit_scope")
+            # Bind complete canonical spec constraints to the provider's actual
+            # output, not arbitrary English marker tokens in a handwritten prompt.
+            if plan_asset is not None and any(
+                " ".join(requirement.split()) not in " ".join(candidate.split())
+                for requirement in canonical_asset_role_requirements(plan_asset)
+            ):
+                errors.append("jingzao_compiler_dropped_asset_role_requirements")
         else:
             errors.append("jingzao_compiled_prompt_missing")
         review = compiled.get("prompt_review", {})
@@ -1056,6 +1209,82 @@ def validate(
 
 
 def main() -> int:
+    if len(sys.argv) > 1 and sys.argv[1] == "prepare-candidate-repair":
+        parser = argparse.ArgumentParser(description="Prepare a same-asset edit from a current reviewed retry candidate.")
+        parser.add_argument("prepare-candidate-repair")
+        parser.add_argument("--project-root", required=True, type=Path)
+        parser.add_argument("--visual-plan", required=True)
+        parser.add_argument("--expected-plan-sha256", required=True)
+        parser.add_argument("--asset-id", required=True)
+        parser.add_argument("--spec", required=True)
+        parser.add_argument("--changes", required=True)
+        parser.add_argument("--output-spec", required=True)
+        parser.add_argument("--output-binding", required=True)
+        args = parser.parse_args()
+        try:
+            root = args.project_root.resolve(strict=True)
+            changes = json.loads(read_relative_regular_file_once(root, args.changes, max_bytes=65536, label="repair changes"))
+            binding = build_candidate_repair_source(project_root=root, visual_plan_binding={"relative_path": args.visual_plan, "sha256": args.expected_plan_sha256}, asset_id=args.asset_id, changes=changes)
+            spec = json.loads(read_relative_regular_file_once(root, args.spec, max_bytes=MAX_JSON_BYTES, label="repair source spec"))
+            targets = [root / args.output_spec, root / args.output_binding]
+            for path in targets:
+                path.relative_to(root)
+                if path.exists() or path.is_symlink() or path.parent.resolve(strict=True) != path.parent:
+                    raise ValueError("candidate_repair_outputs_must_be_new_regular_paths")
+            if targets[0] == targets[1]:
+                raise ValueError("candidate_repair_outputs_must_be_distinct")
+            prepared = prepare_candidate_repair_spec(spec, binding, project_root=root, output_spec=targets[0])
+            written = []
+            try:
+                for path, value in zip(targets, [prepared, binding]):
+                    with path.open("xb") as handle:
+                        handle.write((json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True) + "\n").encode())
+                    written.append(path)
+            except OSError:
+                for path in written:
+                    path.unlink()
+                raise
+            print(json.dumps({"status": "prepared", "candidate_repair": binding, "reference_asset": candidate_repair_reference(binding), "operation": "edit", "spec": {"relative_path": args.output_spec, "sha256": sha256_bytes(targets[0].read_bytes())}, "generated": False, "visual_qa_approved": False}, ensure_ascii=False, indent=2))
+            return 0
+        except (OSError, ValueError, KeyError, TypeError) as exc:
+            print(json.dumps({"status": "blocked", "errors": [str(exc)]}, ensure_ascii=False))
+            return 1
+    if len(sys.argv) > 1 and sys.argv[1] == "prepare-role-spec":
+        parser = argparse.ArgumentParser(description="Apply the current asset role before Jingzao compilation.")
+        parser.add_argument("prepare-role-spec")
+        parser.add_argument("--project-root", required=True, type=Path)
+        parser.add_argument("--visual-plan", required=True, type=Path)
+        parser.add_argument("--asset-id", required=True)
+        parser.add_argument("--spec", required=True, type=Path)
+        parser.add_argument("--output", required=True, type=Path)
+        args = parser.parse_args()
+        try:
+            root = args.project_root.resolve(strict=True)
+            plan_path = (root / args.visual_plan).resolve(strict=True)
+            spec_path = (root / args.spec).resolve(strict=True)
+            output = (root / args.output).resolve(strict=False)
+            for path in (plan_path, spec_path, output):
+                path.relative_to(root)
+            plan_raw = read_relative_regular_file_once(root, plan_path.relative_to(root).as_posix(), max_bytes=MAX_JSON_BYTES, label="visual plan")
+            plan = json.loads(plan_raw)
+            if validate_plan(plan, base_dir=plan_path.parent)[0]:
+                raise ValueError("visual_asset_plan_invalid")
+            asset = next((item for item in plan["assets"] if item["asset_id"] == args.asset_id), None)
+            if asset is None or asset.get("action") in {"reuse", "assemble"}:
+                raise ValueError("active_asset_not_generated")
+            if not canonical_asset_role_requirements(asset):
+                raise ValueError("role_uses_existing_narrative_or_coverage_handoff")
+            spec_raw = read_relative_regular_file_once(root, spec_path.relative_to(root).as_posix(), max_bytes=MAX_JSON_BYTES, label="Jingzao spec")
+            prepared = prepare_role_spec(json.loads(spec_raw), asset)
+            output.parent.mkdir(parents=True, exist_ok=True)
+            raw = (json.dumps(prepared, ensure_ascii=False, indent=2, sort_keys=True) + "\n").encode()
+            with output.open("xb") as handle:
+                handle.write(raw)
+            print(json.dumps({"status": "prepared", "spec": {"relative_path": output.relative_to(root).as_posix(), "sha256": sha256_bytes(raw)}, "asset_id": args.asset_id, "requirements": canonical_asset_role_requirements(asset), "generated": False}, ensure_ascii=False))
+            return 0
+        except (OSError, ValueError, KeyError, TypeError) as exc:
+            print(json.dumps({"status": "blocked", "errors": [str(exc)]}, ensure_ascii=False))
+            return 1
     if len(sys.argv) > 1 and sys.argv[1] == "prepare-layout":
         parser = argparse.ArgumentParser(description="Prepare a derived Jingzao spec and formal layout reference.")
         parser.add_argument("prepare-layout")

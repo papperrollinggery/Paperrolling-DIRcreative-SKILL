@@ -239,7 +239,17 @@
           "character_mode": {"type": ["string", "null"], "enum": ["headed_master", "headed_state", "headless_safe", null]},
           "derived_from_asset_id": {"type": ["string", "null"], "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"},
           "approved_source_master_sha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
-          "character_contract_sha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"}
+          "character_contract_sha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
+          "candidate_repair_source": {"type":"object","additionalProperties":false,"required":["contract_id","project_id","asset_id","truth_sha256","source_plan","source_image","self_check","changes"],"properties":{"contract_id":{"const":"candidate_repair_source_v1"},"project_id":{"type":"string","minLength":1},"asset_id":{"type":"string","pattern":"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"},"truth_sha256":{"type":"string","pattern":"^[a-f0-9]{64}$"},"source_plan":{"type":"object","additionalProperties":false,"required":["relative_path","sha256"],"properties":{"relative_path":{"type":"string","minLength":1},"sha256":{"type":"string","pattern":"^[a-f0-9]{64}$"}}},"source_image":{"type":"object","additionalProperties":false,"required":["relative_path","sha256","pixel_sha256"],"properties":{"relative_path":{"type":"string","minLength":1},"sha256":{"type":"string","pattern":"^[a-f0-9]{64}$"},"pixel_sha256":{"type":"string","pattern":"^[a-f0-9]{64}$"}}},"self_check":{"type":"object","additionalProperties":false,"required":["relative_path","sha256"],"properties":{"relative_path":{"type":"string","minLength":1},"sha256":{"type":"string","pattern":"^[a-f0-9]{64}$"}}},"changes":{"type":"array","minItems":1,"maxItems":32,"items":{"type":"object","additionalProperties":false,"required":["check_id","instruction"],"properties":{"check_id":{"type":"string","minLength":1},"instruction":{"type":"string","minLength":12,"maxLength":4096}}}}}},
+          "execution_task_id": {"$ref": "#/$defs/id"},
+          "candidate_self_check": {
+            "oneOf": [
+              {"type": "null"},
+              {"type": "object", "additionalProperties": false,
+               "required": ["relative_path", "sha256"],
+               "properties": {"relative_path": {"type": "string", "minLength": 1}, "sha256": {"$ref": "#/$defs/sha256"}}}
+            ]
+          }
         }
       }
     },

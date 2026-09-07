@@ -70,7 +70,7 @@ def build_character_master_prompt(
 ) -> str:
     return " ".join(
         (
-            "Create one professional photorealistic headed character master sheet from the approved identity and wardrobe facts.",
+            "Create one professional headed character master sheet in the approved visual medium from the approved identity and wardrobe facts.",
             identity.strip(),
             wardrobe.strip(),
             materials.strip(),
@@ -111,7 +111,7 @@ def build_headed_state_prompt_from_contract(
     pose_lock = character_pose_lock(details)
     return " ".join(
         (
-            "Create one professional photorealistic headed character state derivative from the approved headed master.",
+            "Create one professional headed character state derivative in the same visual medium as the approved headed master.",
             "Use the attached approved headed master as the sole identity and wardrobe reference.",
             authoritative_purpose.strip(),
             "; ".join(str(item) for item in contract.get("state_facts", [])),
@@ -133,7 +133,7 @@ def build_headless_safe_prompt_from_contract(
 ) -> str:
     return " ".join(
         (
-            "Create one professional photorealistic headless-safe character sheet derived only from the approved headed master.",
+            "Create one professional headless-safe character sheet in the same visual medium as the approved headed master, derived only from that master.",
             "Use the attached approved headed master as the sole identity and wardrobe reference.",
             authoritative_purpose.strip(),
             "Preserve identical body proportions, outfit construction, materials, accessories, footwear, hands, cuffs and left/right placements.",

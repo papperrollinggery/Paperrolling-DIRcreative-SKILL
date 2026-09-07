@@ -156,6 +156,21 @@
         "script_id": {"type": "string", "minLength": 1},
         "source_relative_path": {"type": "string", "minLength": 1},
         "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "next_source_start": {
+          "oneOf": [
+            {"type": "null"},
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["source_line_number", "source_line_sha256", "text"],
+              "properties": {
+                "source_line_number": {"type": "integer", "minimum": 1},
+                "source_line_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+                "text": {"type": "string", "minLength": 1}
+              }
+            }
+          ]
+        },
         "dialogue_lines": {
           "type": "array",
           "items": {
@@ -419,6 +434,7 @@
           "pattern": "^@(?:Image|Audio|Video) [1-9][0-9]*$"
         },
         "role": {"type": "string", "minLength": 1},
+        "voice_owner_entity_id": {"type": "string", "minLength": 1},
         "must_not_control": {
           "type": "array",
           "uniqueItems": true,

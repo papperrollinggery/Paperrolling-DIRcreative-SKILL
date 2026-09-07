@@ -227,6 +227,27 @@ def authoritative_script_errors(
             add_error(errors, "authoritative_dialogue_source_line_mismatch", line_id)
         if line.get("source_line_sha256") != hashlib.sha256(source_line.encode("utf-8")).hexdigest():
             add_error(errors, "authoritative_dialogue_source_line_hash_mismatch", line_id)
+    next_start = script.get("next_source_start")
+    if next_start is not None:
+        if not isinstance(next_start, dict):
+            errors.append("authoritative_next_source_start_invalid")
+        else:
+            line_number = next_start.get("source_line_number")
+            source_lines = source_text.splitlines()
+            if (
+                not isinstance(line_number, int)
+                or isinstance(line_number, bool)
+                or not 1 <= line_number <= len(source_lines)
+            ):
+                errors.append("authoritative_next_source_line_invalid")
+            else:
+                source_line = source_lines[line_number - 1]
+                if not source_line.strip() or source_line != next_start.get("text"):
+                    errors.append("authoritative_next_source_line_mismatch")
+                if hashlib.sha256(source_line.encode("utf-8")).hexdigest() != next_start.get("source_line_sha256"):
+                    errors.append("authoritative_next_source_line_hash_mismatch")
+                if (line_number, next_start.get("source_line_sha256")) in source_locators:
+                    errors.append("authoritative_next_source_already_consumed")
     return errors
 
 
@@ -854,12 +875,12 @@ def method_application_errors(document: dict[str, Any]) -> list[str]:
         if method.get("status") == "applied_unverified":
             if (
                 method.get("provider_skill_id") != "mr-li-seedance-25"
-                or method.get("metadata_version") != "1.9.0"
-                or method.get("observed_metadata_version") != "1.9.0"
+                or method.get("metadata_version") != "2.0"
+                or method.get("observed_metadata_version") != "2.0"
                 or method.get("authority") != "isolated_method_only"
                 or method.get("non_adoption_reason") is not None
             ):
-                add_error(errors, "seedance25_method_application_invalid", "v1.9.0 receipt mismatch")
+                add_error(errors, "seedance25_method_application_invalid", "v2.0 receipt mismatch")
                 return errors
         elif method.get("status") == "not_applied":
             if (
@@ -871,9 +892,18 @@ def method_application_errors(document: dict[str, Any]) -> list[str]:
         else:
             add_error(errors, "seedance25_method_application_invalid", "status missing or invalid")
             return errors
-    if version != "2.5" and method:
-        errors.append("seedance25_method_application_not_allowed_for_other_version")
+    if version != "2.5":
+        if method:
+            errors.append("seedance25_method_application_not_allowed_for_other_version")
         return errors
+    script = document.get("authoritative_script", {})
+    if version == "2.5" and "next_source_start" not in script:
+        errors.append("authoritative_next_source_start_required")
+    remaining_source = script.get("next_source_start")
+    remaining_locator = (
+        f"source_line:{remaining_source.get('source_line_number')}"
+        if isinstance(remaining_source, dict) else None
+    )
     project_limit = method.get("project_default_segment_max_seconds")
     current_limit = method.get("current_segment_max_seconds")
     if version == "2.5" and (
@@ -900,6 +930,7 @@ def method_application_errors(document: dict[str, Any]) -> list[str]:
         errors.append("capacity_preflight_unit_coverage_invalid")
     dialogue_by_unit: dict[str, int] = {unit_id: 0 for unit_id in units}
     speakers_by_shot: dict[str, set[str]] = {}
+    speaking_units: dict[str, set[str]] = {}
     shot_to_unit = {
         str(shot.get("shot_id")): str(shot.get("generation_unit_id"))
         for shot in document.get("shots", [])
@@ -918,6 +949,7 @@ def method_application_errors(document: dict[str, Any]) -> list[str]:
                 line_unit_ids.add(unit_id)
         for unit_id in line_unit_ids:
             dialogue_by_unit[unit_id] += len(text)
+            speaking_units.setdefault(speaker, set()).add(unit_id)
     if any(len(speakers) > 1 for speakers in speakers_by_shot.values()):
         add_error(errors, "dialogue_speaker_change_requires_new_shot", "one shot has multiple speakers")
     for unit_id, unit in units.items():
@@ -934,7 +966,7 @@ def method_application_errors(document: dict[str, Any]) -> list[str]:
         expected_next = (
             units[ordered_unit_ids[unit_index + 1]]["shot_ids"][0]
             if unit_index + 1 < len(ordered_unit_ids)
-            else None
+            else remaining_locator
         )
         expected_claim = "segment_only" if expected_next is not None else "scene_complete"
         if (
@@ -954,6 +986,31 @@ def method_application_errors(document: dict[str, Any]) -> list[str]:
                 errors.append(f"capacity_limit_exceeded:{unit_id}:{field}")
         if isinstance(current_limit, (int, float)) and unit.get("duration_seconds", 0) > current_limit:
             errors.append(f"generation_unit_exceeds_method_limit:{unit_id}")
+    entity_ids = {item.get("entity_id") for item in document.get("entity_ownership", [])}
+    applicable_voice_units: set[tuple[str, str]] = set()
+    attached_voice_units: set[tuple[str, str]] = set()
+    for binding in document.get("bindings", []):
+        speaker = binding.get("voice_owner_entity_id")
+        if speaker is None:
+            continue
+        if binding.get("media_type") != "audio" or speaker not in entity_ids:
+            errors.append(f"voice_binding_owner_invalid:{binding.get('binding_id')}")
+            continue
+        required_units = speaking_units.get(speaker, set())
+        used_units = {
+            prompt.get("generation_unit_id")
+            for prompt in document.get("prompt_units", [])
+            if binding.get("binding_id") in prompt.get("binding_ids", [])
+        }
+        for unit_id in sorted(used_units - required_units):
+            errors.append(f"voice_binding_without_speech:{speaker}:{unit_id}")
+        if binding.get("status") == "available" and binding.get("direct_input_policy") in {"allowed", "conditional"}:
+            applicable = required_units.intersection(binding.get("unit_ids", []))
+            applicable_voice_units.update((speaker, unit_id) for unit_id in applicable)
+            if binding.get("attached_to_run") is True:
+                attached_voice_units.update((speaker, unit_id) for unit_id in applicable.intersection(used_units))
+    for speaker, unit_id in sorted(applicable_voice_units - attached_voice_units):
+        errors.append(f"known_voice_binding_missing:{speaker}:{unit_id}")
     forbidden_surface_markers = (
         "【全局画面与声音】",
         "【素材绑定】",

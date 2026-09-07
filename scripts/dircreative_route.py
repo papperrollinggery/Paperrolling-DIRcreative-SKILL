@@ -267,6 +267,99 @@ def denied_generation_followed_by_imperative(request: str) -> bool:
     )
 
 
+def requested_asset_components(request: str) -> dict[str, bool]:
+    """Find requested asset work inside the existing route, never authorization.
+
+    This is a design intake. A role may still be ruled out by the developed story;
+    no entity, image, source approval or generation event is created here.
+    """
+    text = action_text(request)
+    if has(text, r"提示词|prompt") and explicit_action_match(
+        text, r"改短|缩短|精简|修改|改写|调整|优化|压缩|revise|shorten|compress"
+    ) and not requests_whole_film_development(request):
+        return dict.fromkeys(("identity_state", "production_design", "camera_geography", "mechanical_transformation", "reuse"), False)
+    # Keep coordinated exclusions together (不要人物、场景和道具资产). An
+    # excluded role must not turn into a positive request because its noun exists.
+    clauses = re.split(r"[。；;!?！？\n，,]", text)
+    positive_clauses = [
+        re.split(r"不要|不需要|无需|不用|不做|别做|不改变|do\s+not|don't|without", clause, maxsplit=1, flags=re.IGNORECASE)[0]
+        for clause in clauses
+    ]
+    positive = " ".join(positive_clauses)
+    asset_words = has(positive, r"资产|母版|设定图|参考图|设计图|asset|reference\s+(?:image|sheet)|master\s+sheet")
+    related = has(positive, r"相关(?:图片|图像|参考)?资产|所需(?:图片|图像|参考)?资产") and has(
+        positive, r"九宫格|九格|分镜|故事|剧情|storyboard|story"
+    )
+    character = explicit_action_match(positive, r"人物母版|角色母版|人物设定(?:图|资产)|角色设定(?:图|资产)|"
+                                     r"character\s+(?:master|turnaround|model)\s+(?:sheet|asset)") or (
+        asset_words and has(positive, r"人物|角色|服装状态|造型状态|character|wardrobe")
+    )
+    scene = asset_words and has(positive, r"场景|环境|地理|scene|location")
+    prop = asset_words and has(positive, r"道具|产品|载具|武器|prop|product|vehicle")
+    mechanical = has(positive, r"机械|机甲|折叠盾|铰链|锁止|mechanical|mecha") and has(
+        positive, r"展开|折叠|变形|结构|部署|transform|deploy|fold"
+    )
+    role_patterns = {
+        "identity_state": r"人物|角色|服装|造型|character|wardrobe",
+        "production_design": r"道具|产品|载具|武器|机械|机甲|折叠盾|prop|product|vehicle|mechanical|mecha",
+        "camera_geography": r"场景|环境|地理|scene|location",
+    }
+    requested_roles = {
+        role for role, present in zip(role_patterns, (character or related, prop or related or mechanical, scene or related))
+        if present
+    }
+    supplied_roles: set[str] = set()
+    reused_roles: set[str] = set()
+    newly_requested_roles: set[str] = set()
+    reuse = False
+    # Reuse applies to its objects, not to all later clauses or every asset role.
+    for clause in positive_clauses:
+        for part in re.split(r"并且|同时|另外|然后|并(?=给|为|制作|生成|设计)|\band\s+(?=create|make|generate|design|reuse)", clause, flags=re.IGNORECASE):
+            roles = {role for role, pattern in role_patterns.items() if has(part, pattern)}
+            supplied = has(part, r"已给|已有|现有|提供|existing|supplied")
+            if supplied:
+                supplied_roles.update(roles)
+            reuse_action = explicit_action_match(part, r"沿用|复用|继续用|reuse") and bool(
+                roles or has(part, r"图片|图像|素材|资产|母版|参考图|PNG|images?|assets?|master|references?")
+            )
+            if reuse_action:
+                reuse = True
+                reused_roles.update(roles or supplied_roles or requested_roles)
+            creation = explicit_action_match(part, r"生成|制作|设计|建立|创建|改成|改为|修改|换|create|make|generate|design|change")
+            changed_or_new = has(part, r"新(?:的|人物|角色|场景|建|做)|另一个|淋湿|破损|受损|损伤|状态|\bnew\b|another|damaged|wet|state")
+            if not roles and creation and has(part, r"淋湿|破损|受损|损伤|状态|damaged|wet|state"):
+                available = reused_roles or supplied_roles
+                state_hints = {
+                    "identity_state": r"衣袖|袖口|左袖|右袖|衣摆|发型|发丝|伤痕|sleeve|cuff|hairstyle|scar",
+                    "production_design": r"瓶盖|包装|铰链|车轮|刀刃|握柄|hinge|wheel|blade|handle|bottle\s*cap",
+                    "camera_geography": r"墙面|墙壁|地面|屋顶|天花板|wall|floor|roof|ceiling",
+                }
+                roles = {role for role in available if has(part, state_hints[role])}
+                if not roles and (len(available) == 1 or has(part, r"全部|全都|所有|\ball\b")):
+                    roles = available
+            if roles and (creation or (changed_or_new and not supplied)) and (not reuse_action or changed_or_new):
+                newly_requested_roles.update(roles)
+    cancelled = " ".join(re.findall(
+        r"(?:不要|不需要|无需|不用|不做|别做|do\s+not|don't|without)(?!改变|修改|改动)([^。；;!?！？\n，,]+)",
+        text, flags=re.IGNORECASE,
+    ))
+    cancellation_has_assets = related or has(cancelled, r"资产|母版|设定图|参考图|asset|sheet")
+    return {
+        "identity_state": bool((character or related) and ("identity_state" not in reused_roles or "identity_state" in newly_requested_roles) and not (cancellation_has_assets and has(cancelled, r"人物|角色|character"))),
+        "production_design": bool((prop or related or mechanical) and ("production_design" not in reused_roles or "production_design" in newly_requested_roles) and not (cancellation_has_assets and has(cancelled, r"道具|产品|载具|武器|prop|product|vehicle"))),
+        "camera_geography": bool((scene or related) and ("camera_geography" not in reused_roles or "camera_geography" in newly_requested_roles) and not (cancellation_has_assets and has(cancelled, r"场景|环境|scene|location"))),
+        "mechanical_transformation": bool(mechanical),
+        "reuse": bool(reuse),
+    }
+
+
+def requests_whole_film_development(request: str) -> bool:
+    text = action_text(request)
+    return explicit_action_match(text, r"(?:做|制作|创作|开发|完成|筹备).{0,24}(?:短片|广告片|品牌片|电影)|"
+                                r"(?:完整|全套|全部|全片).{0,24}(?:前期|流程|剧本|故事|分镜)|"
+                                r"(?:make|create|develop|prepare).{0,32}(?:film|commercial|movie)")
+
+
 def classify_media_scope(request: str) -> dict[str, Any]:
     """Resolve image generation and final-video generation as separate scopes."""
     text = action_text(request)
@@ -479,11 +572,9 @@ def classify_route(
 
     text = " ".join(request.split())
     actionable = action_text(request)
-    character_master_target = has(
-        actionable,
-        r"人物母版|角色母版|人物设定(?:图|资产)|角色设定(?:图|资产)|"
-        r"character\s+(?:master|turnaround|model)\s+(?:sheet|asset)",
-    )
+    asset_components = requested_asset_components(request)
+    asset_design_target = any(asset_components.values())
+    character_master_target = asset_components["identity_state"]
     maintenance_target = has(
         text,
         r"(?:DIRcreative\s+Skill\s*(?:本身)?|DIR\s*(?:的)?\s*SKILL\.md|DIR\s*安装器|"
@@ -520,7 +611,7 @@ def classify_route(
         r"client delivery|send[- ]ready|send\s+to\s+(?:the\s+)?client",
     ):
         return "client_delivery", ["client_delivery_intent"]
-    if not connected_image_preproduction and (has(
+    if not connected_image_preproduction and not asset_design_target and (has(
         side_effect_intent,
         r"真实生成|生成授权|授权生成|generation authorization|generation\s+authorized|"
         r"authorize (?:real )?generation",
@@ -530,11 +621,10 @@ def classify_route(
     )):
         return "generation_authorization", ["real_generation_requires_authorization"]
 
-    if character_master_target:
-        return "film_development", [
-            "character_master_asset",
-            "identity_state_contract_required",
-        ]
+    if asset_design_target:
+        if character_master_target and not has(actionable, r"九宫格|九格|storyboard|nine[- ]grid") and not requests_whole_film_development(request):
+            return "film_development", ["character_master_asset", "identity_state_contract_required"]
+        return "film_development", ["asset_design_required"]
 
     # Study the media itself; prompt-only criticism stays on the existing route.
     study_action = explicit_action_match(
@@ -607,7 +697,7 @@ def classify_route(
         r"第三句|一句|一段|单镜头|这个镜头|一个镜头|少量分镜|局部分镜|局部|"
         r"one sentence|one paragraph|single shot|this shot|few storyboards|bounded",
     )
-    revision = has(actionable, r"修改|优化|调整|润色|改写|评审|补充|分析|改(?:得|成|为)|revise|rewrite|polish|adjust|review|improve|analy[sz]e")
+    revision = has(actionable, r"修改|优化|调整|润色|改写|改短|缩短|精简|评审|补充|分析|改(?:得|成|为)|revise|rewrite|polish|adjust|review|improve|analy[sz]e")
     complete = pre_video_full_scope or has(actionable, r"完整|全套|多产物|概念\s*\+|故事\s*\+|脚本\s*\+\s*分镜|full|complete|multi[- ]artifact")
     broad_scope = has(
         actionable,
@@ -628,7 +718,7 @@ def classify_route(
             return "copy_revision", ["bounded_revision", "copy_target"]
         return "bounded_revision", ["bounded_revision"]
 
-    if broad_scope or complete or has(actionable, r"广告片|品牌片|短片|film|commercial|故事|脚本|story|script"):
+    if broad_scope or complete or has(actionable, r"广告片|品牌片|短片|film|commercial|故事|剧情|九宫格|九格|脚本|story|script"):
         return "film_development", ["multi_artifact_or_complete_creation"]
     return "bounded_revision", ["single_output_default"]
 
@@ -645,14 +735,12 @@ def classify_deliverable_layer(request: str, route: str) -> tuple[str | None, bo
         return "bounded_output", False
 
     text = action_text(request)
+    assets = requested_asset_components(request)
+    narrative_board = has(text, r"九宫格|九格(?:故事板|分镜)?|9\s*(?:宫格|格)|nine[- ]grid")
+    if any(assets.values()) and not narrative_board and not requests_whole_film_development(request):
+        return "technical_production", False
     if requests_spatial_discussion(request):
         return "spatial_discussion", False
-    if has(
-        text,
-        r"人物母版|角色母版|人物设定(?:图|资产)|角色设定(?:图|资产)|"
-        r"character\s+(?:master|turnaround|model)\s+(?:sheet|asset)",
-    ):
-        return "technical_production", False
     technical = explicit_technical_request(text)
     if technical:
         return "technical_production", True
@@ -703,17 +791,22 @@ def film_craft_stages(
     Revisit conditional craft against the developed script: a short brief cannot
     enumerate all later blocking, action or environment requirements.
     """
-    if route != "film_development" or not shot_matrix_allowed:
+    if route != "film_development":
         return []
-    # Story content can inform craft, never route, scope or authorization.
-    text = action_text(request) + " " + action_text(story_context)
+    assets = requested_asset_components(request)
+    spatial_only = deliverable_layer == "spatial_discussion"
+    if not shot_matrix_allowed and not any(assets.values()) and not spatial_only:
+        return []
+    # Current shot-card facts can inform craft even inside quotation marks.
+    # They never enter route selection or the original-request authorization pass.
+    text = action_text(request) + " " + story_context
     clauses = re.split(r"[。；;!?！？\n，,]", text)
 
     def requested(pattern: str) -> bool:
         return any(explicit_action_match(clause, pattern) for clause in clauses)
 
     action_required = requested(
-        r"武侠|打斗|打戏|对打|搏斗|格斗|追逐|挥刀|格挡|刀剑交击|拳击|动作(?:戏|片|短片)|"
+        r"武侠|打斗|打戏|对打|搏斗|格斗|追逐|挥刀|格挡|刀剑交击|拳击|交接|递给|接住|动作(?:戏|片|短片)|"
         r"\b(?:wuxia|fight|combat|chase)\b|action\s+(?:film|scene|short)"
     )
     motion_required = action_required or motion_planning_required or requested(
@@ -743,24 +836,42 @@ def film_craft_stages(
             **fields,
         }
 
-    stages: list[dict[str, Any]] = [{
-        "stage": "shot_design",
-        "task_reference": "skills/dircreative/references/shot-development.md",
-        "selection_intent": selection("technical_storyboard"),
-        "status": "pending",
-    }]
-    if action_required:
+    stages: list[dict[str, Any]] = []
+    if shot_matrix_allowed:
+        stages.append({
+            "stage": "shot_design", "task_reference": "skills/dircreative/references/shot-development.md",
+            "selection_intent": selection("technical_storyboard"), "status": "pending",
+        })
+    if action_required and (shot_matrix_allowed or spatial_only):
         stages.append({"stage": "action", "selection_intent": selection("action_choreography"), "status": "pending"})
-    if effects_required:
+    if effects_required and shot_matrix_allowed:
         stages.append({"stage": "environment_effects", "selection_intent": selection("vfx_design"), "status": "pending"})
-    if spatial_required:
+    if (spatial_required or spatial_only) and not assets["camera_geography"] and (shot_matrix_allowed or spatial_only):
         stages.append({
             "stage": "camera_geography",
             "task_reference": "skills/dircreative/references/spatial-discussion.md",
             "selection_intent": selection("master_camera"),
             "status": "pending",
         })
-    full_frames = deliverable_layer == "full_preproduction" or media_scope == "pre_video_assets"
+    asset_gaps = {"identity_state": "character_continuity", "production_design": "production_design", "camera_geography": "camera_geography"}
+    for pass_id, gap in asset_gaps.items():
+        if assets[pass_id]:
+            stages.append({
+                "stage": pass_id,
+                "task_reference": "skills/dircreative/references/character-master-sheet.md" if pass_id == "identity_state" else "skills/dircreative/references/asset-foundation-pass.md",
+                "selection_intent": selection("asset_foundation", media="image_series", active_stage=pass_id,
+                    asset_pass_id=pass_id, asset_pass_scope="initial_design", asset_pass_status="in_progress", gaps=[gap]),
+                "status": "pending",
+            })
+    if assets["mechanical_transformation"] or (shot_matrix_allowed and requested(r"机械.{0,20}(?:展开|变形)|铰链|锁止")):
+        stages.append({"stage": "mechanical_transformation", "selection_intent": selection("mechanical_transformation"), "status": "pending"})
+    if assets["reuse"]:
+        stages.append({"stage": "asset_readback", "task_reference": "skills/dircreative/references/image-execution.md",
+            "selection_intent": selection("constraint_input", media="image_series"), "status": "pending"})
+    if any(assets[pass_id] for pass_id in asset_gaps):
+        stages.append({"stage": "asset_compile", "task_reference": "skills/dircreative/references/visual-asset-to-jingzao.md",
+            "selection_intent": selection("visual_asset_compile", media="image_series"), "status": "pending"})
+    full_frames = shot_matrix_allowed and (deliverable_layer == "full_preproduction" or media_scope == "pre_video_assets")
     if full_frames:
         stages.append({"stage": "panel_coverage", "task_reference": "skills/dircreative/references/storyboard-coverage.md", "selection_intent": selection("technical_storyboard"), "status": "pending"})
         if motion_required:

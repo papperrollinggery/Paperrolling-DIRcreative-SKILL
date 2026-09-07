@@ -19,8 +19,8 @@
   "method_application": {
     "status": "applied_unverified",
     "provider_skill_id": "mr-li-seedance-25",
-    "metadata_version": "1.9.0",
-    "observed_metadata_version": "1.9.0",
+    "metadata_version": "2.0",
+    "observed_metadata_version": "2.0",
     "authority": "isolated_method_only",
     "non_adoption_reason": null,
     "project_default_segment_max_seconds": 30,
@@ -82,6 +82,7 @@
   },
   "authoritative_script": {
     "script_id": "SCRIPT-001",
+    "next_source_start": null,
     "source_relative_path": "source/SCRIPT-001.md",
     "sha256": "32c9ee8191e20857c4cf5cdf89d69d7d88a3066f3c8cd33336e7b8b7beec9e96",
     "dialogue_lines": [
