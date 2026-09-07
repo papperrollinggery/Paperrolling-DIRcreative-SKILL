@@ -28,6 +28,131 @@ def write_json(path: Path, value: object) -> dict[str, str]:
 
 
 class VisualAssetJingzaoHandoffTests(unittest.TestCase):
+    def test_nested_visual_plan_keeps_planning_target_sources_relative_to_plan_directory(self):
+        from tests.test_asset_execution_gate import AssetExecutionGateTests
+        import dircreative_asset_execution_gate as execution_gate
+        import dircreative_storyboard_coverage as coverage
+        import dircreative_storyboard_page_assembler as assembler
+
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw); project = root / "project"; project.mkdir(); provider = root / "providers/jingzao-image-forge"
+            factory = AssetExecutionGateTests()
+            packet, request, document = factory.rough_motion_fixture(
+                project, provider, planning_target=True, storyboard_strategy="individual_frames",
+            )
+            design = project / "design"; design.mkdir()
+            original_plan_bytes = (project / "visual-plan.json").read_bytes()
+            for name in ("visual-plan.json", "character-inventory.json", "character-creative-source.json", "character-shot-cards.json"):
+                (project / name).rename(design / name)
+            # The plan's own relative inventory/cards paths remain unchanged.
+            plan_binding = {"relative_path": "design/visual-plan.json", "sha256": hashlib.sha256(original_plan_bytes).hexdigest()}
+            sidecar = json.loads((project / "coverage.json").read_text())
+            sidecar["shot_cards_file"] = "design/character-shot-cards.json"
+            coverage_binding = write_json(project / "coverage.json", sidecar)
+            motion = copy.deepcopy(packet["motion_planning"])
+            motion["coverage_sha256"] = coverage_binding["sha256"]
+            resolved = coverage.resolve_planning_image_target(motion, visual_plan_binding=plan_binding, project_root=project)
+            target = resolved["asset"]
+
+            document["visual_plan"] = plan_binding
+            document["motion_planning"] = motion
+            document["active_asset"] = {key: target[key] for key in (
+                "asset_id", "role", "truth_sha256", "purpose_sha256", "visual_plan_sha256", "operation"
+            )}
+            input_spec = json.loads((project / "request.json").read_text())
+            input_spec.update(asset_id=target["asset_id"], role=target["role"], truth_sha256=target["truth_sha256"],
+                              purpose=target["purpose"], visual_plan_sha256=plan_binding["sha256"])
+            document["input_spec"] = write_json(project / "request.json", input_spec)
+            spec = json.loads((project / "visual-spec.json").read_text())
+            spec["intent"] = target["purpose"]
+            document["output_spec"]["visual_generation_spec"] = write_json(project / "visual-spec.json", spec)
+            compiled = json.loads((project / "compiled.json").read_text())
+            compiled["prompt"] = "Goal:\n" + target["purpose"]
+            compiled_binding = write_json(project / "compiled.json", compiled)
+            prompt_sha = execution_gate.sha256_text(compiled["prompt"])
+            document["output_spec"].update(compiled_prompt_manifest=compiled_binding, prompt_sha256=prompt_sha)
+            document["delivery_consumption"]["consumed_prompt_sha256"] = prompt_sha
+            handoff_binding = write_json(project / "handoff.json", document)
+            packet.update(asset_id=target["asset_id"], asset_role=target["role"], active_asset_truth_sha256=target["truth_sha256"],
+                          visual_plan={"path": plan_binding["relative_path"], "sha256": plan_binding["sha256"]},
+                          motion_planning=motion, dependencies=resolved["dependencies"], prompt=compiled["prompt"], prompt_sha256=prompt_sha)
+            packet["jingzao_asset_handoff"].update(sha256=handoff_binding["sha256"], compiled_prompt_manifest_sha256=compiled_binding["sha256"])
+            packet["prompt_authority"] = execution_gate.build_prompt_authority(
+                target, prompt_sha, jingzao_handoff_sha256=handoff_binding["sha256"],
+                jingzao_provider_skill_sha256=document["provider_skill"]["sha256"],
+                jingzao_prompt_manifest_sha256=compiled_binding["sha256"],
+            )
+
+            errors, loaded_prompt = handoff.validate(document, project_root=project, provider_root=provider,
+                                                     trusted_provider_roots=(provider,), allow_unsandboxed_test_replay=True)
+            self.assertEqual(errors, [])
+            self.assertEqual(loaded_prompt, packet["prompt"])
+            self.assertEqual(execution_gate.validate_packet(
+                packet, repo_root=ROOT, project_root=project, request_text=request,
+                _trusted_jingzao_provider_roots=(provider,), _allow_unsandboxed_jingzao_replay_for_tests=True,
+            ), [])
+            self.assertEqual((design / "visual-plan.json").read_bytes(), original_plan_bytes)
+            self.assertFalse((project / "character-inventory.json").exists())
+            self.assertNotIn(target["asset_id"], {item["asset_id"] for item in json.loads(original_plan_bytes)["assets"]})
+            output = design / "incorrect-formal-page.png"
+            receipt = design / "incorrect-formal-page-receipt.json"
+            result = assembler.assemble(original_plan_bytes, base_dir=design, asset_id=target["asset_id"],
+                                        output_path=output, receipt_path=receipt)
+            if result["status"] == "TOOL_BLOCKED":
+                self.assertEqual(result["errors"], ["pillow_unavailable"])
+            else:
+                self.assertEqual(result["status"], "blocked")
+                self.assertEqual(result["errors"], ["assembly_target_invalid"])
+            self.assertFalse(output.exists())
+            self.assertFalse(receipt.exists())
+
+    def test_planning_target_compiles_without_media_authorization_but_cannot_execute(self):
+        from tests.test_asset_execution_gate import AssetExecutionGateTests
+        import dircreative_asset_execution_gate as execution_gate
+        from dircreative_route import route_request
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw); project = root / "project"; project.mkdir(); provider = root / "providers/jingzao-image-forge"
+            factory = AssetExecutionGateTests()
+            packet, _, document = factory.rough_motion_fixture(project, provider, planning_target=True, storyboard_strategy="individual_frames")
+            request = "$dircreative 做一部完整武侠短片的前期制作，先写全部分镜和提示词，不要生成图片或视频。"
+            self.assertFalse(route_request(request)["image_generation_authorized"])
+            stack_request = json.loads((project / "stack-request.json").read_text())
+            stack_request["request_text"] = request
+            document["skill_stack_request"] = write_json(project / "stack-request.json", stack_request)
+            proc = subprocess.run(
+                [sys.executable, str(ROOT / "scripts/dircreative_skill_stack.py"), "select", "--intent",
+                 str(project / "stack-intent.json"), "--request", request, "--root", str(provider.parent)],
+                capture_output=True, text=True, check=False,
+            )
+            self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+            document["skill_stack_receipt"] = write_json(project / "stack.json", json.loads(proc.stdout))
+            errors, prompt = handoff.validate(document, project_root=project, provider_root=provider,
+                                              trusted_provider_roots=(provider,), allow_unsandboxed_test_replay=True)
+            self.assertEqual(errors, [])
+            self.assertEqual(prompt, packet["prompt"])
+            factory.rebind_motion_handoff(project, packet, document)
+            packet["jingzao_asset_handoff"]["skill_stack_receipt_sha256"] = document["skill_stack_receipt"]["sha256"]
+            errors = execution_gate.validate_packet(packet, repo_root=ROOT, project_root=project, request_text=request,
+                                                     _trusted_jingzao_provider_roots=(provider,), _allow_unsandboxed_jingzao_replay_for_tests=True)
+            self.assertIn("motion_planning_request_not_authorized", errors)
+
+    def test_planning_target_handoff_recomputes_target_and_rejects_formal_masquerade(self):
+        from tests.test_asset_execution_gate import AssetExecutionGateTests
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw); project = root / "project"; project.mkdir(); provider = root / "providers/jingzao-image-forge"
+            _, _, baseline = AssetExecutionGateTests().rough_motion_fixture(project, provider, planning_target=True, storyboard_strategy="individual_frames")
+            for change in ("source_id", "purpose", "target_hash", "no_target"):
+                with self.subTest(change=change):
+                    document = copy.deepcopy(baseline)
+                    if change == "source_id": document["active_asset"]["asset_id"] = document["motion_planning"]["scope_asset_id"]
+                    elif change == "purpose": document["active_asset"]["purpose_sha256"] = "0" * 64
+                    elif change == "target_hash": document["active_asset"]["truth_sha256"] = "0" * 64
+                    else: document.pop("motion_planning")
+                    errors, _ = handoff.validate(document, project_root=project, provider_root=provider,
+                                                  trusted_provider_roots=(provider,), allow_unsandboxed_test_replay=True)
+                    expected = "visual_asset_plan_active_asset_missing_or_ambiguous" if change == "no_target" else "visual_asset_planning_target_mismatch"
+                    self.assertIn(expected, errors)
+
     def test_prepare_layout_cleans_first_output_when_second_publish_fails(self):
         with tempfile.TemporaryDirectory() as raw:
             project = Path(raw)
@@ -624,6 +749,54 @@ class VisualAssetJingzaoHandoffTests(unittest.TestCase):
                 allow_unsandboxed_test_replay=True,
             )
         self.assertIn("jingzao_compilation_replay_mismatch", errors)
+
+    def test_length_reference_approval_is_replayed_exactly_without_broadening_approval_scope(self):
+        with tempfile.TemporaryDirectory() as project_raw, tempfile.TemporaryDirectory() as provider_raw:
+            project = Path(project_raw)
+            provider = Path(provider_raw) / "jingzao-image-forge"
+            document, expected_prompt = self.fixture(project, provider, first_image=True)
+            script = provider / "scripts/compile_prompt.py"
+            script.write_text(
+                "import json,sys\n"
+                "spec=json.load(open(sys.argv[1])); ids=[x['id'] for x in spec.get('inputs',[])]\n"
+                "approved='--approve-review' in sys.argv\n"
+                "review={'status':'approved' if approved else 'review_required',"
+                "'approval_scope':'length_and_reference_complexity_only' if approved else 'none',"
+                "'reasons':['prompt_length'], 'required_reference_count':len(ids)}\n"
+                "print(json.dumps({'prompt':'Goal:\\n'+spec['intent'],'prompt_review':review,"
+                "'imagegen_call_plan':{'status':'ready' if approved else 'review_required',"
+                "'errors':[], 'required_input_ids':ids,'expected_attachment_count':len(ids)}}))\n"
+            )
+            runtime = next(item for item in document["provider_runtime_files"]
+                           if item["relative_path"] == "scripts/compile_prompt.py")
+            runtime.update(sha256=hashlib.sha256(script.read_bytes()).hexdigest(), bytes=script.stat().st_size)
+            compiled_path = project / document["output_spec"]["compiled_prompt_manifest"]["relative_path"]
+            spec_path = project / document["output_spec"]["visual_generation_spec"]["relative_path"]
+            run = subprocess.run([sys.executable, str(script), str(spec_path), "--approve-review"],
+                                 text=True, capture_output=True, check=False)
+            self.assertEqual(run.returncode, 0, run.stderr)
+            actual_approved = json.loads(run.stdout)
+            for case in ("exact_approved", "altered_review", "surface_risk_scope", "unreviewed"):
+                with self.subTest(case=case):
+                    compiled = copy.deepcopy(actual_approved)
+                    if case == "altered_review":
+                        compiled["prompt_review"]["reasons"].append("invented approval")
+                    elif case == "surface_risk_scope":
+                        compiled["prompt_review"]["approval_scope"] = "surface_risk_length_and_reference_complexity"
+                    elif case == "unreviewed":
+                        compiled["prompt_review"]["status"] = "review_required"
+                    document["output_spec"]["compiled_prompt_manifest"] = write_json(compiled_path, compiled)
+                    errors, prompt = handoff.validate(
+                        document, project_root=project, provider_root=provider,
+                        trusted_provider_roots=(provider,), allow_unsandboxed_test_replay=True,
+                    )
+                    if case == "exact_approved":
+                        self.assertEqual(errors, [])
+                        self.assertEqual(prompt, expected_prompt)
+                    else:
+                        self.assertIn("jingzao_compilation_replay_mismatch", errors)
+                        if case in {"surface_risk_scope", "unreviewed"}:
+                            self.assertIn("jingzao_prompt_review_not_ready", errors)
 
     def test_arbitrary_file_cannot_replace_asset_foundation_pass(self):
         with tempfile.TemporaryDirectory() as project_raw, tempfile.TemporaryDirectory() as provider_raw:

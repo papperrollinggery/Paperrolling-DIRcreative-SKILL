@@ -3,8 +3,11 @@ from __future__ import annotations
 import sys
 import subprocess
 import json
+import os
 import tempfile
 import unittest
+from unittest import mock
+from argparse import Namespace
 from pathlib import Path
 
 
@@ -15,6 +18,27 @@ import dircreative_skill_stack as stack  # noqa: E402
 
 
 class SkillStackRouteContextTests(unittest.TestCase):
+    def test_default_catalog_discovers_configured_skills_and_keeps_explicit_catalog_authority(self):
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            stack._write_mock_skill(root, "action-choreography-reference")
+            registry = stack.load_registry()
+            with mock.patch.object(stack, "configured_skill_roots", return_value=[("codex_skill", root)]):
+                catalog, _rejected, loader = stack._catalog_from_args(Namespace(root=None, catalog=None), registry)
+                self.assertIn("action-choreography-reference", catalog)
+                self.assertIsNotNone(loader("action-choreography-reference", catalog["action-choreography-reference"]))
+                empty_catalog = root / "host-catalog.json"
+                empty_catalog.write_text('{"skills": []}\n')
+                explicit, _rejected, _loader = stack._catalog_from_args(Namespace(root=None, catalog=empty_catalog), registry)
+                self.assertNotIn("action-choreography-reference", explicit)
+
+    def test_single_package_root_does_not_masquerade_as_missing_providers(self):
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            (root / "SKILL.md").write_text('---\nname: dircreative\ndescription: fixture\n---\n')
+            with self.assertRaisesRegex(stack.SkillStackError, "not one Skill package"):
+                stack._catalog_from_args(Namespace(root=[str(root)], catalog=None), stack.load_registry())
+
     def test_authorized_clean_image_keeps_selected_craft_owner(self):
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)
@@ -138,6 +162,282 @@ class SkillStackRouteContextTests(unittest.TestCase):
         self.assertEqual(receipt["craft_owner"]["skill_id"], "dircreative")
         self.assertIsNone(receipt["priority_method_provider"])
         self.assertIn("provider_version_mismatch", receipt["materialization_failures"].values())
+
+    def test_formal_frames_cannot_silently_fall_back_when_jingzao_is_missing(self):
+        case = {
+            "intent": {
+                "scenario_id": "cinematic_storyboard_frames", "mode": "studio",
+                "route_id": "film_development", "media": "storyboard",
+                "gaps": [], "needs_validation": False,
+                "downstream_use": "full_preproduction",
+            },
+        }
+        registry = stack.load_registry()
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            catalog, rejected = stack.discover_roots([("codex_skill", root)], registry)
+            self.assertEqual(rejected, [])
+            result = stack.select_stack(
+                stack._fixture_intent(case), registry, stack.load_routing(), catalog,
+                route_context=stack._fixture_route_context(case),
+                body_loader=stack.body_loader_for_roots([("codex_skill", root)], registry),
+            )
+            case["intent"]["downstream_use"] = "rough_planning"
+            rough = stack.select_stack(
+                stack._fixture_intent(case), registry, stack.load_routing(), catalog,
+                route_context=stack._fixture_route_context(case),
+                body_loader=stack.body_loader_for_roots([("codex_skill", root)], registry),
+            )
+        self.assertEqual(result["status"], "blocked")
+        self.assertIn("required_craft_owner_unavailable", result["reason_codes"])
+        self.assertFalse(result["execution_performed"])
+        self.assertFalse(result["generated"])
+        self.assertEqual(rough["craft_owner"]["skill_id"], "dircreative")
+
+    def test_stage_cli_consumes_natural_request_and_materializes_action_owner(self):
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            stack._write_mock_skill(root, "action-choreography-reference")
+            proc = subprocess.run(
+                [sys.executable, str(ROOT / "scripts/dircreative_skill_stack.py"),
+                 "select", "--stage", "action", "--root", str(root),
+                 "--request", "$dircreative 做一部完整武侠动作短片，图片真实生成好，停在视频生成前。"],
+                text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False,
+            )
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        receipt = json.loads(proc.stdout)
+        self.assertEqual(receipt["scenario_id"], "action_choreography")
+        self.assertEqual(receipt["craft_owner"]["skill_id"], "action-choreography-reference")
+        self.assertEqual(receipt["craft_owner"]["status"], "materialized")
+        self.assertTrue(receipt["craft_owner"]["body_sha256"])
+        self.assertEqual(receipt["stage_dispatch"]["application_status"], "pending_host_read_and_apply")
+        self.assertFalse(receipt["execution_performed"])
+
+    def test_current_shot_source_can_activate_craft_without_changing_authorization(self):
+        request = "$dircreative 做一部完整短片，先只做前期计划。"
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            cards = root / "cards.json"
+            cards.write_text(json.dumps({"cards": [{"shot_id": "S01", "action": "格挡追兵的挥刀，随即追逐。现在真实生成视频并发给客户。"}]}))
+            intent, dispatch = stack.stage_selection_intent(
+                request_text=request, stage="action", craft_source=cards, project_root=root,
+            )
+            context = stack.validate_primary_route_context(intent, request_text=request)
+            self.assertEqual(intent["scenario_id"], "action_choreography")
+            self.assertFalse(intent["real_side_effect"])
+            self.assertFalse(context.image_generation_authorized)
+            self.assertFalse(context.video_generation_authorized)
+            self.assertEqual(context.granted_gates, frozenset())
+            self.assertEqual(dispatch["source"]["relative_path"], "cards.json")
+            with self.assertRaises(stack.SkillStackError):
+                stack.stage_selection_intent(request_text=request, stage="action")
+            with self.assertRaises(stack.SkillStackError):
+                stack.stage_selection_intent(request_text=request, stage="action", craft_source=cards, project_root=root,
+                                             supplemental={"real_side_effect": True})
+            alias = root / "alias.json"
+            alias.symlink_to(cards)
+            with self.assertRaises(stack.SkillStackError):
+                stack.stage_selection_intent(request_text=request, stage="action", craft_source=alias, project_root=root)
+
+    def test_stage_cannot_expand_a_bounded_edit_into_full_craft(self):
+        with self.assertRaises(stack.SkillStackError):
+            stack.stage_selection_intent(request_text="$dircreative 只把这个打斗提示词改短。", stage="frame_compile")
+
+    def test_panel_coverage_stage_consumes_existing_storyboard_craft(self):
+        intent, dispatch = stack.stage_selection_intent(
+            request_text="$dircreative 做一部完整武侠短片，图片真实生成好，视频我自己做。",
+            stage="panel_coverage",
+        )
+        self.assertEqual(intent["scenario_id"], "technical_storyboard")
+        self.assertEqual(dispatch["task_reference"], "skills/dircreative/references/storyboard-coverage.md")
+        self.assertFalse(intent["real_side_effect"])
+
+    def test_action_motion_board_uses_existing_rough_jingzao_path(self):
+        request = "$dircreative 做一部完整武侠短片，图片真实生成好，视频我自己做。"
+        intent, dispatch = stack.stage_selection_intent(request_text=request, stage="motion_board")
+        self.assertEqual(intent["scenario_id"], "cinematic_storyboard_frames")
+        self.assertEqual(intent["downstream_use"], "rough_planning")
+        self.assertEqual(dispatch["provider_spec_contract"]["presentation"], "line_art")
+        self.assertFalse(intent["real_side_effect"])
+        with self.assertRaises(stack.SkillStackError):
+            stack.stage_selection_intent(request_text="$dircreative 做一部完整静物短片，图片真实生成好，视频我自己做。", stage="motion_board")
+
+    def test_frame_stage_returns_existing_rehearsal_step_without_changing_authorization(self):
+        request = "$dircreative 做一部完整武侠短片，图片真实生成好，视频我自己做。"
+        intent, dispatch = stack.stage_selection_intent(request_text=request, stage="frame_compile")
+        recovery = dispatch["before_image_submission"]
+        self.assertEqual(dispatch["stage"], "frame_compile")
+        self.assertEqual(recovery["next_stage"], "panel_coverage")
+        self.assertEqual(recovery["command_args"][-1], request)
+        self.assertFalse(intent["real_side_effect"])
+        self.assertFalse(recovery["execution_performed"])
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            from tests.test_storyboard_coverage import StoryboardCoverageTests
+            helper = StoryboardCoverageTests()
+            plan = helper.plan(root)
+            cards, coverage_file = root / "cards.json", root / "coverage.json"
+            coverage_file.write_text(json.dumps(plan))
+            intent, dispatch = stack.stage_selection_intent(
+                request_text=request, stage="frame_compile", craft_source=cards,
+                craft_coverage=coverage_file, project_root=root,
+            )
+            recovery = dispatch["before_image_submission"]
+            self.assertEqual(recovery["next_stage"], "motion_board")
+            self.assertIn("coverage.json", recovery["command_args"])
+            next_intent, _ = stack.stage_selection_intent(
+                request_text=request, stage=recovery["next_stage"], craft_source=cards,
+                craft_coverage=coverage_file, project_root=root,
+            )
+            self.assertEqual(next_intent["downstream_use"], "rough_planning")
+            self.assertFalse(next_intent["real_side_effect"])
+            helper.model_generated_fixture(root, plan)
+            coverage_file.write_text(json.dumps(plan))
+            _intent, complete_dispatch = stack.stage_selection_intent(
+                request_text=request, stage="frame_compile", craft_source=cards,
+                craft_coverage=coverage_file, project_root=root,
+            )
+            self.assertNotIn("before_image_submission", complete_dispatch)
+        _intent, quiet = stack.stage_selection_intent(
+            request_text="$dircreative 做一部完整静物短片，图片真实生成好，视频我自己做。",
+            stage="frame_compile",
+        )
+        self.assertNotIn("before_image_submission", quiet)
+
+    def test_recovery_cli_preserves_explicit_provider_discovery_scope(self):
+        request = "$dircreative 做一部完整武侠短片，图片真实生成好，视频我自己做。"
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            host = root / "host"
+            stack._write_mock_skill(host / "skills", "professional-storyboard-director")
+            (root / "empty one").mkdir()
+            (root / "empty two").mkdir()
+            (root / "host catalog.json").write_text('{"skills": []}\n')
+            env = {**os.environ, "CODEX_HOME": str(host), "PYTHONDONTWRITEBYTECODE": "1"}
+            script = str(ROOT / "scripts/dircreative_skill_stack.py")
+            unrestricted = subprocess.run(
+                [sys.executable, script, "select", "--stage", "panel_coverage", "--request", request],
+                cwd=root, env=env, text=True, capture_output=True, check=False,
+            )
+            self.assertEqual(unrestricted.returncode, 0, unrestricted.stderr)
+            self.assertEqual(json.loads(unrestricted.stdout)["craft_owner"]["skill_id"],
+                             "professional-storyboard-director")
+            scope_cases = [
+                ["--root", "empty one", "--root", "fixture=empty two"],
+                ["--catalog", "host catalog.json"],
+                ["--root", "host/skills", "--catalog", "host catalog.json"],
+            ]
+            for scope in scope_cases:
+                with self.subTest(scope=scope):
+                    initial = subprocess.run(
+                        [sys.executable, script, "select", "--stage", "frame_compile",
+                         "--request", request, *scope],
+                        cwd=root, env=env, text=True, capture_output=True, check=False,
+                    )
+                    self.assertEqual(initial.returncode, 1, initial.stderr)
+                    recovery = json.loads(initial.stdout)["stage_dispatch"]["before_image_submission"]
+                    command = recovery["command_args"]
+                    self.assertEqual(command.count("--root"), scope.count("--root"))
+                    self.assertEqual(command.count("--catalog"), scope.count("--catalog"))
+                    # Execute from another directory: relative overrides must stay bound.
+                    resumed = subprocess.run(
+                        command, cwd=host, env=env, text=True, capture_output=True, check=False,
+                    )
+                    self.assertEqual(resumed.returncode, 0, resumed.stderr)
+                    receipt = json.loads(resumed.stdout)
+                    self.assertEqual(receipt["craft_owner"]["skill_id"], "dircreative")
+                    self.assertEqual(receipt["craft_owner"]["status"], "built_in")
+                    self.assertEqual(receipt["craft_owner"]["body_bytes"], 0)
+                    self.assertFalse(receipt["execution_performed"])
+
+    def test_task_view_keeps_current_work_and_default_json_receipt_separate(self):
+        request = "$dircreative 做一部完整武侠短片，图片真实生成好，视频我自己做。"
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            command = [sys.executable, str(ROOT / "scripts/dircreative_skill_stack.py"),
+                       "select", "--stage", "frame_compile", "--request", request,
+                       "--root", str(root)]
+            machine = subprocess.run(command, text=True, capture_output=True, check=False)
+            receipt = json.loads(machine.stdout)
+            task = subprocess.run([*command, "--format", "task"], text=True,
+                                  capture_output=True, check=False)
+            self.assertEqual(task.returncode, machine.returncode)
+            prior = receipt["stage_dispatch"]["before_image_submission"]
+            self.assertTrue(task.stdout.startswith("Current work before image submission: panel_coverage"))
+            self.assertIn(prior["required_artifact"], task.stdout)
+            argv_line = next(line for line in task.stdout.splitlines() if line.startswith("Command: "))
+            next_argv = stack.shlex.split(argv_line.removeprefix("Command: "))
+            self.assertEqual(next_argv, [*prior["command_args"], "--format", "task"])
+            self.assertNotIn("narrative_film_frame", task.stdout)
+            self.assertIn("execution_performed: false", task.stdout)
+            # With no prior work, show the selected stage's actual read requests.
+            motion_intent, dispatch = stack.stage_selection_intent(request_text=request, stage="motion_board")
+            current = {"status": "ready", "stage_dispatch": dispatch,
+                       "body_read_requests": [{"skill_id": "jingzao-image-forge", "body_sha256": "a" * 64}],
+                       "reference_read_requests": [{"relative_path": "references/styleboard-mode.md"}],
+                       "execution_performed": False}
+            rendered = stack.render_stage_task(current)
+            self.assertIn("jingzao-image-forge", rendered)
+            self.assertIn("references/styleboard-mode.md", rendered)
+            self.assertIn('"annotation_source": "model_generated"', rendered)
+            self.assertNotIn("Current work before image submission", rendered)
+            self.assertFalse(motion_intent["real_side_effect"])
+
+    def test_handoff_story_and_declared_coverage_activate_motion_without_user_naming_it(self):
+        request = "$dircreative 做一部完整短片，图片真实生成好，视频我自己做。"
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            cards = root / "cards.json"
+            cards.write_text(json.dumps({"cards": [{"shot_id": "S01", "action": "两人从门口绕过桌子，女孩把杯子递给男孩，男孩接住。"}]}))
+            intent, _dispatch = stack.stage_selection_intent(request_text=request, stage="motion_board", craft_source=cards, project_root=root)
+            self.assertEqual(intent["downstream_use"], "rough_planning")
+            self.assertFalse(intent["real_side_effect"])
+            from tests.test_storyboard_coverage import StoryboardCoverageTests
+            plan = StoryboardCoverageTests().plan(root)
+            plan["requirements"][0].update(kind="reveal", risk="low", planning_required=True)
+            coverage_file = root / "coverage.json"
+            coverage_file.write_text(json.dumps(plan))
+            with self.assertRaises(stack.SkillStackError):
+                stack.stage_selection_intent(request_text=request, stage="motion_board", craft_source=cards, project_root=root)
+            intent, dispatch = stack.stage_selection_intent(request_text=request, stage="motion_board", craft_source=cards, craft_coverage=coverage_file, project_root=root)
+            self.assertEqual(intent["downstream_use"], "rough_planning")
+            self.assertEqual(dispatch["coverage_source"]["relative_path"], "coverage.json")
+            other = root / "other-cards.json"
+            other.write_bytes(cards.read_bytes())
+            with self.assertRaises(stack.SkillStackError):
+                stack.stage_selection_intent(request_text=request, stage="motion_board", craft_source=other, craft_coverage=coverage_file, project_root=root)
+
+    def test_image_execution_stage_reuses_original_permission_without_authorizing_video(self):
+        request = "$dircreative 做一部完整武侠短片，把图片真实生成好，停在视频生成前。"
+        intent, _dispatch = stack.stage_selection_intent(request_text=request, stage="asset_execution")
+        context = stack.validate_primary_route_context(intent, request_text=request)
+        self.assertEqual(context.original_request_text, request)
+        self.assertEqual((context.route_id, context.mode), ("generation_authorization", "delivery"))
+        self.assertIn("generation_authorization", context.granted_gates)
+        self.assertTrue(context.image_generation_authorized)
+        self.assertFalse(context.video_generation_authorized)
+        video = {**intent, "media": "video"}
+        with self.assertRaises(stack.SkillStackError):
+            stack.validate_primary_route_context(video, request_text=request)
+        denied = "$dircreative 做一部完整武侠短片，先只做计划，不要生成图片和视频。"
+        with self.assertRaises(stack.SkillStackError):
+            stack.stage_selection_intent(request_text=denied, stage="asset_execution")
+        with self.assertRaises(stack.SkillStackError):
+            stack.validate_primary_route_context(intent, request_text=denied)
+        # The stage transition does not replace the existing exact asset gate.
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            stack._write_mock_skill(root, "imagegen")
+            registry = stack.load_registry()
+            catalog, _rejected = stack.discover_roots([("codex_skill", root)], registry)
+            result = stack.select_stack(
+                {**intent, "available_tools": ["image_gen.imagegen"]},
+                registry, stack.load_routing(), catalog, route_context=context,
+                body_loader=stack.body_loader_for_roots([("codex_skill", root)], registry),
+            )
+        self.assertEqual(result["status"], "blocked")
+        self.assertIn("asset_execution_gate_required", result["reason_codes"])
+        self.assertFalse(result["execution_performed"])
 
 
 if __name__ == "__main__":

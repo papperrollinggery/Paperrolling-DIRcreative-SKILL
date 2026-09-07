@@ -6,6 +6,7 @@ import hashlib
 import json
 import os
 import re
+import shlex
 import stat
 import tempfile
 from dataclasses import dataclass, replace
@@ -314,6 +315,7 @@ class ValidatedRouteContext:
     execution_project_root: Path | None
     execution_task_id: str | None
     _seal: object
+    original_request_text: str = ""
 
     def __post_init__(self) -> None:
         if self._seal is not _ROUTE_CONTEXT_SEAL:
@@ -415,7 +417,19 @@ def validate_primary_route_context(
         descriptor=descriptor,
         handoff_path=resolved_handoff,
     )
-    if primary.get("route") != intent.get("route_id") or primary.get("mode") != intent.get("mode"):
+    image_execution_stage = (
+        primary.get("route") == "film_development"
+        and primary.get("action") == "continue"
+        and primary.get("image_generation_authorized") is True
+        and intent.get("active_stage") == "asset_execution"
+        and intent.get("route_id") == "generation_authorization"
+        and intent.get("mode") == "delivery"
+        and intent.get("media") in {"still", "image_series"}
+        and intent.get("real_side_effect") is True
+    )
+    if not image_execution_stage and (
+        primary.get("route") != intent.get("route_id") or primary.get("mode") != intent.get("mode")
+    ):
         raise SkillStackError("intent does not match the validated primary route")
     execution_context = str(primary.get("execution_context") or "")
     expected_context = str(intent.get("execution_context") or "standalone_chat")
@@ -441,13 +455,13 @@ def validate_primary_route_context(
         raise SkillStackError("execution task id is invalid")
     granted: set[str] = set()
     if primary.get("action") == "continue" and primary.get("external_user_gate") is None:
-        if primary.get("route") == "generation_authorization":
+        if primary.get("route") == "generation_authorization" or image_execution_stage:
             granted.add("generation_authorization")
         if primary.get("route") == "client_delivery":
             granted.add("client_delivery_approval")
     return ValidatedRouteContext(
-        route_id=str(primary["route"]),
-        mode=str(primary["mode"]),
+        route_id="generation_authorization" if image_execution_stage else str(primary["route"]),
+        mode="delivery" if image_execution_stage else str(primary["mode"]),
         execution_context=execution_context,
         final_owner="adco" if execution_context == "orchestrated_worker" else "dircreative",
         granted_gates=frozenset(granted),
@@ -460,7 +474,171 @@ def validate_primary_route_context(
             execution_task_id.strip() if isinstance(execution_task_id, str) else None
         ),
         _seal=_ROUTE_CONTEXT_SEAL,
+        original_request_text=request_text,
     )
+
+
+def stage_selection_intent(
+    *,
+    request_text: str,
+    stage: str,
+    supplemental: dict[str, Any] | None = None,
+    craft_source: Path | None = None,
+    craft_coverage: Path | None = None,
+    project_root: Path | None = None,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Consume one existing craft stage, leaving media authorization untouched."""
+    from dircreative_route import film_craft_stages, route_request
+    from dircreative_storyboard_coverage import contained_regular_file, motion_panel_ids, validate as validate_coverage, validate_motion_planning
+
+    primary = route_request(request_text)
+    if primary.get("route") != "film_development" or primary.get("action") != "continue":
+        raise SkillStackError("craft stage requires an active film-development scope")
+    source_binding = None
+    coverage_binding = None
+    coverage = None
+    story_context = ""
+    source_path = None
+
+    def read_craft_source(raw_path: Path) -> tuple[dict[str, Any], dict[str, Any], Path]:
+        if project_root is None:
+            raise SkillStackError("craft source requires its project root")
+        project_alias = project_root.expanduser().absolute()
+        resolved_root = project_alias.resolve(strict=True)
+        source_relative = raw_path.expanduser()
+        if source_relative.is_absolute():
+            try:
+                source_relative = source_relative.relative_to(project_alias)
+            except ValueError:
+                try:
+                    source_relative = source_relative.relative_to(resolved_root)
+                except ValueError as exc:
+                    raise SkillStackError("craft source is outside the project") from exc
+        path = contained_regular_file(resolved_root, source_relative.as_posix())
+        if path is None:
+            raise SkillStackError("craft source is outside the project or unavailable")
+        source_text, _ = _bounded_utf8(path, MAX_INTENT_BYTES, "craft source")
+        try:
+            source = json.loads(source_text)
+        except json.JSONDecodeError as exc:
+            raise SkillStackError("invalid craft source JSON") from exc
+        if not isinstance(source, dict):
+            raise SkillStackError("craft source must be a JSON object")
+        return source, {"relative_path": path.relative_to(resolved_root).as_posix(),
+                        "sha256": hashlib.sha256(source_text.encode("utf-8")).hexdigest()}, path
+
+    if craft_source is not None:
+        source, source_binding, source_path = read_craft_source(craft_source)
+        if not isinstance(source.get("cards"), list):
+            raise SkillStackError("craft source must be canonical shot cards")
+        fields = ("narrative_purpose", "shot_design", "action", "continuity_model")
+        story_context = " ".join(
+            card[field]
+            for card in source["cards"] if isinstance(card, dict)
+            for field in fields if isinstance(card.get(field), str)
+        )
+    motion_required = False
+    if craft_coverage is not None:
+        coverage, coverage_binding, _path = read_craft_source(craft_coverage)
+        assert project_root is not None
+        if validate_coverage(coverage, project_root, "design").get("status") != "valid":
+            raise SkillStackError("craft coverage requires a valid current design")
+        if source_path is not None and contained_regular_file(project_root, coverage.get("shot_cards_file")) != source_path:
+            raise SkillStackError("craft coverage conflicts with current shot cards")
+        motion_required = bool(motion_panel_ids(coverage))
+    stages = film_craft_stages(
+        request_text,
+        route=primary["route"],
+        deliverable_layer=primary.get("deliverable_layer"),
+        shot_matrix_allowed=primary.get("shot_matrix_allowed") is True,
+        media_scope=str(primary.get("media_scope")),
+        story_context=story_context,
+        motion_planning_required=motion_required,
+    )
+    if stage == "asset_execution":
+        if primary.get("image_generation_authorized") is not True:
+            raise SkillStackError("asset execution requires image authorization in the original request")
+        active = {
+            "stage": stage,
+                "task_reference": "skills/dircreative/references/image-execution.md",
+            "selection_intent": {
+                "scenario_id": "real_execution", "mode": "delivery",
+                "route_id": "generation_authorization", "media": "still",
+                "active_stage": "asset_execution", "gaps": [],
+                "needs_validation": False, "real_side_effect": True,
+            },
+        }
+    else:
+        active = next((item for item in stages if item["stage"] == stage), None)
+    if active is None or not isinstance(active.get("selection_intent"), dict):
+        raise SkillStackError("craft stage is not required by the current task and shot source")
+    derived = active["selection_intent"]
+    supplied = supplemental or {}
+    if not isinstance(supplied, dict):
+        raise SkillStackError("intent must be an object")
+    protected = ("scenario_id", "mode", "route_id", "media", "real_side_effect", "downstream_use", "active_stage")
+    if any(key in supplied and supplied[key] != derived.get(key) for key in protected):
+        raise SkillStackError("intent conflicts with the derived craft stage")
+    intent = {**derived, **supplied}
+    dispatch = {
+        "stage": stage,
+        "scenario_id": derived["scenario_id"],
+        "task_reference": active.get("task_reference"),
+        "source": source_binding,
+        "coverage_source": coverage_binding,
+        "application_status": "pending_host_read_and_apply",
+        "execution_performed": False,
+    }
+    if stage == "frame_compile":
+        dispatch["provider_spec_contract"] = {
+            "direction.deliverable": "narrative_film_frame",
+            "cinematic.profile": "narrative_film_frame",
+            "preflight_script": str(ROOT / "scripts/dircreative_narrative_spec_preflight.py"),
+            "semantic_review": "compare current shot states with each compiled prompt before the image batch",
+        }
+        if any(item["stage"] == "motion_board" for item in stages):
+            motion = (
+                validate_motion_planning(coverage, project_root, require_review=True)
+                if coverage is not None and project_root is not None else None
+            )
+            if motion is None or motion.get("status") != "valid" or not motion_panel_ids(coverage):
+                next_stage = "panel_coverage" if coverage is None else "motion_board"
+                command = ["python3", str(ROOT / "scripts/dircreative_skill_stack.py"),
+                           "select", "--stage", next_stage, "--request", request_text]
+                if project_root is not None:
+                    command += ["--execution-project-root", str(project_root.expanduser().absolute())]
+                if source_binding is not None:
+                    command += ["--craft-source", source_binding["relative_path"]]
+                if coverage_binding is not None:
+                    command += ["--craft-coverage", coverage_binding["relative_path"]]
+                dispatch["before_image_submission"] = {
+                    "status": "needs_prior_work", "next_stage": next_stage,
+                    "command_args": command,
+                    "required_artifact": (
+                        "write current storyboard coverage design, then select motion_board"
+                        if coverage is None else
+                        "generate and review the actual annotated motion board through Jingzao"
+                    ),
+                    "resume": "return to frame_compile only if color frames are required; supported annotated_reference units can proceed to Prompt IR",
+                    "execution_performed": False,
+                    "authorization_unchanged": True,
+                    "fallback": "keep the selected craft; a blocked frame handoff is not permission to submit a handwritten image prompt",
+                }
+    elif stage == "motion_board":
+        dispatch["provider_spec_contract"] = {
+            "mode": "styleboard", "presentation": "line_art",
+            "downstream_use": "rough_planning",
+            "source": "current coverage panel IDs, phases and camera setups",
+            "before": "supported storyboard-reference or required color-frame use",
+            "annotation_source": "model_generated",
+            "annotation_colors": "declare stable semantic colors and a readable legend in the image spec",
+            "execution_target": "coverage.planning_image",
+            "planning_target_resolver": str(ROOT / "scripts/dircreative_storyboard_coverage.py") + " resolve-planning-target",
+            "reference": "references/styleboard-mode.md",
+            "assembler_script": str(ROOT / "scripts/dircreative_storyboard_page_assembler.py"),
+            "review": "generate drawings, semantic-color annotations and legend together; inspect actual board and cell mapping before supported storyboard-reference or color-frame use",
+        }
+    return intent, dispatch
 
 
 def _fixture_route_context(case: dict[str, Any]) -> ValidatedRouteContext:
@@ -1777,7 +1955,7 @@ def select_stack(
         ):
             raise SkillStackError("invalid cinematic_storyboard_frames downstream_use")
         if downstream_use in {"clean_model_input", "full_preproduction"}:
-            scenario = {**scenario, "requires_asset_foundation_gate": True}
+            scenario = {**scenario, "requires_asset_foundation_gate": True, "owner_required": True}
     capability_card_id = str(intent.get("capability_card_id", "")).strip()
     target_model = str(intent.get("target_model", "")).strip()
     if (
@@ -2229,6 +2407,10 @@ def select_stack(
         include_required=mode == "delivery",
     )
     handoff_contract_id = scenario.get("handoff_contract_id")
+    if scenario_id == "cinematic_storyboard_frames" and intent.get("downstream_use") == "rough_planning" and intent.get("active_stage") == "motion_board":
+        # Rough sketches use the provider's native styleboard package, before
+        # the locked production-frame contract can exist.
+        handoff_contract_id = None
     handoff_contract: dict[str, Any] | None = None
     if handoff_contract_id is not None:
         contract = registry.get("handoff_contracts", {}).get(handoff_contract_id)
@@ -2864,6 +3046,7 @@ def select_stack(
                 repo_root=ROOT,
                 project_root=route_context.execution_project_root,
                 execution_task_id=route_context.execution_task_id,
+                request_text=route_context.original_request_text,
             )
         except (OSError, ValueError, RuntimeError):
             asset_packet_errors = ["asset_execution_project_root_invalid"]
@@ -4540,8 +4723,66 @@ def _catalog_from_args(
 ) -> tuple[dict[str, CatalogEntry], list[dict[str, str]], BodyLoader | None]:
     catalog_path = getattr(args, "catalog", None)
     root_values = getattr(args, "root", None) or []
-    roots = _parse_roots(root_values)
+    roots = (
+        _parse_roots(root_values)
+        if root_values
+        else [] if catalog_path is not None else configured_skill_roots()
+    )
+    if any((path.expanduser() / "SKILL.md").is_file() for _source_type, path in roots):
+        raise SkillStackError(
+            "--root expects a directory containing installed Skills, not one Skill package; "
+            "omit --root to use the configured host Skill directory"
+        )
     return load_runtime_catalog(registry, roots=roots, catalog_path=catalog_path, package_root=ROOT)
+
+
+def configured_skill_roots() -> list[tuple[str, Path]]:
+    """Resolve the normal host Skill location without scanning other projects.
+
+    A supplied catalog remains authoritative in load_runtime_catalog. These
+    roots locate selected bodies; metadata discovery occurs only without one.
+    """
+    configured = os.environ.get("CODEX_HOME")
+    codex_directory = Path(configured).expanduser() if configured else Path.home() / ".codex"
+    return [("codex_skill", codex_directory / "skills")]
+
+
+def render_stage_task(receipt: dict[str, Any]) -> str:
+    """Display the existing stage contract without changing selection or execution."""
+    dispatch = receipt.get("stage_dispatch")
+    if not isinstance(dispatch, dict):
+        raise SkillStackError("task format requires --stage")
+    prior = dispatch.get("before_image_submission")
+    lines = []
+    if isinstance(prior, dict):
+        lines.extend((
+            f"Current work before image submission: {prior['next_stage']}",
+            f"Required artifact: {prior['required_artifact']}",
+            f"Command: {shlex.join(prior['command_args'])}",
+            f"Resume: {prior['resume']}",
+        ))
+    lines.extend((
+        f"Selected stage: {dispatch['stage']}",
+        f"Provider selection: {receipt['status']}",
+        f"Artifact application: {dispatch['application_status']}",
+    ))
+    if not isinstance(prior, dict):
+        if dispatch.get("task_reference"):
+            lines.append(f"Task reference: {dispatch['task_reference']}")
+        if dispatch.get("provider_spec_contract"):
+            lines.append("Current artifact contract:\n" + json.dumps(
+                dispatch["provider_spec_contract"], ensure_ascii=False, indent=2,
+            ))
+        for key in ("body_read_requests", "reference_read_requests", "handoff_read_requests"):
+            if receipt.get(key):
+                lines.append(key + ":\n" + json.dumps(receipt[key], ensure_ascii=False, indent=2))
+        if dispatch.get("output_target"):
+            lines.append("Output target:\n" + json.dumps(dispatch["output_target"], ensure_ascii=False, indent=2))
+    for key in ("reason_codes", "asset_execution_packet_errors"):
+        if receipt.get(key):
+            lines.append(key + ": " + json.dumps(receipt[key], ensure_ascii=False))
+    lines.append("execution_performed: " + json.dumps(receipt.get("execution_performed", False)))
+    return "\n".join(lines)
 
 
 def main() -> int:
@@ -4549,11 +4790,15 @@ def main() -> int:
     subparsers = parser.add_subparsers(dest="command")
     subparsers.add_parser("self-test")
     discover_parser = subparsers.add_parser("discover")
-    discover_parser.add_argument("--root", action="append", help="[source_type=]/authorized/skill/root")
+    discover_parser.add_argument("--root", action="append", help="override provider discovery with [source_type=]/directory/containing/Skills; normally omit, even for candidate DIR packages")
     discover_parser.add_argument("--catalog", type=Path, help="host-injected metadata catalog JSON")
     select_parser = subparsers.add_parser("select")
-    select_parser.add_argument("--intent", type=Path, required=True)
-    select_parser.add_argument("--root", action="append", help="[source_type=]/authorized/skill/root")
+    select_parser.add_argument("--intent", type=Path, help="explicit intent or supplemental inputs for --stage")
+    select_parser.add_argument("--stage", help="consume one craft stage derived from the request and current shot cards")
+    select_parser.add_argument("--format", choices=("json", "task"), default="json", help="task displays current work and full read requests; json preserves the complete receipt")
+    select_parser.add_argument("--craft-source", type=Path, help="current project shot cards for post-story craft selection")
+    select_parser.add_argument("--craft-coverage", type=Path, help="current coverage design with story-derived planning requirements")
+    select_parser.add_argument("--root", action="append", help="override provider discovery with [source_type=]/directory/containing/Skills; normally omit, even for candidate DIR packages")
     select_parser.add_argument("--catalog", type=Path, help="host-injected metadata catalog JSON")
     select_parser.add_argument("--request", default="", help="original request for primary-route validation")
     select_parser.add_argument("--handoff", type=Path, help="real ADCO Specialist Exchange handoff")
@@ -4604,11 +4849,36 @@ def main() -> int:
         )
         return 0
     if command == "select":
+        if args.format == "task" and not args.stage:
+            raise SkillStackError("task format requires --stage")
+        if args.intent is None and not args.stage:
+            raise SkillStackError("select requires --intent or --stage")
         intent = load_json(
             args.intent,
             max_bytes=MAX_INTENT_BYTES,
             label="intent",
-        )
+        ) if args.intent is not None else {}
+        stage_dispatch = None
+        if args.stage:
+            if args.handoff is not None or args.project_root is not None:
+                raise SkillStackError("ADCO uses its validated explicit intent, not the standalone stage shortcut")
+            intent, stage_dispatch = stage_selection_intent(
+                request_text=args.request, stage=args.stage, supplemental=intent,
+                craft_source=args.craft_source, craft_coverage=args.craft_coverage,
+                project_root=args.execution_project_root,
+            )
+            recovery = stage_dispatch.get("before_image_submission")
+            if recovery is not None:
+                for source_type, path in _parse_roots(args.root or []):
+                    recovery["command_args"] += [
+                        "--root", f"{source_type}={path.expanduser().absolute()}",
+                    ]
+                if args.catalog is not None:
+                    recovery["command_args"] += ["--catalog", str(args.catalog.expanduser().absolute())]
+                if args.format == "task":
+                    recovery["command_args"] += ["--format", "task"]
+        elif args.craft_source is not None or args.craft_coverage is not None:
+            raise SkillStackError("--craft-source and --craft-coverage require --stage")
         calibration_readback = None
         if args.calibration_sources:
             source_documents = load_json(
@@ -4643,7 +4913,25 @@ def main() -> int:
             calibration_readback=calibration_readback,
             body_loader=body_loader,
         )
-        print(json.dumps(receipt, ensure_ascii=False, indent=2, sort_keys=True))
+        if stage_dispatch is not None:
+            packet = intent.get("asset_execution_packet", {})
+            planning = packet.get("motion_planning") if isinstance(packet, dict) else None
+            if (
+                stage_dispatch["stage"] == "asset_execution"
+                and receipt.get("asset_execution_packet_errors") == []
+                and isinstance(planning, dict)
+            ):
+                stage_dispatch["output_target"] = {
+                    "owner": "coverage.planning_image",
+                    "coverage_file": planning["coverage_file"],
+                    "panel_ids": planning["panel_ids"],
+                    "planning_asset_id": packet["asset_id"],
+                    "scope_asset_id": planning.get("scope_asset_id", packet["asset_id"]),
+                    "formal_adoption_granted": False,
+                }
+            receipt["stage_dispatch"] = {**stage_dispatch, "selector_status": receipt["status"]}
+        print(render_stage_task(receipt) if args.format == "task" else
+              json.dumps(receipt, ensure_ascii=False, indent=2, sort_keys=True))
         return 0 if receipt["status"] != "blocked" else 1
     cases = load_json(CASES_PATH)["cases"]
     if command == "smoke":

@@ -43,6 +43,12 @@ brand role when applicable, start-action-end, media/physical rules, continuity l
 sound/edit logic are explicit. Structural coverage proves production planning,
 not creative quality, client readability, asset authorization, or approval.
 
+At technical-shot development, follow the active craft handoffs in
+`shot-development.md`; replace this general reference at that stage. Infer
+full preparation from the requested deliverables, including real images before
+user-run video generation. Read/apply the relevant shot, action and camera
+method before frame compilation; a planned provider name is not use.
+
 ## Whole-film visual asset coverage
 
 Derive assets from the film: recurring identities/states, products/critical
@@ -58,17 +64,25 @@ The minimum whole-film coverage is:
 - one `product_identity_board` per hero product and only necessary
   `prop_continuity_board` records;
 - one `scene_geography_camera_fov_reference` per distinct location/state;
-- one individual `storyboard_frame` for every approved shot;
-- a deterministically assembled `professional_storyboard_motion_map` whose cells cover every shot exactly once,
-  with purpose, time, camera, blocking, continuity, sound/edit, and model risk;
-- each unit's required clean first/key/end frame;
+- readable coverage of every approved shot and required phase, using individual
+  `storyboard_frame` images plus an assembled overview, or a unit's explicitly
+  selected `annotated_reference` model-generated board with current review and
+  supported Prompt IR attachment;
+- only the clean inputs required by the selected model/unit strategy; no
+  per-shot first/key/end quota;
 - a style board only when existing locks do not establish look/material truth.
+
+Apply `storyboard-motion-planning.md` for early action drawings and model-drawn
+annotations. A final frame overview follows the individual-frame strategy.
+Deliver image files, copyable text and a short index by default. Reuse ledger
+data; do not add a website/workbench or local server for routine browsing.
+Keep necessary spatial/camera interaction in its focused viewer.
 
 Scene references, individual shot images, and director storyboard pages are
 different deliverables; boards replace neither scene truth nor clean inputs.
 Mark reuse, derive, generate, and assemble explicitly.
 
-For explicit detailed/full preproduction, a per-shot frame is only a
+For requested detailed/full preproduction, a per-shot frame is only a
 representative. At the coverage stage use `storyboard-coverage.md`: derive the
 plan ledger, action panels and necessary reverse/reaction coverage before
 production. Require its design/assets checks in addition to legacy coverage;
@@ -76,8 +90,9 @@ production. Require its design/assets checks in addition to legacy coverage;
 
 Reselect craft per stage. `pre_video_assets` makes required images but defers
 video; planned rows stay incomplete. Use the character contract for recurring
-identities. Select Jingzao only for complex spec/reference/edit or formal frame
-work; simple images stay direct. `rough_planning` stays ungated; clean/full
+identities. Cinematic storyboard and clean narrative frames use the existing
+Jingzao handoff; complex spec/reference/edit assets use `visual_asset_compile`.
+Simple standalone images stay direct. `rough_planning` stays ungated; clean/full
 preproduction needs the asset gate and scoped Delivery authorization.
 Persist with `runtime/visual-asset-plan.schema.json`, bound inventory and shot
 cards, exact per-shot time/action/sound/continuity/entity truth, dependencies,
@@ -116,15 +131,11 @@ generic language with observable choices, verify supplied/post-produced facts,
 and make the ending resolve the opening. Technical completeness cannot rescue a
 weak or misleading direction.
 
-Before delivery, read the actual prose for speakability, dramatic purpose,
-source fidelity and project voice using `copy-script.md`. Existing passages can
-establish a VOICE PROFILE; for new writing, a project-register choice is enough.
-A screenplay does not need a humanization plan merely because it is long.
-Use `humanization-workflow.md` and `dircreative_humanization_plan.py` only for a
-requested layered operation, demonstrated document-scale defect or explicitly
-selected provider. On that path, diagnose with quoted evidence, accept relevant
-findings within the authorized scope and bind recreation to its preservation
-set. Protect IDs, timecodes, literal SUPER, exact claims, technical fields and
-paste-ready model syntax.
+Before delivery, check speakability, dramatic purpose, source fidelity and project
+voice using `copy-script.md`. Existing prose can establish a VOICE PROFILE; a
+register choice suffices for new writing. Use `humanization-workflow.md` and its
+helper only for requested layered work, a demonstrated document-scale defect or
+an explicitly selected provider. Follow that reference's evidence/preservation
+contract; protect IDs, timecodes, SUPER, claims and paste-ready model syntax.
 
 For explicit groups/parallel work follow `docs/film-preproduction/director-room-routing.md`.

@@ -3,6 +3,11 @@
 Use for scene geography, blocking, eyelines, reverse shots and movement. Keep the
 current requested scope: viewing a layout does not start a whole-film pipeline;
 a full preproduction request continues through its authorized deliverables.
+In a full film, apply this method when the developed scene has spatial risk;
+the user need not explicitly request a diagram or say “spatial discussion”.
+An author-created design within the authorized task can become its working
+scene revision. User adoption is needed for proposed alternatives to an already
+locked arrangement, not as an extra approval for every initial design choice.
 
 ## Run the existing route
 
@@ -34,6 +39,21 @@ new hashes alone do not repair old screen directions or sounds of removed props.
 required template or an identity-asset pack. Coordinates and FOV are design
 intent. Add detail only when needed; complex contact or perspective can require
 pose/animatic/white-model references and visual inspection.
+
+Separate world truth from its current projection. Walls, openings, prop states
+and light-source positions belong to the world; screen-left/right landmarks,
+crop and perspective belong to a particular camera and action phase. A location
+master owns the former unless a specific shot deliberately reuses its view.
+Plan offscreen and reverse-facing space as explicit design assumptions before
+using it. Changing focal length without changing the intended camera position,
+orientation or framing does not establish another view of the location.
+
+Bind each camera to the relevant actor positions and event phase. Preserve the
+relationship axis when appropriate while choosing meaningful viewpoints within
+its half-plane; an intentional crossing or newly established axis needs readable
+coverage. Do not freeze every character on one screen side throughout a moving
+fight, mirror the room, or reuse an initial layout after people and props move.
+Show the appropriate visible landmarks and persistent damage in each new view.
 
 A constructible scene needs `scene_id`, advancing `revision`, `description`,
 `coordinate_system: normalized_xy_design`, `room.features`, `entities`, and

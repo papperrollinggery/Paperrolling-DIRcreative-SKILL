@@ -110,6 +110,154 @@ ROLE_STAGE_CONTRACTS = {
 }
 
 
+def is_annotated_storyboard_handoff_asset(
+    asset: dict[str, Any], visual_plan: dict[str, Any]
+) -> bool:
+    """Identify the narrow generated-board exception without changing page semantics."""
+    coverage = asset.get("coverage") if isinstance(asset, dict) else None
+    if (
+        asset.get("role") != "professional_storyboard_motion_map"
+        or asset.get("action") != "generate"
+        or asset.get("compile_route") != "selected_skill_handoff"
+        or not isinstance(coverage, dict)
+    ):
+        return False
+    unit_ids = coverage.get("generation_unit_ids")
+    if not isinstance(unit_ids, list) or len(unit_ids) != 1:
+        return False
+    units = visual_plan.get("generation_units", []) if isinstance(visual_plan, dict) else []
+    unit = next(
+        (item for item in units if isinstance(item, dict) and item.get("unit_id") == unit_ids[0]),
+        None,
+    )
+    return (
+        isinstance(unit, dict)
+        and unit.get("storyboard_strategy") == "annotated_reference"
+        and coverage.get("shot_ids") == unit.get("shot_ids")
+    )
+
+
+def _rough_motion_panels(
+    packet: dict[str, Any],
+    active_asset: dict[str, Any] | None,
+    visual_plan: dict[str, Any] | None,
+    *,
+    project_root: Path,
+    plan_dir: Path | None,
+    request_text: str | None,
+    errors: list[str],
+    planning_resolution: dict[str, Any] | None = None,
+) -> list[dict[str, Any]] | None:
+    """Bind an early drawing to current design truth, never to adopted parent pixels."""
+    binding = packet.get("motion_planning")
+    if binding is None:
+        return None
+    stage = packet.get("stage_contract")
+    if (
+        not isinstance(binding, dict)
+        or set(binding) != (
+            {"target", "scope_asset_id", "coverage_file", "coverage_sha256", "panel_ids"}
+            if planning_resolution is not None else {"coverage_file", "coverage_sha256", "panel_ids"}
+        )
+        or not isinstance(active_asset, dict)
+        or not isinstance(visual_plan, dict)
+        or plan_dir is None
+        or (planning_resolution is None and not is_annotated_storyboard_handoff_asset(active_asset, visual_plan))
+        or active_asset.get("planning_only") is not True
+        or active_asset.get("direct_video_input") is not False
+        or not isinstance(stage, dict)
+        or stage.get("stage_id") != "motion_board"
+    ):
+        errors.append("motion_planning_context_invalid")
+        return None
+    from dircreative_route import route_request
+    from dircreative_skill_stack import stage_selection_intent
+    from dircreative_storyboard_coverage import contained_regular_file, validate as validate_coverage
+
+    route = route_request(request_text or "")
+    if (
+        route.get("image_generation_authorized") is not True
+        or route.get("video_generation_authorized") is not False
+        or route.get("media_scope") != "pre_video_assets"
+        or packet.get("media_scope") != "pre_video_assets"
+    ):
+        errors.append("motion_planning_request_not_authorized")
+        return None
+    try:
+        payload = read_relative_regular_file_once(
+            project_root, binding.get("coverage_file"), max_bytes=MAX_VISUAL_PLAN_BYTES,
+            label="motion planning coverage",
+        )
+        if hashlib.sha256(payload).hexdigest() != binding.get("coverage_sha256"):
+            raise ValueError("coverage hash mismatch")
+        coverage = json.loads(payload.decode("utf-8"))
+        if not isinstance(coverage, dict) or validate_coverage(coverage, project_root, "design").get("status") != "valid":
+            raise ValueError("coverage design invalid")
+        source = contained_regular_file(plan_dir, visual_plan.get("shot_cards_file"))
+        if (
+            source is None
+            or source != contained_regular_file(project_root, coverage.get("shot_cards_file"))
+            or coverage.get("shot_cards_sha256") != visual_plan.get("shot_cards_sha256")
+            or coverage.get("project_id") != visual_plan.get("project_id")
+            or coverage.get("scope") != visual_plan.get("scope")
+        ):
+            raise ValueError("coverage source mismatch")
+        intent, _dispatch = stage_selection_intent(
+            request_text=request_text or "", stage="motion_board", craft_source=source,
+            craft_coverage=Path(binding["coverage_file"]), project_root=project_root,
+        )
+        if intent.get("active_stage") != "motion_board" or intent.get("downstream_use") != "rough_planning":
+            raise ValueError("motion stage unavailable")
+        unit_shots = active_asset["coverage"]["shot_ids"]
+        requested = binding.get("panel_ids")
+        if not isinstance(requested, list) or not requested or any(not isinstance(item, str) for item in requested):
+            raise ValueError("coverage panel binding invalid")
+        panels = [panel for panel in coverage["panels"]
+                  if panel["shot_id"] in unit_shots and panel["panel_id"] in requested]
+        if requested != [panel["panel_id"] for panel in panels]:
+            raise ValueError("coverage panel binding mismatch")
+    except (OSError, UnicodeDecodeError, ValueError, TypeError, KeyError, RuntimeError):
+        errors.append("motion_planning_coverage_invalid")
+        return None
+    return panels
+
+
+def _motion_spec_errors(
+    document: dict[str, Any], panels: list[dict[str, Any]], *, project_root: Path,
+) -> list[str]:
+    """Check the same hash-bound spec that the existing provider replay consumes."""
+    from dircreative_storyboard_coverage import planning_image_spec_errors
+    errors: list[str] = []
+    try:
+        def read(binding: dict[str, Any]) -> dict[str, Any]:
+            data = read_relative_regular_file_once(
+                project_root, binding["relative_path"], max_bytes=MAX_JINGZAO_HANDOFF_BYTES,
+                label="motion planning handoff input",
+            )
+            if hashlib.sha256(data).hexdigest() != binding["sha256"]:
+                raise ValueError("handoff input hash mismatch")
+            value = json.loads(data.decode("utf-8"))
+            if not isinstance(value, dict):
+                raise ValueError("handoff input must be object")
+            return value
+
+        spec = read(document["output_spec"]["visual_generation_spec"])
+        source = read(document["input_spec"])
+        compiled = read(document["output_spec"]["compiled_prompt_manifest"])
+        if document.get("active_asset", {}).get("operation") != "styleboard":
+            return ["motion_planning_spec_not_drawing"]
+        errors.extend(planning_image_spec_errors(spec, panels))
+        reference_ids = [item["input_id"] for item in source["reference_assets"]]
+        if (
+            [item["id"] for item in spec.get("inputs", [])] != reference_ids
+            or compiled.get("imagegen_call_plan", {}).get("required_input_ids") != reference_ids
+        ):
+            errors.append("motion_planning_reference_order_mismatch")
+    except (OSError, UnicodeDecodeError, ValueError, TypeError, KeyError, AttributeError):
+        errors.append("motion_planning_spec_binding_invalid")
+    return list(dict.fromkeys(errors))
+
+
 def sha256_text(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
 
@@ -257,6 +405,19 @@ def _sealed_jingzao_validation(
             provider.get("sha256"),
             "Jingzao provider Skill",
         )
+        for relative in (
+            "scripts/validate_spec.py",
+            "scripts/compile_prompt.py",
+            "scripts/reference_delivery.py",
+            "scripts/validate_style_capsule.py",
+        ):
+            seal(
+                provider_root,
+                provider_files,
+                relative,
+                None,
+                "Jingzao provider runtime",
+            )
         for item in document.get("reference_reads", []):
             seal(
                 provider_root,
@@ -345,6 +506,7 @@ def _sealed_jingzao_validation(
         )
     if handoff_errors:
         errors.append("jingzao_handoff_validation_failed")
+        errors.extend(f"jingzao_handoff_validation:{item}" for item in handoff_errors)
         return None
     return artifact_files
 
@@ -557,6 +719,7 @@ def _verified_visual_asset_jingzao_prompt(
     trusted_provider_roots: tuple[Path, ...] | None,
     allow_unsandboxed_test_replay: bool,
     errors: list[str],
+    motion_panels: list[dict[str, Any]] | None = None,
 ) -> str | None:
     binding = packet.get("jingzao_asset_handoff")
     if not isinstance(binding, dict) or set(binding) != {
@@ -589,6 +752,11 @@ def _verified_visual_asset_jingzao_prompt(
     if not isinstance(document, dict) or document.get("fixture_only") is not False:
         errors.append("jingzao_asset_handoff_not_production")
         return None
+    planning_binding = packet.get("motion_planning")
+    if isinstance(planning_binding, dict) and "target" in planning_binding:
+        if document.get("motion_planning") != planning_binding:
+            errors.append("jingzao_planning_target_binding_mismatch")
+            return None
     output = document.get("output_spec", {})
     stack_binding = document.get("skill_stack_receipt", {})
     active = document.get("active_asset", {})
@@ -612,6 +780,11 @@ def _verified_visual_asset_jingzao_prompt(
     ):
         errors.append("jingzao_asset_handoff_active_asset_mismatch")
         return None
+    if motion_panels is not None:
+        motion_errors = _motion_spec_errors(document, motion_panels, project_root=project_root)
+        if motion_errors:
+            errors.extend(motion_errors)
+            return None
     catalog = (
         visual_asset_jingzao_handoff.default_provider_roots()
         if trusted_provider_roots is None
@@ -752,6 +925,7 @@ def validate_packet(
     repo_root: Path = ROOT,
     project_root: Path | None = None,
     execution_task_id: str | None = None,
+    request_text: str | None = None,
     _trusted_jingzao_provider_roots: tuple[Path, ...] | None = None,
     _allow_unsandboxed_jingzao_replay_for_tests: bool = False,
 ) -> list[str]:
@@ -765,6 +939,7 @@ def validate_packet(
     visual_plan = _bound_visual_plan(packet, project_root=project_root, errors=errors)
     active_plan_asset: dict[str, Any] | None = None
     bound_plan_dir: Path | None = None
+    planning_resolution: dict[str, Any] | None = None
     if visual_plan is not None:
         bound_plan_dir = Path(str(visual_plan.pop("_bound_plan_dir")))
         active_plan_asset = next(
@@ -775,13 +950,36 @@ def validate_packet(
             ),
             None,
         )
+        motion_binding = packet.get("motion_planning")
+        if isinstance(motion_binding, dict) and "target" in motion_binding:
+            from dircreative_storyboard_coverage import resolve_planning_image_target
+            try:
+                planning_resolution = resolve_planning_image_target(
+                    motion_binding, project_root=project_root,
+                    visual_plan_binding={"relative_path": packet["visual_plan"]["path"], "sha256": packet["visual_plan"]["sha256"]},
+                )
+                active_plan_asset = planning_resolution["asset"]
+                if packet.get("asset_id") != active_plan_asset["asset_id"]:
+                    errors.append("planning_target_asset_id_mismatch")
+            except (OSError, UnicodeDecodeError, ValueError, TypeError, KeyError, RuntimeError) as exc:
+                errors.append(f"planning_target_invalid:{exc}")
         if active_plan_asset is None:
             errors.append(f"active_asset_missing_from_visual_plan:{packet.get('asset_id')}")
         elif active_plan_asset.get("role") != role:
             errors.append(f"active_asset_role_mismatch:{packet.get('asset_id')}")
         elif packet.get("active_asset_truth_sha256") != active_plan_asset.get("truth_sha256"):
             errors.append(f"active_asset_truth_mismatch:{packet.get('asset_id')}")
-    expected = ROLE_STAGE_CONTRACTS.get(str(role))
+        if isinstance(active_plan_asset, dict) and active_plan_asset.get("action") == "reuse":
+            errors.append("existing_asset_reuse_requires_readback_not_generation")
+    motion_panels = _rough_motion_panels(
+        packet, active_plan_asset, visual_plan, project_root=project_root,
+        plan_dir=bound_plan_dir, request_text=request_text, errors=errors,
+        planning_resolution=planning_resolution,
+    )
+    expected = (
+        ("motion_board", "skills/dircreative/references/storyboard-motion-planning.md")
+        if motion_panels is not None else ROLE_STAGE_CONTRACTS.get(str(role))
+    )
     stage = packet.get("stage_contract")
     if expected is None:
         errors.append(f"asset_role_stage_contract_unknown:{role}")
@@ -823,16 +1021,16 @@ def validate_packet(
                 continue
             asset_id = dependency.get("asset_id")
             status = dependency.get("status")
-            if status not in APPROVED_DEPENDENCY_STATES:
+            if motion_panels is None and status not in APPROVED_DEPENDENCY_STATES:
                 errors.append(f"dependency_not_approved:{asset_id}:{status}")
             review_sha = dependency.get("visual_qa_receipt_sha256")
-            if status in APPROVED_DEPENDENCY_STATES and (
+            if motion_panels is None and status in APPROVED_DEPENDENCY_STATES and (
                 not isinstance(review_sha, str)
                 or len(review_sha) != 64
                 or any(char not in "0123456789abcdef" for char in review_sha)
             ):
                 errors.append(f"dependency_review_receipt_missing:{asset_id}")
-        if role in DEPENDENT_ASSET_ROLES and not dependencies:
+        if motion_panels is None and role in DEPENDENT_ASSET_ROLES and not dependencies:
             errors.append(f"dependent_asset_requires_reviewed_parents:{role}")
         if active_plan_asset is not None:
             expected_dependency_ids = list(active_plan_asset.get("inherits_from", []))
@@ -861,6 +1059,13 @@ def validate_packet(
                     else None
                 )
                 plan_status = planned_dependency.get("status") if isinstance(planned_dependency, dict) else None
+                if motion_panels is not None:
+                    if (
+                        plan_status not in {"planned", "prompt_ready", "generated_candidate", "user_locked", "reused_locked"}
+                        or dependency.get("status") != plan_status
+                    ):
+                        errors.append(f"motion_planning_dependency_state_mismatch:{dependency_id}")
+                    continue
                 evidence_ok = False
                 if (
                     isinstance(planned_dependency, dict)
@@ -984,7 +1189,13 @@ def validate_packet(
         or execution.get("parallel_group") is not None
     ):
         errors.append("foundation_asset_requires_serial_review_gate")
-    if role in DETERMINISTIC_ASSEMBLY_ROLES:
+    annotated_storyboard_handoff = (
+        isinstance(active_plan_asset, dict)
+        and isinstance(visual_plan, dict)
+        and is_annotated_storyboard_handoff_asset(active_plan_asset, visual_plan)
+    )
+    planning_image_handoff = planning_resolution is not None and motion_panels is not None
+    if role in DETERMINISTIC_ASSEMBLY_ROLES and not annotated_storyboard_handoff and not planning_image_handoff:
         errors.append("professional_storyboard_requires_deterministic_assembly")
 
     prompt = packet.get("prompt")
@@ -1043,7 +1254,7 @@ def validate_packet(
         errors.append("asset_compile_route_handoff_mismatch")
     formal_asset_jingzao_prompt: str | None = None
     uses_formal_asset_jingzao = (
-        role in JINGZAO_FORMAL_ASSET_ROLES
+        (role in JINGZAO_FORMAL_ASSET_ROLES or annotated_storyboard_handoff or planning_image_handoff)
         and compile_route == "selected_skill_handoff"
     )
     if uses_formal_asset_jingzao and active_plan_asset is not None:
@@ -1054,6 +1265,7 @@ def validate_packet(
             trusted_provider_roots=_trusted_jingzao_provider_roots,
             allow_unsandboxed_test_replay=_allow_unsandboxed_jingzao_replay_for_tests,
             errors=errors,
+            motion_panels=motion_panels,
         )
 
     if role == "character_identity_reference":
@@ -1176,7 +1388,7 @@ def validate_packet(
         if expected_prompt is not None and prompt != expected_prompt:
             errors.append("prompt_not_exact_jingzao_manifest_output")
     elif (
-        role not in DETERMINISTIC_ASSEMBLY_ROLES
+        (role not in DETERMINISTIC_ASSEMBLY_ROLES or annotated_storyboard_handoff)
         and active_plan_asset is not None
         and visual_plan is not None
         and isinstance(prompt, str)
@@ -1197,6 +1409,7 @@ def main() -> int:
     parser.add_argument("--repo-root", type=Path, default=ROOT)
     parser.add_argument("--project-root", required=True, type=Path)
     parser.add_argument("--execution-task-id")
+    parser.add_argument("--request", help="original authorized request; required for early motion-board drawing")
     args = parser.parse_args()
     try:
         if args.packet.stat().st_size > MAX_PACKET_BYTES:
@@ -1213,6 +1426,7 @@ def main() -> int:
             repo_root=args.repo_root.resolve(),
             project_root=args.project_root.resolve(),
             execution_task_id=args.execution_task_id,
+            request_text=args.request,
         )
     except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
         errors = [f"packet_unreadable:{type(exc).__name__}"]

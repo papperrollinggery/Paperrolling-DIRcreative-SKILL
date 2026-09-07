@@ -56,6 +56,10 @@ derived references or prompts stale.
 ## Rules
 
 - One main action per shot.
+- Keep the intended action intensity and its preparation, force, contact,
+  response and consequence. A single dramatic event can be fast and forceful;
+  readability does not require slow, slight or contact-free movement. Storyboard
+  the decisive phase as needed instead of making every image a video start pose.
 - Derive shot count from information, action and editing needs; explain a decision only when useful.
 - Distinguish `12 customer story sections` from the real shot/rhythm plan. Derive shot and panel counts from information, action and editing coverage, not a universal per-minute quota. Legacy client-contract count checks are a separate compatibility constraint, not the creative standard.
 - Every shot needs timecode, duration, story beat, narrative purpose, shot type, shot size, angle, lens, lens reason, camera support, camera motion, focus, composition, subject action, structured blocking, scene layers, continuity locks, audio fields, transitions, and model notes.
@@ -69,6 +73,10 @@ derived references or prompts stale.
 - The downstream professional storyboard/motion page must use the visible shot-card template. Do not approve thin cell text that lacks narrative purpose, lens/support/movement, blocking/path, continuity, sound/edit, and model risk.
 - Do not let a storyboard page replace the shot list. The page visualizes the approved shot cards; it must not invent new character identity or scene geography.
 - Blocking must be structured as start position, end position, path, eyeline, screen direction, and axis note.
+- Separate stable world coordinates from each shot's screen projection. Name
+  the camera position, viewing direction and visible background at the active
+  action phase; a location image cannot lock all later crops and screen sides.
+  Use `references/spatial-discussion.md` for constructible changing geography.
 - Audio must be structured as dialogue, voiceover, ambience, SFX, foley, music, and silence policy.
 - Camera motion must name a physical start target and end target. Do not write only `slow push`, `camera follows`, or `cinematic movement`.
 - Composition must name foreground, midground, background, and the product/face/readable-text zone.
@@ -96,6 +104,10 @@ derived references or prompts stale.
   viewer position, subject/frame ratio, camera height, visual center, horizon,
   attention path, and depth pattern. Do not impose a fixed wide/medium/close
   quota; repeated grammar is valid only when motivated.
+- When action changes the environment, carry the trigger, affected material,
+  force direction, deformation/fracture/spray and persistent result into the
+  scene state and frame handoff. Effects need a physical or established fictional
+  cause. Do not add destruction to quiet beats or erase it to obtain a clean frame.
 - Do not write image or video prompts.
 
 ## skill_run_receipt

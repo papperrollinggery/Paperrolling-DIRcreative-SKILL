@@ -333,7 +333,7 @@ def primitive(points: list, color: str = "neutral", *, closed: bool = False, fil
     return {"points": [[round(v, 6) for v in p[:2]] for p in points], "color": color, "closed": closed, "fill": fill, "dashed": dashed, "label": label, "entity_id": entity_id}
 
 
-def project_scene(scene: dict, shot_id: str, phase: str = "initial") -> dict:
+def project_scene(scene: dict, shot_id: str, phase: str = "initial", *, include_frame_layers: bool = False) -> dict:
     require_scene(scene)
     camera = next((c for c in scene.get("cameras", []) if c["shot_id"] == shot_id), None)
     if camera is None:
@@ -406,8 +406,12 @@ def project_scene(scene: dict, shot_id: str, phase: str = "initial") -> dict:
         top.append(primitive(path["points"], color, dashed=True))
     cx, cy = camera["position"]
     top.append(primitive([[cx-.02, cy-.02], [cx+.02, cy-.02], camera["look_at"]], "camera", closed=True, dashed=True))
-    frame = [p for _, shapes in sorted(layers, key=lambda item: -item[0]) for p in shapes]
-    return {"shot_id": shot_id, "label": camera.get("label", shot_id), "phase": phase, "top": top, "frame": frame, "axis_side": camera_side(dict(scene, entities=entities), camera), "eyelines": eyelines, "entity_positions": positions, "entity_states": entities}
+    frame_layers = [shapes for _, shapes in sorted(layers, key=lambda item: -item[0])]
+    frame = [primitive for shapes in frame_layers for primitive in shapes]
+    result = {"shot_id": shot_id, "label": camera.get("label", shot_id), "phase": phase, "top": top, "frame": frame, "axis_side": camera_side(dict(scene, entities=entities), camera), "eyelines": eyelines, "entity_positions": positions, "entity_states": entities}
+    if include_frame_layers:
+        result["_frame_layers"] = frame_layers
+    return result
 
 
 def svg_image(primitives: list[dict], width: int = 1280, height: int = 720) -> str:
@@ -532,14 +536,54 @@ def read_export(path: Path, project_root: Path) -> dict:
 
 def view_payload(scene: dict) -> dict:
     require_scene(scene)
+    if scene.get("cameras"):
+        frame_primitives: dict[str, list[dict]] = {}
+        primitive_tokens: dict[str, str] = {}
+        entity_states_by_phase: dict[str, list[dict]] = {}
+        views = []
+        for phase in phases(scene):
+            entity_states_by_phase[phase] = entities_at(scene, phase)
+            for camera in scene["cameras"]:
+                view = project_scene(scene, camera["shot_id"], phase, include_frame_layers=True)
+                frame_layers = []
+                for primitives in view.pop("_frame_layers"):
+                    serialized = json.dumps(primitives, ensure_ascii=False, separators=(",", ":"))
+                    token = primitive_tokens.get(serialized)
+                    if token is None:
+                        token = f"p{len(frame_primitives)}"
+                        primitive_tokens[serialized] = token
+                        frame_primitives[token] = primitives
+                    frame_layers.append(token)
+                views.append({
+                    "shot_id": view["shot_id"], "label": view["label"], "phase": phase,
+                    "axis_side": view["axis_side"], "eyelines": view["eyelines"], "frame_layers": frame_layers,
+                })
+        return {
+            "scene_id": scene["scene_id"], "revision": scene["revision"], "description": scene["description"],
+            "colors": [{"id": e["id"], "label": e.get("label", e["id"]), "color": e["color"]} for e in scene["entities"]],
+            "views": views, "frame_primitives": frame_primitives, "entity_states_by_phase": entity_states_by_phase,
+        }
     views = []
     for phase in phases(scene):
-        if scene.get("cameras"):
-            views.extend(project_scene(scene, c["shot_id"], phase) for c in scene["cameras"])
-        else:
-            entities = entities_at(scene, phase)
-            views.append({"shot_id": "overview", "label": "俯视讨论", "phase": phase, "top": [], "frame": [], "axis_side": None, "eyelines": {}, "entity_positions": {e["id"]: e["position"] for e in entities}, "entity_states": entities})
+        entities = entities_at(scene, phase)
+        views.append({"shot_id": "overview", "label": "俯视讨论", "phase": phase, "top": [], "frame": [], "axis_side": None, "eyelines": {}, "entity_positions": {e["id"]: e["position"] for e in entities}, "entity_states": entities})
     return {"scene_id": scene["scene_id"], "revision": scene["revision"], "description": scene["description"], "colors": [{"id": e["id"], "label": e.get("label", e["id"]), "color": e["color"]} for e in scene["entities"]], "views": views}
+
+
+def materialize_view(payload: dict, shot_id: str, phase: str) -> dict:
+    """Expand one compact camera/phase selection for deterministic regression checks."""
+    view = next(view for view in payload["views"] if view["shot_id"] == shot_id and view["phase"] == phase)
+    frame_primitives = payload.get("frame_primitives")
+    if frame_primitives is None:
+        return view
+    entity_states = payload["entity_states_by_phase"][phase]
+    return {
+        "shot_id": view["shot_id"], "label": view["label"], "phase": view["phase"],
+        "frame": [primitive for token in view["frame_layers"] for primitive in frame_primitives[token]],
+        "axis_side": view["axis_side"], "eyelines": view["eyelines"],
+        "entity_positions": {entity["id"]: entity["position"] for entity in entity_states},
+        "entity_states": entity_states,
+    }
 
 
 def build_spec(scene_path: Path, project_root: Path) -> dict:

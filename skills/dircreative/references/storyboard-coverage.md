@@ -1,8 +1,8 @@
 # Detailed Storyboard Coverage
 
-Use at the explicitly requested full/detailed preproduction stage, replacing the
-general craft reading for that stage rather than stacking a new controller.
-Preserve the existing shot-card, asset-foundation and model-adapter owners.
+Use for full/detailed preproduction, replacing the general craft reading.
+Keep existing shot-card, asset-foundation and model-adapter owners. Infer the
+stage from the deliverable; users need not name the sidecar or its craft steps.
 
 ## Plan before producing
 
@@ -13,11 +13,11 @@ available. Use the existing attempt ledger; do not create another.
 
 The design ladder is:
 
-`story beat → scene geography → technical shot → action panel → clean input → generation unit`
+`story beat → scene geography → technical shot → action panel → unit reference strategy`
 
 A cut/reverse gets its own shot ID; action phases within a continuous shot share
-it but have distinct panel IDs. A scene hero or director-board page cannot
-replace complete, readable individual action images.
+it but have distinct panel IDs. An overview cannot replace readable phase
+coverage. A reviewed annotated reference can supply its bound unit panels.
 
 ## Determine the needed panels
 
@@ -35,6 +35,11 @@ Make the narrative drawing and action phase readable first: pose, contact,
 object change and camera relation. Short behavior notes and arrows may clarify
 a line drawing for human review and, where supported, storyboard or motion
 reference. They are guidance, never literal clean frames.
+For required motion rehearsal, apply `storyboard-motion-planning.md` and produce
+the actual model-generated drawings, colored annotations and legend before
+downstream storyboard-reference or color-frame use.
+Use `--phase planning` to check their bindings and recorded review; `design`
+can pass while those drawings are still pending.
 
 Use `master-shot-camera-planning` for coherent staging and
 `professional-storyboard-director` for the board only when available and useful.
@@ -42,9 +47,10 @@ Neither authorizes generation or expands scope.
 
 ## Sidecar contract
 
-`scripts/dircreative_storyboard_coverage.py` is a read-only supplementary checker.
-It binds an existing JSON shot-card file; it does not replace or silently relax
-the legacy one-representative-frame-per-shot visual plan.
+`scripts/dircreative_storyboard_coverage.py` is a read-only supplementary checker
+bound to existing shot cards. Its standalone `assets` check retains individual
+image requirements. For `annotated_reference` units, use the pre-video gate with
+the same coverage and actual `--prompt-ir`; that gate validates the alternative.
 
 ```bash
 python3 scripts/dircreative_storyboard_coverage.py validate /path/coverage.json \
@@ -69,27 +75,26 @@ The sidecar contains:
   Conventional reverse pairs use distinct setups/shots, reciprocal gaze targets,
   opposite screen looks and the same side of the declared axis. A deliberate
   exception needs a creative reason and visual review, not a metadata shortcut.
+- Motion drawings use separate `planning_image` and `motion_annotations` fields
+  on the same panels. `motion_planning` binds boards and review; see the motion
+  planning card. They never become production `image`; supported annotated units
+  validate them separately through the pre-video gate.
 
 `design` verifies declared phases, source binding, shot coverage, panel order and
 declared eyeline relationships. `assets` also requires actual per-shot image
 coverage and all additional required phase images. PNGs must be contained,
 decodable, aspect-correct when specified and hash-matched. One unchanged image
 cannot prove different states in the same shot. A planned image stays missing.
-An approved shot still needs its actual representative image. It may derive from
-an accepted storyboard panel only when it genuinely represents that shot and
-the panel-to-asset lineage is recorded; video-only use does not waive this.
+An individual-frame unit needs its actual representative images. These may
+derive from accepted panels with recorded lineage. An annotated unit instead
+needs its complete current board, reviewed panels and supported IR attachment.
 
-For detailed/full preproduction, require both this sidecar and the legacy visual
-asset plan against the same shot-card identity before reporting combined visual
-coverage. The legacy `visual_assets_complete` alone covers representatives, not
-all action panels. Neither checker proves artistic quality or actual pixel gaze:
-inspect the images and run the reference-effect comparison loop.
-
-`--legacy-plan` checks both validators and the exact shared shot-card path/hash,
-project and scope. It preserves the legacy completion claim and every adoption
-error. A valid `plan_complete` plus panel assets is still not a trusted
-`visual_assets_complete` claim. Review the requirement list against the actual
-script for omitted actions; record AI review as AI, never human approval.
+Both sidecar and visual plan must bind the same cards, project and scope;
+`--legacy-plan` checks this without granting `visual_assets_complete`.
+The pre-video gate consumes `--storyboard-coverage`, plus current `--prompt-ir`
+for annotated units. Inspect rendered actions, camera and gaze; a checker cannot
+detect omitted story requirements or judge visual success. Record AI review as
+AI, never human approval. Preserve all unresolved adoption errors.
 
 ## Panel dispatch and return
 
@@ -99,8 +104,8 @@ executes with authorization; do not duplicate those owners.
 
 Bind each frame's `panel_context` to a frozen design sidecar: file/hash, panel
 ID, phase, time and state. Set `frame_id=panel_id`; retain real `shot_id`.
-Dispatch panels sharing a shot in separate packets to preserve the legacy
-one-frame-per-shot rule. Return images to the same IDs in a new assets revision;
+For individual frames, dispatch same-shot panels in separate packets. Annotated
+boards use the unit's styleboard handoff. Return images to their IDs in a new revision;
 never overwrite the design receipt or fabricate extra shots.
 
 ## Bounded revisions

@@ -20,7 +20,7 @@
 
 DIRcreative 不是“输入一句话、吐出一堆提示词”的黑盒。它先判断任务是局部修改、完整开发还是交付审计，再只加载对应合同。局部任务直接交付修改结果；只有真实方向冲突、生成授权或客户交付才停下来询问。
 
-当前源码版本为 `v0.9.0`；已发布版本与下载以 [GitHub Releases](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/releases) 为准。本版接通自然语言空间讨论、当前宿主可视化、同源机位投影与无文字控制参考，并将布局接入既有 Jingzao 和视频提示词绑定。纯查看无需逐阶段审批，采用后复用有效授权继续所选范围；来源修订、实际附件、真实生成、视觉审阅和用户验收分别核对。
+当前源码版本为 `v0.9.1`；已发布版本与下载以 [GitHub Releases](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/releases) 为准。本版依据完整前期需求和已写出的镜头内容，衔接动作、摄影、分镜覆盖与 Jingzao 编译工艺，并默认发现本机已安装提供者。空间预览保留全部机位与动作阶段；逐镜图片还需核对实际视角、动作因果与持续状态。已有图片授权可继续用于对应资产，视频生成和用户验收仍分别核对。
 
 源码仓库包含 DIRcreative 根 Skill、19 个 `skills/dircreative/*` 内部子 Skill，以及 `ai-film-asset-stress-test`、`ai-film-production-ledger` 两个 P0 能力入口。正式 DIRcreative 安装包按安全设计只暴露根 `$dircreative`，其余入口会内部化后由 selector 路由；Skill Stack 还会发现宿主中已安装的外部专业 provider。这些依赖不会被复制进本仓库，也不能把“宿主可调用”表述成“GitHub 已内置”。ADCO 始终是独立外部编排方。
 
@@ -126,11 +126,11 @@ DIRcreative 会选择 Fast、Studio 或 Delivery。Fast 不进入 Director Room�
 
 - 图片生成与最终视频生成分别授权；“完成视频生成前全部流程”在明确包含图片资产时会生成真实图片，但不会生成最终视频。
 - 每次图片调用都要绑定当前视觉计划、active asset、role-specific contract、prompt、父资产审查状态和 host 选择的项目根；错误人物母版不能解锁后续分镜或 clean input。
-- 完整成片先展示动态视觉资产矩阵：角色/产品/关键道具、每个场景、每个镜头的独立分镜图、覆盖全部镜头的导演故事板，以及模型实际需要的 clean frames。
+- 完整前期按故事和模型策略确定所需资产：角色/产品/关键道具、场景、覆盖全部镜头与必要动作相位的逐镜图或带注故事板，以及该生成单元实际需要的 clean frames。
 - TVC 验收使用 16:9 广播主档案，不以 9:16 社媒变体代替；具体帧率、声音、字幕/法务安全区与母版参数以目标客户或播出方规格为准。
 - 再展示生成合同：每张图的用途、继承来源、标题层级和是否会成为视频输入；代表性样片不得冒充全片完成。
 - 视觉资产计划 v2.3 绑定源清单、批准 shot cards、连续且逐帧对齐的 timecode、完整逐镜创意真相和精确继承关系；完成证据统一为依赖无关的规范 PNG，场景、逐镜、风格与视频输入帧必须匹配目标画幅，文件完整解码后再绑定规范化像素身份、技术收据和包内独立视觉复核清单。`user_locked` 只是工作流状态，不能绕过复核；技术盖章不能自动通过视觉判断，独立资产也不得靠 metadata 改写把同一画面冒充多张图。
-- `visual_assets_complete` 只表示场景图、逐镜分镜、导演故事板和视频输入帧完成，不表示 TVC 成片、客户批准或电视台验收。
+- `visual_assets_complete` 表示当前范围按所选方案完成所需视觉资产与正式复核；独立 AI 审阅只能支持待用户审阅的状态，也不表示视频成片、客户批准或电视台验收。
 - fixture、终端演示、HTML 页面和自动化测试不能冒充真人验收。
 - 生成候选、临时截图和 review widget 不能自动成为项目 source of truth。
 - 高风险场景/支撑关系在交给镜造或图像工具前必须写入 `truth_contract`：场景附件、道具附件、参考图不可控制的背景/地面字段、可见支撑关系、父帧状态和最低充分约束输入均须显式绑定。实际执行的 prompt 与附件路径还必须和 hash-bound manifest 及 host trace 一致；结构 PASS 不代表像素里真的看见了悬挂关系。
@@ -299,12 +299,12 @@ Skill; see [review trust host configuration](docs/film-preproduction/review-trus
 正式安装源是同一 GitHub Release 中的归档和 `SHA256SUMS`，再由该 tag 的精确、
 干净源码执行同进程验证与安装；不能运行归档内的 installer，也不能用 metadata
 自证。下面的信任链从 `v0.5.0` 起适用；更早版本不满足这条正式安装门。
-以下命令在 `v0.9.0` tag 与 Release 实际发布后生效。
+以下命令在 `v0.9.1` tag 与 Release 实际发布后生效。
 
 ```bash
-gh release download v0.9.0 \
+gh release download v0.9.1 \
   --repo papperrollinggery/Paperrolling-DIRcreative-SKILL \
-  --pattern 'dircreative-0.9.0.tar.gz' \
+  --pattern 'dircreative-0.9.1.tar.gz' \
   --pattern 'SHA256SUMS'
 ```
 
@@ -314,7 +314,7 @@ gh release download v0.9.0 \
 ```bash
 set -euo pipefail
 REPO_URL="https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL.git"
-TAG="v0.9.0"
+TAG="v0.9.1"
 EXPECTED_COMMIT="$(
   git ls-remote --exit-code --tags "$REPO_URL" \
     "refs/tags/$TAG" "refs/tags/$TAG^{}" |
@@ -326,7 +326,7 @@ EXPECTED_COMMIT="$(
     }
   '
 )"
-ARTIFACT="$(pwd)/dircreative-0.9.0.tar.gz"
+ARTIFACT="$(pwd)/dircreative-0.9.1.tar.gz"
 CHECKSUMS="$(pwd)/SHA256SUMS"
 VERIFY_ROOT="$(mktemp -d)"
 trap 'rm -rf "$VERIFY_ROOT"' EXIT

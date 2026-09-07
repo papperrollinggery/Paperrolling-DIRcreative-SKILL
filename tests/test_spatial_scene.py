@@ -220,6 +220,34 @@ class SpatialSceneTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "spatial_shot_missing"):
             spatial.project_scene(scene, "S01")
 
+    def test_view_payload_deduplicates_camera_phase_geometry_without_losing_selected_view(self):
+        scene = self.scene()
+        scene["cameras"] = [
+            dict(camera, shot_id=f"S{index:02d}", label=f"机位 {index:02d}")
+            for index in range(1, 16)
+            for camera in scene["cameras"][:1]
+        ]
+        point = [.32, .52]
+        scene["paths"] = []
+        for index in range(10):
+            next_point = [round(.30 - index * .01, 2), round(.50 + (index + 1) * .01, 2)]
+            scene["paths"].append({"entity_id": "A", "points": [point, next_point], "trigger": f"第 {index + 1} 次走位", "order": index + 1})
+            point = next_point
+        self.assertEqual(spatial.validate_scene(scene), [])
+
+        payload = spatial.view_payload(scene)
+
+        self.assertEqual(len(payload["views"]), len(scene["cameras"]) * len(spatial.phases(scene)))
+        self.assertIn("frame_primitives", payload)
+        self.assertIn("entity_states_by_phase", payload)
+        self.assertTrue(all("top" not in view and "frame" not in view for view in payload["views"]))
+        self.assertLess(len(json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode("utf-8")), 1_000_000)
+        for shot_id, phase in (("S01", "initial"), ("S02", "path-1"), ("S01", "path-10"), ("S02", "final")):
+            self.assertEqual(
+                spatial.materialize_view(payload, shot_id, phase),
+                {key: value for key, value in spatial.project_scene(scene, shot_id, phase).items() if key != "top"},
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

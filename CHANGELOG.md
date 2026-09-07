@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## 0.9.1 - 2026-09-07
+
+- Connect natural full-preproduction requests and developed shot cards to the existing action, camera, panel-coverage and Jingzao frame-compilation stages. Selectors now discover configured host Skills by default and consume each applicable stage without adding a second router.
+- Rehearse complex action with model-generated line drawings, semantic-color arrows, notes and legend. Preserve the original annotated board and explicit cell mapping; inspect it before supported storyboard-reference or required color-frame use. Reuse coverage IDs and Jingzao's rough styleboard path without counting sketches as production images or demanding finished assets before drawing.
+- Declare supplied foundation PNGs through the existing inventory and read back only available assets. Preserve valid small planning crops through verified source pixels; combine corrected native panels by proportional document layout with replayable provenance and a new page review.
+- Default to native files, inline images, copyable text and a short index. Routine ledgers and browsing do not require a website, dashboard, workbench or local server; focused spatial/camera interaction remains available when needed.
+- Carry existing image authorization from film development into the exact asset-execution context; keep video authorization, asset packets and formal review requirements separate.
+- Preserve action phases, motivated viewpoint changes, reference roles, impact intensity and environment consequences through shot development. Clean inputs follow the selected generation-unit strategy instead of a fixed per-shot quota.
+- Require the actual Jingzao narrative-film profile before frame compilation and bind that profile in production handoffs. Review source states against all compiled fields so generic template defaults, wrong actor actions and stale light/camera descriptions cannot masquerade as reviewed cinematography.
+- Require whole-film and sequence pre-video asset checks to validate panel coverage and the existing production handoff for required action images. Reject reuse of one image across different action phases while keeping visual-quality and user-acceptance claims unverified.
+- Deduplicate shared scene state and projected objects in camera/phase previews, retaining the full interactive selection within the existing payload limits.
+
 ## 0.9.0 - 2026-09-06
 
 - Route natural-language blocking, camera and reverse-shot discussions into the current host visualization contract, with a complete text fallback and no mandatory stage approval for viewing.

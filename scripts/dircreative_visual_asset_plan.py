@@ -92,6 +92,8 @@ PLANNING_ROLES = {
     "professional_storyboard_motion_map",
 }
 DIRECT_ROLES = {"clean_first_frame", "clean_key_frame", "clean_end_frame"}
+STORYBOARD_STRATEGIES = {"individual_frames", "annotated_reference"}
+STORYBOARD_ACQUISITIONS = {"native_generate", "assembled_model_panels"}
 DELIVERY_FRAME_ROLES = {
     "scene_geography_camera_fov_reference",
     "lighting_material_style_board",
@@ -100,6 +102,10 @@ DELIVERY_FRAME_ROLES = {
 }
 DELIVERY_ASPECT_RATIO_TOLERANCE = 0.02
 GENERATED_STATUSES = {"generated_candidate", "user_locked", "reused_locked"}
+EXISTING_SOURCE_ROLES = {
+    "character_identity_reference", "product_identity_board", "prop_continuity_board",
+    "scene_geography_camera_fov_reference", "lighting_material_style_board",
+}
 COMPLETION_CLAIMS = {
     "none",
     "plan_complete",
@@ -648,7 +654,18 @@ def decode_png_stdlib(path: Path) -> dict[str, Any]:
     }
 
 
-def inspect_raster(path: Path) -> tuple[dict[str, Any] | None, str | None]:
+def inspect_raster(
+    path: Path,
+    *,
+    allow_derived_planning_crop: bool = False,
+) -> tuple[dict[str, Any] | None, str | None]:
+    """Fully decode a canonical evidence PNG.
+
+    The default minimum dimensions apply to every canonical or production image.
+    ``allow_derived_planning_crop`` only lets a caller inspect the raster part of
+    a planning crop after that caller has independently proven its source-board
+    extraction receipt.  It deliberately carries no provenance claim itself.
+    """
     try:
         before = path.stat()
         size = before.st_size
@@ -706,7 +723,10 @@ def inspect_raster(path: Path) -> tuple[dict[str, Any] | None, str | None]:
             return None, re.sub(r"[^A-Za-z0-9_.-]+", "_", str(exc) or type(exc).__name__)[:96]
     else:
         return None, "non_png_decoder_unavailable"
-    if result["width"] < MIN_RASTER_WIDTH or result["height"] < MIN_RASTER_HEIGHT:
+    if (
+        not allow_derived_planning_crop
+        and (result["width"] < MIN_RASTER_WIDTH or result["height"] < MIN_RASTER_HEIGHT)
+    ):
         return None, "dimensions_below_minimum"
     try:
         result["sha256"] = sha256_file(path)
@@ -1487,7 +1507,7 @@ def parse_inventory(
     }
     if (
         not required.issubset(inventory)
-        or set(inventory) - required - {"style_compile_route"}
+        or set(inventory) - required - {"style_compile_route", "existing_sources"}
         or inventory.get("schema_version") != SCHEMA_VERSION
     ):
         raise ValueError("visual asset inventory field set or version is invalid")
@@ -1723,7 +1743,7 @@ def parse_inventory(
             "direct_input_roles",
             "direct_input_not_required_reason",
         }
-        if not isinstance(unit, dict) or set(unit) != expected:
+        if not isinstance(unit, dict) or set(unit) - {"storyboard_strategy", "storyboard_acquisition"} != expected:
             raise ValueError("inventory generation unit is invalid")
         unit_id = unit.get("unit_id")
         shot_ids = unit.get("shot_ids")
@@ -1731,6 +1751,7 @@ def parse_inventory(
         maximum = unit.get("direct_input_max")
         roles = unit.get("direct_input_roles")
         reason = unit.get("direct_input_not_required_reason")
+        storyboard_strategy = unit.get("storyboard_strategy", "individual_frames")
         if (
             not isinstance(unit_id, str)
             or not ID_RE.fullmatch(unit_id)
@@ -1754,6 +1775,10 @@ def parse_inventory(
             or not all(role in DIRECT_ROLES for role in roles)
             or duplicate_values(roles)
             or not isinstance(reason, str)
+            or storyboard_strategy not in STORYBOARD_STRATEGIES
+            or not isinstance(unit.get("storyboard_acquisition", "native_generate"), str)
+            or unit.get("storyboard_acquisition", "native_generate") not in STORYBOARD_ACQUISITIONS
+            or ("storyboard_acquisition" in unit and storyboard_strategy != "annotated_reference")
         ):
             raise ValueError(f"inventory generation unit {unit_id} input strategy is invalid")
         if maximum > 0 and not roles:
@@ -1997,6 +2022,57 @@ def selected_input_shot(role: str, shot_ids: list[str], ordinal: int, total: int
     return shot_ids[max(0, min(position, len(shot_ids) - 1))]
 
 
+def _bind_existing_sources(assets: list[dict[str, Any]], raw_sources: Any, base_dir: Path) -> None:
+    """Bind explicitly supplied PNGs into design truth without creating generation/QA events."""
+    if not isinstance(raw_sources, list):
+        raise ValueError("existing_sources must be a list")
+    assets_by_id = {asset["asset_id"]: asset for asset in assets}
+    seen: set[str] = set()
+    root = base_dir.resolve(strict=True)
+    for source in raw_sources:
+        if not isinstance(source, dict) or set(source) != {"asset_id", "relative_path", "sha256"}:
+            raise ValueError("existing_source field set is invalid")
+        asset_id = source.get("asset_id")
+        if not isinstance(asset_id, str) or asset_id in seen or asset_id not in assets_by_id:
+            raise ValueError(f"existing_source asset is unknown or duplicated: {asset_id}")
+        seen.add(asset_id)
+        asset = assets_by_id[asset_id]
+        if asset["role"] not in EXISTING_SOURCE_ROLES:
+            raise ValueError(f"existing_source role is not reusable: {asset_id}")
+        relative = source.get("relative_path")
+        expected_hash = source.get("sha256")
+        if (
+            not isinstance(relative, str) or not relative or "\x00" in relative or "\\" in relative
+            or Path(relative).is_absolute() or ".." in Path(relative).parts
+            or not isinstance(expected_hash, str) or SHA256_RE.fullmatch(expected_hash) is None
+        ):
+            raise ValueError(f"existing_source path or hash is invalid: {asset_id}")
+
+        def contained_source() -> Path:
+            candidate = root
+            for part in Path(relative).parts:
+                candidate = candidate / part
+                if candidate.is_symlink():
+                    raise ValueError(f"existing_source symlink is forbidden: {asset_id}")
+            path = contained_file(relative, root)
+            if path is None:
+                raise ValueError(f"existing_source file is missing or outside root: {asset_id}")
+            return path
+
+        path = contained_source()
+        evidence, reason = inspect_raster(path)
+        if evidence is None or evidence.get("format") != "PNG":
+            raise ValueError(f"existing_source is not a valid PNG: {asset_id}: {reason}")
+        # Inspecting and re-deriving must not silently adopt swapped source bytes.
+        if evidence["sha256"] != expected_hash or sha256_file(contained_source()) != expected_hash:
+            raise ValueError(f"existing_source hash mismatch: {asset_id}")
+        asset["action"] = "reuse"
+        asset["generated_file"] = relative
+        asset["truth_sha256"] = canonical_json_sha256({
+            "design_truth_sha256": asset["truth_sha256"], "existing_source": source,
+        })
+
+
 def derive_plan(
     inventory: dict[str, Any],
     *,
@@ -2147,6 +2223,9 @@ def derive_plan(
 
     for shot_id in shot_ids:
         shot = shot_map[shot_id]
+        unit = unit_map[shot["generation_unit_id"]]
+        if unit.get("storyboard_strategy", "individual_frames") == "annotated_reference":
+            continue
         coverage = empty_coverage()
         coverage["scene_ids"] = [shot["scene_id"]]
         coverage["character_ids"] = list(shot["character_ids"])
@@ -2173,8 +2252,14 @@ def derive_plan(
             )
         )
 
-    for page_index in range(0, len(shot_ids), 6):
-        page_shots = shot_ids[page_index : page_index + 6]
+    legacy_shot_ids = [
+        shot_id for shot_id in shot_ids
+        if unit_map[shot_map[shot_id]["generation_unit_id"]].get(
+            "storyboard_strategy", "individual_frames"
+        ) == "individual_frames"
+    ]
+    for page_index in range(0, len(legacy_shot_ids), 6):
+        page_shots = legacy_shot_ids[page_index : page_index + 6]
         page_number = page_index // 6 + 1
         coverage = empty_coverage()
         coverage["scene_ids"] = list(dict.fromkeys(shot_map[item]["scene_id"] for item in page_shots))
@@ -2209,6 +2294,60 @@ def derive_plan(
         )
 
     for unit_id, unit in unit_map.items():
+        if unit.get("storyboard_strategy", "individual_frames") != "annotated_reference":
+            continue
+        assembled_panels = unit.get("storyboard_acquisition", "native_generate") == "assembled_model_panels"
+        unit_shots = list(unit["shot_ids"])
+        coverage = empty_coverage()
+        coverage["scene_ids"] = list(
+            dict.fromkeys(shot_map[item]["scene_id"] for item in unit_shots)
+        )
+        coverage["character_ids"] = list(
+            dict.fromkeys(value for item in unit_shots for value in shot_map[item]["character_ids"])
+        )
+        coverage["appearance_state_ids"] = list(
+            dict.fromkeys(value for item in unit_shots for value in shot_map[item]["appearance_state_ids"])
+        )
+        coverage["product_ids"] = list(
+            dict.fromkeys(value for item in unit_shots for value in shot_map[item]["product_ids"])
+        )
+        coverage["prop_ids"] = list(
+            dict.fromkeys(value for item in unit_shots for value in shot_map[item]["prop_ids"])
+        )
+        coverage["shot_ids"] = unit_shots
+        coverage["generation_unit_ids"] = [unit_id]
+        inherits = list(dict.fromkeys(
+            scene_asset_ids[shot_map[item]["scene_id"]] for item in unit_shots
+        ))
+        inherits.extend(
+            appearance_asset_ids[state]
+            for item in unit_shots for state in shot_map[item]["appearance_state_ids"]
+        )
+        inherits.extend(
+            product_asset_ids[product]
+            for item in unit_shots for product in shot_map[item]["product_ids"]
+        )
+        inherits.extend(
+            prop_asset_ids[prop]
+            for item in unit_shots for prop in shot_map[item]["prop_ids"]
+        )
+        if inventory["style_reference_required"] is True:
+            inherits.append(style_asset_id)
+        assets.append(
+            planned_asset(
+                f"annotated-storyboard-unit-{unit_id}",
+                "professional_storyboard_motion_map",
+                (f"Assemble native annotated panel layout for generation unit {unit_id}." if assembled_panels
+                 else f"Generate annotated action storyboard reference for generation unit {unit_id}."),
+                truth_payload={"unit": unit, "shots": [shot_truth_map[item] for item in unit_shots]},
+                coverage=coverage,
+                inherits_from=list(dict.fromkeys(inherits)),
+                action="assemble" if assembled_panels else "generate",
+                compile_route="deterministic_assembly" if assembled_panels else "selected_skill_handoff",
+            )
+        )
+
+    for unit_id, unit in unit_map.items():
         minimum = unit["direct_input_min"]
         roles = unit["direct_input_roles"]
         for ordinal in range(minimum):
@@ -2236,13 +2375,18 @@ def derive_plan(
                         "direct_input_role": role,
                     },
                     coverage=coverage,
-                    inherits_from=[f"storyboard-frame-{selected_shot}"],
+                    inherits_from=[
+                        f"annotated-storyboard-unit-{unit_id}"
+                        if unit.get("storyboard_strategy", "individual_frames") == "annotated_reference"
+                        else f"storyboard-frame-{selected_shot}"
+                    ],
                     action="derive",
                     planning_only=False,
                     compile_route="selected_skill_handoff",
                 )
             )
 
+    _bind_existing_sources(assets, inventory.get("existing_sources", []), base_dir)
     output_units = [
         {
             "unit_id": unit["unit_id"],
@@ -2251,6 +2395,13 @@ def derive_plan(
             "direct_input_max": unit["direct_input_max"],
             "direct_input_roles": list(unit["direct_input_roles"]),
             "direct_input_not_required_reason": unit["direct_input_not_required_reason"],
+            **(
+                {"storyboard_strategy": "annotated_reference"}
+                if unit.get("storyboard_strategy") == "annotated_reference"
+                else {}
+            ),
+            **({"storyboard_acquisition": "assembled_model_panels"}
+               if unit.get("storyboard_acquisition") == "assembled_model_panels" else {}),
         }
         for unit in unit_map.values()
     ]
@@ -2615,7 +2766,7 @@ def validate_plan(
             "direct_input_roles",
             "direct_input_not_required_reason",
         }
-        if not isinstance(unit, dict) or set(unit) != expected_fields:
+        if not isinstance(unit, dict) or set(unit) - {"storyboard_strategy", "storyboard_acquisition"} != expected_fields:
             errors.append(f"generation_unit_invalid:{index}")
             continue
         unit_id = unit.get("unit_id")
@@ -2639,6 +2790,7 @@ def validate_plan(
         maximum = unit.get("direct_input_max")
         roles = unit.get("direct_input_roles")
         reason = unit.get("direct_input_not_required_reason")
+        storyboard_strategy = unit.get("storyboard_strategy", "individual_frames")
         if (
             not isinstance(minimum, int)
             or isinstance(minimum, bool)
@@ -2652,6 +2804,10 @@ def validate_plan(
             or not all(role in DIRECT_ROLES for role in roles)
             or duplicate_values(roles)
             or not isinstance(reason, str)
+            or storyboard_strategy not in STORYBOARD_STRATEGIES
+            or not isinstance(unit.get("storyboard_acquisition", "native_generate"), str)
+            or unit.get("storyboard_acquisition", "native_generate") not in STORYBOARD_ACQUISITIONS
+            or ("storyboard_acquisition" in unit and storyboard_strategy != "annotated_reference")
         ):
             errors.append(f"generation_unit_direct_input_strategy_invalid:{unit_id}")
         elif isinstance(maximum, int) and maximum > 0 and not roles:
@@ -2711,7 +2867,9 @@ def validate_plan(
             "clean_end_frame",
         } and compile_route != "selected_skill_handoff":
             errors.append(f"asset_compile_route_role_mismatch:{asset_id}")
-        elif role == "professional_storyboard_motion_map" and compile_route != "deterministic_assembly":
+        elif role == "professional_storyboard_motion_map" and compile_route not in {
+            "deterministic_assembly", "selected_skill_handoff"
+        }:
             errors.append(f"asset_compile_route_role_mismatch:{asset_id}")
         elif role not in {
             "professional_storyboard_motion_map",
@@ -2848,12 +3006,32 @@ def validate_plan(
                 if coverage != expected_coverage:
                     errors.append(f"storyboard_truth_mismatch:{asset_id}")
         if role == "professional_storyboard_motion_map":
-            if asset.get("action") != "assemble":
-                errors.append(f"director_storyboard_must_assemble:{asset_id}")
             page_shots = safe_coverage_ids(asset, "shot_ids")
-            if not 1 <= len(page_shots) <= 6:
-                errors.append(f"director_storyboard_page_density_invalid:{asset_id}")
-            elif all(shot_id in truth_map for shot_id in page_shots):
+            unit_coverage = safe_coverage_ids(asset, "generation_unit_ids")
+            annotated_unit = (
+                len(unit_coverage) == 1
+                and unit_map.get(unit_coverage[0], {}).get(
+                    "storyboard_strategy", "individual_frames"
+                ) == "annotated_reference"
+            )
+            if annotated_unit:
+                unit_id = unit_coverage[0]
+                expected_shots = safe_id_list(unit_map[unit_id].get("shot_ids"))
+                assembled_panels = unit_map[unit_id].get("storyboard_acquisition", "native_generate") == "assembled_model_panels"
+                if asset.get("action") != ("assemble" if assembled_panels else "generate"):
+                    errors.append(f"annotated_storyboard_must_{'assemble' if assembled_panels else 'generate'}:{asset_id}")
+                if asset.get("compile_route") != ("deterministic_assembly" if assembled_panels else "selected_skill_handoff"):
+                    errors.append(f"annotated_storyboard_compile_route_invalid:{asset_id}")
+                if page_shots != expected_shots:
+                    errors.append(f"annotated_storyboard_unit_coverage_invalid:{asset_id}")
+            else:
+                if asset.get("action") != "assemble":
+                    errors.append(f"director_storyboard_must_assemble:{asset_id}")
+                if asset.get("compile_route") != "deterministic_assembly":
+                    errors.append(f"director_storyboard_compile_route_invalid:{asset_id}")
+                if not 1 <= len(page_shots) <= 6:
+                    errors.append(f"director_storyboard_page_density_invalid:{asset_id}")
+            if page_shots and all(shot_id in truth_map for shot_id in page_shots):
                 expected_page_coverage = {
                     "scene_ids": list(dict.fromkeys(truth_map[item]["scene_id"] for item in page_shots)),
                     "character_ids": list(
@@ -2875,9 +3053,10 @@ def validate_plan(
                 }
                 if coverage != expected_page_coverage:
                     errors.append(f"director_storyboard_truth_mismatch:{asset_id}")
-                expected_page_dependencies = [f"storyboard-frame-{item}" for item in page_shots]
-                if asset.get("inherits_from") != expected_page_dependencies:
-                    errors.append(f"director_storyboard_dependency_mismatch:{asset_id}")
+                if not annotated_unit:
+                    expected_page_dependencies = [f"storyboard-frame-{item}" for item in page_shots]
+                    if asset.get("inherits_from") != expected_page_dependencies:
+                        errors.append(f"director_storyboard_dependency_mismatch:{asset_id}")
         if role in DIRECT_ROLES:
             clean_shots = safe_coverage_ids(asset, "shot_ids")
             if (
@@ -2899,7 +3078,14 @@ def validate_plan(
                 }
                 if coverage != expected_clean_coverage:
                     errors.append(f"clean_input_truth_mismatch:{asset_id}")
-                if asset.get("inherits_from") != [f"storyboard-frame-{truth['shot_id']}"]:
+                expected_parent = (
+                    f"annotated-storyboard-unit-{truth['generation_unit_id']}"
+                    if unit_map.get(truth["generation_unit_id"], {}).get(
+                        "storyboard_strategy", "individual_frames"
+                    ) == "annotated_reference"
+                    else f"storyboard-frame-{truth['shot_id']}"
+                )
+                if asset.get("inherits_from") != [expected_parent]:
                     errors.append(f"clean_input_dependency_mismatch:{asset_id}")
 
     for duplicate in duplicate_values(asset_ids):
@@ -2969,6 +3155,8 @@ def validate_plan(
                     errors.append(f"asset_dependency_mismatch:{asset_id}")
                 else:
                     errors.append(f"asset_semantic_drift:{asset_id}:{field}")
+            if expected.get("action") == "reuse" and actual.get("generated_file") != expected.get("generated_file"):
+                errors.append(f"existing_source_path_mismatch:{asset_id}")
 
     if scope == "asset_only":
         if completion_claim != "asset_only_plan_complete":
@@ -3050,7 +3238,15 @@ def validate_plan(
         "scene_identity_coverage_invalid",
     )
 
-    storyboard_counts = _coverage_counts(assets, "storyboard_frame", "shot_ids", shot_ids)
+    legacy_storyboard_shot_ids = [
+        shot_id for shot_id in shot_ids
+        if unit_map.get(truth_map.get(shot_id, {}).get("generation_unit_id"), {}).get(
+            "storyboard_strategy", "individual_frames"
+        ) == "individual_frames"
+    ]
+    storyboard_counts = _coverage_counts(
+        assets, "storyboard_frame", "shot_ids", legacy_storyboard_shot_ids
+    )
     director_counts = _coverage_counts(
         assets,
         "professional_storyboard_motion_map",
@@ -3132,15 +3328,24 @@ def validate_plan(
 
     evidence_by_asset: dict[str, dict[str, Any]] = {}
     all_images_required = completion_claim in GENERATED_CLAIMS
-    if all_images_required or (scope == "asset_only" and _validate_recorded_assets):
+    has_recorded_reuse_evidence = _validate_recorded_assets and any(
+        asset.get("required") is True and asset.get("action") == "reuse"
+        and asset.get("technical_receipt") is not None for asset in assets
+    )
+    if all_images_required or (scope == "asset_only" and _validate_recorded_assets) or has_recorded_reuse_evidence:
         recorded_assets = [
             asset for asset in assets
             if asset.get("required") is True
-            and (all_images_required or asset.get("status") in GENERATED_STATUSES)
+            and (all_images_required or (scope == "asset_only" and asset.get("status") in GENERATED_STATUSES)
+                 or (asset.get("action") == "reuse" and asset.get("technical_receipt") is not None)
+                 # A joint review also needs its reviewed generated/assembled
+                 # members; unreviewed future assets stay outside this readback.
+                 or (has_recorded_reuse_evidence and asset.get("visual_qa_receipt") is not None))
         ]
         for asset in recorded_assets:
             asset_id = asset["asset_id"]
-            if asset.get("status") not in GENERATED_STATUSES:
+            pending_reuse = asset.get("action") == "reuse" and asset.get("status") in {"planned", "prompt_ready"}
+            if asset.get("status") not in GENERATED_STATUSES and not (pending_reuse and not all_images_required):
                 errors.append(f"required_asset_not_generated:{asset_id}")
             path = contained_file(asset.get("generated_file"), base_dir)
             if path is None:
@@ -3225,7 +3430,10 @@ def validate_plan(
             tuple[dict[str, Any], dict[str, dict[str, Any]], str | None],
         ] = {}
         for asset in recorded_assets:
-            if not all_images_required and asset.get("status") == "generated_candidate" and asset.get("visual_qa_receipt") is None:
+            if not all_images_required and asset.get("visual_qa_receipt") is None and (
+                asset.get("status") == "generated_candidate"
+                or (asset.get("action") == "reuse" and asset.get("status") in {"planned", "prompt_ready"})
+            ):
                 continue
             asset_id = asset["asset_id"]
             evidence = evidence_by_asset.get(asset_id)
@@ -3322,6 +3530,7 @@ def stamp_plan_evidence(
     *,
     base_dir: Path,
     checked_at: str | None = None,
+    asset_ids: list[str] | None = None,
     evidence_cache: dict[
         tuple[str, int, int, int, int, int],
         tuple[dict[str, Any] | None, str | None],
@@ -3341,8 +3550,20 @@ def stamp_plan_evidence(
     )
     if semantic_errors:
         raise ValueError("cannot stamp an invalid visual plan: " + ";".join(semantic_errors))
+    selected_ids: set[str] | None = None
+    if asset_ids is not None:
+        required_ids = {asset["asset_id"] for asset in stamped["assets"] if asset.get("required") is True}
+        if (
+            not isinstance(asset_ids, list) or not asset_ids
+            or not all(isinstance(asset_id, str) for asset_id in asset_ids)
+            or len(set(asset_ids)) != len(asset_ids) or not set(asset_ids).issubset(required_ids)
+        ):
+            raise ValueError("stamp asset_ids must be unique known required assets")
+        selected_ids = set(asset_ids)
     for asset in stamped["assets"]:
         if asset.get("required") is not True:
+            continue
+        if selected_ids is not None and asset["asset_id"] not in selected_ids:
             continue
         if asset_only and asset.get("status") not in GENERATED_STATUSES and not asset.get("generated_file"):
             continue
@@ -4518,11 +4739,12 @@ def main() -> int:
         "--stamp-evidence",
         action="store_true",
         help=(
-            "Full-decode every required generated raster and bind technical receipts; "
-            "this never grants visual QA approval."
+            "Full-decode required rasters, or only repeated --asset-id selections, "
+            "and bind technical receipts without granting visual QA approval."
         ),
     )
     parser.add_argument("--checked-at", help="RFC3339 UTC timestamp for reproducible evidence stamping.")
+    parser.add_argument("--asset-id", action="append", dest="asset_ids", help="Stamp only this existing required asset; repeat for a partial batch. Never grants visual approval.")
     parser.add_argument("--self-test", action="store_true")
     args = parser.parse_args()
     selected = sum(bool(value) for value in (args.self_test, args.plan, args.inventory))
@@ -4534,6 +4756,8 @@ def main() -> int:
         parser.error("--output requires --inventory or --stamp-evidence")
     if args.checked_at and not args.stamp_evidence:
         parser.error("--checked-at requires --stamp-evidence")
+    if args.asset_ids is not None and not args.stamp_evidence:
+        parser.error("--asset-id requires --stamp-evidence")
     try:
         if args.self_test:
             errors, report = self_test()
@@ -4548,6 +4772,7 @@ def main() -> int:
                     payload,
                     base_dir=plan_path.parent,
                     checked_at=args.checked_at,
+                    asset_ids=args.asset_ids,
                 )
                 errors, metrics = validate_plan(payload, base_dir=plan_path.parent)
                 if not errors:

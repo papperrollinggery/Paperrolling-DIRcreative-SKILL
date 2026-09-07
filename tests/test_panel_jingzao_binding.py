@@ -199,6 +199,20 @@ class PanelJingzaoBindingTests(unittest.TestCase):
         }
         return document
 
+    def test_production_panel_requires_actual_motion_planning_before_consumption(self):
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            document = self.bound_document(root)
+            document["fixture_only"] = False
+            self.assertIn("panel_context_motion_planning_incomplete: p1", handoff.validate_panel_bindings(document, root))
+            plan = json.loads((root / "coverage.json").read_bytes())
+            plan["requirements"][0]["kind"] = "hold"
+            plan["requirements"][0]["risk"] = "low"
+            payload = json.dumps(plan).encode()
+            (root / "coverage.json").write_bytes(payload)
+            document["frames"][0]["panel_context"]["coverage_sha256"] = hashlib.sha256(payload).hexdigest()
+            self.assertEqual(handoff.validate_panel_bindings(document, root), [])
+
     def truth_document(self, root: Path) -> tuple[dict, list[dict]]:
         root.mkdir(parents=True, exist_ok=True)
         document = self.bound_document(root)

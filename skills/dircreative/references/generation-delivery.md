@@ -1,8 +1,13 @@
 # Generation and Delivery
 
-Use this card only when the user is about to generate, hand off a formal asset, or
-make work client-visible. Keep the creative result visible while adding the
-minimum evidence the action requires.
+Use for an already-designed active asset or client delivery. If a film still
+needs story/shots, stay in Studio and apply `shot-development.md` first;
+authorization does not replace craft or its pre-call packet.
+
+Default to native files, inline previews, copyable text and a short index.
+Reuse ledger data. A website, dashboard, workbench or local server requires an
+actual requested web deliverable; routine browsing does not. Keep necessary
+spatial/camera interaction in its existing focused viewer.
 
 ## Real generation
 
@@ -19,28 +24,24 @@ Resolve scope before the first media call:
 
 - `whole_film`: load or derive the visual asset matrix and generate its required
   assets in dependency order: identity/product/prop locks, scene anchors,
-  optional non-redundant look board, per-shot storyboard frames, director
-  storyboard pages, then clean generation-unit inputs;
+  needed look evidence, the selected storyboard strategy, and required clean inputs;
 - `sequence`: require the same coverage for the selected sequence only and name
   the excluded shots/scenes;
 - `representative_sample`: generate only the explicitly bounded test assets and
   label the result `sample_visual_assets_complete`, never whole-film complete.
 
-Bind every generated image to the current delivery profile. A TVC test uses a
-landscape broadcast profile and its safe-area/packshot constraints; a 9:16
-social image set is a channel variant and cannot validate TVC readiness. Exact
-master, loudness, legal-line, and caption requirements come from the named
-broadcaster/client delivery specification; do not invent a universal target.
+Bind images to their delivery profile; a TVC uses a landscape broadcast profile.
+A 9:16 social variant does not validate TVC readiness. Use the client's master, safe-area, packshot, loudness and
+caption requirements; do not invent a universal broadcast specification.
 
-For whole-film scope, each recurring character, hero product/critical prop,
-distinct scene, approved shot, director-storyboard cell, and generation unit
-must map to at least one required asset. Every approved shot needs an individual
-`storyboard_frame`; the `professional_storyboard_motion_map` must cover every
-shot exactly once. In visual asset plan v2, split a generation unit at every
-scene-anchor change. Let the selected model strategy require zero, one, or
-multiple clean first/key/end inputs within an explicit minimum/maximum range;
-do not force every model into a one-frame rule. Planning boards remain separate
-from clean direct inputs.
+Cover every recurring identity, critical prop, scene, shot, required phase and
+generation unit. The usual strategy uses individual `storyboard_frame` images
+and a deterministic overview. A unit explicitly using `annotated_reference`
+can instead use a reviewed native board or verified native-panel layout, with exact coverage and
+a supported conditional `storyboard_motion` Prompt IR attachment. Verify its
+actual bytes and upload mapping; it is never a literal clean frame. Other units
+retain their own requirements. Split units at scene-anchor changes and preserve
+their declared zero/one/multiple clean-input ranges.
 
 An explicit “generate now” instruction can satisfy generation authorization. A
 planning request, ambiguous “prepare,” or missing rights cannot. If blocked, ask
@@ -64,11 +65,11 @@ Once authorized:
   execution gate passes. A prompt, plan, preview, or
   “ready” state is not a generated result. If no compatible tool is available,
   return `TOOL_BLOCKED` or a clearly labeled external handoff.
-- For a new image sequence without locked identity, generate and review the identity reference first.
-  Select the first required identity asset from the matrix, lock or reject it,
-  then continue one dependency layer and one shot at a time while inheriting
-  character, product, prop, scene, and look truth. Inspect the saved file, not
-  only the chat preview, and retry one failed variable at a time.
+- For a new sequence, establish required identity evidence before dependent
+  frames; rough action planning need not await finished portraits. Continue by
+  dependency layer, reusing current character/prop/scene/look truth. Inspect
+  saved files and repair actual failed variables; independent ready assets may
+  be generated together within the authorized scope.
 - Dependency unlock needs the full visual manifest plus either host-registry
   signature or a separate Codex task's sealed request, image view and host claim;
   reviewer labels and self-hashes are insufficient.
@@ -78,31 +79,20 @@ Once authorized:
   representative assets and approve, reject, or retry them yourself. Continue
   without asking for test-only confirmation; test evidence is never client or
   production approval.
-- Every direct image-tool candidate reaching `selected` binds a validated
-  coverage panel/requirement hash in `execution_risk_binding`. Verified `low` or
-  `medium` keeps the lightweight path; verified `high` additionally requires
-  `execution_input_manifest`: exact prompt hash, ordered
-  attachments, and structured scene/support revision bound to the handoff truth
-  artifact/hash. The ledger reopens the validated packet and requires the actual
-  prompt text/hash and normalized ordered inputs to equal its target frame entry.
-  A production (`fixture_only:false`) packet also requires the explicit trusted
-  `--handoff-provider-root`; the ledger forwards it into nested handoff
-  validation rather than downgrading the packet to fixture mode.
-  Required support binds unique subject and anchor inputs.
-  Missing/false upstream risk, scene
-  input, or ready parent blocks selection. Selection also needs a signed
-  semantic truth review bound to output/truth hashes: scene pass, visible
-  support, no forbidden background/ground contamination, and current parent
-  states. A generic `accept` is insufficient. Legacy low-risk candidates remain
-  compatible after their risk source is hash-bound; they need no scene/support
-  manifest, spatial layout, or semantic truth review.
 - Formal release/global-install forward tests additionally bind the exact request,
   prompt, references and outputs to a bounded host-log prefix, then use a separate
   image-view task. `unsigned_host_trace` is execution evidence, never visual approval.
 
+For image execution, use `image-execution.md` for the current planning target and
+exact compiled-data transfer. Retain the known authorization and completion
+boundaries when replacing this shared guide.
+
+## Completion evidence
+
 `visual_assets_complete` is allowed only when every required matrix row has a
-fully decodable canonical PNG inside the evidence root; scene, style, per-shot
-storyboard, and clean video-input frames match the delivery-profile aspect; its
+fully decodable canonical PNG inside the evidence root; scene, style, individual
+storyboard and clean video-input frames match the delivery-profile aspect;
+annotated reference canvases retain their reviewed drawing/annotation layout; its
 file hash, normalized pixel hash, perceptual fingerprint, normalization profile,
 and technical receipt match; and a separate role-specific visual-review manifest covers the exact
 asset, truth and pixels. The plan validator never creates that manifest.

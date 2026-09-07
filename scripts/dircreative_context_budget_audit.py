@@ -121,7 +121,8 @@ def audit() -> tuple[list[str], dict[str, Any]]:
             failures.append("Studio Route Card loads final-delivery contracts")
         for term in (
             "every scene image",
-            "one individual storyboard frame per shot",
+            "every shot and required phase",
+            "annotated_reference",
             "complete director storyboard coverage",
             "clean model-input frames",
             "representative sample as incomplete for whole-film coverage",
@@ -134,7 +135,8 @@ def audit() -> tuple[list[str], dict[str, Any]]:
     if film_reference.is_file():
         film_text = " ".join(film_reference.read_text(encoding="utf-8").casefold().split())
         for term in (
-            "one individual `storyboard_frame` for every approved shot",
+            "readable coverage of every approved shot and required phase",
+            "annotated_reference",
             "scene references, individual shot images, and director storyboard pages",
             "tvc evidence",
             "`representative_sample` always remains incomplete for whole-film coverage",
@@ -162,6 +164,16 @@ def audit() -> tuple[list[str], dict[str, Any]]:
     measured_contexts["film_development:storyboard_coverage"] = {
         **routes["film_development"],
         "required_files": ["skills/dircreative/references/storyboard-coverage.md"],
+        "optional_files": [],
+    }
+    measured_contexts["film_development:shot_development"] = {
+        **routes["film_development"],
+        "required_files": ["skills/dircreative/references/shot-development.md"],
+        "optional_files": [],
+    }
+    measured_contexts["film_development:motion_planning"] = {
+        **routes["film_development"],
+        "required_files": ["skills/dircreative/references/storyboard-motion-planning.md"],
         "optional_files": [],
     }
     for route_id, config in measured_contexts.items():

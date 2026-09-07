@@ -296,6 +296,10 @@ def validate_panel_bindings(
         )
         if coverage_result.get("status") != "valid":
             add_error(errors, "panel_context_coverage_invalid", panel_id)
+        elif document.get("fixture_only") is False:
+            planning = validate_storyboard_coverage(coverage_document, artifact_root, "planning")
+            if planning.get("status") != "valid":
+                add_error(errors, "panel_context_motion_planning_incomplete", panel_id)
         panels = coverage_document.get("panels")
         matches = (
             [item for item in panels if isinstance(item, dict) and item.get("panel_id") == panel_id]
@@ -883,6 +887,12 @@ def production_provenance_errors(
     consumption = document.get("delivery_consumption", {})
     verify_artifact_file(input_spec, artifact_root, "input_spec", errors)
     verify_artifact_file(output_spec, artifact_root, "output_spec", errors)
+    from dircreative_narrative_spec_preflight import bound_output_spec_errors
+    errors.extend(
+        bound_output_spec_errors(
+            artifact_root, output_spec, document["frames"], provider_root=provider_root
+        )
+    )
     prompt_manifest = {
         "relative_path": output_spec.get("prompt_manifest_relative_path"),
         "sha256": output_spec.get("prompt_manifest_sha256"),
@@ -1102,6 +1112,17 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
 
         skill_payload = b"fixture jingzao skill\n"
         (provider_root / "SKILL.md").write_bytes(skill_payload)
+        scripts_root = provider_root / "scripts"
+        scripts_root.mkdir()
+        (scripts_root / "validate_spec.py").write_text(
+            'import json\nprint(json.dumps({"valid": True, "errors": []}))\n', encoding="utf-8"
+        )
+        (scripts_root / "compile_prompt.py").write_text(
+            'import json,sys\ns=json.load(open(sys.argv[-1]))\nprint(json.dumps({"prompt": f"fixture cinematic prompt for {s[\'intent\']}", "prompt_review": {"status": "ready"}}))\n',
+            encoding="utf-8",
+        )
+        (scripts_root / "reference_delivery.py").write_text("# fixture runtime\n", encoding="utf-8")
+        (scripts_root / "validate_style_capsule.py").write_text("# fixture dependency\n", encoding="utf-8")
         production["provider_skill"]["sha256"] = hashlib.sha256(skill_payload).hexdigest()
         for index, item in enumerate(production["reference_reads"]):
             payload = f"reference {index}\n".encode("utf-8")
@@ -1113,7 +1134,12 @@ def self_test() -> tuple[list[str], dict[str, Any]]:
 
         artifact_bindings = [
             (production["input_spec"], b"dir input\n"),
-            (production["output_spec"], b"jingzao output\n"),
+            (production["output_spec"], json.dumps({"production_manifest": "1.0", "frames": [
+                {"id": f["frame_id"], "shot_id": f["shot_id"], "spec": {
+                    "visual_generation_spec": "1.0", "intent": f["frame_id"], "direction": {"deliverable": "narrative_film_frame"},
+                    "cinematic": {"profile": "narrative_film_frame"},
+                }} for f in production["frames"]
+            ]}).encode()),
         ]
         for binding, payload in artifact_bindings:
             path = artifact_root / binding["relative_path"]

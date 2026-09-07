@@ -1,7 +1,6 @@
 # Studio Development Route Card
 
-Use for connected film-development outputs. Reuse the brief and existing work;
-start at the stage needed to produce the requested result.
+Use for connected film work. Reuse the brief and artifacts; start at the needed stage.
 
 ## Budget
 
@@ -15,9 +14,9 @@ start at the stage needed to produce the requested result.
 
 ## Execution
 
-1. Produce a recommended direction and usable first-round artifact. Do not
-   re-confirm a complete brief. Separate source facts from creative assumptions;
-   unavailable product evidence blocks its claim, not independent story work.
+1. Produce a recommended direction and usable first-round artifact. Do not re-confirm
+   a complete brief. Separate facts from assumptions; missing product evidence
+   blocks its claim, not story work.
 2. Select the requested layer: `client_story`, `narrative_storyboard`,
    `frame_content_spec`, `technical_production` or `full_preproduction`.
    Client stories, nine-grid narratives and frame specs stop at their layer;
@@ -29,18 +28,20 @@ start at the stage needed to produce the requested result.
    alternatives; repair the result in the same turn.
 4. For whole-film technical scope, derive assets from recurring identities,
    products/critical props, distinct scenes, shots and generation units. Include
-   every scene image, one individual storyboard frame per shot, complete director
-   storyboard coverage and required clean model-input frames. Reuse valid supplied
-   assets. Assemble overview pages from approved frames; do not redraw the film.
+   every scene image, complete director storyboard coverage and required clean
+   model-input frames. Use shot frames with an overview, or reviewed model-generated
+   boards for `annotated_reference` units. Cover every shot and required phase;
+   reuse supplied assets.
    A formal shot row carries its canonical ID and continuous start-end timecode.
 5. Continue through every authorized deliverable in dependency order. Use
    `concept_lock` only for a remaining material conflict the user must decide.
-   Already selected directions and permission do not need another approval.
+   Do not re-approve existing choices or permission.
    In real production scope, check execution/review capability before a large
    asset build, then use the Delivery card for the active media call.
 6. Verify the current output and affected dependencies. Mark a representative
    sample as incomplete for whole-film coverage. `pre_video_assets` requires
-   `dircreative_pre_video_assets_gate.py` before any completion claim; missing
+   `dircreative_pre_video_assets_gate.py` with the bound storyboard-coverage
+   sidecar for whole-film/sequence scope before any completion claim; missing
    media/review/readback remains an explicit blocker with usable work preserved.
 7. Persist compact state only for pause/resume or multi-file output. Delegation
    uses the consistency-only `dircreative_request_scope_contract.py`; it cannot

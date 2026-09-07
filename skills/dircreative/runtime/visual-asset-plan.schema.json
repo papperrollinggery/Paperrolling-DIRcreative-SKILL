@@ -149,7 +149,9 @@
             "uniqueItems": true,
             "items": {"enum": ["clean_first_frame", "clean_key_frame", "clean_end_frame"]}
           },
-          "direct_input_not_required_reason": {"type": "string"}
+          "direct_input_not_required_reason": {"type": "string"},
+          "storyboard_strategy": {"enum": ["individual_frames", "annotated_reference"]},
+          "storyboard_acquisition": {"enum": ["native_generate", "assembled_model_panels"]}
         }
       }
     },

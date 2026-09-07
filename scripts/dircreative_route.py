@@ -506,6 +506,13 @@ def classify_route(
         r"(?:直到|完成|做到|走到).{0,16}(?:视频生成|生成视频)(?:之)?前.{0,24}(?:全部|全套|流程)|"
         r"(?:视频生成|生成视频)前.{0,20}(?:全部|全套|完整).{0,12}(?:技术)?流程",
     )
+    connected_image_preproduction = media_scope == "pre_video_assets" and (
+        pre_video_full_scope or explicit_action_match(
+            actionable,
+            r"(?:做|制作|创作|开发|完成|筹备).{0,32}(?:短片|动作片|广告片|品牌片|电影)|"
+            r"(?:make|create|develop|prepare).{0,40}(?:film|commercial|movie)",
+        )
+    )
 
     if has(
         side_effect_intent,
@@ -513,14 +520,14 @@ def classify_route(
         r"client delivery|send[- ]ready|send\s+to\s+(?:the\s+)?client",
     ):
         return "client_delivery", ["client_delivery_intent"]
-    if has(
+    if not connected_image_preproduction and (has(
         side_effect_intent,
         r"真实生成|生成授权|授权生成|generation authorization|generation\s+authorized|"
         r"authorize (?:real )?generation",
     ) or (
         (generation_authorized(request) or denied_generation_followed_by_imperative(request))
         and not has(actionable, r"Prompt|提示词|方案|计划|plan")
-    ):
+    )):
         return "generation_authorization", ["real_generation_requires_authorization"]
 
     if character_master_target:
@@ -680,6 +687,98 @@ def classify_deliverable_layer(request: str, route: str) -> tuple[str | None, bo
     return "full_preproduction", True
 
 
+def film_craft_stages(
+    request: str,
+    *,
+    route: str,
+    deliverable_layer: str | None,
+    shot_matrix_allowed: bool,
+    media_scope: str,
+    story_context: str = "",
+    motion_planning_required: bool = False,
+) -> list[dict[str, Any]]:
+    """Expose the existing stage handoffs without selecting or executing providers.
+
+    These are deferred reads/selector inputs, not extra first-response reads.
+    Revisit conditional craft against the developed script: a short brief cannot
+    enumerate all later blocking, action or environment requirements.
+    """
+    if route != "film_development" or not shot_matrix_allowed:
+        return []
+    # Story content can inform craft, never route, scope or authorization.
+    text = action_text(request) + " " + action_text(story_context)
+    clauses = re.split(r"[。；;!?！？\n，,]", text)
+
+    def requested(pattern: str) -> bool:
+        return any(explicit_action_match(clause, pattern) for clause in clauses)
+
+    action_required = requested(
+        r"武侠|打斗|打戏|对打|搏斗|格斗|追逐|挥刀|格挡|刀剑交击|拳击|动作(?:戏|片|短片)|"
+        r"\b(?:wuxia|fight|combat|chase)\b|action\s+(?:film|scene|short)"
+    )
+    motion_required = action_required or motion_planning_required or requested(
+        r"交接|递给|递向|接住|换手|绕过|穿过|跨越|翻越|撞击|躲避|走位变化|"
+        r"黑白.*(?:分镜|草图|线稿)|动作草图|动势|人物移位|运镜标注|九宫格.*分镜|"
+        r"\b(?:handoff|contact|dodge)\b|passes?\s+.+\s+to\b|moves?\s+around\b|"
+        r"motion\s+board|annotated\s+storyboard"
+    )
+    spatial_required = motion_required or requested(
+        r"两人|二人|三人|多人|反打|过肩|机位|走位|动线|遮挡|"
+        r"blocking|staging|reverse[ -]?shot|multiple\s+characters"
+    )
+    effects_required = requested(
+        r"环境(?:破碎|破坏)|爆裂|爆炸|碎裂|飞石|法术|异能|"
+        r"\b(?:destruction|explosion|shattering|magic|vfx)\b"
+    )
+
+    def selection(scenario_id: str, **fields: Any) -> dict[str, Any]:
+        return {
+            "scenario_id": scenario_id,
+            "mode": "studio",
+            "route_id": "film_development",
+            "media": "storyboard",
+            "gaps": [],
+            "needs_validation": False,
+            "real_side_effect": False,
+            **fields,
+        }
+
+    stages: list[dict[str, Any]] = [{
+        "stage": "shot_design",
+        "task_reference": "skills/dircreative/references/shot-development.md",
+        "selection_intent": selection("technical_storyboard"),
+        "status": "pending",
+    }]
+    if action_required:
+        stages.append({"stage": "action", "selection_intent": selection("action_choreography"), "status": "pending"})
+    if effects_required:
+        stages.append({"stage": "environment_effects", "selection_intent": selection("vfx_design"), "status": "pending"})
+    if spatial_required:
+        stages.append({
+            "stage": "camera_geography",
+            "task_reference": "skills/dircreative/references/spatial-discussion.md",
+            "selection_intent": selection("master_camera"),
+            "status": "pending",
+        })
+    full_frames = deliverable_layer == "full_preproduction" or media_scope == "pre_video_assets"
+    if full_frames:
+        stages.append({"stage": "panel_coverage", "task_reference": "skills/dircreative/references/storyboard-coverage.md", "selection_intent": selection("technical_storyboard"), "status": "pending"})
+        if motion_required:
+            stages.append({
+                "stage": "motion_board",
+                "task_reference": "skills/dircreative/references/storyboard-motion-planning.md",
+                "selection_intent": selection("cinematic_storyboard_frames", downstream_use="rough_planning", active_stage="motion_board"),
+                "status": "pending",
+            })
+        stages.append({
+                "stage": "frame_compile",
+                "task_reference": "skills/dircreative/references/storyboard-frame-to-jingzao.md",
+                "selection_intent": selection("cinematic_storyboard_frames", downstream_use="full_preproduction"),
+                "status": "pending",
+            })
+    return stages
+
+
 def route_request(
     request: str,
     handoff: dict[str, Any] | None = None,
@@ -779,6 +878,13 @@ def route_request(
         "full_receipt_required": config["full_receipt_required"],
         "deliverable_layer": deliverable_layer,
         "shot_matrix_allowed": shot_matrix_allowed,
+        "craft_stages": film_craft_stages(
+            request,
+            route=route,
+            deliverable_layer=deliverable_layer,
+            shot_matrix_allowed=shot_matrix_allowed,
+            media_scope=media_scope["media_scope"],
+        ),
         "spatial_discussion": {
             "requested": deliverable_layer == "spatial_discussion",
             "interaction": "presentation_only" if deliverable_layer == "spatial_discussion" else None,

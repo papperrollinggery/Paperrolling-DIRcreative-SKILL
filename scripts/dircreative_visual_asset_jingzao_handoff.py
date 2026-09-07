@@ -21,6 +21,7 @@ except ImportError:  # pragma: no cover
 from dircreative_state_audit import _builtin_schema_errors
 from dircreative_verify_release import read_relative_regular_file_once
 from dircreative_visual_asset_plan import validate_plan
+from dircreative_storyboard_coverage import resolve_planning_image_target, planning_image_spec_errors
 import dircreative_asset_foundation_pass as asset_foundation_pass
 
 
@@ -570,8 +571,11 @@ def validate(
         errors,
     )
     active = document["active_asset"]
+    annotated_storyboard = False
+    planning_resolution: dict[str, Any] | None = None
     if isinstance(visual_plan, dict):
-        plan_errors, _ = validate_plan(copy.deepcopy(visual_plan), base_dir=resolved_project)
+        plan_dir = (resolved_project / document["visual_plan"]["relative_path"]).parent
+        plan_errors, _ = validate_plan(copy.deepcopy(visual_plan), base_dir=plan_dir)
         if plan_errors:
             errors.append("visual_asset_plan_snapshot_invalid")
         active_matches = [
@@ -579,6 +583,20 @@ def validate(
             for item in visual_plan.get("assets", [])
             if isinstance(item, dict) and item.get("asset_id") == active["asset_id"]
         ]
+        if "motion_planning" in document:
+            try:
+                planning_resolution = resolve_planning_image_target(
+                    document["motion_planning"], project_root=resolved_project,
+                    visual_plan_binding=document["visual_plan"],
+                )
+                derived = planning_resolution["asset"]
+                if any(active.get(key) != derived[key] for key in (
+                    "asset_id", "role", "truth_sha256", "purpose_sha256", "visual_plan_sha256", "operation"
+                )):
+                    errors.append("visual_asset_planning_target_mismatch")
+                active_matches = [derived]
+            except (OSError, UnicodeDecodeError, ValueError, TypeError, KeyError, RuntimeError) as exc:
+                errors.append(f"visual_asset_planning_target_invalid:{exc}")
         if len(active_matches) != 1:
             errors.append("visual_asset_plan_active_asset_missing_or_ambiguous")
         else:
@@ -591,6 +609,29 @@ def validate(
                 or document["visual_plan"]["sha256"] != active["visual_plan_sha256"]
             ):
                 errors.append("visual_asset_plan_active_asset_mismatch")
+            coverage = plan_asset.get("coverage") if isinstance(plan_asset, dict) else None
+            unit_ids = coverage.get("generation_unit_ids") if isinstance(coverage, dict) else None
+            unit = next(
+                (
+                    item for item in visual_plan.get("generation_units", [])
+                    if isinstance(item, dict)
+                    and isinstance(unit_ids, list)
+                    and len(unit_ids) == 1
+                    and item.get("unit_id") == unit_ids[0]
+                ),
+                None,
+            )
+            annotated_storyboard = (
+                plan_asset.get("role") == "professional_storyboard_motion_map"
+                and plan_asset.get("action") == "generate"
+                and plan_asset.get("compile_route") == "selected_skill_handoff"
+                and isinstance(unit, dict)
+                and isinstance(coverage, dict)
+                and unit.get("storyboard_strategy") == "annotated_reference"
+                and coverage.get("shot_ids") == unit.get("shot_ids")
+            )
+            if active.get("role") == "professional_storyboard_motion_map" and not annotated_storyboard and planning_resolution is None:
+                errors.append("visual_asset_annotated_storyboard_strategy_invalid")
 
     stack_request_bytes = read_binding(
         resolved_project,
@@ -684,16 +725,23 @@ def validate(
             "purpose_sha256"
         ]:
             errors.append("visual_asset_input_spec_purpose_mismatch")
-        foundation = load_json_bytes(
-            read_binding(
-                resolved_project,
-                input_spec.get("asset_foundation_pass"),
+        if planning_resolution is not None:
+            # The bound coverage design is the evidence for this temporary target.
+            # It is not a completed foundation pass or a formal asset adoption.
+            foundation = None
+            if input_spec.get("asset_foundation_pass") is not None:
+                errors.append("planning_target_foundation_must_be_null")
+        else:
+            foundation = load_json_bytes(
+                read_binding(
+                    resolved_project,
+                    input_spec.get("asset_foundation_pass"),
+                    "asset_foundation_pass",
+                    errors,
+                ),
                 "asset_foundation_pass",
                 errors,
-            ),
-            "asset_foundation_pass",
-            errors,
-        )
+            )
         if isinstance(foundation, dict):
             foundation_source_by_id = {
                 str(item.get("asset_id")): item
@@ -701,11 +749,15 @@ def validate(
                 if isinstance(item, dict) and isinstance(item.get("asset_id"), str)
             }
             is_design = foundation.get("status") == "in_progress" and bool(foundation.get("planned_asset_ids"))
-            if is_design:
+            if annotated_storyboard:
+                foundation_errors = []
+            elif is_design:
                 foundation_errors = asset_foundation_pass.validate_design(
                     foundation, artifact_root=resolved_project,
                     asset_id=active["asset_id"], role=active["role"],
                 )
+                if annotated_storyboard and foundation_errors == ["asset_design_scope_invalid"]:
+                    foundation_errors = []
             else:
                 foundation_errors = asset_foundation_pass.validate(foundation, artifact_root=resolved_project)
             if foundation_errors:
@@ -776,7 +828,7 @@ def validate(
                             raise ValueError("layout source mismatch")
                     except (ImportError, OSError, RuntimeError, ValueError):
                         errors.append(f"visual_asset_layout_reference_invalid:{item.get('input_id')}")
-                elif (
+                elif not annotated_storyboard and planning_resolution is None and (
                     source is None
                     or source.get("relative_path") != item.get("relative_path")
                     or source.get("sha256") != item.get("sha256")
@@ -822,10 +874,13 @@ def validate(
     )
     spec_inputs_by_id: dict[str, dict[str, Any]] = {}
     if isinstance(spec, dict) and isinstance(input_spec, dict):
+        if planning_resolution is not None:
+            errors.extend(planning_image_spec_errors(spec, planning_resolution["panels"]))
         if spec.get("intent") != input_spec.get("purpose"):
             errors.append("jingzao_visual_generation_spec_purpose_mismatch")
         allowed_modes = {
             "create": {"create"},
+            "styleboard": {"styleboard"},
             "reconstruct": {"reconstruct"},
             "edit": {"edit"},
             "restyle": {"restyle"},
@@ -842,6 +897,8 @@ def validate(
             errors.append("jingzao_visual_generation_spec_unbound_input")
             raw_spec_inputs = []
         required_spec_inputs = raw_spec_inputs
+        if planning_resolution is not None and [item.get("id") for item in required_spec_inputs] != [item.get("input_id") for item in reference_assets]:
+            errors.append("motion_planning_reference_order_mismatch")
         spec_inputs_by_id = {
             str(item.get("id")): item
             for item in required_spec_inputs
@@ -936,6 +993,11 @@ def validate(
                 return [validation_error], None
             if replay_validation != validation_receipt or replay_validation != {"valid": True, "errors": []}:
                 return ["jingzao_validation_replay_mismatch"], None
+            declared_review = compiled.get("prompt_review") if isinstance(compiled, dict) else None
+            approve_length_review = isinstance(declared_review, dict) and (
+                declared_review.get("status") == "approved"
+                and declared_review.get("approval_scope") == "length_and_reference_complexity_only"
+            )
             replay_compiled, compile_error = run_json_command(
                 isolated_python_command(
                     replay_provider / "scripts/compile_prompt.py",
@@ -944,6 +1006,7 @@ def validate(
                     "openai",
                     "--format",
                     "json",
+                    *(["--approve-review"] if approve_length_review else []),
                 ),
                 cwd=replay_provider,
                 label="jingzao_compile_prompt_replay",
@@ -967,12 +1030,18 @@ def validate(
             prompt = candidate
         else:
             errors.append("jingzao_compiled_prompt_missing")
-        if compiled.get("prompt_review", {}).get("status") != "ready":
+        review = compiled.get("prompt_review", {})
+        if review.get("status") != "ready" and not (
+            review.get("status") == "approved"
+            and review.get("approval_scope") == "length_and_reference_complexity_only"
+        ):
             errors.append("jingzao_prompt_review_not_ready")
         call_plan = compiled.get("imagegen_call_plan", {})
         if call_plan.get("status") != "ready" or call_plan.get("errors") not in ([], None):
             errors.append("jingzao_imagegen_call_plan_not_ready")
         expected_input_ids = sorted(item["input_id"] for item in reference_assets)
+        if planning_resolution is not None and call_plan.get("required_input_ids") != [item["input_id"] for item in reference_assets]:
+            errors.append("motion_planning_reference_order_mismatch")
         if (
             sorted(call_plan.get("required_input_ids", [])) != expected_input_ids
             or call_plan.get("expected_attachment_count") != len(expected_input_ids)

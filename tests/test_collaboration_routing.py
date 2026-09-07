@@ -226,6 +226,55 @@ class CollaborationRoutingTests(unittest.TestCase):
         self.assertEqual(result["spatial_discussion"]["scene_state_owner"], "existing_scene_shot_artifacts")
         self.assertEqual(result["spatial_discussion"]["adoption"], "explicit_user_intent_required")
 
+    def test_natural_action_preproduction_exposes_existing_craft_stages(self):
+        result = self.route(
+            "$dircreative 帮我做一部一分钟武侠动作短片，要有故事，"
+            "把需要的图片都真实生成好，停在视频生成前，视频我自己生成。"
+        )
+        self.assertEqual(result["route"], "film_development")
+        self.assertEqual(result["media_scope"], "pre_video_assets")
+        self.assertFalse(result["video_generation_authorized"])
+        self.assertEqual(result["required_files"], ["skills/dircreative/references/film-development.md"])
+        stages = result["craft_stages"]
+        self.assertEqual(stages[0]["stage"], "shot_design")
+        intents = [item["selection_intent"] for item in stages if "selection_intent" in item]
+        self.assertEqual(
+            [intent["scenario_id"] for intent in intents],
+            ["technical_storyboard", "action_choreography", "master_camera", "technical_storyboard", "cinematic_storyboard_frames", "cinematic_storyboard_frames"],
+        )
+        self.assertEqual(stages[-2]["stage"], "motion_board")
+        self.assertEqual(intents[-2]["downstream_use"], "rough_planning")
+        self.assertEqual(intents[-1]["downstream_use"], "full_preproduction")
+        self.assertTrue(all(intent["media"] == "storyboard" and intent["real_side_effect"] is False for intent in intents))
+        self.assertTrue(all(item["status"] == "pending" for item in stages))
+        registry = json.loads((ROOT / "skills/dircreative/runtime/visual-skill-policy.json").read_text())
+        scenarios = {item["scenario_id"]: item for item in registry["scenarios"]}
+        for intent in intents:
+            self.assertIn(intent["media"], scenarios[intent["scenario_id"]]["media"])
+        for item in stages:
+            if "task_reference" in item:
+                self.assertTrue((ROOT / item["task_reference"]).is_file())
+
+    def test_action_effects_are_conditional_and_never_authorize_execution(self):
+        result = self.route("做一部完整武侠动作短片，环境破碎要有因果，暂时只做前期计划。")
+        intents = [item["selection_intent"] for item in result["craft_stages"] if "selection_intent" in item]
+        self.assertIn("vfx_design", [intent["scenario_id"] for intent in intents])
+        self.assertTrue(all(intent["real_side_effect"] is False for intent in intents))
+        quiet = self.route("做一部完整静物短片，不要打斗，不要爆炸，真实生成全部图片，视频我自己做。")
+        quiet_scenarios = [item["selection_intent"]["scenario_id"] for item in quiet["craft_stages"] if "selection_intent" in item]
+        self.assertNotIn("action_choreography", quiet_scenarios)
+        self.assertNotIn("vfx_design", quiet_scenarios)
+
+    def test_bounded_revision_client_story_and_identity_keep_their_scope(self):
+        for request in (
+            "只把这个武侠打斗镜头提示词改得简洁，别扩写。",
+            "请为客户写一页武侠故事，只要故事，不要分镜和资产。",
+            "请生成一张人物母版。",
+            "审查 DIRcreative 源码的动作分镜路由。",
+        ):
+            with self.subTest(request=request):
+                self.assertEqual(self.route(request)["craft_stages"], [])
+
 
 class ClientStoryContextTests(unittest.TestCase):
     def test_client_story_loads_only_its_small_craft_reference(self):

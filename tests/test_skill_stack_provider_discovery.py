@@ -229,10 +229,13 @@ class RuntimeProviderDiscoveryTests(unittest.TestCase):
         self.assertTrue(loaded.body_loaded)
         self.assertEqual(loaded.skill_file.name, "INTERNAL_SKILL.md")
 
-    def test_cli_catalog_path_uses_runtime_loader_with_no_external_roots(self):
+    def test_explicit_empty_catalog_retains_bundled_providers_without_discovery(self):
         self.bundle(installed=True)
-        with patch.object(stack, "ROOT", self.package):
-            catalog, _, loader = stack._catalog_from_args(argparse.Namespace(catalog=None, root=[]), self.registry)
+        host = self.host_catalog([])
+        with patch.object(stack, "ROOT", self.package), patch.object(
+            stack, "configured_skill_roots", side_effect=AssertionError("explicit catalog must not trigger discovery")
+        ):
+            catalog, _, loader = stack._catalog_from_args(argparse.Namespace(catalog=host, root=[]), self.registry)
         self.assertEqual(set(catalog), set(BUILTINS))
         self.assertTrue(loader(BUILTINS[0], catalog[BUILTINS[0]]).body_loaded)
 

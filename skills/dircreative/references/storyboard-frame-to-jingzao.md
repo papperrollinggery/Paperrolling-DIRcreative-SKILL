@@ -1,25 +1,17 @@
 # Storyboard Frame to Jingzao Handoff
 
-Use `storyboard_frame_to_jingzao_v1` when DIRcreative has locked story, technical
-shots, state continuity, and canonical assets, but the deliverable needs polished
-cinematic storyboard images or clean video-input frames. This is a real provider
-handoff to `jingzao-image-forge`, not a copy of its craft rules into DIRcreative.
-Persist and validate the chain with
+Use `storyboard_frame_to_jingzao_v1` for cinematic storyboard or clean input frames
+from locked story, shots, state and assets. Jingzao owns frame compilation.
+Persist and validate with
 `docs/film-preproduction/schemas/storyboard-frame-to-jingzao.schema.json` and
 `python3 scripts/dircreative_storyboard_frame_handoff.py validate <receipt>`.
-Legacy fixtures without `panel_context` need no external roots; panel fixtures
-need `--artifact-root` to resolve their design. A generated production
-packet must also pass `--artifact-root <project-output-root> --provider-root
-<jingzao-skill-root> --host-event-log <absolute Codex host JSONL>` so the
-validator can resolve every file, recompute every hash, and match each image to
-a completed host generation event. The log must resolve beneath the current
-host's `~/.codex/sessions` tree and outside the writable artifact root; an
-arbitrary producer-written JSONL is not accepted as host evidence.
-For production packets the resolved provider root must be disjoint from the
-artifact root and exactly match an installed `jingzao-image-forge` directory in
-`~/.codex/skills`, `~/.agents/skills`, or `~/.skillshub`. Symlink overlap and
-unregistered provider copies fail closed; ordinary CLI callers cannot extend
-the trusted catalog.
+Panel fixtures need `--artifact-root` to resolve their design; legacy fixtures
+without panels do not. Production validation also needs `--provider-root` at
+an installed `jingzao-image-forge` under `~/.codex/skills`, `~/.agents/skills`,
+or `~/.skillshub`, disjoint from the artifact root, and `--host-event-log` at
+an absolute Codex JSONL under `~/.codex/sessions`, outside producer-writable
+artifacts. Unregistered copies, overlapping roots and producer-written host
+logs fail closed. CLI callers cannot extend the trusted catalog.
 
 ## Ownership and execution
 
@@ -27,12 +19,9 @@ the trusted catalog.
   asset truth, approval state, and the returned image manifest.
 - `jingzao-image-forge` owns frame-level visual direction, reference-role
   compilation, shot tension, cinematic framing, and the image-generation spec.
-- The host loads Jingzao in its isolated craft context and follows Jingzao's own
-  conditional references, including styleboard, shot-tension, and narrative-frame
-  guidance. The isolated 128 KiB budget covers the full provider body plus the
-  task-relevant reference pack; referenced bytes must be accounted before use.
-  DIR does not paraphrase those bodies or claim they were used without a
-  verified full-body read.
+- The host reads/applies Jingzao's full body and conditional references in the
+  existing isolated 128 KiB craft budget; account for their bytes before use.
+  DIR cannot paraphrase the bodies and claim a verified provider read.
 - The selector receipt must include bounded `reference_read_requests` for every
   required Jingzao reference with provider-relative path, SHA-256, byte count,
   and isolated context scope. Selecting the body alone is not adoption.
@@ -41,10 +30,10 @@ the trusted catalog.
 - Generated frames return to DIRcreative for cross-shot consistency, continuity,
   model-input policy, user lock, and status. Neither Jingzao nor imagegen grants
   `visual_assets_complete`, client approval, or delivery.
-- A multi-shot professional storyboard/motion page is assembled after the
-  individual frame reviews with `scripts/dircreative_storyboard_page_assembler.py`.
-  It is a planning overview PNG with its own receipt and visual review, never a
-  second imagegen interpretation or a direct video-model input.
+- The assembler's `--plan` mode makes a final frame overview after individual
+  reviews. Needed early black-and-white action rehearsal uses its separate
+  `--coverage` mode; apply `storyboard-motion-planning.md` before the color batch.
+  Neither page is a direct clean video input.
 
 ## Required input packet
 
@@ -109,15 +98,14 @@ or damage progression.
 
 ## Reference roles
 
-Assign each actual reference one primary role: identity, wardrobe, vehicle,
-scene, prop, camera_action, layout, style, palette, or clean-frame state. Record
-secondary roles explicitly and keep a `must_not_control` list.
+Give each reference one primary role, explicit secondary roles and a
+`must_not_control` list: identity, wardrobe, vehicle, scene, prop, camera_action,
+layout, style, palette or clean-frame state.
 
 - Canonical assets own identity, topology, material, and declared state; they do
   not own camera or composition unless assigned `camera_action`.
-- A prior narrative frame may own viewer position, action phase, crop, or
-  attention flow as `camera_action`; it remains candidate evidence and cannot
-  silently regain identity or topology authority.
+- Prior frames may guide viewer position, phase, crop or attention as
+  `camera_action`, never silently regain identity or topology authority.
 - Human planning boards stay outside generation inputs. Model-layout references
   may control position/direction only and must not leak diagram styling.
 - A deterministic spatial export enters as `layout` only when its PNG is the
@@ -143,18 +131,13 @@ progression, material, light ownership, rights, and direct-input eligibility.
 
 ### Director-frame gate
 
-Check that the output is a narrative frame rather than an asset presentation:
-
-- one causally informative frozen moment;
-- motivated viewer position and camera placement;
-- dominant read at thumbnail size;
-- action vector plus visible resistance or consequence;
-- distinct foreground/midground/background functions;
-- intentional occlusion, parallax, crop pressure, and offscreen space;
-- focal length, distance, height, roll, and projection serving the same beat;
-- declared exaggeration with a protected anchor;
-- one quiet region so tension remains readable;
-- no centered full-asset overview unless the shot function explicitly needs it.
+Test the actual output against the required input packet above: the frozen event,
+viewer position, camera motivation, readable action/resistance, depth roles and
+all declared optical/dynamic choices must serve that beat. Check dominant read at
+thumbnail size and retain a quiet region. A centered full-asset overview requires
+an explicit shot purpose. For narrative specs enable both `direction.deliverable`
+and `cinematic.profile` as `narrative_film_frame`; generic compilation is not this
+gate. Compare all compiled fields with the current source state before generation.
 
 Passing asset truth never auto-passes director-frame quality. A `clean_frame`
 means text-free, border-free, role-safe, and technically usable; it does not mean
@@ -188,35 +171,27 @@ The later Delivery/imagegen receipt must echo the exact Jingzao output spec ID
 and SHA-256 it consumed. A matching body hash or prompt text alone does not prove
 that the compiled frame contract reached generation.
 
-For non-fixture production, bind the DIR input spec, Jingzao output spec,
-compiled prompt manifest, execution receipt, and generated image by safe
-root-relative path plus actual SHA-256. This compile-only handoff never grants
-`generated: true`; the field remains `false`. When local host evidence is found,
-record only `status: observed_unverified`, an exact `frame_outputs` manifest
-covering every `frame_id`, and one distinct execution receipt and decodable PNG
-per frame. Each receipt
-must identify `image_gen.imagegen`, the completed host call, consumed spec,
-frame-specific compiled prompt hash, output path, and result hash. The prompt
-manifest must contain a `frame_prompts` entry for every frame and may not reuse
-one prompt hash as proof for unrelated frames. The bound host-log prefix is
-read with no symlink following; its session ID, prefix hash, completed call ID,
-prompt digest, and returned PNG bytes must match. A log stored inside the
-artifact root is rejected because the producer cannot also manufacture its own
-proof. Even a match under `~/.codex/sessions` remains an observation, not an
-independent trust root: only the separate candidate-bound media-forward/C2PA
-gate may certify real generation. Provider `SKILL.md` and every requested `references/...` file are re-read
-under the supplied provider root; traversal, symlink escape, missing files,
-byte-count drift, and hash drift fail closed.
+Production binds input/output specs, prompt manifest, execution receipts and
+PNGs by safe root-relative path and SHA-256. Keep `generated: false`; host matches
+are only `status: observed_unverified`. `frame_outputs` covers every frame with
+a distinct execution receipt and decodable PNG. Each receipt identifies
+`image_gen.imagegen`, completed call, consumed spec, exact prompt, output and
+result hashes. `frame_prompts` covers every frame without unrelated prompt
+reuse. When the provider requires nonblocking length/reference review, retain
+its complete approved `prompt_review` in that frame entry for exact replay.
+This cannot approve story/physics or override a provider hard block.
 
-If the isolated Jingzao context or actual image tool is unavailable, return the
-handoff packet and `prompt_only`; do not substitute a lower-quality generic frame
-while claiming Jingzao was used.
+Read the bound host-log prefix without symlink following; match session/prefix,
+completed call, prompt digest and returned PNG bytes. Producer-owned logs are
+invalid. Only the separate candidate-bound media-forward/C2PA gate can certify
+real generation. Re-read provider `SKILL.md` and requested references, rejecting
+missing files, traversal, symlink escape and byte/hash drift.
+
+Missing Jingzao context or image tool: return the packet as `prompt_only`,
+without claiming a generic replacement used Jingzao.
 
 ## Conditional frame dynamics
 
-Apply dynamics fields by shot class. Static product, identity, interview,
-dialogue, observation, or intentionally calm frames may set action/counterforce,
-crop pressure, parallax, or exaggeration to `not_applicable` only with a concrete
-reason. Do not invent motion or resistance to fill the contract. Viewer task and
-position, dominant read, depth organization, and camera motivation remain
-required for narrative frames.
+Calm frames may mark dynamics `not_applicable` with a concrete reason, without
+inventing motion or resistance. Narrative frames still require viewer task and
+position, dominant read, depth organization and camera motivation.

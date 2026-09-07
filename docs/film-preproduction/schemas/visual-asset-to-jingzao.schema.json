@@ -29,17 +29,18 @@
     "target_owner": {"const": "jingzao-image-forge"},
     "output_owner": {"const": "dircreative"},
     "fixture_only": {"type": "boolean"},
+    "motion_planning": {"$ref": "#/$defs/planning_image_target"},
     "active_asset": {
       "type": "object",
       "additionalProperties": false,
       "required": ["asset_id", "role", "truth_sha256", "purpose_sha256", "visual_plan_sha256", "operation"],
       "properties": {
         "asset_id": {"$ref": "#/$defs/id"},
-        "role": {"enum": ["character_identity_reference", "product_identity_board", "prop_continuity_board", "scene_geography_camera_fov_reference", "lighting_material_style_board"]},
+        "role": {"enum": ["character_identity_reference", "product_identity_board", "prop_continuity_board", "scene_geography_camera_fov_reference", "lighting_material_style_board", "professional_storyboard_motion_map"]},
         "truth_sha256": {"$ref": "#/$defs/sha256"},
         "purpose_sha256": {"$ref": "#/$defs/sha256"},
         "visual_plan_sha256": {"$ref": "#/$defs/sha256"},
-        "operation": {"enum": ["create", "reconstruct", "edit", "restyle", "expand", "clean_reset"]}
+        "operation": {"enum": ["create", "reconstruct", "edit", "restyle", "expand", "clean_reset", "styleboard"]}
       }
     },
     "visual_plan": {"$ref": "#/$defs/artifact_binding"},
@@ -93,6 +94,18 @@
     }
   },
   "$defs": {
+    "planning_image_target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target", "scope_asset_id", "coverage_file", "coverage_sha256", "panel_ids"],
+      "properties": {
+        "target": {"const": "coverage.planning_image"},
+        "scope_asset_id": {"$ref": "#/$defs/id"},
+        "coverage_file": {"$ref": "#/$defs/safe_relative_path"},
+        "coverage_sha256": {"$ref": "#/$defs/sha256"},
+        "panel_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/id"}}
+      }
+    },
     "id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"},
     "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
     "safe_relative_path": {"type": "string", "minLength": 1, "pattern": "^[A-Za-z0-9._/-]+$"},
