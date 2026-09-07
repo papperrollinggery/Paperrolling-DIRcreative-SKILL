@@ -10,6 +10,15 @@ selected pre-image foundation design stage. No screenplay, timed shots or
 already-generated master is required to create the first master. Its identity,
 appearance state, purpose and compilation route still bind the image request.
 
+For recurring creatures or machines, declare `identity_kind: nonhuman` on the
+inventory character. Keep five views: a close-up of the head/core/defining
+recognition structure plus front, both sides and back. Preserve anatomy,
+materials and appearance-state continuity through the same asset and review
+system; human-face, clothing and Apple human-pose requirements do not apply.
+Missing `identity_kind` retains the existing human five-view contract.
+`headed_state` also supports nonhuman state changes from a same-kind approved
+master; `headless_safe` remains human-only.
+
 ## One identity system, not competing character packs
 
 All character sheets for one state share the same `asset_id`, `state_family`,
@@ -93,6 +102,16 @@ line, camera height, relaxed A-pose, anatomy, body proportions, garment hem,
 sleeve length, footwear, and lighting. The dominant face close-up owns fine identity;
 the full-body panels own build, silhouette, wardrobe construction, side-specific
 placement, and hair/body integration.
+
+Resolve asymmetry before the first call. State each detail's projection once:
+for an anatomical-left shoulder piece, front = image-right, nose-left profile =
+near shoulder, back = image-left; the opposite profile may occlude it. Match the
+actual selected panel order. Where style references do not establish that
+structure, the existing constraint-input stage can supply a simple five-view
+layout guide with scoped position marks. Bind it as layout-only; keep identity,
+costume and material authority with their real sources. Guide labels/colors are
+not final content. This is an optional control for a specific spatial risk, not
+a required extra design/approval stage for every image.
 
 Keep the primary face frontal and level, with both eyes and both sides of the
 face readable. This is the shared identity anchor for headed and headless

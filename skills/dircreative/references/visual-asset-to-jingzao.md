@@ -43,6 +43,12 @@ operation and purpose. Every image reference must already appear in the
 foundation source set with an allowed rights/approval state, then appear exactly
 once as a local `must_attach` input and in the compiled call plan.
 
+An authored 2D layout/sketch can be a `planning_only` foundation source and a
+`layout` input with exact path/hash and `reference_only_approved` scope. It controls
+only its declared arrangement, never identity or material. A layout declaring
+`spatial_source` still requires the verified spatial export; an ordinary panel
+guide does not need to impersonate a measured 3D scene.
+
 Validation replays the current DIR selector and the hash-bound Jingzao validator
 and compiler from sealed copies. On macOS provider replay runs with isolated
 Python, a minimal environment, no network, no home-directory reads, and no file

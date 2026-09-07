@@ -21,10 +21,11 @@ Keep single-portrait/poster work on its bounded image path.
 Before the first call, resolve the visual design from the supplied references:
 silhouette, materials, color ownership and the details needed by planned shots.
 A reference reconstruction should preserve the reference's successful visual
-solution; do not append unrelated costume or camera defaults. For a new complex
-design, a main-view design candidate can precede the canonical multi-view asset;
-it is not yet the complete master. Choose that extra step only when it reduces
-real uncertainty, not for every asset. Do not add a new user approval when the
+solution; do not append unrelated costume or camera defaults. Keep a requested
+five-view master complete. Remove duplicated instructions, not requested views,
+design detail or quality. When a spatial/side-specific relation remains ambiguous,
+use the existing constraint-input stage to provide a scoped layout reference;
+do not keep appending corrective words or editing degraded pixels. Do not add a new user approval when the
 brief and authorization are sufficient.
 
 Prepare the original Jingzao spec with the current role **before** validating

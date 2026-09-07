@@ -359,6 +359,7 @@ def character_plan_binding_errors(
             not isinstance(source_asset, dict)
             or source_asset.get("role") != "character_identity_reference"
             or source_asset.get("character_mode") != "headed_master"
+            or source_asset.get("identity_kind", "human") != identity_kind
             or source_asset.get("status") not in {"generated_candidate", "user_locked", "reused_locked"}
             or source_asset.get("generated_sha256") != source_sha
         ):

@@ -959,7 +959,7 @@ def candidate_check_ids(asset: dict[str, Any]) -> list[str]:
     common = ["saved_pixels_and_detail", "truth_and_reference_match", "artifacts_and_downstream_fit"]
     if asset.get("role") == "character_identity_reference" and asset.get("identity_kind", "human") == "nonhuman":
         return common + [
-            "front_reference_view", "left_reference_view", "right_reference_view", "back_reference_view",
+            "recognition_closeup", "front_reference_view", "left_reference_view", "right_reference_view", "back_reference_view",
             "recognition_features_anatomy_or_structure", "materials_and_appearance_state",
         ]
     by_role = {
@@ -1363,6 +1363,7 @@ def validate_visual_review_manifest(
         resolution = entry.get("probe_resolution")
         if "probe_resolution" in entry and (
             asset.get("role") != "character_identity_reference"
+            or asset.get("identity_kind", "human") != "human"
             or asset.get("character_mode") not in {"headed_master", "headed_state"}
             or not isinstance(resolution, dict) or set(resolution) != {"receipt_sha256", "observed"}
             or not isinstance(resolution.get("receipt_sha256"), str)

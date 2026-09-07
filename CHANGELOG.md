@@ -9,6 +9,7 @@
 - Stop automatic recursive edits of a previously repaired image. Allow an explicitly bound best-quality same-truth base, require its known defects to be addressed, and preserve candidate lineage without promoting it to an approved source.
 - Resolve headed-character detector disagreements within the existing visual review using the actual probe receipt and visible observations. Preserve blocked measurements, opacity checks, source hashes, formal review and host authorization; headless safeguards are unchanged.
 - Fix first-output registration for standalone asset plans without falsely claiming completed media. Clarify first-pass reference/design preparation, conditional negative prompts, clean-image label policy and dependency-scoped rework; update only project-level maintenance guidance.
+- Keep requested five-view coverage. Support explicit nonhuman character identity/state without human-anatomy probes, and allow source-bound authored 2D layout references without pretending they are measured spatial exports.
 - These changes remove demonstrated workflow failures; structural checks do not establish universal first-pass image quality or pixel-perfect editing.
 
 ## 0.9.3 - 2026-09-07

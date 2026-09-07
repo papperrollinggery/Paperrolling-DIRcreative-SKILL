@@ -44,6 +44,9 @@ of its checkout directory name (including `DIR SKILL`).
   artifacts. Fix evidenced failures with the smallest coherent change; keep a
   working contrasting scenario. Do not add a router, approval layer, mandatory
   form, provider or universal checklist merely to make the process look complete.
+- Preserve the requested scope and quality while optimizing. In particular, a
+  requested five-view master stays five-view; do not replace it with one view,
+  skip a difficult detail or redefine success to make a test pass.
 - Prepare the first generation from the user's visual intent, actual references
   and the current asset's purpose. A simple, fully specified image stays simple.
   Keep craft decisions; exclude management prose and conflicting template defaults

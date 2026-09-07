@@ -58,7 +58,8 @@ output and returns ownership to DIRcreative.
 | `stress_certification` | DIRcreative | validator: `ai-film-asset-stress-test` | certified or conditional shot scope |
 
 Do not load all owners into one Studio context. A failed, missing, or incomplete
-pass keeps later work blocked. Planning boards remain planning-only and never
+pass blocks its actual consumers; independent assets and planning keep moving.
+Review a ready-input production batch together. Planning boards remain planning-only and never
 become identity, topology, geography, or clean-frame truth.
 
 For a recurring clothed human, use the canonical v3 rules in

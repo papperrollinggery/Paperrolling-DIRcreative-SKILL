@@ -713,6 +713,54 @@ class VisualAssetJingzaoHandoffTests(unittest.TestCase):
         self.assertEqual(errors, [])
         self.assertEqual(loaded_prompt, prompt)
 
+    def test_authored_2d_layout_uses_foundation_provenance_without_claiming_spatial_geometry(self):
+        with tempfile.TemporaryDirectory() as raw:
+            root=Path(raw);project=root/'project';project.mkdir();provider=root/'provider/jingzao-image-forge'
+            document,_=self.fixture(project,provider,first_image=True)
+            guide=project/'layout.png';guide.write_bytes(b'fixture layout bytes, not generated media')
+            source={'asset_id':'layout-guide','source_kind':'planning_only','role':'planning_only',
+                    'relative_path':guide.name,'sha256':hashlib.sha256(guide.read_bytes()).hexdigest()}
+            request=json.loads((project/document['input_spec']['relative_path']).read_text())
+            foundation_path=project/request['asset_foundation_pass']['relative_path']
+            foundation=json.loads(foundation_path.read_text())
+            foundation.update(planning_source_ids=['layout-guide'],source_assets=[source])
+            stage=foundation['stages'][0]
+            intake_path=project/stage['input_artifact']['relative_path'];intake=json.loads(intake_path.read_text())
+            intake['payload']['source_assets']=[source];intake['payload_sha256']=handoff.canonical_sha256(intake['payload'])
+            stage['input_artifact'].update(write_json(intake_path,intake))
+            identity_path=project/stage['output_artifact']['relative_path'];identity=json.loads(identity_path.read_text())
+            identity['input_sha256']=stage['input_artifact']['sha256']
+            stage['output_artifact'].update(write_json(identity_path,identity))
+            request['asset_foundation_pass']=write_json(foundation_path,foundation)
+            ref={'input_id':'layout-guide','asset_id':'layout-guide','role':'layout',
+                 'relative_path':guide.name,'sha256':source['sha256'],'rights_status':'project_owned',
+                 'approval_status':'reference_only_approved'}
+            request['reference_assets']=[ref]
+            document['input_spec']=write_json(project/'layout-request.json',request)
+            spec_path=project/document['output_spec']['visual_generation_spec']['relative_path']
+            spec=json.loads(spec_path.read_text())
+            spec['inputs']=[{'id':'layout-guide','type':'image','role':'layout','source_kind':'local_path',
+                'source_ref':guide.name,'must_attach':True,'description':'Panel position guide only.'}]
+            document['output_spec']['visual_generation_spec']=write_json(spec_path,spec)
+            proc=subprocess.run([sys.executable,str(provider/'scripts/compile_prompt.py'),str(spec_path)],capture_output=True,text=True,check=True)
+            compiled=json.loads(proc.stdout)
+            document['output_spec']['compiled_prompt_manifest']=write_json(project/'layout-compiled.json',compiled)
+            sha=hashlib.sha256(compiled['prompt'].encode()).hexdigest()
+            document['output_spec']['prompt_sha256']=sha;document['delivery_consumption']['consumed_prompt_sha256']=sha
+            def check(doc):
+                return handoff.validate(doc,project_root=project,provider_root=provider,
+                    trusted_provider_roots=(provider,),allow_unsandboxed_test_replay=True)[0]
+            self.assertEqual(check(document),[])
+            for case in ('foreign_source','changed_hash','spatial_claim'):
+                altered=copy.deepcopy(request)
+                if case=='foreign_source':altered['reference_assets'][0]['asset_id']='unbound-layout'
+                if case=='changed_hash':altered['reference_assets'][0]['sha256']='0'*64
+                if case=='spatial_claim':altered['reference_assets'][0]['spatial_source']={'relative_path':'missing.json','sha256':'0'*64}
+                bad=copy.deepcopy(document);bad['input_spec']=write_json(project/f'{case}.json',altered)
+                errors=check(bad)
+                expected='visual_asset_layout_reference_invalid:layout-guide' if case=='spatial_claim' else 'visual_asset_reference_not_in_foundation:layout-guide'
+                self.assertIn(expected,errors)
+
     def test_wrong_skill_stack_owner_blocks(self):
         with tempfile.TemporaryDirectory() as project_raw, tempfile.TemporaryDirectory() as provider_raw:
             project = Path(project_raw)
