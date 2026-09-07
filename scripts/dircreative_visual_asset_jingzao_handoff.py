@@ -95,13 +95,17 @@ def canonical_asset_role_requirements(asset: dict[str, Any], *, operation: str =
     if mode not in {"headed_master", "headed_state", "headless_safe"}:
         raise ValueError("character_master_mode_invalid")
     if asset.get("identity_kind", "human") == "nonhuman":
-        if mode != "headed_master":
+        if mode == "headless_safe":
             raise ValueError("nonhuman_character_mode_invalid")
-        return [
+        requirements = [
             "One physical reference sheet for exactly one recurring nonhuman identity and one appearance state; never combine different entities on this sheet.",
+            "One dominant close-up of the entity's head, core, or other declared recognition structure at the far left, readable without turning it into a human face.",
             "Four complete reference views in one horizontal row: front, left side, right side, and back. Keep the same scale, recognizable silhouette, anatomy or structure, material behavior, distinctive features, and declared appearance state in every view.",
             "Use a fully opaque neutral background with readable even lighting; no unrelated person, undeclared prop, text, label, border or watermark.",
         ]
+        if mode == "headed_state":
+            requirements.append("Derive from the attached approved nonhuman master; change only the declared state and preserve identity, structure, materials and recognition features.")
+        return requirements
     requirements = [
         "One physical master sheet for exactly one character identity and one appearance state; never combine different characters on this sheet.",
         "One dominant front-facing crown-to-neck face close-up at the far left, level and readable with both eyes visible.",
@@ -131,6 +135,8 @@ def known_asset_role_requirements() -> set[str]:
         clauses.update(canonical_asset_role_requirements({
             "role": "character_identity_reference", "character_mode": mode,
         }))
+    for mode in ("headed_master", "headed_state"):
+        clauses.update(canonical_asset_role_requirements({"role": "character_identity_reference", "character_mode": mode, "identity_kind": "nonhuman"}))
     return clauses
 
 

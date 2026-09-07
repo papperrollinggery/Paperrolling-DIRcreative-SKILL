@@ -342,7 +342,7 @@ def character_plan_binding_errors(
         "approved_source_master_sha256"
     ):
         errors.append("character_master_source_truth_mismatch")
-    if identity_kind == "nonhuman" and mode != "headed_master":
+    if identity_kind == "nonhuman" and mode == "headless_safe":
         errors.append("nonhuman_character_mode_invalid")
     if mode in {"headed_state", "headless_safe"}:
         source_asset = next(
@@ -1300,7 +1300,7 @@ def validate_packet(
             isinstance(master, dict)
             and mode in {"headed_master", "headed_state", "headless_safe"}
             and identity_kind in {"human", "nonhuman"}
-            and (not nonhuman_master or mode == "headed_master")
+            and (not nonhuman_master or mode != "headless_safe")
             and (
                 nonhuman_master
                 or (

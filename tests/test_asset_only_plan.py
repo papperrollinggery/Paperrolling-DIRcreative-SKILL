@@ -152,6 +152,22 @@ class AssetOnlyPlanTests(unittest.TestCase):
             errors, _metrics = visual_plan.validate_plan(plan, base_dir=path.parent)
         self.assertIn("character_contract_sha256_mismatch:" + plan["assets"][0]["asset_id"], errors)
 
+    def test_rehashed_identity_kind_tamper_still_conflicts_with_inventory(self):
+        temp, path, inventory = self.materialize("character-still-inventory.json")
+        with temp:
+            inventory["characters"][0]["identity_kind"] = "nonhuman"
+            path.write_text(json.dumps(inventory), encoding="utf-8")
+            plan = visual_plan.derive_plan(inventory, inventory_file=path.name, base_dir=path.parent)
+            asset = plan["assets"][0]
+            asset["identity_kind"] = "human"
+            contract = {"character_mode": asset["character_mode"], "identity_kind": "human",
+                        "derived_from_asset_id": asset["derived_from_asset_id"],
+                        "approved_source_master_sha256": asset["approved_source_master_sha256"],
+                        "coverage": asset["coverage"], "inherits_from": asset["inherits_from"], "purpose": asset["purpose"]}
+            asset["character_contract_sha256"] = visual_plan.canonical_json_sha256(contract)
+            errors, _ = visual_plan.validate_plan(plan, base_dir=path.parent)
+        self.assertIn("asset_semantic_drift:" + asset["asset_id"] + ":identity_kind", errors)
+
     def test_first_asset_only_output_registers_and_can_be_reviewed_without_claiming_completion(self):
         temp, path, inventory = self.materialize("product-still-inventory.json")
         with temp:

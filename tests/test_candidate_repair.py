@@ -282,6 +282,7 @@ class CandidateRepairTests(unittest.TestCase):
         requirements = handoff.canonical_asset_role_requirements(asset)
         compiled = '\n'.join(requirements).lower()
         self.assertIn('four complete reference views', compiled)
+        self.assertIn('recognition structure', compiled)
         self.assertNotIn('face close-up', compiled)
         self.assertNotIn('hands', compiled)
         self.assertNotIn('footwear', compiled)

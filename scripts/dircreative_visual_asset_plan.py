@@ -3503,6 +3503,7 @@ def validate_plan(
                 not isinstance(source_asset, dict)
                 or source_asset.get("role") != "character_identity_reference"
                 or source_asset.get("character_mode") != "headed_master"
+                or source_asset.get("identity_kind", "human") != asset.get("identity_kind", "human")
                 or source_asset.get("status") not in GENERATED_STATUSES
                 or source_asset.get("generated_sha256")
                 != asset.get("approved_source_master_sha256")
@@ -3533,6 +3534,7 @@ def validate_plan(
                 "direct_video_input",
                 "truth_sha256",
                 "compile_route",
+                "identity_kind",
             ):
                 if (
                     expected.get("role") == "character_identity_reference"
@@ -3540,6 +3542,8 @@ def validate_plan(
                     and field in {"action", "inherits_from"}
                     and actual.get("action") == "derive"
                 ):
+                    continue
+                if field == "identity_kind" and actual.get(field, "human") == expected.get(field, "human"):
                     continue
                 if actual.get(field) == expected.get(field):
                     continue
