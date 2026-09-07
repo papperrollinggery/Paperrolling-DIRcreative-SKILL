@@ -330,15 +330,20 @@ def character_plan_binding_errors(
 ) -> list[str]:
     errors: list[str] = []
     mode = master.get("mode")
+    identity_kind = master.get("identity_kind", "human")
     expected_mode = active_asset.get("character_mode")
     if mode != expected_mode:
         errors.append("character_master_mode_truth_mismatch")
+    if identity_kind != active_asset.get("identity_kind", "human"):
+        errors.append("character_master_identity_kind_truth_mismatch")
     source_id = master.get("derived_from_asset_id")
     source_sha = master.get("approved_source_master_sha256")
     if source_id != active_asset.get("derived_from_asset_id") or source_sha != active_asset.get(
         "approved_source_master_sha256"
     ):
         errors.append("character_master_source_truth_mismatch")
+    if identity_kind == "nonhuman" and mode != "headed_master":
+        errors.append("nonhuman_character_mode_invalid")
     if mode in {"headed_state", "headless_safe"}:
         source_asset = next(
             (
@@ -1162,7 +1167,7 @@ def validate_packet(
                         f"dependency_visual_review_not_host_authorized:{dependency_id}"
                     )
                     continue
-                if planned_dependency.get("role") == "character_identity_reference":
+                if planned_dependency.get("role") == "character_identity_reference" and planned_dependency.get("identity_kind", "human") == "human":
                     structure_receipt, structure_errors = load_character_master_receipt(
                         planned_dependency,
                         base_dir=bound_plan_dir,
@@ -1289,20 +1294,28 @@ def validate_packet(
     if role == "character_identity_reference":
         master = packet.get("character_master")
         mode = master.get("mode") if isinstance(master, dict) else None
+        identity_kind = master.get("identity_kind", "human") if isinstance(master, dict) else None
+        nonhuman_master = isinstance(master, dict) and identity_kind == "nonhuman"
         canonical_master = (
             isinstance(master, dict)
             and mode in {"headed_master", "headed_state", "headless_safe"}
-            and master.get("layout") == "single_horizontal_row"
-            and master.get("portrait_position") == "far_left"
-            and master.get("full_body_views")
-            == ["front", "left_profile", "right_profile", "back"]
-            and master.get("min_subject_height_ratio") == 0.75
-            and master.get("body_scale") == "equal"
-            and master.get("ground_line") == "shared"
-            and bool(master.get("identity_facts"))
-            and bool(master.get("wardrobe_facts"))
-            and bool(master.get("wardrobe_materials"))
-            and isinstance(master.get("side_specific_details"), list)
+            and identity_kind in {"human", "nonhuman"}
+            and (not nonhuman_master or mode == "headed_master")
+            and (
+                nonhuman_master
+                or (
+                    master.get("layout") == "single_horizontal_row"
+                    and master.get("portrait_position") == "far_left"
+                    and master.get("full_body_views") == ["front", "left_profile", "right_profile", "back"]
+                    and master.get("min_subject_height_ratio") == 0.75
+                    and master.get("body_scale") == "equal"
+                    and master.get("ground_line") == "shared"
+                    and bool(master.get("identity_facts"))
+                    and bool(master.get("wardrobe_facts"))
+                    and bool(master.get("wardrobe_materials"))
+                    and isinstance(master.get("side_specific_details"), list)
+                )
+            )
             and (
                 mode == "headed_master"
                 or (
@@ -1328,7 +1341,9 @@ def validate_packet(
             "shared ground line",
             "no 2x2 grid",
         ]
-        if mode == "headless_safe":
+        if nonhuman_master:
+            prompt_markers = ["four complete reference views", "recognizable silhouette"]
+        elif mode == "headless_safe":
             prompt_markers.extend(("fully headless", "only readable face", "rear collar"))
         elif mode == "headed_state":
             prompt_markers.extend(("headed character state derivative", "Change only the declared visible state"))
@@ -1343,7 +1358,7 @@ def validate_packet(
             errors.extend(
                 character_plan_binding_errors(master, active_plan_asset, visual_plan)
             )
-        if canonical_master and isinstance(prompt, str):
+        if canonical_master and isinstance(prompt, str) and not nonhuman_master:
             lowered_prompt = prompt.lower()
             bound_details = [
                 *master.get("wardrobe_materials", []),

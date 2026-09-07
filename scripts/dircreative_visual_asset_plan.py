@@ -140,12 +140,14 @@ ASSET_FIELDS = {
 }
 ASSET_OPTIONAL_FIELDS = {
     "character_mode",
+    "identity_kind",
     "derived_from_asset_id",
     "approved_source_master_sha256",
     "character_contract_sha256",
 }
 ASSET_EXECUTION_FIELDS = {"execution_task_id", "candidate_self_check", "candidate_repair_source"}
 CHARACTER_MODES = {"headed_master", "headed_state", "headless_safe"}
+IDENTITY_KINDS = {"human", "nonhuman"}
 COMPILE_ROUTES = {"direct_concise", "selected_skill_handoff", "deterministic_assembly"}
 COVERAGE_FIELDS = {
     "scene_ids",
@@ -955,6 +957,11 @@ def visual_review_rubric_id(role: str) -> str:
 
 def candidate_check_ids(asset: dict[str, Any]) -> list[str]:
     common = ["saved_pixels_and_detail", "truth_and_reference_match", "artifacts_and_downstream_fit"]
+    if asset.get("role") == "character_identity_reference" and asset.get("identity_kind", "human") == "nonhuman":
+        return common + [
+            "front_reference_view", "left_reference_view", "right_reference_view", "back_reference_view",
+            "recognition_features_anatomy_or_structure", "materials_and_appearance_state",
+        ]
     by_role = {
         "character_identity_reference": ["frontal_portrait", "front_body", "left_profile", "right_profile", "back_body", "identity_and_proportions", "wardrobe_material_and_side_details", "mode_and_source_preservation"],
         "product_identity_board": ["silhouette_scale_and_construction", "material_function_and_exact_graphics"],
@@ -1643,6 +1650,7 @@ def planned_asset(
     action: str = "generate",
     planning_only: bool = True,
     compile_route: str = "direct_concise",
+    identity_kind: str = "human",
 ) -> dict[str, Any]:
     asset = {
         "asset_id": asset_id,
@@ -1667,6 +1675,7 @@ def planned_asset(
     if role == "character_identity_reference":
         contract = {
             "character_mode": "headed_master",
+            "identity_kind": identity_kind,
             "derived_from_asset_id": None,
             "approved_source_master_sha256": None,
             "coverage": coverage,
@@ -2001,7 +2010,7 @@ def parse_inventory(
             if (
                 not isinstance(item, dict)
                 or not {"id", "purpose"}.issubset(item)
-                or set(item) - {"id", "purpose", "compile_route"}
+                or set(item) - ({"id", "purpose", "compile_route", "identity_kind"} if label == "characters" else {"id", "purpose", "compile_route"})
             ):
                 raise ValueError(f"inventory {label} item is invalid")
             entity_id = item.get("id")
@@ -2020,6 +2029,10 @@ def parse_inventory(
                 "selected_skill_handoff",
             }:
                 raise ValueError(f"inventory {label} compile route is invalid")
+            if label == "characters":
+                identity_kind = item.get("identity_kind", "human")
+                if identity_kind not in IDENTITY_KINDS:
+                    raise ValueError("inventory character identity_kind is invalid")
             result[entity_id] = item
         return result
 
@@ -2473,6 +2486,7 @@ def derive_plan(
                 coverage=coverage,
                 inherits_from=[],
                 compile_route="selected_skill_handoff",
+                identity_kind=item.get("identity_kind", "human"),
             )
         )
     for entity_id, item in product_map.items():
@@ -3254,6 +3268,7 @@ def validate_plan(
         role_assets[role].append(asset)
         if role == "character_identity_reference":
             mode = asset.get("character_mode")
+            identity_kind = asset.get("identity_kind", "human")
             source_id = asset.get("derived_from_asset_id")
             source_sha = asset.get("approved_source_master_sha256")
             contract = {
@@ -3264,8 +3279,16 @@ def validate_plan(
                 "inherits_from": asset.get("inherits_from"),
                 "purpose": asset.get("purpose"),
             }
+            if "identity_kind" in asset:
+                contract["identity_kind"] = identity_kind
             if mode not in CHARACTER_MODES:
                 errors.append(f"character_mode_invalid:{asset_id}")
+            if identity_kind not in IDENTITY_KINDS:
+                errors.append(f"character_identity_kind_invalid:{asset_id}")
+            if mode == "headless_safe" and (
+                identity_kind != "human"
+            ):
+                errors.append(f"headless_character_contract_invalid:{asset_id}")
             if mode == "headed_master":
                 if source_id is not None or source_sha is not None:
                     errors.append(f"base_character_source_must_be_empty:{asset_id}")
@@ -3752,7 +3775,7 @@ def validate_plan(
                     f"required_asset_technical_receipt_invalid:{asset_id}:{receipt_problem}"
                 )
             review_claimed = all_images_required or asset.get("status") in {"user_locked", "reused_locked"} or asset.get("visual_qa_receipt") is not None
-            if asset.get("role") == "character_identity_reference" and review_claimed:
+            if asset.get("role") == "character_identity_reference" and review_claimed and asset.get("identity_kind", "human") == "human":
                 try:
                     from dircreative_character_master_visual_gate import (
                         load_headless_review_authorization,

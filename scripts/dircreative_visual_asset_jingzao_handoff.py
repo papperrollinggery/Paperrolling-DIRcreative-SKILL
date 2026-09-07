@@ -94,6 +94,14 @@ def canonical_asset_role_requirements(asset: dict[str, Any], *, operation: str =
     mode = asset.get("character_mode", "headed_master")
     if mode not in {"headed_master", "headed_state", "headless_safe"}:
         raise ValueError("character_master_mode_invalid")
+    if asset.get("identity_kind", "human") == "nonhuman":
+        if mode != "headed_master":
+            raise ValueError("nonhuman_character_mode_invalid")
+        return [
+            "One physical reference sheet for exactly one recurring nonhuman identity and one appearance state; never combine different entities on this sheet.",
+            "Four complete reference views in one horizontal row: front, left side, right side, and back. Keep the same scale, recognizable silhouette, anatomy or structure, material behavior, distinctive features, and declared appearance state in every view.",
+            "Use a fully opaque neutral background with readable even lighting; no unrelated person, undeclared prop, text, label, border or watermark.",
+        ]
     requirements = [
         "One physical master sheet for exactly one character identity and one appearance state; never combine different characters on this sheet.",
         "One dominant front-facing crown-to-neck face close-up at the far left, level and readable with both eyes visible.",
@@ -979,7 +987,7 @@ def validate(
                     reference_payloads[str(item.get("input_id"))] = payload
                 source = foundation_source_by_id.get(str(item.get("asset_id")))
                 is_layout = item.get("role") == "layout"
-                if is_layout:
+                if is_layout and item.get("spatial_source") is not None:
                     try:
                         layout_source = spatial_layout_foundation_source(
                             {"spatial_source": item.get("spatial_source")}, resolved_project
@@ -996,6 +1004,7 @@ def validate(
                     source is None
                     or source.get("relative_path") != item.get("relative_path")
                     or source.get("sha256") != item.get("sha256")
+                    or (is_layout and (source.get("source_kind") != "planning_only" or source.get("role") != "planning_only"))
                 ):
                     errors.append(f"visual_asset_reference_not_in_foundation:{item.get('input_id')}")
                 if item.get("rights_status") not in {

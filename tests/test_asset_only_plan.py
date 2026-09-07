@@ -113,6 +113,45 @@ class AssetOnlyPlanTests(unittest.TestCase):
         self.assertEqual(character["character_mode"], "headed_master")
         self.assertEqual(character["compile_route"], "selected_skill_handoff")
 
+    def test_nonhuman_character_is_a_character_identity_not_a_prop_workaround(self):
+        temp, path, inventory = self.materialize("character-still-inventory.json")
+        with temp:
+            inventory["characters"][0].update(
+                identity_kind="nonhuman",
+                purpose="A recurring blue fire bird with copper feather edges, ember eyes, and a distinctive split tail for story continuity.",
+            )
+            path.write_text(json.dumps(inventory), encoding="utf-8")
+            plan = visual_plan.derive_plan(inventory, inventory_file=path.name, base_dir=path.parent)
+            errors, _metrics = visual_plan.validate_plan(plan, base_dir=path.parent)
+        self.assertEqual(errors, [])
+        character = next(asset for asset in plan["assets"] if asset["role"] == "character_identity_reference")
+        self.assertEqual(character["identity_kind"], "nonhuman")
+
+    def test_unknown_character_identity_kind_is_rejected(self):
+        temp, path, inventory = self.materialize("character-still-inventory.json")
+        with temp:
+            inventory["characters"][0]["identity_kind"] = "mythic"
+            with self.assertRaisesRegex(ValueError, "identity_kind"):
+                visual_plan.derive_plan(inventory, inventory_file=path.name, base_dir=path.parent)
+
+    def test_nonhuman_candidate_checklist_uses_entity_views_not_human_body_checks(self):
+        asset = {"role": "character_identity_reference", "identity_kind": "nonhuman"}
+        checks = visual_plan.candidate_check_ids(asset)
+        self.assertIn("front_reference_view", checks)
+        self.assertIn("left_reference_view", checks)
+        self.assertNotIn("frontal_portrait", checks)
+        self.assertNotIn("front_body", checks)
+
+    def test_character_identity_kind_tamper_cannot_bypass_inventory_truth(self):
+        temp, path, inventory = self.materialize("character-still-inventory.json")
+        with temp:
+            inventory["characters"][0]["identity_kind"] = "nonhuman"
+            path.write_text(json.dumps(inventory), encoding="utf-8")
+            plan = visual_plan.derive_plan(inventory, inventory_file=path.name, base_dir=path.parent)
+            plan["assets"][0]["identity_kind"] = "human"
+            errors, _metrics = visual_plan.validate_plan(plan, base_dir=path.parent)
+        self.assertIn("character_contract_sha256_mismatch:" + plan["assets"][0]["asset_id"], errors)
+
     def test_first_asset_only_output_registers_and_can_be_reviewed_without_claiming_completion(self):
         temp, path, inventory = self.materialize("product-still-inventory.json")
         with temp:

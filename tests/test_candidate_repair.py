@@ -277,6 +277,22 @@ class CandidateRepairTests(unittest.TestCase):
         prepared=handoff.prepare_role_spec(spec,self.asset)
         self.assertIn('visual_asset_change_preserve_conflict',handoff.role_spec_errors(prepared,self.asset))
 
+    def test_nonhuman_character_contract_keeps_multi_view_identity_without_human_anatomy(self):
+        asset = {**self.asset, 'identity_kind': 'nonhuman', 'character_mode': 'headed_master'}
+        requirements = handoff.canonical_asset_role_requirements(asset)
+        compiled = '\n'.join(requirements).lower()
+        self.assertIn('four complete reference views', compiled)
+        self.assertNotIn('face close-up', compiled)
+        self.assertNotIn('hands', compiled)
+        self.assertNotIn('footwear', compiled)
+
+    def test_legacy_human_character_contract_keeps_five_view_requirements(self):
+        requirements = handoff.canonical_asset_role_requirements(self.asset)
+        compiled = '\n'.join(requirements).lower()
+        self.assertIn('face close-up', compiled)
+        self.assertIn('four full-body views', compiled)
+        self.assertIn('footwear', compiled)
+
     def test_prepare_and_record_clis_keep_expected_plan_guard_and_new_candidate_lineage(self):
         changes=fixtures.write_json(self.project/'changes.json',self.changes)
         command=[sys.executable,str(ROOT/'scripts/dircreative_visual_asset_jingzao_handoff.py'),'prepare-candidate-repair',
