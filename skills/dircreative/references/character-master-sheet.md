@@ -106,13 +106,15 @@ upscale a weak board. Use the horizontal strip to preserve source pixels. Move
 macro garment construction into the conditional detail sheet instead of
 shrinking the master with more panels.
 
-Immediately after saving a headed master, run
+At the character batch review, before accepting a master for dependent use, run
 `python3 scripts/dircreative_character_master_visual_gate.py --image <png>
 --asset-id <id> --asset-truth-sha256 <hash> --mode <headed_master|headed_state|headless_safe>`.
-Headed modes must detect
-one far-left close-up and exactly four separated full bodies to the right before
-any `reviewed/pass` claim or downstream generation. A missing/unavailable probe
-fails closed. Headless-safe checks one dominant left portrait, four plausible
+The probe checks for
+one far-left close-up and four separated full bodies to the right. Do not run it
+as an approval stop between independent character outputs. Missing/unavailable
+measurement remains unverified; detection errors require visual diagnosis, not
+automatic reposing, removing cloth or redrawing an accepted design merely to
+satisfy the detector. Headless-safe checks one dominant left portrait, four plausible
 full-height body components and zero detected faces in those slots, but remains
 `applied_unverified`; only a separate human review signed by an authority in the
 host trust registry can unlock it.
@@ -120,6 +122,15 @@ It also remains bound to the approved headed source hash. Bind the canonical
 sidecar receipt to the plan; do not replace it with a written checklist. This structural measurement still cannot identify
 front/left/right/back orientation, identity, garment material or side-specific
 details, so the normal manifest-bound visual review remains mandatory.
+
+For a headed sheet that is visually correct but the detector misreads, resolve
+the disagreement inside that existing batch review: the character manifest entry
+may include `probe_resolution: {"receipt_sha256": "<actual probe receipt hash>",
+"observed": "<what is visibly complete and why the detector disagrees>"}`.
+The probe stays `blocked`; its real bytes, tool identity and measurements remain
+validated. Full visual QA and downstream authority still apply. This narrow
+resolution does not waive missing/tampered probes, opacity, or headless review.
+Do not regenerate good pixels just to make an automatic body rectangle pass.
 
 Add portrait front/left/right close-ups only when planned profile close-ups,
 prosthetics, hair asymmetry, or identity stress justify the extra pixels. Do not

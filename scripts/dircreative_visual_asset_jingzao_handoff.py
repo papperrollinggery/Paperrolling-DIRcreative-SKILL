@@ -53,6 +53,7 @@ INPUT_SPEC_FIELDS = {
     "reference_assets",
 }
 REPAIR_PRESERVE_REQUIREMENT = "Change only the listed visible defects in the supplied image. Preserve all other established subject identity, shape, proportions, materials, colors, visual medium and unrequested details."
+REPAIR_INTENT = "Edit the attached image using the listed corrections; retain its established visual design."
 
 
 def sha256_bytes(payload: bytes) -> str:
@@ -67,7 +68,13 @@ def canonical_sha256(value: Any) -> str:
     )
 
 
-def canonical_asset_role_requirements(asset: dict[str, Any]) -> list[str]:
+EDIT_SOURCE_REQUIREMENT = (
+    "Preserve the source image's existing view order, framing, poses, lighting and visual medium, "
+    "except where a listed edit explicitly changes them."
+)
+
+
+def canonical_asset_role_requirements(asset: dict[str, Any], *, operation: str = "create") -> list[str]:
     """Generation constraints, derived from DIR truth before provider compilation.
 
     These are ordinary supported Jingzao spec values, not compiler metadata or
@@ -77,6 +84,11 @@ def canonical_asset_role_requirements(asset: dict[str, Any]) -> list[str]:
     from dircreative_prompt_compiler import ASSET_ROLE_RULES
 
     role = asset.get("role")
+    if operation == "edit":
+        requirements = [EDIT_SOURCE_REQUIREMENT, REPAIR_PRESERVE_REQUIREMENT]
+        if role == "character_identity_reference" and asset.get("character_mode") == "headless_safe":
+            requirements.append("The left portrait is the only readable face. All four bodies are fully headless, preserving natural hands, wrists, cuffs, rear collar and inner back neckline from the approved headed source.")
+        return requirements
     if role != "character_identity_reference":
         return [ASSET_ROLE_RULES[role]] if role in ASSET_ROLE_RULES else []
     mode = asset.get("character_mode", "headed_master")
@@ -85,7 +97,7 @@ def canonical_asset_role_requirements(asset: dict[str, Any]) -> list[str]:
     requirements = [
         "One physical master sheet for exactly one character identity and one appearance state; never combine different characters on this sheet.",
         "One dominant front-facing crown-to-neck face close-up at the far left, level and readable with both eyes visible.",
-        "Four full-body views in one horizontal row after the portrait: front, anatomical left profile with nose pointing frame-left, anatomical right profile with nose pointing frame-right, and back. Front first and back last; both side profiles are required and are not mirror substitutes.",
+        "Four full-body views in one horizontal row after the portrait: front, anatomical left profile and anatomical right profile in either order, and back. Front first and back last; both sides are required and are not mirror substitutes.",
         "The portrait and each full-body subject occupy at least 75% of the saved canvas height; equal body scale, shared ground line, complete head-to-toe framing and separated silhouettes.",
         "Preserve this character's identity, body proportions, hair, garment construction and materials, footwear, anatomical left/right detail placement, and the declared pose and appearance state in every view.",
         "Use a fully opaque neutral background with readable even lighting; no extra identity, undeclared prop, costume variant, text, label, border or watermark.",
@@ -104,6 +116,9 @@ def known_asset_role_requirements() -> set[str]:
     """Only clauses owned by this compiler; custom artistic constraints are untouched."""
     from dircreative_prompt_compiler import ASSET_ROLE_RULES
     clauses = set(ASSET_ROLE_RULES.values())
+    clauses.update([EDIT_SOURCE_REQUIREMENT, REPAIR_PRESERVE_REQUIREMENT])
+    # Retire the old fixed profile order when reopening an existing spec.
+    clauses.add("Four full-body views in one horizontal row after the portrait: front, anatomical left profile with nose pointing frame-left, anatomical right profile with nose pointing frame-right, and back. Front first and back last; both side profiles are required and are not mirror substitutes.")
     for mode in ("headed_master", "headed_state", "headless_safe"):
         clauses.update(canonical_asset_role_requirements({
             "role": "character_identity_reference", "character_mode": mode,
@@ -113,7 +128,9 @@ def known_asset_role_requirements() -> set[str]:
 
 def prepare_role_spec(spec: dict[str, Any], asset: dict[str, Any]) -> dict[str, Any]:
     """Apply canonical role constraints to an existing spec without changing its mode/ratio."""
-    if not isinstance(spec, dict) or spec.get("intent") != asset.get("purpose"):
+    if not isinstance(spec, dict) or spec.get("intent") not in (
+        {asset.get("purpose"), REPAIR_INTENT} if spec.get("mode") == "edit" else {asset.get("purpose")}
+    ):
         raise ValueError("visual_asset_spec_purpose_mismatch")
     prepared = copy.deepcopy(spec)
     constraints = prepared.setdefault("constraints", {})
@@ -122,7 +139,7 @@ def prepare_role_spec(spec: dict[str, Any], asset: dict[str, Any]) -> dict[str, 
     preserved = constraints.setdefault("must_preserve", [])
     if not isinstance(preserved, list) or not all(isinstance(item, str) for item in preserved):
         raise ValueError("visual_asset_spec_preservation_invalid")
-    required = canonical_asset_role_requirements(asset)
+    required = canonical_asset_role_requirements(asset, operation=str(spec.get("mode", "create")))
     if not required:
         return prepared
     known = known_asset_role_requirements()
@@ -133,16 +150,22 @@ def prepare_role_spec(spec: dict[str, Any], asset: dict[str, Any]) -> dict[str, 
 
 
 def role_spec_errors(spec: Any, asset: dict[str, Any]) -> list[str]:
-    required = canonical_asset_role_requirements(asset)
+    required = canonical_asset_role_requirements(asset, operation=str(spec.get("mode", "create")) if isinstance(spec, dict) else "create")
     if not required:
         return []
     constraints = spec.get("constraints") if isinstance(spec, dict) else None
     preserved = constraints.get("must_preserve") if isinstance(constraints, dict) else None
-    if not isinstance(preserved, list) or not all(isinstance(item, str) for item in preserved) or any(item not in preserved for item in required):
+    if not isinstance(preserved, list) or not all(isinstance(item, str) for item in preserved):
         return ["visual_asset_role_requirements_missing"]
+    errors = []
+    if any(item not in preserved for item in required):
+        errors.append("visual_asset_role_requirements_missing")
     if set(preserved).intersection(known_asset_role_requirements()) - set(required):
-        return ["visual_asset_role_requirements_stale"]
-    return []
+        errors.append("visual_asset_role_requirements_stale")
+    changes = constraints.get("must_change", [])
+    if isinstance(changes, list) and any(item in preserved for item in changes if isinstance(item, str)):
+        errors.append("visual_asset_change_preserve_conflict")
+    return errors
 
 
 def candidate_repair_reference(binding: dict[str, Any]) -> dict[str, Any]:
@@ -156,7 +179,7 @@ def candidate_repair_reference(binding: dict[str, Any]) -> dict[str, Any]:
 def prepare_candidate_repair_spec(
     spec: dict[str, Any], binding: dict[str, Any], *, project_root: Path, output_spec: Path,
 ) -> dict[str, Any]:
-    expected = build_candidate_repair_source(project_root=project_root, visual_plan_binding=binding.get("source_plan"), asset_id=binding.get("asset_id"), changes=binding.get("changes"))
+    expected = build_candidate_repair_source(project_root=project_root, visual_plan_binding=binding.get("source_plan"), asset_id=binding.get("asset_id"), changes=binding.get("changes"), base_plan_binding=binding.get("base_plan"))
     if binding != expected:
         raise ValueError("candidate_repair_source_binding_mismatch")
     root = project_root.resolve(strict=True)
@@ -166,8 +189,19 @@ def prepare_candidate_repair_spec(
     asset = next(item for item in plan["assets"] if item["asset_id"] == binding["asset_id"])
     if spec.get("inputs") not in (None, []):
         raise ValueError("candidate_repair_requires_unambiguous_single_base_spec")
-    prepared = prepare_role_spec(spec, asset)
+    # A repair is a delta against actual pixels, not another costume/lighting
+    # design brief. Keep custom preservation facts, but do not replay create
+    # scene, subject poses, render directions or aesthetic routing into it.
+    prepared = {key: copy.deepcopy(spec[key]) for key in (
+        "visual_generation_spec", "intent", "platform", "language", "canvas", "constraints",
+    ) if key in spec}
     prepared["mode"] = "edit"
+    prepared = prepare_role_spec(prepared, asset)
+    # Stable asset purpose remains in the bound request/plan. Repeating that
+    # initial design as the edit's Goal can contradict the accepted source.
+    prepared["intent"] = REPAIR_INTENT
+    prepared["scene"] = {"summary": "Edit the attached source image using only the listed changes."}
+    prepared["render"] = {"artifact_budget": "source_matched"}
     prepared["inputs"] = [{
         "id": "candidate-repair-base", "type": "image", "role": "base_edit_source",
         "source_kind": "local_path", "source_ref": os.path.relpath(root / binding["source_image"]["relative_path"], target.parent),
@@ -753,6 +787,7 @@ def validate(
             expected_repair = build_candidate_repair_source(
                 project_root=resolved_project, visual_plan_binding=document["visual_plan"],
                 asset_id=active["asset_id"], changes=repair.get("changes") if isinstance(repair, dict) else None,
+                base_plan_binding=repair.get("base_plan") if isinstance(repair, dict) else None,
             )
             if repair != expected_repair or active.get("operation") != "edit" or "motion_planning" in document:
                 raise ValueError("candidate_repair_source_or_operation_mismatch")
@@ -1017,7 +1052,7 @@ def validate(
             errors.extend(role_spec_errors(spec, plan_asset))
         if planning_resolution is not None:
             errors.extend(planning_image_spec_errors(spec, planning_resolution["panels"]))
-        if spec.get("intent") != input_spec.get("purpose"):
+        if spec.get("intent") != (REPAIR_INTENT if verified_repair is not None else input_spec.get("purpose")):
             errors.append("jingzao_visual_generation_spec_purpose_mismatch")
         allowed_modes = {
             "create": {"create"},
@@ -1178,7 +1213,7 @@ def validate(
             # output, not arbitrary English marker tokens in a handwritten prompt.
             if plan_asset is not None and any(
                 " ".join(requirement.split()) not in " ".join(candidate.split())
-                for requirement in canonical_asset_role_requirements(plan_asset)
+                for requirement in canonical_asset_role_requirements(plan_asset, operation=str(active.get("operation", "create")))
             ):
                 errors.append("jingzao_compiler_dropped_asset_role_requirements")
         else:
@@ -1218,13 +1253,18 @@ def main() -> int:
         parser.add_argument("--asset-id", required=True)
         parser.add_argument("--spec", required=True)
         parser.add_argument("--changes", required=True)
+        parser.add_argument("--base-plan", help="Reviewed best-quality same-truth plan to use instead of the latest edited image.")
+        parser.add_argument("--expected-base-plan-sha256")
         parser.add_argument("--output-spec", required=True)
         parser.add_argument("--output-binding", required=True)
         args = parser.parse_args()
         try:
             root = args.project_root.resolve(strict=True)
             changes = json.loads(read_relative_regular_file_once(root, args.changes, max_bytes=65536, label="repair changes"))
-            binding = build_candidate_repair_source(project_root=root, visual_plan_binding={"relative_path": args.visual_plan, "sha256": args.expected_plan_sha256}, asset_id=args.asset_id, changes=changes)
+            if bool(args.base_plan) != bool(args.expected_base_plan_sha256):
+                raise ValueError("candidate_repair_base_plan_requires_hash")
+            binding = build_candidate_repair_source(project_root=root, visual_plan_binding={"relative_path": args.visual_plan, "sha256": args.expected_plan_sha256}, asset_id=args.asset_id, changes=changes,
+                base_plan_binding={"relative_path": args.base_plan, "sha256": args.expected_base_plan_sha256} if args.base_plan else None)
             spec = json.loads(read_relative_regular_file_once(root, args.spec, max_bytes=MAX_JSON_BYTES, label="repair source spec"))
             targets = [root / args.output_spec, root / args.output_binding]
             for path in targets:

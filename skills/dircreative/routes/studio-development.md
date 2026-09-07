@@ -1,6 +1,6 @@
 # Studio Development Route Card
 
-Use for connected film work. Reuse the brief and artifacts; start at the needed stage.
+Reuse the brief and artifacts; start at the needed film stage.
 
 ## Budget
 
@@ -14,8 +14,8 @@ Use for connected film work. Reuse the brief and artifacts; start at the needed 
 
 ## Execution
 
-1. Produce a recommended direction and usable first-round artifact. Do not re-confirm
-   a complete brief. Separate facts from assumptions; missing product evidence
+1. Produce a recommended direction and usable first-round artifact; reuse a
+   complete brief. Mark assumptions; missing product evidence
    blocks its claim, not story work.
 2. Select the requested layer: `client_story`, `narrative_storyboard`,
    `frame_content_spec`, `technical_production` or `full_preproduction`.
@@ -38,6 +38,8 @@ Use for connected film work. Reuse the brief and artifacts; start at the needed 
    Do not re-approve existing choices or permission.
    In real production scope, check execution/review capability before a large
    asset build, then use the Delivery card for the active media call.
+   Batch independent outputs, then review together. Choose the next missing
+   deliverable before retrying; interrupt only for a critical next-input defect.
 6. Verify the current output and affected dependencies. Mark a representative
    sample as incomplete for whole-film coverage. `pre_video_assets` requires
    `dircreative_pre_video_assets_gate.py` with the bound storyboard-coverage
@@ -53,5 +55,4 @@ Use for connected film work. Reuse the brief and artifacts; start at the needed 
 For `spatial_discussion`, use its task reference and current host display
 contract. Keep viewing presentation-only and finish the requested scope.
 
-Return the actual requested content and necessary limitations. Do not expose
-route labels, hashes, role meetings or validation machinery unless asked.
+Return usable content and material limitations; keep internal routing details out.

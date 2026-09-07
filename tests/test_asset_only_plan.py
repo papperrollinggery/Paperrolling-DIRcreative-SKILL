@@ -6,6 +6,8 @@ import tempfile
 import unittest
 import struct
 import zlib
+import subprocess
+import hashlib
 from pathlib import Path
 
 
@@ -110,6 +112,35 @@ class AssetOnlyPlanTests(unittest.TestCase):
         character = next(asset for asset in plan["assets"] if asset["role"] == "character_identity_reference")
         self.assertEqual(character["character_mode"], "headed_master")
         self.assertEqual(character["compile_route"], "selected_skill_handoff")
+
+    def test_first_asset_only_output_registers_and_can_be_reviewed_without_claiming_completion(self):
+        temp, path, inventory = self.materialize("product-still-inventory.json")
+        with temp:
+            root = path.parent
+            plan = visual_plan.derive_plan(inventory, inventory_file=path.name, base_dir=root)
+            raw = json.dumps(plan).encode()
+            (root/'plan.json').write_bytes(raw)
+            (root/'output.png').write_bytes(visual_plan.test_png_bytes(width=1024,height=1024))
+            command = [sys.executable,str(ROOT/'scripts/dircreative_asset_execution_gate.py'),
+                       '--project-root',str(root)]
+            result = subprocess.run(command+['--record-output','--plan','plan.json','--expected-plan-sha256',
+                hashlib.sha256(raw).hexdigest(),'--asset-id',plan['assets'][0]['asset_id'],
+                '--image','output.png','--execution-task-id','first-still','--output','generated.json'],
+                capture_output=True,text=True)
+            self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+            candidate=json.loads((root/'generated.json').read_text())
+            self.assertEqual(candidate['completion_claim'],'none')
+            self.assertEqual(visual_plan.validate_plan(candidate,base_dir=root)[0],[])
+            review=json.loads(result.stdout)['self_check_template']
+            asset=candidate['assets'][0]
+            review.update(reviewed_at=asset['technical_receipt']['checked_at'],reviewer_id='test',review_task_id='batch-review')
+            review['assets'][0]['decision']='checked'
+            for item in review['assets'][0]['observations']:
+                item.update(result='pass',observed='Test fixture observation for '+item['check_id'])
+            (root/'review.json').write_text(json.dumps(review))
+            checked=subprocess.run(command+['--check-output','--plan','generated.json','--asset-id',asset['asset_id'],
+                '--self-check-manifest','review.json','--output','checked.json'],capture_output=True,text=True)
+            self.assertEqual(checked.returncode,0,checked.stdout+checked.stderr)
 
     def test_standalone_product_prompt_does_not_invent_visible_project_labels(self):
         temp, path, inventory = self.materialize("product-still-inventory.json")

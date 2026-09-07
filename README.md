@@ -20,7 +20,7 @@
 
 DIRcreative 不是“输入一句话、吐出一堆提示词”的黑盒。它先判断任务是局部修改、完整开发还是交付审计，再只加载对应合同。局部任务直接交付修改结果；只有真实方向冲突、生成授权或客户交付才停下来询问。
 
-当前源码版本为 `v0.9.3`；已发布版本与下载以 [GitHub Releases](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/releases) 为准。本版将自然表述中的人物、状态、场景和机械资产需求接入已有组件，把角色要求送入实际图片编译，并在落盘后逐项自检再继续。Seedance 2.5 联动已核对的 `mr-li-seedance-25` 2.0 方法，保留 DR 的人物多视角、镜头、资产与授权规则。生成、执行者自检、独立审查、用户采用与视频完成分别记录。
+当前源码版本为 `v0.9.4`；已发布版本与下载以 [GitHub Releases](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/releases) 为准。本版分开首次设计与局部修图提示词，支持独立资产连续产出后集中审核，避免反复编辑最新候选导致细节退化。已有参考、摄影、动作、材质与真实依赖约束继续生效；简单单图保持简洁路径。生成、批次检查、正式验收、用户采用与视频完成分别记录，不保证所有图一次成功或编辑区域外逐像素不变。
 
 源码仓库包含 DIRcreative 根 Skill、19 个 `skills/dircreative/*` 内部子 Skill，以及 `ai-film-asset-stress-test`、`ai-film-production-ledger` 两个 P0 能力入口。正式 DIRcreative 安装包按安全设计只暴露根 `$dircreative`，其余入口会内部化后由 selector 路由；Skill Stack 还会发现宿主中已安装的外部专业 provider。这些依赖不会被复制进本仓库，也不能把“宿主可调用”表述成“GitHub 已内置”。ADCO 始终是独立外部编排方。
 
@@ -299,12 +299,12 @@ Skill; see [review trust host configuration](docs/film-preproduction/review-trus
 正式安装源是同一 GitHub Release 中的归档和 `SHA256SUMS`，再由该 tag 的精确、
 干净源码执行同进程验证与安装；不能运行归档内的 installer，也不能用 metadata
 自证。下面的信任链从 `v0.5.0` 起适用；更早版本不满足这条正式安装门。
-以下命令在 `v0.9.3` tag 与 Release 实际发布后生效。
+以下命令在 `v0.9.4` tag 与 Release 实际发布后生效。
 
 ```bash
-gh release download v0.9.3 \
+gh release download v0.9.4 \
   --repo papperrollinggery/Paperrolling-DIRcreative-SKILL \
-  --pattern 'dircreative-0.9.3.tar.gz' \
+  --pattern 'dircreative-0.9.4.tar.gz' \
   --pattern 'SHA256SUMS'
 ```
 
@@ -314,7 +314,7 @@ gh release download v0.9.3 \
 ```bash
 set -euo pipefail
 REPO_URL="https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL.git"
-TAG="v0.9.3"
+TAG="v0.9.4"
 EXPECTED_COMMIT="$(
   git ls-remote --exit-code --tags "$REPO_URL" \
     "refs/tags/$TAG" "refs/tags/$TAG^{}" |
@@ -326,7 +326,7 @@ EXPECTED_COMMIT="$(
     }
   '
 )"
-ARTIFACT="$(pwd)/dircreative-0.9.3.tar.gz"
+ARTIFACT="$(pwd)/dircreative-0.9.4.tar.gz"
 CHECKSUMS="$(pwd)/SHA256SUMS"
 VERIFY_ROOT="$(mktemp -d)"
 trap 'rm -rf "$VERIFY_ROOT"' EXIT

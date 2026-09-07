@@ -38,6 +38,34 @@ of its checkout directory name (including `DIR SKILL`).
   release candidate. Keep generated media and host-specific evidence outside the
   source tree; use the existing release/install gates for publication.
 
+## Production quality and workflow changes
+
+- Optimize the requested deliverable, not the number of checks or planning
+  artifacts. Fix evidenced failures with the smallest coherent change; keep a
+  working contrasting scenario. Do not add a router, approval layer, mandatory
+  form, provider or universal checklist merely to make the process look complete.
+- Prepare the first generation from the user's visual intent, actual references
+  and the current asset's purpose. A simple, fully specified image stays simple.
+  Keep craft decisions; exclude management prose and conflicting template defaults
+  from model-facing prompts. Create and local edit need different constraints.
+- Produce independent content/assets in batches once their shared inputs are
+  ready, then review the batch together. Only a defect that affects a real next
+  dependency interrupts production. Candidate observations, final acceptance and
+  user approval are different; reuse authorization already given by the user.
+- A local repair must not silently restage the whole image. Retain the best
+  source and inspect both the requested change and non-target deterioration.
+  Regressions require a change of method or return to the source, not another
+  automatic edit of the latest degraded image. A detector failure is diagnostic
+  evidence to investigate, not a reason by itself to redesign accepted content.
+- Audit actual stage transitions across story, reference, generation and review.
+  Preserve completed work and invalidate only affected consumers. Test batch
+  progress, initial output quality and repair fidelity separately; fewer words,
+  files or tool calls alone do not establish improvement.
+- Use independent review for a release candidate and material unresolved risks,
+  not a separate approval ceremony for every routine artifact. Once the agreed
+  checks pass, finish the authorized integration, release and installation; do
+  not continue optimizing without a new failure or concrete remaining gap.
+
 ## Agent skills
 
 ### Issue tracker

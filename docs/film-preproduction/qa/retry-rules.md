@@ -151,6 +151,15 @@ F-GRADE-01: change only grade continuity. Restore the white-balance anchor, prod
 
 ## Learning And Registry Updates
 
+For image assets, review the independent batch before choosing retries. A local
+failure blocks only its consuming use; it does not stop unrelated production or
+restart the story/reference stages. First repair the cause in the input/prompt,
+not just the latest visible symptom. If a repair damages a previously correct
+region or materially degrades texture, stop recursive edits of that result.
+Return to the best same-truth base, use supported regional editing, or generate
+a fresh candidate. Keep both failures and successful originals. More retries,
+longer negative prompts and more reviewers are not evidence of improvement.
+
 Promote a new prompt pattern only when a fixture retry improves at least one QA gate without regressing another. Record the source, mechanism, fixture evidence, failure risk, and deprecation rule.
 
 ## Prompt IR, Compiler, Convergence, And Cleanup

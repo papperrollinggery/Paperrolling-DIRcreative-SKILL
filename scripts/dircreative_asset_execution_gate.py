@@ -36,6 +36,7 @@ from dircreative_visual_asset_plan import (
     record_candidate_output,
     candidate_self_check_template,
     validate_candidate_self_check,
+    character_probe_resolved_by_review,
     atomic_write_json,
 )
 
@@ -1183,6 +1184,7 @@ def validate_packet(
                         or not isinstance(structure_receipt, dict)
                         or not (
                             structure_receipt.get("status") == "pass"
+                            or character_probe_resolved_by_review(planned_dependency, structure_receipt, base_dir=bound_plan_dir)
                             or (
                                 planned_dependency.get("character_mode") == "headless_safe"
                                 and structure_receipt.get("status") == "applied_unverified"
@@ -1200,11 +1202,8 @@ def validate_packet(
     execution = packet.get("execution")
     if not isinstance(execution, dict):
         errors.append("execution_contract_missing")
-    elif role == "character_identity_reference" and (
-        execution.get("mode") != "serial_review_gated"
-        or execution.get("parallel_group") is not None
-    ):
-        errors.append("foundation_asset_requires_serial_review_gate")
+    elif execution.get("mode") not in {"serial_review_gated", "batch_then_review"}:
+        errors.append("execution_review_mode_invalid")
     annotated_storyboard_handoff = (
         isinstance(active_plan_asset, dict)
         and isinstance(visual_plan, dict)
@@ -1225,6 +1224,7 @@ def validate_packet(
         active_plan_asset is not None
         and isinstance(prompt, str)
         and role not in JINGZAO_PROMPT_ROLES
+        and packet.get("candidate_repair") is None
         and str(active_plan_asset.get("purpose", "")) not in prompt
     ):
         errors.append("active_asset_purpose_missing_from_prompt")
@@ -1349,7 +1349,8 @@ def validate_packet(
                 *master.get("wardrobe_materials", []),
                 *master.get("side_specific_details", []),
             ]
-            if any(
+            is_verified_repair = packet.get("candidate_repair") is not None and formal_asset_jingzao_prompt is not None
+            if not is_verified_repair and any(
                 str(detail).lower() not in lowered_prompt
                 for detail in bound_details
             ):
@@ -1358,7 +1359,7 @@ def validate_packet(
                 *master.get("identity_facts", []),
                 *master.get("wardrobe_facts", []),
             ]
-            if any(
+            if not is_verified_repair and any(
                 str(detail).lower() not in lowered_prompt
                 for detail in identity_and_wardrobe
             ):
@@ -1454,7 +1455,13 @@ def prepare_image_call(
     try:
         plan = _read_bound_json(project_root, packet["visual_plan"], path_key="path")
         plan_dir = (project_root / packet["visual_plan"]["path"]).parent
-        pending = pending_candidate_self_checks(plan, base_dir=plan_dir, execution_task_id=execution_task_id)
+        # Only replacing this candidate needs its own prior observations.
+        # Actual parent dependencies are checked by validate_packet. Unrelated
+        # outputs stay pending until the batch review instead of stopping it.
+        pending = pending_candidate_self_checks(
+            plan, base_dir=plan_dir, execution_task_id=execution_task_id,
+            asset_ids={packet["asset_id"]},
+        )
         permitted_retry = f"candidate_postcheck_failed:{packet['asset_id']}:candidate_self_check_requires_repair"
         # A reviewed rejection can be repaired in place with a new candidate;
         # no missing, stale or structurally invalid review is silently skipped.
@@ -1509,7 +1516,7 @@ def prepare_image_call(
                 "visual_plan_sha256": packet["visual_plan"]["sha256"],
                 "execution_task_id": execution_task_id, "asset_id": packet["asset_id"],
                 "candidate_repair": copy.deepcopy(packet.get("candidate_repair")),
-                "post_call_action": "record the exact saved PNG, then inspect and check-output before another call"}
+                "post_call_action": "record the exact saved PNG; continue independent batch outputs, then review together before dependent use or final delivery"}
     except (OSError, ValueError, KeyError, TypeError) as exc:
         errors.append(str(exc))
         return result

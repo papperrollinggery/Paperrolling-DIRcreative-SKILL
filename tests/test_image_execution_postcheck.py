@@ -178,7 +178,7 @@ class LiveCallAndCandidateTests(unittest.TestCase):
         self.assertEqual(run.returncode,0,run.stdout+run.stderr)
 
 
-    def test_pending_product_blocks_a_different_dependency_free_asset(self):
+    def test_pending_product_does_not_block_a_different_dependency_free_asset(self):
         candidate=self.saved()
         prior_id=self.asset['asset_id']
         self.asset=next(a for a in self.plan['assets'] if a['role']=='prop_continuity_board')
@@ -186,15 +186,17 @@ class LiveCallAndCandidateTests(unittest.TestCase):
         self.assertEqual(packet['dependencies'],[])
         for retry in (False,True):
             result=self.prepare(packet,retry_failed_asset=retry)
-            self.assertIn('candidate_postcheck_required:'+prior_id,result['errors'])
-            self.assertIsNone(result['imagegen_arguments'])
+            self.assertEqual(result['preflight_status'],'ready',result)
+        self.assertIn('candidate_postcheck_required:'+prior_id,
+                      planmod.pending_candidate_self_checks(candidate,base_dir=self.root,execution_task_id=self.task))
 
-    def test_character_checklist_alone_cannot_replace_actual_structure_probe(self):
+    def test_character_self_check_records_observations_without_claiming_formal_structure_approval(self):
         self.asset=next(a for a in self.plan['assets'] if a['role']=='character_identity_reference')
         candidate=self.saved(); manifest=self.observed(candidate)
         errors=planmod.validate_candidate_self_check(manifest,payload=candidate,asset_id=self.asset['asset_id'],base_dir=self.root)
-        self.assertIn('candidate_self_check_character_structure_failed',errors)
-        self.assertIn('character_master_visual_receipt_missing_or_invalid',errors)
+        self.assertEqual(errors,[])
+        asset=next(a for a in candidate['assets'] if a['asset_id']==self.asset['asset_id'])
+        self.assertIsNone(asset['visual_qa_receipt'])
         manifest['assets'][0]['observations'][4]['result']='not_applicable'
         self.assertIn('candidate_self_check_required_observation_not_applicable',planmod.validate_candidate_self_check(
             manifest,payload=candidate,asset_id=self.asset['asset_id'],base_dir=self.root))
