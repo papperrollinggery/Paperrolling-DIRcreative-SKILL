@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.9.2 - 2026-09-07
+
+- Supply the real Noto CJK font dependency in Linux CI so the annotated-storyboard regression runs with readable Chinese glyphs; preserve the missing-font runtime guard and all workflow tests.
+- Publish the completed 0.9.1 workflow changes together with this CI repair. The already-pushed 0.9.1 tag is retained without a release archive.
+
 ## 0.9.1 - 2026-09-07
 
 - Connect natural full-preproduction requests and developed shot cards to the existing action, camera, panel-coverage and Jingzao frame-compilation stages. Selectors now discover configured host Skills by default and consume each applicable stage without adding a second router.

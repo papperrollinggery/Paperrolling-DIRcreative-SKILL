@@ -33,6 +33,11 @@ jobs:
       - name: Optional image and schema test backends
         run: python3 -m pip install "Pillow==12.2.0" "jsonschema==4.26.0"
 
+      - name: CJK font for annotated storyboard tests
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends fonts-noto-cjk
+
       - name: Restore annotated release tag
         if: startsWith(github.ref, 'refs/tags/v')
         run: |
