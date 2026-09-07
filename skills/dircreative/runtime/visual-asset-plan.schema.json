@@ -237,6 +237,7 @@
             ]
           },
           "character_mode": {"type": ["string", "null"], "enum": ["headed_master", "headed_state", "headless_safe", null]},
+          "identity_kind": {"type": "string", "enum": ["human", "nonhuman"]},
           "derived_from_asset_id": {"type": ["string", "null"], "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"},
           "approved_source_master_sha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
           "character_contract_sha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},

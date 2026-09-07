@@ -36,6 +36,7 @@ from dircreative_visual_asset_plan import (
     record_candidate_output,
     candidate_self_check_template,
     validate_candidate_self_check,
+    character_probe_resolved_by_review,
     atomic_write_json,
 )
 
@@ -329,15 +330,20 @@ def character_plan_binding_errors(
 ) -> list[str]:
     errors: list[str] = []
     mode = master.get("mode")
+    identity_kind = master.get("identity_kind", "human")
     expected_mode = active_asset.get("character_mode")
     if mode != expected_mode:
         errors.append("character_master_mode_truth_mismatch")
+    if identity_kind != active_asset.get("identity_kind", "human"):
+        errors.append("character_master_identity_kind_truth_mismatch")
     source_id = master.get("derived_from_asset_id")
     source_sha = master.get("approved_source_master_sha256")
     if source_id != active_asset.get("derived_from_asset_id") or source_sha != active_asset.get(
         "approved_source_master_sha256"
     ):
         errors.append("character_master_source_truth_mismatch")
+    if identity_kind == "nonhuman" and mode == "headless_safe":
+        errors.append("nonhuman_character_mode_invalid")
     if mode in {"headed_state", "headless_safe"}:
         source_asset = next(
             (
@@ -353,6 +359,7 @@ def character_plan_binding_errors(
             not isinstance(source_asset, dict)
             or source_asset.get("role") != "character_identity_reference"
             or source_asset.get("character_mode") != "headed_master"
+            or source_asset.get("identity_kind", "human") != identity_kind
             or source_asset.get("status") not in {"generated_candidate", "user_locked", "reused_locked"}
             or source_asset.get("generated_sha256") != source_sha
         ):
@@ -443,6 +450,12 @@ def _sealed_jingzao_validation(
                 binding.get("sha256"),
                 label,
             )
+        capsule_binding = output_spec.get("style_capsule")
+        if capsule_binding is not None:
+            if not isinstance(capsule_binding, dict) or set(capsule_binding) != {"relative_path", "sha256"}:
+                raise ValueError("Jingzao style capsule binding invalid")
+            seal(project_root, artifact_files, capsule_binding.get("relative_path"),
+                 capsule_binding.get("sha256"), "Jingzao style capsule")
         seal(
             project_root,
             artifact_files,
@@ -1161,7 +1174,7 @@ def validate_packet(
                         f"dependency_visual_review_not_host_authorized:{dependency_id}"
                     )
                     continue
-                if planned_dependency.get("role") == "character_identity_reference":
+                if planned_dependency.get("role") == "character_identity_reference" and planned_dependency.get("identity_kind", "human") == "human":
                     structure_receipt, structure_errors = load_character_master_receipt(
                         planned_dependency,
                         base_dir=bound_plan_dir,
@@ -1183,6 +1196,7 @@ def validate_packet(
                         or not isinstance(structure_receipt, dict)
                         or not (
                             structure_receipt.get("status") == "pass"
+                            or character_probe_resolved_by_review(planned_dependency, structure_receipt, base_dir=bound_plan_dir)
                             or (
                                 planned_dependency.get("character_mode") == "headless_safe"
                                 and structure_receipt.get("status") == "applied_unverified"
@@ -1200,11 +1214,8 @@ def validate_packet(
     execution = packet.get("execution")
     if not isinstance(execution, dict):
         errors.append("execution_contract_missing")
-    elif role == "character_identity_reference" and (
-        execution.get("mode") != "serial_review_gated"
-        or execution.get("parallel_group") is not None
-    ):
-        errors.append("foundation_asset_requires_serial_review_gate")
+    elif execution.get("mode") not in {"serial_review_gated", "batch_then_review"}:
+        errors.append("execution_review_mode_invalid")
     annotated_storyboard_handoff = (
         isinstance(active_plan_asset, dict)
         and isinstance(visual_plan, dict)
@@ -1225,6 +1236,7 @@ def validate_packet(
         active_plan_asset is not None
         and isinstance(prompt, str)
         and role not in JINGZAO_PROMPT_ROLES
+        and packet.get("candidate_repair") is None
         and str(active_plan_asset.get("purpose", "")) not in prompt
     ):
         errors.append("active_asset_purpose_missing_from_prompt")
@@ -1289,20 +1301,28 @@ def validate_packet(
     if role == "character_identity_reference":
         master = packet.get("character_master")
         mode = master.get("mode") if isinstance(master, dict) else None
+        identity_kind = master.get("identity_kind", "human") if isinstance(master, dict) else None
+        nonhuman_master = isinstance(master, dict) and identity_kind == "nonhuman"
         canonical_master = (
             isinstance(master, dict)
             and mode in {"headed_master", "headed_state", "headless_safe"}
-            and master.get("layout") == "single_horizontal_row"
-            and master.get("portrait_position") == "far_left"
-            and master.get("full_body_views")
-            == ["front", "left_profile", "right_profile", "back"]
-            and master.get("min_subject_height_ratio") == 0.75
-            and master.get("body_scale") == "equal"
-            and master.get("ground_line") == "shared"
-            and bool(master.get("identity_facts"))
-            and bool(master.get("wardrobe_facts"))
-            and bool(master.get("wardrobe_materials"))
-            and isinstance(master.get("side_specific_details"), list)
+            and identity_kind in {"human", "nonhuman"}
+            and (not nonhuman_master or mode != "headless_safe")
+            and (
+                nonhuman_master
+                or (
+                    master.get("layout") == "single_horizontal_row"
+                    and master.get("portrait_position") == "far_left"
+                    and master.get("full_body_views") == ["front", "left_profile", "right_profile", "back"]
+                    and master.get("min_subject_height_ratio") == 0.75
+                    and master.get("body_scale") == "equal"
+                    and master.get("ground_line") == "shared"
+                    and bool(master.get("identity_facts"))
+                    and bool(master.get("wardrobe_facts"))
+                    and bool(master.get("wardrobe_materials"))
+                    and isinstance(master.get("side_specific_details"), list)
+                )
+            )
             and (
                 mode == "headed_master"
                 or (
@@ -1328,7 +1348,9 @@ def validate_packet(
             "shared ground line",
             "no 2x2 grid",
         ]
-        if mode == "headless_safe":
+        if nonhuman_master:
+            prompt_markers = ["four complete reference views", "recognizable silhouette"]
+        elif mode == "headless_safe":
             prompt_markers.extend(("fully headless", "only readable face", "rear collar"))
         elif mode == "headed_state":
             prompt_markers.extend(("headed character state derivative", "Change only the declared visible state"))
@@ -1343,13 +1365,14 @@ def validate_packet(
             errors.extend(
                 character_plan_binding_errors(master, active_plan_asset, visual_plan)
             )
-        if canonical_master and isinstance(prompt, str):
+        if canonical_master and isinstance(prompt, str) and not nonhuman_master:
             lowered_prompt = prompt.lower()
             bound_details = [
                 *master.get("wardrobe_materials", []),
                 *master.get("side_specific_details", []),
             ]
-            if any(
+            is_verified_repair = packet.get("candidate_repair") is not None and formal_asset_jingzao_prompt is not None
+            if not is_verified_repair and any(
                 str(detail).lower() not in lowered_prompt
                 for detail in bound_details
             ):
@@ -1358,7 +1381,7 @@ def validate_packet(
                 *master.get("identity_facts", []),
                 *master.get("wardrobe_facts", []),
             ]
-            if any(
+            if not is_verified_repair and any(
                 str(detail).lower() not in lowered_prompt
                 for detail in identity_and_wardrobe
             ):
@@ -1454,7 +1477,13 @@ def prepare_image_call(
     try:
         plan = _read_bound_json(project_root, packet["visual_plan"], path_key="path")
         plan_dir = (project_root / packet["visual_plan"]["path"]).parent
-        pending = pending_candidate_self_checks(plan, base_dir=plan_dir, execution_task_id=execution_task_id)
+        # Only replacing this candidate needs its own prior observations.
+        # Actual parent dependencies are checked by validate_packet. Unrelated
+        # outputs stay pending until the batch review instead of stopping it.
+        pending = pending_candidate_self_checks(
+            plan, base_dir=plan_dir, execution_task_id=execution_task_id,
+            asset_ids={packet["asset_id"]},
+        )
         permitted_retry = f"candidate_postcheck_failed:{packet['asset_id']}:candidate_self_check_requires_repair"
         # A reviewed rejection can be repaired in place with a new candidate;
         # no missing, stale or structurally invalid review is silently skipped.
@@ -1509,7 +1538,7 @@ def prepare_image_call(
                 "visual_plan_sha256": packet["visual_plan"]["sha256"],
                 "execution_task_id": execution_task_id, "asset_id": packet["asset_id"],
                 "candidate_repair": copy.deepcopy(packet.get("candidate_repair")),
-                "post_call_action": "record the exact saved PNG, then inspect and check-output before another call"}
+                "post_call_action": "record the exact saved PNG; continue independent batch outputs, then review together before dependent use or final delivery"}
     except (OSError, ValueError, KeyError, TypeError) as exc:
         errors.append(str(exc))
         return result

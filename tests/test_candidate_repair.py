@@ -55,9 +55,7 @@ class CandidateRepairTests(unittest.TestCase):
             'rights_status':'project_owned','approval_status':'candidate_repair_only'}])
         doc['input_spec']=fixtures.write_json(self.project/'repair-request.json',request)
         spec=json.loads((self.project/'visual-spec.json').read_text())
-        spec.update(mode='edit',inputs=[{'id':'candidate-repair-base','type':'image','role':'base_edit_source','source_kind':'local_path','source_ref':self.asset['generated_file'],'must_attach':True,'description':'The current failed candidate, used only to repair this same asset.'}])
-        spec['constraints']['must_change']=[x['instruction'] for x in self.changes]
-        spec['constraints']['must_preserve'].append(handoff.REPAIR_PRESERVE_REQUIREMENT)
+        spec=handoff.prepare_candidate_repair_spec(spec,self.binding,project_root=self.project,output_spec=self.project/'repair-spec.json')
         doc['output_spec']['visual_generation_spec']=fixtures.write_json(self.project/'repair-spec.json',spec)
         run=subprocess.run([sys.executable,str(self.provider/'scripts/compile_prompt.py'),str(self.project/'repair-spec.json')],capture_output=True,text=True)
         self.assertEqual(run.returncode,0,run.stderr)
@@ -128,7 +126,7 @@ class CandidateRepairTests(unittest.TestCase):
     def test_prepare_spec_binds_only_this_candidate_and_exact_changes(self):
         spec=json.loads((self.project/'visual-spec.json').read_text())
         prepared=handoff.prepare_candidate_repair_spec(spec,self.binding,project_root=self.project,output_spec=self.project/'out-spec.json')
-        self.assertEqual(prepared['mode'],'edit');self.assertEqual(prepared['intent'],self.asset['purpose'])
+        self.assertEqual(prepared['mode'],'edit');self.assertEqual(prepared['intent'],handoff.REPAIR_INTENT)
         self.assertEqual(prepared['inputs'][0]['role'],'base_edit_source')
         self.assertEqual(prepared['inputs'][0]['source_ref'],'candidate-v01.png')
         self.assertEqual(prepared['constraints']['must_change'],[x['instruction'] for x in self.changes])
@@ -137,6 +135,20 @@ class CandidateRepairTests(unittest.TestCase):
         bad['constraints']['must_change']=['An unbound broader redesign instruction outside the selected defects.']
         doc['output_spec']['visual_generation_spec']=fixtures.write_json(self.project/'bad-spec.json',bad)
         self.assertIn('candidate_repair_spec_scope_mismatch',self.validate(doc)[0])
+
+    def test_local_repair_drops_create_layout_pose_and_style_instructions(self):
+        spec=json.loads((self.project/'visual-spec.json').read_text())
+        spec.update(scene={'summary':'Rearrange the four views in a new order.'},
+                    subjects=[{'pose':'Move every arm into an A-pose.'}],
+                    lighting={'key':'Change the studio light.'},style='New costume design')
+        prepared=handoff.prepare_candidate_repair_spec(spec,self.binding,project_root=self.project,output_spec=self.project/'repair-spec.json')
+        for key in ('subjects','lighting','style'):
+            self.assertNotIn(key,prepared)
+        preserved=prepared['constraints']['must_preserve']
+        self.assertIn(handoff.EDIT_SOURCE_REQUIREMENT,preserved)
+        self.assertFalse(any('Four full-body' in item for item in preserved))
+        self.assertEqual(handoff.role_spec_errors(prepared,self.asset),[])
+        self.assertIn('Four full-body', '\n'.join(handoff.prepare_role_spec(spec,self.asset)['constraints']['must_preserve']))
 
     def test_recorded_repair_keeps_old_evidence_and_truth_without_promoting_or_reusing_pixels(self):
         old={name:(self.project/name).read_bytes() for name in ['candidate-v01.png','retry-plan.json','retry-review.json']}
@@ -199,8 +211,9 @@ class CandidateRepairTests(unittest.TestCase):
         self.plan_binding=fixtures.write_json(self.project/'retry-plan.json',self.plan)
         self.binding=planmod.build_candidate_repair_source(project_root=self.project,visual_plan_binding=self.plan_binding,asset_id=self.asset['asset_id'],changes=self.changes)
         packet=self.execution_packet();result=run(packet)
-        self.assertIsNone(result['imagegen_arguments'])
-        self.assertIn('candidate_postcheck_required:'+second['asset_id'],result['errors'])
+        self.assertEqual(result['preflight_status'],'ready',result)
+        self.assertIn('candidate_postcheck_required:'+second['asset_id'],
+                      planmod.pending_candidate_self_checks(self.plan,base_dir=self.project,execution_task_id='audit'))
 
     def test_record_cli_cannot_reset_failed_review_with_renamed_old_pixels_without_repair_binding(self):
         source=self.project/'candidate-v01.png'
@@ -217,6 +230,69 @@ class CandidateRepairTests(unittest.TestCase):
         actual=json.loads((self.project/'retry-plan.json').read_text())
         row=next(a for a in actual['assets'] if a['asset_id']==self.asset['asset_id'])
         self.assertEqual(row['candidate_self_check'],self.asset['candidate_self_check'])
+
+    def test_second_repair_returns_to_bound_best_base_instead_of_degraded_latest(self):
+        original_binding=copy.deepcopy(self.plan_binding)
+        output=self.project/'candidate-v02.png';output.write_bytes(planmod.test_png_bytes(seed=91))
+        current=planmod.record_candidate_output(self.plan,base_dir=self.project,asset_id=self.asset['asset_id'],
+            image_path=output,execution_task_id='second',repair_source=self.binding,project_root=self.project)
+        row=next(a for a in current['assets'] if a['asset_id']==self.asset['asset_id'])
+        review=planmod.candidate_self_check_template(current,row['asset_id'])
+        review.update(reviewed_at=row['technical_receipt']['checked_at'],reviewer_id='test',review_task_id='second-review')
+        review['assets'][0]['decision']='retry'
+        for item in review['assets'][0]['observations']:
+            item.update(result='fail' if item['check_id']=='left_profile' else 'pass',observed='Unit fixture observation '+item['check_id'])
+        row['candidate_self_check']=fixtures.write_json(self.project/'second-review.json',review)
+        current_binding=fixtures.write_json(self.project/'second-plan.json',current)
+        changes=[{'check_id':'left_profile','instruction':'Restore the missing shoulder detail in the nose-left view.'}]
+        with self.assertRaisesRegex(ValueError,'best_base_or_fresh_generation'):
+            planmod.build_candidate_repair_source(project_root=self.project,visual_plan_binding=current_binding,
+                asset_id=row['asset_id'],changes=changes)
+        with self.assertRaisesRegex(ValueError,'cover_base_defects'):
+            planmod.build_candidate_repair_source(project_root=self.project,visual_plan_binding=current_binding,
+                asset_id=row['asset_id'],changes=changes,base_plan_binding=original_binding)
+        # Include defects known on the chosen base even if the current image
+        # happened to repair them. The original purpose/truth stays bound.
+        repaired=planmod.build_candidate_repair_source(project_root=self.project,visual_plan_binding=current_binding,
+            asset_id=row['asset_id'],changes=changes+self.changes,base_plan_binding=original_binding)
+        self.assertEqual(repaired['source_image']['relative_path'],'candidate-v01.png')
+        self.assertEqual(repaired['source_plan'],current_binding)
+        self.assertEqual(repaired['base_plan'],original_binding)
+        prepared=handoff.prepare_candidate_repair_spec({'intent':row['purpose'],'inputs':[]},repaired,
+            project_root=self.project,output_spec=self.project/'third-spec.json')
+        self.assertEqual(prepared['inputs'][0]['source_ref'],'candidate-v01.png')
+        forged=copy.deepcopy(original_binding);forged['sha256']='0'*64
+        with self.assertRaisesRegex(ValueError,'base_plan_changed'):
+            planmod.build_candidate_repair_source(project_root=self.project,visual_plan_binding=current_binding,
+                asset_id=row['asset_id'],changes=changes,base_plan_binding=forged)
+        copied=self.project/'copied-base.png';copied.write_bytes((self.project/'candidate-v01.png').read_bytes())
+        with self.assertRaisesRegex(ValueError,'new_output_pixels'):
+            planmod.record_candidate_output(current,base_dir=self.project,asset_id=row['asset_id'],image_path=copied,
+                execution_task_id='third',repair_source=repaired,project_root=self.project)
+
+    def test_exact_change_preserve_conflict_is_rejected_without_a_new_review_gate(self):
+        spec={'mode':'edit','intent':self.asset['purpose'],'constraints':{
+            'must_preserve':['Keep the shoulder on image-right.'],
+            'must_change':['Keep the shoulder on image-right.']}}
+        prepared=handoff.prepare_role_spec(spec,self.asset)
+        self.assertIn('visual_asset_change_preserve_conflict',handoff.role_spec_errors(prepared,self.asset))
+
+    def test_nonhuman_character_contract_keeps_multi_view_identity_without_human_anatomy(self):
+        asset = {**self.asset, 'identity_kind': 'nonhuman', 'character_mode': 'headed_master'}
+        requirements = handoff.canonical_asset_role_requirements(asset)
+        compiled = '\n'.join(requirements).lower()
+        self.assertIn('four complete reference views', compiled)
+        self.assertIn('recognition structure', compiled)
+        self.assertNotIn('face close-up', compiled)
+        self.assertNotIn('hands', compiled)
+        self.assertNotIn('footwear', compiled)
+
+    def test_legacy_human_character_contract_keeps_five_view_requirements(self):
+        requirements = handoff.canonical_asset_role_requirements(self.asset)
+        compiled = '\n'.join(requirements).lower()
+        self.assertIn('face close-up', compiled)
+        self.assertIn('four full-body views', compiled)
+        self.assertIn('footwear', compiled)
 
     def test_prepare_and_record_clis_keep_expected_plan_guard_and_new_candidate_lineage(self):
         changes=fixtures.write_json(self.project/'changes.json',self.changes)

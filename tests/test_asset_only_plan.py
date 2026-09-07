@@ -6,6 +6,8 @@ import tempfile
 import unittest
 import struct
 import zlib
+import subprocess
+import hashlib
 from pathlib import Path
 
 
@@ -110,6 +112,90 @@ class AssetOnlyPlanTests(unittest.TestCase):
         character = next(asset for asset in plan["assets"] if asset["role"] == "character_identity_reference")
         self.assertEqual(character["character_mode"], "headed_master")
         self.assertEqual(character["compile_route"], "selected_skill_handoff")
+
+    def test_nonhuman_character_is_a_character_identity_not_a_prop_workaround(self):
+        temp, path, inventory = self.materialize("character-still-inventory.json")
+        with temp:
+            inventory["characters"][0].update(
+                identity_kind="nonhuman",
+                purpose="A recurring blue fire bird with copper feather edges, ember eyes, and a distinctive split tail for story continuity.",
+            )
+            path.write_text(json.dumps(inventory), encoding="utf-8")
+            plan = visual_plan.derive_plan(inventory, inventory_file=path.name, base_dir=path.parent)
+            errors, _metrics = visual_plan.validate_plan(plan, base_dir=path.parent)
+        self.assertEqual(errors, [])
+        character = next(asset for asset in plan["assets"] if asset["role"] == "character_identity_reference")
+        self.assertEqual(character["identity_kind"], "nonhuman")
+
+    def test_unknown_character_identity_kind_is_rejected(self):
+        temp, path, inventory = self.materialize("character-still-inventory.json")
+        with temp:
+            inventory["characters"][0]["identity_kind"] = "mythic"
+            with self.assertRaisesRegex(ValueError, "identity_kind"):
+                visual_plan.derive_plan(inventory, inventory_file=path.name, base_dir=path.parent)
+
+    def test_nonhuman_candidate_checklist_uses_entity_views_not_human_body_checks(self):
+        asset = {"role": "character_identity_reference", "identity_kind": "nonhuman"}
+        checks = visual_plan.candidate_check_ids(asset)
+        self.assertIn("front_reference_view", checks)
+        self.assertIn("left_reference_view", checks)
+        self.assertNotIn("frontal_portrait", checks)
+        self.assertNotIn("front_body", checks)
+
+    def test_character_identity_kind_tamper_cannot_bypass_inventory_truth(self):
+        temp, path, inventory = self.materialize("character-still-inventory.json")
+        with temp:
+            inventory["characters"][0]["identity_kind"] = "nonhuman"
+            path.write_text(json.dumps(inventory), encoding="utf-8")
+            plan = visual_plan.derive_plan(inventory, inventory_file=path.name, base_dir=path.parent)
+            plan["assets"][0]["identity_kind"] = "human"
+            errors, _metrics = visual_plan.validate_plan(plan, base_dir=path.parent)
+        self.assertIn("character_contract_sha256_mismatch:" + plan["assets"][0]["asset_id"], errors)
+
+    def test_rehashed_identity_kind_tamper_still_conflicts_with_inventory(self):
+        temp, path, inventory = self.materialize("character-still-inventory.json")
+        with temp:
+            inventory["characters"][0]["identity_kind"] = "nonhuman"
+            path.write_text(json.dumps(inventory), encoding="utf-8")
+            plan = visual_plan.derive_plan(inventory, inventory_file=path.name, base_dir=path.parent)
+            asset = plan["assets"][0]
+            asset["identity_kind"] = "human"
+            contract = {"character_mode": asset["character_mode"], "identity_kind": "human",
+                        "derived_from_asset_id": asset["derived_from_asset_id"],
+                        "approved_source_master_sha256": asset["approved_source_master_sha256"],
+                        "coverage": asset["coverage"], "inherits_from": asset["inherits_from"], "purpose": asset["purpose"]}
+            asset["character_contract_sha256"] = visual_plan.canonical_json_sha256(contract)
+            errors, _ = visual_plan.validate_plan(plan, base_dir=path.parent)
+        self.assertIn("asset_semantic_drift:" + asset["asset_id"] + ":identity_kind", errors)
+
+    def test_first_asset_only_output_registers_and_can_be_reviewed_without_claiming_completion(self):
+        temp, path, inventory = self.materialize("product-still-inventory.json")
+        with temp:
+            root = path.parent
+            plan = visual_plan.derive_plan(inventory, inventory_file=path.name, base_dir=root)
+            raw = json.dumps(plan).encode()
+            (root/'plan.json').write_bytes(raw)
+            (root/'output.png').write_bytes(visual_plan.test_png_bytes(width=1024,height=1024))
+            command = [sys.executable,str(ROOT/'scripts/dircreative_asset_execution_gate.py'),
+                       '--project-root',str(root)]
+            result = subprocess.run(command+['--record-output','--plan','plan.json','--expected-plan-sha256',
+                hashlib.sha256(raw).hexdigest(),'--asset-id',plan['assets'][0]['asset_id'],
+                '--image','output.png','--execution-task-id','first-still','--output','generated.json'],
+                capture_output=True,text=True)
+            self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+            candidate=json.loads((root/'generated.json').read_text())
+            self.assertEqual(candidate['completion_claim'],'none')
+            self.assertEqual(visual_plan.validate_plan(candidate,base_dir=root)[0],[])
+            review=json.loads(result.stdout)['self_check_template']
+            asset=candidate['assets'][0]
+            review.update(reviewed_at=asset['technical_receipt']['checked_at'],reviewer_id='test',review_task_id='batch-review')
+            review['assets'][0]['decision']='checked'
+            for item in review['assets'][0]['observations']:
+                item.update(result='pass',observed='Test fixture observation for '+item['check_id'])
+            (root/'review.json').write_text(json.dumps(review))
+            checked=subprocess.run(command+['--check-output','--plan','generated.json','--asset-id',asset['asset_id'],
+                '--self-check-manifest','review.json','--output','checked.json'],capture_output=True,text=True)
+            self.assertEqual(checked.returncode,0,checked.stdout+checked.stderr)
 
     def test_standalone_product_prompt_does_not_invent_visible_project_labels(self):
         temp, path, inventory = self.materialize("product-still-inventory.json")

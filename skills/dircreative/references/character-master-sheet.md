@@ -10,6 +10,21 @@ selected pre-image foundation design stage. No screenplay, timed shots or
 already-generated master is required to create the first master. Its identity,
 appearance state, purpose and compilation route still bind the image request.
 
+For recurring creatures or machines, declare `identity_kind: nonhuman` on the
+inventory character. Keep five views: a close-up of the head/core/defining
+recognition structure plus front, both sides and back. Preserve anatomy,
+materials and appearance-state continuity through the same asset and review
+system; human-face, clothing and Apple human-pose requirements do not apply.
+Missing `identity_kind` retains the existing human five-view contract.
+`headed_state` also supports nonhuman state changes from a same-kind approved
+master; `headless_safe` remains human-only.
+
+When Jingzao calls for single-person/material-readable inspection, inspect each
+figure and its garment regions in the saved five-view original at readable
+scale. Preserve the requested five-view deliverable. Additional generated detail
+images are conditional on actual shot needs; a review-scale instruction does
+not change the user's requested output format.
+
 ## One identity system, not competing character packs
 
 All character sheets for one state share the same `asset_id`, `state_family`,
@@ -94,6 +109,16 @@ sleeve length, footwear, and lighting. The dominant face close-up owns fine iden
 the full-body panels own build, silhouette, wardrobe construction, side-specific
 placement, and hair/body integration.
 
+Resolve asymmetry before the first call. State each detail's projection once:
+for an anatomical-left shoulder piece, front = image-right, nose-left profile =
+near shoulder, back = image-left; the opposite profile may occlude it. Match the
+actual selected panel order. Where style references do not establish that
+structure, the existing constraint-input stage can supply a simple five-view
+layout guide with scoped position marks. Bind it as layout-only; keep identity,
+costume and material authority with their real sources. Guide labels/colors are
+not final content. This is an optional control for a specific spatial risk, not
+a required extra design/approval stage for every image.
+
 Keep the primary face frontal and level, with both eyes and both sides of the
 face readable. This is the shared identity anchor for headed and headless
 variants. Supplemental angled face references are conditional on actual shot
@@ -106,13 +131,15 @@ upscale a weak board. Use the horizontal strip to preserve source pixels. Move
 macro garment construction into the conditional detail sheet instead of
 shrinking the master with more panels.
 
-Immediately after saving a headed master, run
+At the character batch review, before accepting a master for dependent use, run
 `python3 scripts/dircreative_character_master_visual_gate.py --image <png>
 --asset-id <id> --asset-truth-sha256 <hash> --mode <headed_master|headed_state|headless_safe>`.
-Headed modes must detect
-one far-left close-up and exactly four separated full bodies to the right before
-any `reviewed/pass` claim or downstream generation. A missing/unavailable probe
-fails closed. Headless-safe checks one dominant left portrait, four plausible
+The probe checks for
+one far-left close-up and four separated full bodies to the right. Do not run it
+as an approval stop between independent character outputs. Missing/unavailable
+measurement remains unverified; detection errors require visual diagnosis, not
+automatic reposing, removing cloth or redrawing an accepted design merely to
+satisfy the detector. Headless-safe checks one dominant left portrait, four plausible
 full-height body components and zero detected faces in those slots, but remains
 `applied_unverified`; only a separate human review signed by an authority in the
 host trust registry can unlock it.
@@ -120,6 +147,15 @@ It also remains bound to the approved headed source hash. Bind the canonical
 sidecar receipt to the plan; do not replace it with a written checklist. This structural measurement still cannot identify
 front/left/right/back orientation, identity, garment material or side-specific
 details, so the normal manifest-bound visual review remains mandatory.
+
+For a headed sheet that is visually correct but the detector misreads, resolve
+the disagreement inside that existing batch review: the character manifest entry
+may include `probe_resolution: {"receipt_sha256": "<actual probe receipt hash>",
+"observed": "<what is visibly complete and why the detector disagrees>"}`.
+The probe stays `blocked`; its real bytes, tool identity and measurements remain
+validated. Full visual QA and downstream authority still apply. This narrow
+resolution does not waive missing/tampered probes, opacity, or headless review.
+Do not regenerate good pixels just to make an automatic body rectangle pass.
 
 Add portrait front/left/right close-ups only when planned profile close-ups,
 prosthetics, hair asymmetry, or identity stress justify the extra pixels. Do not

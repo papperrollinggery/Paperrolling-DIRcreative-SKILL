@@ -23,6 +23,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 import dircreative_character_master_visual_gate as gate  # noqa: E402
 import dircreative_media_forward_audit as media_audit  # noqa: E402
+import dircreative_visual_asset_plan as planmod  # noqa: E402
 
 
 def rgba_png(width: int, height: int, pixel: tuple[int, int, int, int]) -> bytes:
@@ -82,6 +83,29 @@ def probe(full_body_count: int) -> dict:
 
 
 class CharacterMasterVisualGateTests(unittest.TestCase):
+    def test_detector_disagreement_can_be_resolved_in_bound_batch_review_without_faking_probe_pass(self):
+        with tempfile.TemporaryDirectory() as raw:
+            root=Path(raw)
+            asset={'asset_id':'CHAR-REVIEW','role':'character_identity_reference','character_mode':'headed_master',
+                   'generated_sha256':'a'*64,'truth_sha256':'b'*64}
+            receipt={'status':'blocked','image_sha256':'a'*64,'asset_truth_sha256':'b'*64,
+                     'receipt_sha256':'c'*64,'raster_alpha':{'alpha_min':255,'alpha_max':255,'alpha_nonopaque_pixel_count':0}}
+            entry={'asset_id':asset['asset_id'],'decision':'pass','file_sha256':'a'*64,'truth_sha256':'b'*64,
+                   'probe_resolution':{'receipt_sha256':'c'*64,'observed':'The full four views are visible; overlapping translucent fabric confused the detector.'}}
+            manifest={'assets':[entry]}
+            review_path=root/'review.json'
+            review_path.write_text(json.dumps(manifest))
+            asset['visual_qa_receipt']={'review_manifest_file':review_path.name,
+                'review_manifest_sha256':hashlib.sha256(review_path.read_bytes()).hexdigest()}
+            self.assertTrue(planmod.character_probe_resolved_by_review(asset,receipt,base_dir=root))
+            self.assertEqual(receipt['status'],'blocked')
+            for invalid in (dict(receipt,raster_alpha=None),dict(receipt,raster_alpha={'alpha_min':0,'alpha_max':255,'alpha_nonopaque_pixel_count':1}),
+                            dict(receipt,receipt_sha256='d'*64),dict(receipt,image_sha256='d'*64)):
+                self.assertFalse(planmod.character_probe_resolved_by_review(asset,invalid,base_dir=root))
+            self.assertFalse(planmod.character_probe_resolved_by_review(dict(asset,character_mode='headless_safe'),receipt,base_dir=root))
+            review_path.write_text(json.dumps({'assets':[dict(entry,decision='fail')]}))
+            self.assertFalse(planmod.character_probe_resolved_by_review(asset,receipt,base_dir=root))
+
     def test_transparent_character_master_cannot_receive_pass_receipt(self):
         with tempfile.TemporaryDirectory() as raw:
             image_path = Path(raw) / "transparent-master.png"

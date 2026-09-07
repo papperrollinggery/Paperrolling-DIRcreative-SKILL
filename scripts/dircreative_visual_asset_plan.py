@@ -140,12 +140,14 @@ ASSET_FIELDS = {
 }
 ASSET_OPTIONAL_FIELDS = {
     "character_mode",
+    "identity_kind",
     "derived_from_asset_id",
     "approved_source_master_sha256",
     "character_contract_sha256",
 }
 ASSET_EXECUTION_FIELDS = {"execution_task_id", "candidate_self_check", "candidate_repair_source"}
 CHARACTER_MODES = {"headed_master", "headed_state", "headless_safe"}
+IDENTITY_KINDS = {"human", "nonhuman"}
 COMPILE_ROUTES = {"direct_concise", "selected_skill_handoff", "deterministic_assembly"}
 COVERAGE_FIELDS = {
     "scene_ids",
@@ -955,6 +957,11 @@ def visual_review_rubric_id(role: str) -> str:
 
 def candidate_check_ids(asset: dict[str, Any]) -> list[str]:
     common = ["saved_pixels_and_detail", "truth_and_reference_match", "artifacts_and_downstream_fit"]
+    if asset.get("role") == "character_identity_reference" and asset.get("identity_kind", "human") == "nonhuman":
+        return common + [
+            "recognition_closeup", "front_reference_view", "left_reference_view", "right_reference_view", "back_reference_view",
+            "recognition_features_anatomy_or_structure", "materials_and_appearance_state",
+        ]
     by_role = {
         "character_identity_reference": ["frontal_portrait", "front_body", "left_profile", "right_profile", "back_body", "identity_and_proportions", "wardrobe_material_and_side_details", "mode_and_source_preservation"],
         "product_identity_board": ["silhouette_scale_and_construction", "material_function_and_exact_graphics"],
@@ -1015,9 +1022,12 @@ def record_candidate_output(
         expected = build_candidate_repair_source(
             project_root=source_root, visual_plan_binding=repair_source.get("source_plan"),
             asset_id=asset_id, changes=repair_source.get("changes"),
+            base_plan_binding=repair_source.get("base_plan"),
         )
         if repair_source != expected:
             raise ValueError("candidate_repair_source_binding_mismatch")
+        if evidence["pixel_sha256"] == expected["source_image"]["pixel_sha256"]:
+            raise ValueError("candidate_repair_requires_new_output_pixels")
         old_raw = read_relative_regular_file_once(source_root, expected["source_plan"]["relative_path"], max_bytes=8 * 1024 * 1024, label="repair source plan")
         if json.loads(old_raw) != payload or (source_root / expected["source_plan"]["relative_path"]).parent != root:
             raise ValueError("candidate_repair_record_plan_mismatch")
@@ -1119,15 +1129,16 @@ def validate_candidate_self_check(
         if isinstance(width, int) and isinstance(height, int) and width > 0 and height > 0:
             if abs((evidence["width"] / evidence["height"]) / (width / height) - 1) > DELIVERY_ASPECT_RATIO_TOLERANCE:
                 return ["candidate_self_check_delivery_aspect_mismatch"]
-    if asset.get("role") == "character_identity_reference":
-        from dircreative_character_master_visual_gate import load_character_master_receipt
-        receipt, problems = load_character_master_receipt(asset, base_dir=base_dir, image_evidence=evidence)
-        if problems or not isinstance(receipt, dict) or receipt.get("status") not in {"pass", "applied_unverified"}:
-            return ["candidate_self_check_character_structure_failed", *problems]
+    # This records visual observations, not formal character acceptance.
+    # Structure evidence belongs to the batch/dependency/final review, where it
+    # is already validated. A detector result must not force per-image repair.
     return []
 
 
-def pending_candidate_self_checks(payload: dict[str, Any], *, base_dir: Path, execution_task_id: str) -> list[str]:
+def pending_candidate_self_checks(
+    payload: dict[str, Any], *, base_dir: Path, execution_task_id: str,
+    asset_ids: set[str] | None = None,
+) -> list[str]:
     """Pending candidates belong to this active plan, not to a caller-chosen task ID.
 
     Older assets without a registration remain readable through their existing
@@ -1135,6 +1146,8 @@ def pending_candidate_self_checks(payload: dict[str, Any], *, base_dir: Path, ex
     """
     errors: list[str] = []
     for asset in payload.get("assets", []):
+        if asset_ids is not None and asset.get("asset_id") not in asset_ids:
+            continue
         if "execution_task_id" not in asset:
             continue
         binding = asset.get("candidate_self_check")
@@ -1154,6 +1167,7 @@ def pending_candidate_self_checks(payload: dict[str, Any], *, base_dir: Path, ex
 
 def build_candidate_repair_source(
     *, project_root: Path, visual_plan_binding: Any, asset_id: str, changes: Any,
+    base_plan_binding: Any = None,
 ) -> dict[str, Any]:
     """Bind a same-asset edit base to an actual current retry, without approval or a self-DAG."""
     if not isinstance(visual_plan_binding, dict) or set(visual_plan_binding) != {"relative_path", "sha256"}:
@@ -1187,24 +1201,62 @@ def build_candidate_repair_source(
     if entry["decision"] != "retry":
         raise ValueError("candidate_repair_requires_retry_decision")
     failed = {item["check_id"] for item in entry["observations"] if item["result"] == "fail"}
+    base_failed: set[str] = set()
+    source_asset, source_dir = asset, base
+    if base_plan_binding is not None:
+        if not isinstance(base_plan_binding, dict) or set(base_plan_binding) != {"relative_path", "sha256"}:
+            raise ValueError("candidate_repair_base_plan_binding_invalid")
+        base_raw = read_relative_regular_file_once(root, base_plan_binding["relative_path"], max_bytes=8 * 1024 * 1024, label="repair base plan")
+        if hashlib.sha256(base_raw).hexdigest() != base_plan_binding["sha256"]:
+            raise ValueError("candidate_repair_base_plan_changed")
+        source_plan = json.loads(base_raw)
+        source_dir = (root / base_plan_binding["relative_path"]).parent
+        if validate_plan(source_plan, base_dir=source_dir)[0] or source_plan.get("project_id") != plan["project_id"]:
+            raise ValueError("candidate_repair_base_plan_invalid")
+        source_asset = next((item for item in source_plan["assets"] if item["asset_id"] == asset_id), None)
+        if not isinstance(source_asset, dict) or any(source_asset.get(key) != asset.get(key) for key in (
+            "truth_sha256", "role", "purpose", "character_mode", "coverage",
+        )):
+            raise ValueError("candidate_repair_base_truth_mismatch")
+        review_ref = source_asset.get("candidate_self_check")
+        if not isinstance(review_ref, dict):
+            raise ValueError("candidate_repair_base_requires_observations")
+        base_review_raw = read_relative_regular_file_once(source_dir, review_ref["relative_path"], max_bytes=1024 * 1024, label="repair base review")
+        if hashlib.sha256(base_review_raw).hexdigest() != review_ref["sha256"]:
+            raise ValueError("candidate_repair_base_review_changed")
+        base_review = json.loads(base_review_raw)
+        base_problems = validate_candidate_self_check(base_review, payload=source_plan, asset_id=asset_id, base_dir=source_dir)
+        if base_problems not in ([], ["candidate_self_check_requires_repair"]):
+            raise ValueError("candidate_repair_base_review_invalid")
+        base_failed = {item["check_id"] for item in base_review["assets"][0]["observations"] if item["result"] == "fail"}
+        failed.update(base_failed)
+    if asset.get("candidate_repair_source") and (
+        base_plan_binding is None or source_asset.get("generated_pixel_sha256") == asset.get("generated_pixel_sha256")
+    ):
+        raise ValueError("candidate_repair_chain_requires_best_base_or_fresh_generation")
     if (not isinstance(changes, list) or not changes or len(changes) > len(failed)
         or any(not isinstance(item, dict) or set(item) != {"check_id", "instruction"}
                or not isinstance(item.get("check_id"), str) or item["check_id"] not in failed
                or not isinstance(item.get("instruction"), str) or not 12 <= len(item["instruction"].strip()) <= 4096 for item in changes)
         or len({item["check_id"] for item in changes}) != len(changes)):
         raise ValueError("candidate_repair_changes_must_target_observed_failures")
-    relative_image = (base / asset["generated_file"]).relative_to(root).as_posix()
+    if not base_failed.issubset({item["check_id"] for item in changes}):
+        raise ValueError("candidate_repair_changes_must_cover_base_defects")
+    relative_image = (source_dir / source_asset["generated_file"]).relative_to(root).as_posix()
     image_raw = read_relative_regular_file_once(root, relative_image, max_bytes=MAX_RASTER_FILE_BYTES, label="candidate repair image")
-    if hashlib.sha256(image_raw).hexdigest() != asset["generated_sha256"]:
+    if hashlib.sha256(image_raw).hexdigest() != source_asset["generated_sha256"]:
         raise ValueError("candidate_repair_image_changed")
-    return {
+    result = {
         "contract_id": "candidate_repair_source_v1", "project_id": plan["project_id"],
         "asset_id": asset_id, "truth_sha256": asset["truth_sha256"],
         "source_plan": copy.deepcopy(visual_plan_binding),
-        "source_image": {"relative_path": relative_image, "sha256": asset["generated_sha256"], "pixel_sha256": asset["generated_pixel_sha256"]},
+        "source_image": {"relative_path": relative_image, "sha256": source_asset["generated_sha256"], "pixel_sha256": source_asset["generated_pixel_sha256"]},
         "self_check": {"relative_path": (base / review_binding["relative_path"]).relative_to(root).as_posix(), "sha256": review_binding["sha256"]},
         "changes": copy.deepcopy(changes),
     }
+    if base_plan_binding is not None:
+        result["base_plan"] = copy.deepcopy(base_plan_binding)
+    return result
 
 
 def validate_visual_review_manifest(
@@ -1302,12 +1354,23 @@ def validate_visual_review_manifest(
         "downstream_use_fit",
     }
     for entry in entries:
-        if not isinstance(entry, dict) or set(entry) != entry_fields:
+        if not isinstance(entry, dict) or set(entry) not in (entry_fields, entry_fields | {"probe_resolution"}):
             return {}, "manifest_entry_shape"
         asset_id = str(entry["asset_id"])
         asset = asset_map[asset_id]
         evidence = evidence_by_asset.get(asset_id)
         rubric = entry.get("rubric")
+        resolution = entry.get("probe_resolution")
+        if "probe_resolution" in entry and (
+            asset.get("role") != "character_identity_reference"
+            or asset.get("identity_kind", "human") != "human"
+            or asset.get("character_mode") not in {"headed_master", "headed_state"}
+            or not isinstance(resolution, dict) or set(resolution) != {"receipt_sha256", "observed"}
+            or not isinstance(resolution.get("receipt_sha256"), str)
+            or not SHA256_RE.fullmatch(resolution["receipt_sha256"])
+            or not isinstance(resolution.get("observed"), str) or len(resolution["observed"].strip()) < 20
+        ):
+            return {}, f"manifest_probe_resolution_invalid:{asset_id}"
         checks = {
             "manifest_entry_evidence": evidence is not None,
             "manifest_entry_role": entry.get("role") == asset.get("role"),
@@ -1331,6 +1394,45 @@ def validate_visual_review_manifest(
             return {}, f"{problem}:{asset_id}"
         entry_map[asset_id] = entry
     return entry_map, None
+
+
+def character_probe_resolved_by_review(
+    asset: dict[str, Any], probe_receipt: Any, *, base_dir: Path,
+) -> bool:
+    """Resolve a valid detector disagreement in the existing batch review.
+
+    Callers must still validate the full QA manifest/authority. This never turns
+    the detector result into pass and cannot excuse a missing/tampered probe,
+    transparent image or headless source requirement.
+    """
+    if (asset.get("character_mode") not in {"headed_master", "headed_state"}
+        or not isinstance(probe_receipt, dict) or probe_receipt.get("status") != "blocked"
+        or probe_receipt.get("image_sha256") != asset.get("generated_sha256")
+        or probe_receipt.get("asset_truth_sha256") != asset.get("truth_sha256")):
+        return False
+    from dircreative_character_master_visual_gate import character_master_alpha_errors
+    alpha = probe_receipt.get("raster_alpha")
+    if not isinstance(alpha, dict) or character_master_alpha_errors(alpha):
+        return False
+    qa = asset.get("visual_qa_receipt")
+    if not isinstance(qa, dict):
+        return False
+    try:
+        raw = read_relative_regular_file_once(base_dir, qa["review_manifest_file"], max_bytes=8 * 1024 * 1024, label="character batch review")
+        if hashlib.sha256(raw).hexdigest() != qa["review_manifest_sha256"]:
+            return False
+        manifest = json.loads(raw)
+        entry = next(item for item in manifest["assets"] if item["asset_id"] == asset["asset_id"])
+        resolution = entry.get("probe_resolution", {})
+        return (isinstance(resolution, dict)
+                and isinstance(probe_receipt.get("receipt_sha256"), str)
+                and entry.get("decision") == "pass"
+                and entry.get("file_sha256") == asset.get("generated_sha256")
+                and entry.get("truth_sha256") == asset.get("truth_sha256")
+                and resolution.get("receipt_sha256") == probe_receipt.get("receipt_sha256")
+                and isinstance(resolution.get("observed"), str) and len(resolution["observed"].strip()) >= 20)
+    except (OSError, ValueError, KeyError, TypeError, StopIteration):
+        return False
 
 
 def validate_visual_qa_receipt(
@@ -1549,6 +1651,7 @@ def planned_asset(
     action: str = "generate",
     planning_only: bool = True,
     compile_route: str = "direct_concise",
+    identity_kind: str = "human",
 ) -> dict[str, Any]:
     asset = {
         "asset_id": asset_id,
@@ -1573,6 +1676,7 @@ def planned_asset(
     if role == "character_identity_reference":
         contract = {
             "character_mode": "headed_master",
+            "identity_kind": identity_kind,
             "derived_from_asset_id": None,
             "approved_source_master_sha256": None,
             "coverage": coverage,
@@ -1907,7 +2011,7 @@ def parse_inventory(
             if (
                 not isinstance(item, dict)
                 or not {"id", "purpose"}.issubset(item)
-                or set(item) - {"id", "purpose", "compile_route"}
+                or set(item) - ({"id", "purpose", "compile_route", "identity_kind"} if label == "characters" else {"id", "purpose", "compile_route"})
             ):
                 raise ValueError(f"inventory {label} item is invalid")
             entity_id = item.get("id")
@@ -1926,6 +2030,10 @@ def parse_inventory(
                 "selected_skill_handoff",
             }:
                 raise ValueError(f"inventory {label} compile route is invalid")
+            if label == "characters":
+                identity_kind = item.get("identity_kind", "human")
+                if identity_kind not in IDENTITY_KINDS:
+                    raise ValueError("inventory character identity_kind is invalid")
             result[entity_id] = item
         return result
 
@@ -2379,6 +2487,7 @@ def derive_plan(
                 coverage=coverage,
                 inherits_from=[],
                 compile_route="selected_skill_handoff",
+                identity_kind=item.get("identity_kind", "human"),
             )
         )
     for entity_id, item in product_map.items():
@@ -3160,6 +3269,7 @@ def validate_plan(
         role_assets[role].append(asset)
         if role == "character_identity_reference":
             mode = asset.get("character_mode")
+            identity_kind = asset.get("identity_kind", "human")
             source_id = asset.get("derived_from_asset_id")
             source_sha = asset.get("approved_source_master_sha256")
             contract = {
@@ -3170,8 +3280,16 @@ def validate_plan(
                 "inherits_from": asset.get("inherits_from"),
                 "purpose": asset.get("purpose"),
             }
+            if "identity_kind" in asset:
+                contract["identity_kind"] = identity_kind
             if mode not in CHARACTER_MODES:
                 errors.append(f"character_mode_invalid:{asset_id}")
+            if identity_kind not in IDENTITY_KINDS:
+                errors.append(f"character_identity_kind_invalid:{asset_id}")
+            if mode == "headless_safe" and (
+                identity_kind != "human"
+            ):
+                errors.append(f"headless_character_contract_invalid:{asset_id}")
             if mode == "headed_master":
                 if source_id is not None or source_sha is not None:
                     errors.append(f"base_character_source_must_be_empty:{asset_id}")
@@ -3386,6 +3504,7 @@ def validate_plan(
                 not isinstance(source_asset, dict)
                 or source_asset.get("role") != "character_identity_reference"
                 or source_asset.get("character_mode") != "headed_master"
+                or source_asset.get("identity_kind", "human") != asset.get("identity_kind", "human")
                 or source_asset.get("status") not in GENERATED_STATUSES
                 or source_asset.get("generated_sha256")
                 != asset.get("approved_source_master_sha256")
@@ -3416,6 +3535,7 @@ def validate_plan(
                 "direct_video_input",
                 "truth_sha256",
                 "compile_route",
+                "identity_kind",
             ):
                 if (
                     expected.get("role") == "character_identity_reference"
@@ -3423,6 +3543,8 @@ def validate_plan(
                     and field in {"action", "inherits_from"}
                     and actual.get("action") == "derive"
                 ):
+                    continue
+                if field == "identity_kind" and actual.get(field, "human") == expected.get(field, "human"):
                     continue
                 if actual.get(field) == expected.get(field):
                     continue
@@ -3436,7 +3558,7 @@ def validate_plan(
                 errors.append(f"existing_source_path_mismatch:{asset_id}")
 
     if scope == "asset_only":
-        if completion_claim != "asset_only_plan_complete":
+        if completion_claim not in {"none", "asset_only_plan_complete"}:
             errors.append("asset_only_completion_claim_invalid")
         if any((shot_ids, rhythm_ids, raw_truth, generation_units)):
             errors.append("asset_only_timeline_content_present")
@@ -3658,7 +3780,7 @@ def validate_plan(
                     f"required_asset_technical_receipt_invalid:{asset_id}:{receipt_problem}"
                 )
             review_claimed = all_images_required or asset.get("status") in {"user_locked", "reused_locked"} or asset.get("visual_qa_receipt") is not None
-            if asset.get("role") == "character_identity_reference" and review_claimed:
+            if asset.get("role") == "character_identity_reference" and review_claimed and asset.get("identity_kind", "human") == "human":
                 try:
                     from dircreative_character_master_visual_gate import (
                         load_headless_review_authorization,
@@ -3696,6 +3818,8 @@ def validate_plan(
                         )
                     )
                 )
+                if not structure_errors and character_probe_resolved_by_review(asset, structure_receipt, base_dir=base_dir):
+                    structure_status_ok = True
                 if structure_errors or headless_review_errors or not structure_status_ok:
                     errors.append(
                         f"required_character_master_visual_structure_invalid:{asset_id}:"

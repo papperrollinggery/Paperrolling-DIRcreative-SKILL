@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## 0.9.4 - 2026-09-08
+
+- Separate local image-repair prompts from initial design and layout requirements. Keep original asset truth in the bound plan while compiling only the source-preserving edit intent and observed corrections; allow either valid side-profile order on new human masters.
+- Produce independent assets/content before consolidated batch review. Remove plan-wide candidate-check blocking and the character-only serial restriction, while retaining actual parent checks and final acceptance. Candidate self-check no longer duplicates the character detector gate.
+- Stop automatic recursive edits of a previously repaired image. Allow an explicitly bound best-quality same-truth base, require its known defects to be addressed, and preserve candidate lineage without promoting it to an approved source.
+- Resolve headed-character detector disagreements within the existing visual review using the actual probe receipt and visible observations. Preserve blocked measurements, opacity checks, source hashes, formal review and host authorization; headless safeguards are unchanged.
+- Fix first-output registration for standalone asset plans without falsely claiming completed media. Clarify first-pass reference/design preparation, conditional negative prompts, clean-image label policy and dependency-scoped rework; update only project-level maintenance guidance.
+- Keep requested five-view coverage. Support explicit nonhuman character identity/state without human-anatomy probes, and allow source-bound authored 2D layout references without pretending they are measured spatial exports.
+- Forward hash-bound Jingzao style capsules through asset and narrative-frame replay. Accept its two documented nonblocking review scopes without stripping style detail, while keeping exact compilation checks and detected contamination blocks.
+- Keep handoff validators as hash-verified executable tools instead of mandatory model-reading material. Preserve full contract/schema reads and existing context budgets; validator code growth no longer blocks ordinary frame selection.
+- These changes remove demonstrated workflow failures; structural checks do not establish universal first-pass image quality or pixel-perfect editing.
+
 ## 0.9.3 - 2026-09-07
 
 - Route natural storyboard-and-asset requests and independent character, state, scene and mechanical work into the existing design stages. Preserve mixed reuse/new-asset scope, negations, quoted story facts and bounded text/portrait work without granting generation from source text.

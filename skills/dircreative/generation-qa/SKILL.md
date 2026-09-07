@@ -72,23 +72,22 @@ When visualization adds clarity, use `skills/dircreative/assets/visualizations/s
 - E6 rejects a fixed Image2/GPT Image suffix required for every prompt; `surface_integrity_guard_v1` is an optional internal QA macro activated only by an observed failure or recorded A/B eval.
 - Reject deprecated capability cards and preview aliases when a current stable endpoint exists. Keep Runway Gen-4 Aleph deprecation, Aleph 2.0 Web, and Aleph 2.0 API as separate receipts; keep stable Veo 3.1 `*-001` cards separate from deprecated preview aliases.
 - Compare generated/imported visuals against `visual_decomposition` and `prompt_layers`: subject, blocking, details, environment, light, composition, camera, palette, material, proportion, and generation intent must match the locked source.
-- Reject outputs that add unowned visual facts: invented logos, exact text, locations, hidden props, camera-specific claims, product features, wardrobe changes, or scene objects not present in the prompt or locked references.
+- Reject violations of protected visual facts: identity, exact text/logos, product features, established wardrobe, prop custody and scene geography. Ordinary design detail within the brief is permitted; do not mark a new design wrong merely because every decorative detail was not individually specified.
 - Reject prompt outputs that rely on standalone filler quality words instead of concrete visual constraints.
 - Reject receipts that hide source tier, access date, provider surface, or a material official-source conflict.
-- Check that `director_recreation_prompt`, `prompt_core`, and `negative_prompt` are present for complex image assets and that the negative prompt targets the observed failure.
+- Check that the production prompt and reusable identity/style facts are sufficient for complex assets. A negative prompt is conditional on a concrete known risk or observed failure; do not require a new image to accumulate exclusions from earlier attempts.
 - Treat multilingual prompt fields as optional delivery fields. Do not fail a normal DIRcreative prompt for being single-language.
 - Treat post-generation QA as a backstop. The primary prevention layer is the image-prompt-compiler `pre_generation_contract`.
-- Run immediately after any generated or imported image before asking the user to approve, lock, or proceed.
+- For an authorized batch with ready shared inputs, finish the batch and conduct one consolidated review before dependent use, final selection or delivery. Interrupt only for a critical defect affecting the next real input; unrelated images and content keep moving.
 - The user must not be the first QA pass, but the assistant also must not rely on post-QA as the first defense.
 - Check whether a failure is caused by missing generated files, external pending assets, or unlocked candidates.
 - Check whether a failure is caused by rights, card/version mismatch, duration/reference incompatibility, audio-route mismatch, deprecated status, or a generate/edit/extension route collision.
 - Reject generated candidates when character identity or scene geography drifts from the locked source asset.
 - Reject duplicate boards when repeated character or scene content introduces new visual facts.
-- Reject reference images without explicit role labeling in the image or manifest.
-- Reject reference images when the role label is not the dominant page title or the film/project title is visually dominant.
+- Require reference roles in the manifest. Visible role titles apply only to presentation boards that call for them; identity sheets, source photographs and clean model inputs must not be redrawn to add labels.
 - Reject storyboard/motion pages that lack professional shot-card density: timecode, duration, shot image, detailed frame description, shot size, focal length, movement, blocking, sound, transition, and model risk.
-- Do not advance rejected generated candidates to video prompts.
-- Do not ask for a user lock when self-QA fails. Record `self_qa.status: fail`, failure IDs, and the corrected next action.
+- Do not advance a rejected candidate as a direct video input. Continue independent assets and prompt work that do not consume its failed facts.
+- Do not ask the user to approve a known unusable candidate. Record its actual failure and affected uses. A retry is a production decision, not an automatic response to a style preference or a detector flag.
 - For Creative Production outputs, treat `render_moodboard_board_widget` as a review surface, not the source of truth. The candidate must be written back to DIRcreative as `generated_candidate`, then QA can pass, fail, or request a one-variable retry.
 - Reject any Creative Production candidate that is marked `user_locked` while QA is pending or failed.
 - Reject narrative frames or human planning boards promoted to identity,

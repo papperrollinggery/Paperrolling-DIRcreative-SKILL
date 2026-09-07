@@ -18,6 +18,25 @@ import dircreative_skill_stack as stack  # noqa: E402
 
 
 class SkillStackRouteContextTests(unittest.TestCase):
+    def test_handoff_validator_is_executed_not_loaded_as_craft_text(self):
+        with tempfile.TemporaryDirectory() as raw:
+            root=Path(raw)
+            stack._write_mock_skill(root,'jingzao-image-forge')
+            registry=stack.load_registry()
+            catalog,_=stack.discover_roots([('codex_skill',root)],registry)
+            case=next(item for item in json.loads(stack.CASES_PATH.read_text())['cases'] if item['id']=='p47_cinematic_storyboard_frames')
+            receipt=stack.select_stack(stack._fixture_intent(case),registry,stack.load_routing(),catalog,
+                route_context=stack._fixture_route_context(case),body_loader=stack.body_loader_for_roots([('codex_skill',root)],registry))
+            self.assertEqual(receipt['status'],'ready',receipt)
+            requests=receipt['handoff_read_requests']
+            validator=next(item for item in requests if item['role']=='output_validator')
+            self.assertEqual(validator['host_action'],'hash_verify_and_run_existing_handoff_validator_without_loading_source')
+            self.assertEqual(validator['bytes'],(ROOT/validator['relative_path']).stat().st_size)
+            self.assertTrue(validator['sha256'])
+            self.assertEqual(receipt['context']['handoff_validator_execution_bytes'],validator['bytes'])
+            self.assertLess(receipt['context']['isolated_handoff_context_bytes'],sum(item['bytes'] for item in requests))
+            self.assertTrue(all('full_read' in item['host_action'] for item in requests if item['role']!='output_validator'))
+
     def test_default_catalog_discovers_configured_skills_and_keeps_explicit_catalog_authority(self):
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)

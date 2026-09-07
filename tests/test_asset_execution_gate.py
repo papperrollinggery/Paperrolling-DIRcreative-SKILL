@@ -1076,13 +1076,15 @@ class AssetExecutionGateTests(unittest.TestCase):
             gate.validate_packet(packet, repo_root=ROOT, project_root=ROOT),
         )
 
-    def test_first_foundation_asset_cannot_start_parallel_batch(self):
+    def test_first_foundation_asset_can_join_batch_review_without_bypassing_other_gates(self):
         prompt = self.canonical_character_prompt()
         packet = self.character_packet(prompt)
-        packet["execution"]["mode"] = "parallel"
+        packet["execution"]["mode"] = "batch_then_review"
         packet["execution"]["parallel_group"] = "foundation-batch"
         errors = gate.validate_packet(packet, repo_root=ROOT)
-        self.assertIn("foundation_asset_requires_serial_review_gate", errors)
+        self.assertNotIn("execution_review_mode_invalid", errors)
+        baseline = self.character_packet(prompt)
+        self.assertEqual(errors, gate.validate_packet(baseline, repo_root=ROOT))
 
     def test_scene_prompt_must_contain_active_plan_purpose(self):
         scene_asset = next(

@@ -87,8 +87,9 @@ When visualization adds clarity, use `skills/dircreative/assets/visualizations/s
   conditional-detail rules.
 - Run its stable passes in the order defined by
   `skills/dircreative/references/asset-foundation-pass.md`. Bind each output hash
-  to the next input; a failed or incomplete pass remains `needs_followup` or
-  blocked and cannot be promoted into Seedance compilation.
+  only where it is a real next input. A failed or incomplete pass blocks only
+  the asset, shot or sequence that consumes it; continue independent planning
+  and authorized production batches before returning to the failed dependency.
 - Before repeated/multi-shot assets become compile inputs, route the final pass
   through `ai-film-asset-stress-test`. `conditional` must enumerate allowed and
   blocked shot scope; missing real evidence remains `unverified`.
@@ -103,7 +104,7 @@ When visualization adds clarity, use `skills/dircreative/assets/visualizations/s
   discover the limit at generation time or silently drop a reference.
 - Hero, acting, movement, or expression-critical shots must include a reference video, reference clip, or explicit motion note. Music/video sources must keep source, usage, and lock status so later versions cannot drop them.
 - For assisted generation, lock visual truth in this order: character identity, scene geography/camera FOV, professional storyboard/motion page, then selected clean frames.
-- Character consistency and scene consistency are mandatory. Do not batch-generate multiple boards that independently reinterpret the same character or location.
+- Character consistency and scene consistency are mandatory. Establish shared identity and geography before dependent work; do not batch-generate boards that independently reinterpret an unanchored character or location. Once those inputs are ready, produce the batch continuously and review/select it together.
 - Prefer a minimal V2 pack when drift risk is high: one character identity reference, one scene geography + camera FOV atlas, one professional storyboard/motion page, then optional clean first/end frames.
 - Scene geography boards should be a single atlas when possible: panoramic or 360-degree environment, top-down route map, shot camera positions, FOV wedges, subject path, and vehicle path.
 - Repeated character or scene content must inherit from the locked source asset; repetition must not introduce new face, wardrobe, prop, street, vehicle, or light-source facts.

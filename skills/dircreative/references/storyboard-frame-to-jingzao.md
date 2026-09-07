@@ -13,6 +13,11 @@ an absolute Codex JSONL under `~/.codex/sessions`, outside producer-writable
 artifacts. Unregistered copies, overlapping roots and producer-written host
 logs fail closed. CLI callers cannot extend the trusted catalog.
 
+Read the contract and schema for authoring; hash-verify and run the existing
+validator through its normal validation entrypoint. Its Python implementation
+is executable tooling, not mandatory model-reading material for each frame.
+Source inspection remains available for diagnosing an actual validator error.
+
 ## Ownership and execution
 
 - DIRcreative owns story purpose, canonical shots/timecodes, continuity states,
@@ -30,10 +35,27 @@ logs fail closed. CLI callers cannot extend the trusted catalog.
 - Generated frames return to DIRcreative for cross-shot consistency, continuity,
   model-input policy, user lock, and status. Neither Jingzao nor imagegen grants
   `visual_assets_complete`, client approval, or delivery.
-- The assembler's `--plan` mode makes a final frame overview after individual
-  reviews. Needed early black-and-white action rehearsal uses its separate
+- The assembler's `--plan` mode makes a final frame overview after the batch's
+  frame review. Needed early black-and-white action rehearsal uses its separate
   `--coverage` mode; apply `storyboard-motion-planning.md` before the color batch.
   Neither page is a direct clean video input.
+
+## Selected style capsules
+
+For a chosen Jingzao style capsule, keep a project-local JSON snapshot and use
+`dircreative_narrative_spec_preflight.py --project-root PROJECT FRAME_SPEC
+--style-capsule STYLE_JSON`. Bind the returned `{relative_path, sha256}` as
+`output_spec.style_capsule` in this handoff. DIR seals the file and replays it
+for each frame through the installed single-spec compiler; it is not an image
+attachment. Do not assume the provider's production compiler supports this flag
+unless its actual interface does. Keep the native per-frame spec and prompt
+manifest envelopes.
+
+The provider's two documented soft review scopes may be accepted by the executor
+with `--approve-review` and exact replay; detected contamination stays blocked.
+Preserve style variation driven by the target character and scene, alongside
+the shot's camera, action, reference and continuity requirements. Reuse batch
+input review rather than asking for a new user approval per frame.
 
 ## Required input packet
 
