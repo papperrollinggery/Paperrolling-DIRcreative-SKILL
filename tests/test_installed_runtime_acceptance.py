@@ -56,6 +56,9 @@ class InstalledRuntimeAcceptanceTests(unittest.TestCase):
         import validate_project as validation
 
         source = ROOT / "skills/dircreative/SKILL.md"
+        installed_mode = not source.is_file()
+        if installed_mode:
+            source = ROOT / "skills/dircreative/INTERNAL_SKILL.md"
         body = parity.strip_skill_frontmatter_bytes(source.read_bytes()).decode("utf-8")
         metadata_only = self.base / "metadata-only-command.md"
         metadata_only.write_text(
@@ -63,13 +66,14 @@ class InstalledRuntimeAcceptanceTests(unittest.TestCase):
             + body.replace("$dircreative", "DIRcreative")
         )
         original = validation.require_path
-        with mock.patch.object(
-            validation, "require_path",
-            side_effect=lambda path: metadata_only if path == "skills/dircreative/SKILL.md" else original(path),
-        ):
-            with self.assertRaisesRegex(validation.ValidationError, r"root router missing v2 contract term: \$dircreative"):
-                validation.validate_skills()
-        validation.validate_skills()
+        with mock.patch.object(validation, "INSTALLED_PACKAGE_VALIDATION", installed_mode):
+            with mock.patch.object(
+                validation, "require_path",
+                side_effect=lambda path: metadata_only if path == "skills/dircreative/SKILL.md" else original(path),
+            ):
+                with self.assertRaisesRegex(validation.ValidationError, r"root router missing v2 contract term: \$dircreative"):
+                    validation.validate_skills()
+            validation.validate_skills()
 
     def test_independent_staging_passes_without_obsolete_root_phrases(self):
         result = self.verify()
