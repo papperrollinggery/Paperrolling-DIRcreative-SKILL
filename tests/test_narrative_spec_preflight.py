@@ -55,6 +55,16 @@ class NarrativeSpecPreflightTests(unittest.TestCase):
             self.assertEqual(result["call_plan"], native_plan)
             self.assertEqual(runner.call_count, 3)
 
+    def test_style_capsule_is_passed_to_compiler_without_becoming_an_attachment(self):
+        with tempfile.TemporaryDirectory() as raw, tempfile.TemporaryDirectory() as provider_raw:
+            root=Path(raw); path=self.write_json(root,"narrative.json",narrative_spec()); capsule=self.write_json(root,"capsule.json",{"id":"c"})
+            provider=Path(provider_raw)/"jingzao-image-forge"; provider.mkdir(); (provider/"SKILL.md").write_text("skill"); (provider/"scripts").mkdir()
+            for name in ("validate_spec.py","compile_prompt.py","reference_delivery.py"): (provider/"scripts"/name).write_text("#")
+            outputs=[({"valid":True,"errors":[]},None),({"prompt":"p","prompt_review":{"status":"ready"}},None),({"valid":True,"imagegen_call_plan":{"status":"ready","expected_attachment_count":0}},None)]
+            with mock.patch.object(preflight,"trusted_provider_roots",return_value=(provider,)),mock.patch.object(preflight,"run_json_command",side_effect=outputs) as run:
+                code,_=preflight.preflight(root,path.name,provider,style_capsule=capsule.name)
+            self.assertEqual(code,0); compiler=run.call_args_list[1].args[0]; self.assertIn("--style-capsule",compiler); self.assertEqual(run.call_args_list[2].args[0][-1],"codex_imagegen")
+
     def test_a_to_b_to_a_source_mutation_cannot_change_provider_snapshot(self):
         with tempfile.TemporaryDirectory() as project_raw, tempfile.TemporaryDirectory() as provider_raw:
             root = Path(project_raw); path = self.write_json(root, "narrative.json", narrative_spec())

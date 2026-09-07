@@ -253,6 +253,13 @@ def preflight(project_root: Path, spec_relative: str, provider_root: Path | None
     review = compiled.get("prompt_review", {}).get("status") if isinstance(compiled, dict) else None
     if error or not isinstance(compiled, dict) or not nonempty(compiled.get("prompt")) or review not in {"ready", "approved"}:
         return 1, {"status": "blocked", "errors": [error or "jingzao_compilation_not_ready"], "input_spec_sha256": sha256(raw_spec), "compiled": compiled}
+    if style_capsule and capsule_bytes is not None:
+        try:
+            reread_capsule = read_relative_regular_file_once(root, style_capsule, max_bytes=MAX_SPEC_BYTES, label="narrative style capsule")
+        except (OSError, ValueError):
+            reread_capsule = None
+        if reread_capsule != capsule_bytes:
+            return 1, {"status": "blocked", "errors": ["style_capsule_changed_during_provider_replay"]}
     with spec_snapshot(spec_path, raw_spec) as snapshot:
         reference_delivery, error = run_json_command(
             isolated_python_command(provider / "scripts/reference_delivery.py", str(snapshot), "--target", "codex_imagegen"),
