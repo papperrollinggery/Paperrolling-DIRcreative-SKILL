@@ -18,6 +18,7 @@ from typing import Any
 
 from dircreative_verify_release import read_relative_regular_file_once
 from dircreative_visual_asset_jingzao_handoff import isolated_python_command, run_json_command
+from dircreative_visual_asset_jingzao_handoff import provider_review_approved, provider_review_ready
 
 
 MAX_SPEC_BYTES = 4 * 1024 * 1024
@@ -142,20 +143,29 @@ def bound_output_spec_errors(
         entries = [{"id": expected[0]["id"], "spec": value}]
     else:
         entries = value["frames"]
+    capsule = binding.get("style_capsule")
+    capsule_bytes = None
+    if capsule is not None:
+        if not isinstance(capsule, dict) or set(capsule) != {"relative_path", "sha256"}:
+            return ["narrative_style_capsule_binding_invalid"]
+        try:
+            capsule_bytes = read_relative_regular_file_once(root, capsule["relative_path"], max_bytes=MAX_SPEC_BYTES, label="narrative style capsule")
+        except (OSError, ValueError):
+            return ["narrative_style_capsule_invalid_or_changed"]
+        if sha256(capsule_bytes) != capsule["sha256"]:
+            return ["narrative_style_capsule_invalid_or_changed"]
     output_path = root / binding["relative_path"]
     for entry in entries:
         frame_id, spec = entry["id"], entry["spec"]
         prompt_entry = prompt_by_id.get(frame_id, {})
         declared_review = prompt_entry.get("prompt_review") if isinstance(prompt_entry, dict) else None
-        approve_review = isinstance(declared_review, dict) and (
-            declared_review.get("status") == "approved"
-            and declared_review.get("approval_scope") == "length_and_reference_complexity_only"
-        )
+        approve_review = provider_review_approved(declared_review)
         compiled, _, compile_error = compile_snapshot(
             provider,
             output_path,
             json.dumps(spec, ensure_ascii=False, separators=(",", ":")).encode(),
             approve_review=approve_review,
+            style_capsule=capsule_bytes,
         )
         if compile_error or not isinstance(compiled, dict) or not nonempty(compiled.get("prompt")):
             errors.append(f"narrative_provider_compile_failed:{frame_id}")
@@ -163,10 +173,7 @@ def bound_output_spec_errors(
         review = compiled.get("prompt_review")
         review_status = review.get("status") if isinstance(review, dict) else None
         approved_scope = review.get("approval_scope") if isinstance(review, dict) else None
-        if review_status != "ready" and not (
-            review_status == "approved"
-            and approved_scope == "length_and_reference_complexity_only"
-        ):
+        if not provider_review_ready(review):
             errors.append(f"narrative_provider_prompt_review_not_ready:{frame_id}")
             continue
         prompt = prompt_entry.get("prompt") if isinstance(prompt_entry, dict) else None
@@ -197,7 +204,7 @@ def resolve_provider(raw: Path | None, artifact_root: Path, *, trusted_roots: tu
     return provider, None
 
 
-def compile_snapshot(provider: Path, source_path: Path, payload: bytes, *, approve_review: bool = False) -> tuple[dict[str, Any] | None, dict[str, Any] | None, str | None]:
+def compile_snapshot(provider: Path, source_path: Path, payload: bytes, *, approve_review: bool = False, style_capsule: bytes | None = None) -> tuple[dict[str, Any] | None, dict[str, Any] | None, str | None]:
     with spec_snapshot(source_path, payload) as snapshot:
         validation, error = run_json_command(
             isolated_python_command(provider / "scripts/validate_spec.py", "--json", str(snapshot)),
@@ -206,16 +213,22 @@ def compile_snapshot(provider: Path, source_path: Path, payload: bytes, *, appro
         if error or validation != {"valid": True, "errors": []}:
             return None, validation, error or "jingzao_validation_failed"
         args = ["--platform", "openai", "--format", "json"]
+        capsule = None
+        if style_capsule is not None:
+            capsule = snapshot.with_suffix(".style-capsule.json")
+            capsule.write_bytes(style_capsule)
+            args.extend(["--style-capsule", str(capsule)])
         if approve_review:
             args.append("--approve-review")
         compiled, error = run_json_command(
             isolated_python_command(provider / "scripts/compile_prompt.py", *args, str(snapshot)),
             cwd=provider, label="jingzao_compile_prompt",
         )
+        if capsule is not None: capsule.unlink(missing_ok=True)
         return compiled, validation, error
 
 
-def preflight(project_root: Path, spec_relative: str, provider_root: Path | None = None, *, approve_review: bool = False) -> tuple[int, dict[str, Any]]:
+def preflight(project_root: Path, spec_relative: str, provider_root: Path | None = None, *, approve_review: bool = False, style_capsule: str | None = None) -> tuple[int, dict[str, Any]]:
     try:
         root = project_root.resolve(strict=True)
     except OSError:
@@ -232,7 +245,11 @@ def preflight(project_root: Path, spec_relative: str, provider_root: Path | None
         return 1, {"status": "blocked", "errors": [error], "input_spec_sha256": sha256(raw_spec)}
     assert provider is not None
     spec_path = root / spec_relative
-    compiled, validation, error = compile_snapshot(provider, spec_path, raw_spec, approve_review=approve_review)
+    capsule_bytes = None
+    if style_capsule:
+        try: capsule_bytes = read_relative_regular_file_once(root, style_capsule, max_bytes=MAX_SPEC_BYTES, label="narrative style capsule")
+        except (OSError, ValueError): return 1, {"status":"blocked","errors":["style_capsule_invalid"]}
+    compiled, validation, error = compile_snapshot(provider, spec_path, raw_spec, approve_review=approve_review, style_capsule=capsule_bytes)
     review = compiled.get("prompt_review", {}).get("status") if isinstance(compiled, dict) else None
     if error or not isinstance(compiled, dict) or not nonempty(compiled.get("prompt")) or review not in {"ready", "approved"}:
         return 1, {"status": "blocked", "errors": [error or "jingzao_compilation_not_ready"], "input_spec_sha256": sha256(raw_spec), "compiled": compiled}
@@ -260,8 +277,9 @@ def main() -> int:
     parser.add_argument("spec", help="safe project-relative specification path")
     parser.add_argument("--provider-root", type=Path)
     parser.add_argument("--approve-review", action="store_true")
+    parser.add_argument("--style-capsule")
     args = parser.parse_args()
-    code, result = preflight(args.project_root, args.spec, args.provider_root, approve_review=args.approve_review)
+    code, result = preflight(args.project_root, args.spec, args.provider_root, approve_review=args.approve_review, style_capsule=args.style_capsule)
     print(json.dumps(result, ensure_ascii=False, sort_keys=True))
     return code
 
