@@ -63,7 +63,15 @@
         "prompt_manifest_id": {"type": "string", "minLength": 1},
         "prompt_manifest_relative_path": {"$ref": "#/$defs/safe_relative_path"},
         "prompt_manifest_sha256": {"$ref": "#/$defs/sha256"},
-        "style_capsule": {"$ref": "#/$defs/artifact_binding"},
+        "style_capsule": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["relative_path", "sha256"],
+          "properties": {
+            "relative_path": {"$ref": "#/$defs/safe_relative_path"},
+            "sha256": {"$ref": "#/$defs/sha256"}
+          }
+        },
         "prompt_authority_review_relative_path": {"$ref": "#/$defs/safe_relative_path"},
         "prompt_authority_review_sha256": {"$ref": "#/$defs/sha256"},
         "prompt_authority_review_signature_relative_path": {"$ref": "#/$defs/safe_relative_path"}

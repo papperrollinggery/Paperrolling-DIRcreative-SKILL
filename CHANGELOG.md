@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-## 0.9.4 - 2026-09-07
+## 0.9.4 - 2026-09-08
 
 - Separate local image-repair prompts from initial design and layout requirements. Keep original asset truth in the bound plan while compiling only the source-preserving edit intent and observed corrections; allow either valid side-profile order on new human masters.
 - Produce independent assets/content before consolidated batch review. Remove plan-wide candidate-check blocking and the character-only serial restriction, while retaining actual parent checks and final acceptance. Candidate self-check no longer duplicates the character detector gate.
@@ -10,6 +10,7 @@
 - Resolve headed-character detector disagreements within the existing visual review using the actual probe receipt and visible observations. Preserve blocked measurements, opacity checks, source hashes, formal review and host authorization; headless safeguards are unchanged.
 - Fix first-output registration for standalone asset plans without falsely claiming completed media. Clarify first-pass reference/design preparation, conditional negative prompts, clean-image label policy and dependency-scoped rework; update only project-level maintenance guidance.
 - Keep requested five-view coverage. Support explicit nonhuman character identity/state without human-anatomy probes, and allow source-bound authored 2D layout references without pretending they are measured spatial exports.
+- Forward hash-bound Jingzao style capsules through asset and narrative-frame replay. Accept its two documented nonblocking review scopes without stripping style detail, while keeping exact compilation checks and detected contamination blocks.
 - These changes remove demonstrated workflow failures; structural checks do not establish universal first-pass image quality or pixel-perfect editing.
 
 ## 0.9.3 - 2026-09-07

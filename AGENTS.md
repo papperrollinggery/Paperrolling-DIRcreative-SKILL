@@ -64,6 +64,10 @@ of its checkout directory name (including `DIR SKILL`).
   Preserve completed work and invalidate only affected consumers. Test batch
   progress, initial output quality and repair fidelity separately; fewer words,
   files or tool calls alone do not establish improvement.
+- When an integrated provider changes, inspect its current schema, CLI and
+  emitted review states. Forward selected style inputs through existing
+  handoffs; do not drop style detail to satisfy an obsolete DIR check. Keep
+  another task's provider changes intact and bind tests to the version read.
 - Use independent review for a release candidate and material unresolved risks,
   not a separate approval ceremony for every routine artifact. Once the agreed
   checks pass, finish the authorized integration, release and installation; do

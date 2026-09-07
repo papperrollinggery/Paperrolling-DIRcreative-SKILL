@@ -450,6 +450,12 @@ def _sealed_jingzao_validation(
                 binding.get("sha256"),
                 label,
             )
+        capsule_binding = output_spec.get("style_capsule")
+        if capsule_binding is not None:
+            if not isinstance(capsule_binding, dict) or set(capsule_binding) != {"relative_path", "sha256"}:
+                raise ValueError("Jingzao style capsule binding invalid")
+            seal(project_root, artifact_files, capsule_binding.get("relative_path"),
+                 capsule_binding.get("sha256"), "Jingzao style capsule")
         seal(
             project_root,
             artifact_files,

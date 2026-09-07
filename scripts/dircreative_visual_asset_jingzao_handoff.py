@@ -587,7 +587,7 @@ def provider_errors(
         for item in reference_reads
         if isinstance(item, dict)
     }
-    if declared_paths != REQUIRED_REFERENCE_READS:
+    if not REQUIRED_REFERENCE_READS.issubset(declared_paths) or len(declared_paths) != len(reference_reads):
         errors.append("jingzao_reference_read_set_mismatch")
     for item in reference_reads:
         if not isinstance(item, dict) or not isinstance(item.get("relative_path"), str):
@@ -1057,6 +1057,7 @@ def validate(
     capsule_payload: bytes | None = None
     if output.get("style_capsule") is not None:
         capsule_payload = read_binding(resolved_project, output["style_capsule"], "jingzao_style_capsule", errors)
+        load_json_bytes(capsule_payload, "jingzao_style_capsule", errors)
     spec = load_json_bytes(
         read_binding(resolved_project, output["visual_generation_spec"], "visual_generation_spec", errors),
         "visual_generation_spec",

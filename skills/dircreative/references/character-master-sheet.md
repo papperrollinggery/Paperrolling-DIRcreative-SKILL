@@ -19,6 +19,12 @@ Missing `identity_kind` retains the existing human five-view contract.
 `headed_state` also supports nonhuman state changes from a same-kind approved
 master; `headless_safe` remains human-only.
 
+When Jingzao calls for single-person/material-readable inspection, inspect each
+figure and its garment regions in the saved five-view original at readable
+scale. Preserve the requested five-view deliverable. Additional generated detail
+images are conditional on actual shot needs; a review-scale instruction does
+not change the user's requested output format.
+
 ## One identity system, not competing character packs
 
 All character sheets for one state share the same `asset_id`, `state_family`,

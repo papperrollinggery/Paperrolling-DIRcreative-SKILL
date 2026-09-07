@@ -20,7 +20,7 @@
 
 DIRcreative 不是“输入一句话、吐出一堆提示词”的黑盒。它先判断任务是局部修改、完整开发还是交付审计，再只加载对应合同。局部任务直接交付修改结果；只有真实方向冲突、生成授权或客户交付才停下来询问。
 
-当前源码版本为 `v0.9.4`；已发布版本与下载以 [GitHub Releases](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/releases) 为准。本版分开首次设计与局部修图提示词，支持独立资产连续产出后集中审核，避免反复编辑最新候选导致细节退化。已有参考、摄影、动作、材质与真实依赖约束继续生效；简单单图保持简洁路径。生成、批次检查、正式验收、用户采用与视频完成分别记录，不保证所有图一次成功或编辑区域外逐像素不变。
+当前源码版本为 `v0.9.4`；已发布版本与下载以 [GitHub Releases](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/releases) 为准。本版保留完整五视图，分开首次设计与局部修图提示词，支持独立资产连续产出后集中审核，避免反复编辑最新候选导致细节退化。已联动镜造 v1.8.0 的风格胶囊、条件引用和非阻断审核范围。已有参考、摄影、动作、材质与真实依赖约束继续生效；简单单图请求保持其简洁路径。生成、批次检查、正式验收、用户采用与视频完成分别记录，不保证所有图一次成功或编辑区域外逐像素不变。
 
 源码仓库包含 DIRcreative 根 Skill、19 个 `skills/dircreative/*` 内部子 Skill，以及 `ai-film-asset-stress-test`、`ai-film-production-ledger` 两个 P0 能力入口。正式 DIRcreative 安装包按安全设计只暴露根 `$dircreative`，其余入口会内部化后由 selector 路由；Skill Stack 还会发现宿主中已安装的外部专业 provider。这些依赖不会被复制进本仓库，也不能把“宿主可调用”表述成“GitHub 已内置”。ADCO 始终是独立外部编排方。
 

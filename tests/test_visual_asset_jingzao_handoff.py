@@ -779,6 +779,20 @@ class VisualAssetJingzaoHandoffTests(unittest.TestCase):
             )
         self.assertIn("visual_asset_skill_stack_receipt_invalid", errors)
 
+    def test_current_provider_conditional_style_reference_can_join_base_reads(self):
+        with tempfile.TemporaryDirectory() as raw:
+            root=Path(raw);project=root/'project';project.mkdir();provider=root/'provider/jingzao-image-forge'
+            document,_=self.fixture(project,provider,first_image=True)
+            relative='references/changsheng-wardrobe-system.md'
+            path=provider/relative;path.write_text('Choose cloth, color and construction from the target character and situation.')
+            document['reference_reads'].append({'relative_path':relative,'sha256':hashlib.sha256(path.read_bytes()).hexdigest(),'bytes':path.stat().st_size})
+            def check(doc):return handoff.validate(doc,project_root=project,provider_root=provider,trusted_provider_roots=(provider,),allow_unsandboxed_test_replay=True)[0]
+            self.assertEqual(check(document),[])
+            missing=copy.deepcopy(document);missing['reference_reads'].pop(0)
+            self.assertIn('jingzao_reference_read_set_mismatch',check(missing))
+            path.write_text('Changed provider style instructions.')
+            self.assertIn('jingzao_reference_read_binding_mismatch:'+relative,check(document))
+
     def test_unready_prompt_review_blocks(self):
         with tempfile.TemporaryDirectory() as project_raw, tempfile.TemporaryDirectory() as provider_raw:
             project = Path(project_raw)
@@ -886,6 +900,9 @@ class VisualAssetJingzaoHandoffTests(unittest.TestCase):
             self.assertIn('jingzao_compilation_replay_mismatch',check(missing)[0])
             capsule_path.write_text(json.dumps({**capsule,'visual_rules':{}}))
             self.assertIn('jingzao_style_capsule_hash_mismatch',check(document)[0])
+            capsule_path.write_text('null')
+            document['output_spec']['style_capsule']=write_json(capsule_path,None)
+            self.assertIn('jingzao_style_capsule_root_invalid',check(document)[0])
 
     def test_arbitrary_file_cannot_replace_asset_foundation_pass(self):
         with tempfile.TemporaryDirectory() as project_raw, tempfile.TemporaryDirectory() as provider_raw:

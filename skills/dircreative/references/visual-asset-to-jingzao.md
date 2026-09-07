@@ -20,6 +20,18 @@ upstream artifacts, and downstream state. `jingzao-image-forge` owns the
 and image-call plan. The host image tool remains the execution adapter. Neither
 prompt compilation nor a successful tool call grants visual approval.
 
+When a selected Jingzao style capsule is used, copy the exact chosen JSON into
+the project and bind it as `output_spec.style_capsule: {relative_path, sha256}`.
+Compile with `--style-capsule PATH`; DIR replays those same bytes and that option.
+The capsule is a text/style input, not an image attachment or an extra identity
+reference. Preserve its relevant material, palette and character-adaptation rules
+alongside the target's authoritative five-view/layout and subject facts. Do not
+replace a style system with one dark palette, fabric or decorative formula.
+Read the current provider's conditional style references as well as its base
+references and bind them in `reference_reads`. Changsheng costume work in
+Jingzao v1.8.0 also needs `references/changsheng-wardrobe-system.md`; its old
+v1.7.0 test capsule is historical evidence, not a default generation source.
+
 The handoff must bind:
 
 - the active visual-plan snapshot and asset truth;
@@ -59,7 +71,20 @@ roots must not contain each other. For edits, add Lira or constraint input only
 when needed.
 
 The execution packet must consume the exact compiled prompt hash from this
-handoff. Missing provider files, changed upstream truth, `prompt_review` other
-than `ready`, unresolved required references, or a non-ready ImageGen call plan
+handoff. Missing provider files, changed upstream truth, unresolved required
+references, or a non-ready ImageGen call plan
 blocks the formal asset. A direct DIR prompt may still be used for rough or
 low-risk work, but it cannot impersonate this handoff.
+
+Accept `ready`, or the provider's genuine `approved` result for
+`length_and_reference_complexity_only` or
+`surface_risk_length_and_reference_complexity`, only with exact replay.
+`--approve-review` is the executor's review of nonblocking prompt complexity or
+intentional surface language, not another user approval or visual acceptance.
+Detected contamination and empty prompts remain blocked. Do not shrink style
+detail merely to satisfy an obsolete DIR approval whitelist. Automated residue
+checks cover known wording, not every semantic conflict.
+
+Recheck installed provider identity after an update and reprepare affected
+unexecuted calls. Preserve completed/approved image versions and their chosen
+style source; a provider update is not permission to restyle them.
