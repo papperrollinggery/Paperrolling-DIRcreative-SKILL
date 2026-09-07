@@ -10,7 +10,7 @@ Plans and prompts are not media.
 
 ## Invocation Boundary
 
-Start only on explicit DIRcreative invocation or validated `adco.specialist-exchange`
+Start only on explicit DIRcreative invocation (for example, `$dircreative`) or validated `adco.specialist-exchange`
 selecting `dircreative.film-preproduction`. DIR/ADCO source maintenance stops
 runtime execution (`source_maintenance`); runtime tests use isolated fixtures.
 Never modify project instructions to activate this Skill.

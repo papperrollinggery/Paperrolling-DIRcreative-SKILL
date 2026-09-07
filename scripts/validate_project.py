@@ -2092,6 +2092,8 @@ def validate_skills() -> None:
     root_text = root_skill.read_text(encoding="utf-8")
     require(len(root_text.splitlines()) <= 220, "root skill exceeds 220-line router budget")
     require(len(root_text.encode("utf-8")) <= 16 * 1024, "root skill exceeds 16 KiB router budget")
+    from dircreative_install_parity import strip_skill_frontmatter_bytes
+    root_text = strip_skill_frontmatter_bytes(root_text.encode("utf-8")).decode("utf-8")
     for heading in [
         "## Invocation Boundary", "## Router Contract", "## Work from the requested outcome",
         "## Intelligent Skill Stack", "## External User Gates", "## State and truth",

@@ -52,6 +52,25 @@ class InstalledRuntimeAcceptanceTests(unittest.TestCase):
         options.update(kwargs)
         return parity.verify_installed_runtime(**options)
 
+    def test_source_router_contract_cannot_be_satisfied_only_by_frontmatter(self):
+        import validate_project as validation
+
+        source = ROOT / "skills/dircreative/SKILL.md"
+        body = parity.strip_skill_frontmatter_bytes(source.read_bytes()).decode("utf-8")
+        metadata_only = self.base / "metadata-only-command.md"
+        metadata_only.write_text(
+            '---\nname: dircreative\ndescription: "Use $dircreative for film work."\n---\n'
+            + body.replace("$dircreative", "DIRcreative")
+        )
+        original = validation.require_path
+        with mock.patch.object(
+            validation, "require_path",
+            side_effect=lambda path: metadata_only if path == "skills/dircreative/SKILL.md" else original(path),
+        ):
+            with self.assertRaisesRegex(validation.ValidationError, r"root router missing v2 contract term: \$dircreative"):
+                validation.validate_skills()
+        validation.validate_skills()
+
     def test_independent_staging_passes_without_obsolete_root_phrases(self):
         result = self.verify()
         self.assertTrue(result.ok, result.errors)
