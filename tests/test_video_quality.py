@@ -241,7 +241,10 @@ class VideoQualityTests(unittest.TestCase):
         payload["shot_blocks"][1]["transition_in"] = "continue the specular bridge from S99"
         with self.assertRaisesRegex(AdapterContractError, "unresolved_prompt_shot_reference"):
             get_adapter("seedance").compile_full(payload)
-        payload["shot_blocks"][1]["transition_in"] = "continue from /Users/example/approved-frame.png"
+        # Build a synthetic host path at runtime so release privacy sanitization
+        # does not rewrite the negative-test input into a permitted fixture path.
+        host_path = "/".join(("", "Users", "example", "approved-frame.png"))
+        payload["shot_blocks"][1]["transition_in"] = "continue from " + host_path
         with self.assertRaisesRegex(AdapterContractError, "local_path"):
             get_adapter("seedance").compile_full(payload)
         payload["shot_blocks"][1]["transition_in"] = "continue from " + "a" * 64
