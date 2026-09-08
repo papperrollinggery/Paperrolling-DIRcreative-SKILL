@@ -1,32 +1,40 @@
-# Video quality prefix
+# Source-derived video quality direction
 
-Use `build_video_quality_prefix(payload, unit=None)` only for a video prompt
-submission. Put its twelve ordered lines once before a whole-film submission or
-once before each independently submitted generation unit: Style,
+`build_video_quality_prefix(payload, unit=None)` forwards the authored PromptIR
+look, composition, continuity and relevant audio facts once per video submission.
+Empty or irrelevant categories are omitted. It supplies no default skin, acting
+pause, physics style, palette ratio, composition formula, haze, camera equipment,
+resolution or frame rate. The author resolves these choices for the actual scene
+with `prompt-structure.md` before compilation.
+
+The optional caller-owned `video_quality` mapping preserves explicit overrides.
+If the user supplies all twelve fields, they retain this order: Style,
 Cinematography, Lighting, Color, Camera, Skin, Acting, Physics, Composition,
-Continuity, Technical, Audio. Do not add it to a static character sheet, image
-reference board, or a shot body repeatedly.
+Continuity, Technical, Audio. Fewer fields do not trigger boilerplate filling.
+Unique medium, material, body-proportion and scene facts must survive adaptation;
+shorter output by itself is not a quality result.
 
-The formatter reads existing PromptIR look, camera, composition, locks and
-audio fields. An optional caller-owned `video_quality` mapping can explicitly
-override a line without becoming a required PromptIR schema field. Structured
-scene lighting and atmosphere take priority: a night-fire scene does not acquire
-a sky/window source, and `intensity: none` does not acquire haze. An explicit
-animation or CG style wins over the photoreal cinema baseline.
+`wrap_video_prompt(payload, prompt, unit=None)` attaches that direction once.
+It moves only old top-level Continuity and Look sections into the shared block;
+Timeline-internal camera, audio, look changes and state transitions remain.
+Do not use the video wrapper on still character sheets or image references.
 
-For `native` and `reference_audio` routes, the Audio line carries the authored
-dialogue, ambience, music and SFX. For `postproduction`, `none` and `unresolved`
-routes it only carries the post-production audio boundary; it must not claim
-that authored dialogue or music is generated natively. `exact_text` omits the
-default no-subtitles direction.
+Native/reference audio carries the authored sound. Postproduction/none/unresolved
+routes keep finishing cues outside the model prompt and do not claim generated
+speech or music. Exact-text work retains its text policy. Capability cards and
+execution receipts remain the authority for real model settings; an authored
+technical phrase is creative intent, not proof of output metadata.
 
-Use `wrap_video_prompt(payload, prompt, unit=None)` when attaching the prefix.
-It removes only old top-level `Continuity:` and `Look:` sections because their
-facts now live in the prefix; Timeline-internal Camera, Audio and Look change
-sentences remain intact.
+Legacy `audio_plan` strings are shared directions, not a typed per-unit event
+map. The compiler preserves them rather than guessing which speech can be
+deleted. For a split film, author each unit's actual dialogue/event cues and
+resolve any whole-film speech repeated in the shared plan before submission.
+Locally rebased shot cues do not establish the scope of arbitrary global prose.
 
-“8K”, “IMAX”, “24 fps” and “180-degree shutter” are requested visual/motion
-intent in prompt text. They do not assert a provider API setting, execution
-receipt, or verified output resolution. The prefix contains only model-facing
-creative direction; keep routing, model parameters, QA and management records
-outside it.
+Shot `transition_in/out` and continuity locks travel with their shot. A
+transition-plan boundary matching existing `<from_shot_id>_to_<to_shot_id>` can
+be scoped to an independent unit. An opaque legacy label remains in the full
+plan; it is not guessed onto an individual cut or made an error solely for its
+spelling. Put a required unit-local bridge in its shot transition or explicit
+boundary before export. Internal identifiers are crosswalked to readable timing;
+unknown IDs, local paths and hashes are not laundered into approved references.

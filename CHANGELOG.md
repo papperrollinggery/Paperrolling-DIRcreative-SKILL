@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## 0.11.0 - 2026-09-09
+
+### Changed
+
+- Reworked video prompt authoring around scene intent, reference roles, stable design and evolving event state across action, performance, environment, product and graphic work. Preserve authored format and craft without a mandatory twelve-part cinematic prefix.
+- Removed unrequested photoreal/skin, pause, palette ratio, composition formula, resolution, frame-rate and shutter defaults. Explicit quality overrides remain supported.
+- Carry shot transitions, local continuity and native sound bridges into compiled prompts; preserve unit scope and locally rebased timing without exposing internal identifiers.
+- Added source-backed prompt research and anonymized failure analysis covering reference-board leakage, held contact poses, state resets and conflicting visual authority. Private media and conversation evidence are not bundled.
+
+### Verification boundary
+
+- Compiler/fixture tests and installed-method exercises verify instruction and text behavior. The inspected negative video informs the diagnosis; no claim is made that a new video-model candidate has proven quality improvement.
+
 ## 0.10.0 - 2026-09-08
 
 - Bring Jingzao photography advice into existing Studio story and shot development before camera choices are locked. Connect composition and environment to story, blocking and shot information; preserve story ownership, Fast scope, existing budgets and separate image execution.

@@ -34,6 +34,13 @@ DIRcreative 是面向 **AI 影视前期制作的 Codex Skill**。从一句创意
 
 产出取决于请求范围和可用工具。提示词提交前需要核对实际参考资产与模型要求；图片生成、视频生成和最终采纳分别处理。
 
+## 按场景组织视频提示词
+
+先明确参考职责与稳定设计，再写逐拍变化，让动作、表演、环境、摄影与声音互相衔接。
+保留具体创作要求，取消自动附加的电影质感前缀与固定节奏模板。
+可查看[六类对照提示词](examples/prompt-structure-quality/README.md)和
+[研究依据与验证边界](docs/film-preproduction/research/prompt-structure-20260909.md)。
+
 ## 产品 CG 风格与分析
 
 可按需调用柔光干粉、精密硬表面、弹性与织构、流变触感、雕塑材质、图形模块六类风格。
@@ -45,7 +52,7 @@ DIRcreative 是面向 **AI 影视前期制作的 Codex Skill**。从一句创意
 
 需要支持 Skills 的 Codex 环境与 Python 3.10 及以上。图像、视频、转录和媒体下载服务各有自己的运行要求。
 
-**正式版本安装**：从 [GitHub Releases](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/releases/latest) 下载归档与校验文件，按[精确 tag 安装说明](README.technical.md#verified-release-install)完成验证。当前源码版本为 **v0.10.0**；已发布版本以 Release 中的实际资产为准。
+**正式版本安装**：从 [GitHub Releases](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/releases/latest) 下载归档与校验文件，按[精确 tag 安装说明](README.technical.md#verified-release-install)完成验证。当前源码版本为 **v0.11.0**；已发布版本以 Release 中的实际资产为准。
 
 安装开发副本：
 

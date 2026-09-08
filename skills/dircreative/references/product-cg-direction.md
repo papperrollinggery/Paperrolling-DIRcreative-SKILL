@@ -127,8 +127,8 @@ fields, local changes in `shot.look_delta`, and actions/joins in their existing
 shot fields. State the chosen CG treatment in `project.intended_use` or optional
 `video_quality.style`; use other optional quality overrides when an authored
 lighting, optics, cadence or material law needs exact wording. Do not add an
-unsupported `render_look.medium` field or an independent CG prefix. The twelve
-quality sections, model-specific bindings and sound-generation boundary remain.
+unsupported `render_look.medium` field or an independent CG prefix. Source-derived quality direction, model-specific bindings and the
+sound-generation boundary remain; irrelevant quality categories stay omitted.
 
 A concrete example and the evidence scope are in the
 [product CG examples](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/blob/main/examples/product-cg-style-library/README.md).

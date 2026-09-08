@@ -34,6 +34,14 @@ Start with the work you need. A small edit stays small; a complete preproduction
 
 Outputs depend on the requested scope and available providers. A prompt is ready for submission only after its actual references and model requirements are checked. Image generation, video generation and final approval remain distinct steps.
 
+## Scene-led video prompts
+
+Prompt structure follows the scene: stable references and design, then evolving
+action, performance, environment, camera and sound. Authored detail is preserved;
+unrequested cinematic prefixes and rhythm formulas are not added. Browse
+[six contrasting prompt examples](examples/prompt-structure-quality/README.md)
+and the [source-backed research and limits](docs/film-preproduction/research/prompt-structure-20260909.md).
+
 ## Product CG styles
 
 Choose from six optional families: dry powder, precision hard surfaces, elastic
@@ -46,7 +54,7 @@ See the [product CG library and test boundaries](examples/product-cg-style-libra
 
 You need a Codex environment with Skills support and Python 3.10 or newer. Image, video, transcription and media-download services have their own requirements.
 
-For a **verified release installation**, download the archive and checksums from [GitHub Releases](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/releases/latest), then follow the [exact-tag installation guide](README.technical.md#verified-release-install). The source version is **v0.10.0**; release assets are authoritative for published availability.
+For a **verified release installation**, download the archive and checksums from [GitHub Releases](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/releases/latest), then follow the [exact-tag installation guide](README.technical.md#verified-release-install). The source version is **v0.11.0**; release assets are authoritative for published availability.
 
 For a development copy:
 

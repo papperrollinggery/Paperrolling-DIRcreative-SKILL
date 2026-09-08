@@ -2708,12 +2708,11 @@ def validate_production_prompt_discipline() -> None:
         "negative check",
         "prompt-window hygiene",
         "falsifiable success rubric",
-        "model: which target model",
-        "camera: one motivated camera behavior",
-        "subject:",
-        "look: lighting",
-        "action:",
-        "camera + subject + action + setting + style + lighting",
+        "skills/dircreative/references/prompt-structure.md",
+        "stable design",
+        "causal events",
+        "camera, environment, performance",
+        "sound and outgoing state",
         "retries change one production variable at a time",
         "adding an mcp dependency",
         "thread history",
@@ -2738,6 +2737,9 @@ def validate_production_prompt_discipline() -> None:
     ]
     missing = [term for term in required_terms if term not in lower]
     require(not missing, f"{path} missing discipline terms: {missing}")
+    # Validate maintained method linkage, not a mandatory five/six/twelve-heading
+    # recipe. Creative effectiveness is checked with authored scenes and output.
+    require_path("skills/dircreative/references/prompt-structure.md")
 
     root = require_path("skills/dircreative/SKILL.md").read_text(encoding="utf-8")
     delivery_route = require_path("skills/dircreative/routes/delivery-audit.md").read_text(encoding="utf-8")

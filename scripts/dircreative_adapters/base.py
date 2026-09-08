@@ -65,6 +65,61 @@ def clean(value: Any) -> str:
     return re.sub(r"\s+", " ", str(value)).strip().rstrip(".")
 
 
+def shot_reference_labels(shots: list[dict[str, Any]]) -> dict[str, str]:
+    """Map canonical IDs to a readable ordinal and time range for model prompts."""
+    labels: dict[str, str] = {}
+    for ordinal, shot in enumerate(shots, start=1):
+        shot_id = shot.get("shot_id")
+        if isinstance(shot_id, str) and shot_id:
+            labels[shot_id.casefold()] = (
+                f"view {ordinal} ({time_label(shot['time_start'])}-{time_label(shot['time_end'])})"
+            )
+    return labels
+
+
+def crosswalk_shot_references(value: Any, labels: dict[str, str]) -> str:
+    """Replace only known canonical shot IDs; unknown IDs remain fail-closed."""
+    text = clean(value)
+
+    def replace(match: re.Match[str]) -> str:
+        label = labels.get(match.group(0).casefold())
+        if label is None:
+            raise AdapterContractError(f"unresolved_prompt_shot_reference: {match.group(0)}")
+        return label
+
+    return INTERNAL_SURFACE_PATTERNS["internal_shot_or_asset_label"].sub(replace, text)
+
+
+def unit_shot_reference_labels(
+    shots: list[dict[str, Any]], unit_shot_ids: set[str], unit_start: float,
+) -> dict[str, str]:
+    """Keep unit prompts local; references outside its range become continuity context."""
+    labels: dict[str, str] = {}
+    local_shots = [shot for shot in shots if shot["shot_id"] in unit_shot_ids]
+    for ordinal, shot in enumerate(local_shots, start=1):
+        labels[shot["shot_id"].casefold()] = (
+            f"view {ordinal} ({time_label(time_value(shot['time_start']) - unit_start)}-"
+            f"{time_label(time_value(shot['time_end']) - unit_start)})"
+        )
+    for shot in shots:
+        key = shot["shot_id"].casefold()
+        if key not in labels:
+            labels[key] = "the external continuity context"
+    return labels
+
+
+def transition_endpoints(item: dict[str, Any], shot_ids: set[str]) -> tuple[str, str] | None:
+    """Resolve an explicit ``from_to`` boundary when legacy text permits it."""
+    boundary = clean(item.get("boundary", ""))
+    matches = [
+        (source, destination)
+        for source in shot_ids
+        for destination in shot_ids
+        if boundary == f"{source}_to_{destination}"
+    ]
+    return matches[0] if len(matches) == 1 else None
+
+
 def ordered_attached_references(payload: dict[str, Any]) -> list[dict[str, Any]]:
     """Return attachments in the actual upload order.
 
@@ -132,6 +187,17 @@ def look_text(layer: dict[str, Any]) -> str:
         for item in ordered
         if item and clean(item).lower() != "none by design"
     )
+
+
+def transition_text(item: dict[str, Any], native_audio: bool, labels: dict[str, str]) -> str:
+    """Render only model-facing bridge facts, never the planning boundary key."""
+    parts = [
+        f"Visual bridge: {crosswalk_shot_references(item['visual_bridge'], labels)}",
+        f"Continuity: {crosswalk_shot_references(item['continuity_state'], labels)}",
+    ]
+    if native_audio and item.get("audio_bridge") and clean(item["audio_bridge"]):
+        parts.append(f"Audio bridge: {crosswalk_shot_references(item['audio_bridge'], labels)}")
+    return ". ".join(parts) + "."
 
 
 def shared_surface_errors(text: str, allowed_slots: set[str]) -> list[str]:
@@ -273,21 +339,48 @@ class PromptAdapter:
         ]
         if render.native_audio:
             handoff_lines.append(f"Carry the audio boundary as {clean(unit['audio_handoff'])}.")
-        shot_map = {shot["shot_id"]: shot for shot in payload["shot_blocks"]}
+        ordered_shots = sorted(payload["shot_blocks"], key=lambda item: time_value(item["time_start"]))
+        shot_map = {shot["shot_id"]: shot for shot in ordered_shots}
+        scoped_ids = set(unit["shot_ids"])
+        local_labels = unit_shot_reference_labels(ordered_shots, scoped_ids, unit_start)
+        global_labels = shot_reference_labels(ordered_shots)
         local_timeline: list[str] = []
         for shot_id in unit["shot_ids"]:
             shot = shot_map[shot_id]
             local_start = time_value(shot["time_start"]) - unit_start
             local_end = time_value(shot["time_end"]) - unit_start
-            local_timeline.append(
-                f"{time_label(local_start)}-{time_label(local_end)}: {render.timeline_bodies[shot_id]}"
-            )
+            local_body = render.timeline_bodies[shot_id]
+            for global_id, local_label in local_labels.items():
+                global_label = global_labels[global_id]
+                local_body = local_body.replace(global_label, local_label)
+            for cue in shot["audio_cues"]:
+                if not isinstance(cue, dict) or "time" not in cue:
+                    continue
+                source = f"{clean(cue['time'])} {clean(cue['kind'])}"
+                rebased = f"{time_label(time_value(cue['time']) - unit_start)} {clean(cue['kind'])}"
+                local_body = local_body.replace(source, rebased)
+            local_timeline.append(f"{time_label(local_start)}-{time_label(local_end)}: {local_body}")
         sections = [
             *local_prefix,
             "State continuity:\n" + "\n".join(handoff_lines),
             "Timeline:\n" + "\n".join(local_timeline),
             *look_sections,
         ]
+        ordered_ids = {shot["shot_id"] for shot in ordered_shots}
+        labels = local_labels
+        transitions = [item for item in payload.get("transition_plan", []) if isinstance(item, dict)]
+        if scoped_ids == ordered_ids:
+            scoped_transitions = [transition_text(item, render.native_audio, labels) for item in transitions]
+        else:
+            scoped_transitions = [
+                transition_text(item, render.native_audio, labels)
+                for item in transitions
+                if (endpoints := transition_endpoints(item, ordered_ids)) is not None
+                and endpoints[0] in scoped_ids
+                and endpoints[1] in scoped_ids
+            ]
+        if scoped_transitions:
+            sections.append("Transitions:\n" + "\n".join(scoped_transitions))
         prompt = "\n\n".join(sections).strip() + "\n"
         errors = self.surface_errors(prompt, payload)
         if errors:
@@ -350,7 +443,10 @@ class PromptAdapter:
         timeline_lines: list[str] = []
         timeline_bodies: dict[str, str] = {}
         postproduction_audio: list[str] = []
-        for shot in sorted(payload["shot_blocks"], key=lambda item: time_value(item["time_start"])):
+        ordered_shots = sorted(payload["shot_blocks"], key=lambda item: time_value(item["time_start"]))
+        labels = shot_reference_labels(ordered_shots)
+        shot_ids = {shot["shot_id"] for shot in ordered_shots}
+        for shot in ordered_shots:
             parts = [clean(shot["story_beat"]), clean(shot["emotional_or_attention_beat"])]
             for action in shot["entity_actions"]:
                 owner = clean(entity_names[action["owner_entity_id"]])
@@ -373,9 +469,17 @@ class PromptAdapter:
                 f"{clean(camera['shot_size'])}, {clean(camera['angle_height_axis'])}, {clean(camera['support'])}; "
                 f"start on {clean(camera['start_target'])}, {clean(camera['path'])}, end on {clean(camera['end_target'])}; "
                 f"{clean(camera['speed_easing'])}; focus {clean(camera['focus'])}. "
-                f"The move is motivated by {clean(camera['motivation'])}"
+                f"The move is motivated by {clean(camera['motivation'])}. "
+                f"Lens rationale: {clean(camera['lens_feel_reason'])}"
             )
             parts.append("Composition: " + clean(shot["composition_state"]))
+            if shot.get("transition_in") and clean(shot["transition_in"]):
+                parts.append("Enter via " + crosswalk_shot_references(shot["transition_in"], labels))
+            if shot.get("transition_out") and clean(shot["transition_out"]):
+                parts.append("Exit via " + crosswalk_shot_references(shot["transition_out"], labels))
+            shot_locks = [clean(value) for value in shot.get("continuity_locks", []) if clean(value)]
+            if shot_locks:
+                parts.append("Preserve shot continuity: " + "; ".join(shot_locks))
             if shot.get("look_delta") and clean(shot["look_delta"]).lower() != "none by design":
                 parts.append("Look change: " + clean(shot["look_delta"]))
             cue_texts = []
@@ -417,9 +521,7 @@ class PromptAdapter:
         if transitions:
             transition_lines = []
             for item in transitions:
-                transition_lines.append(
-                    f"{clean(item['visual_bridge'])}; preserve {clean(item['continuity_state'])}."
-                )
+                transition_lines.append(transition_text(item, native_audio, labels))
                 if item.get("audio_bridge") and not native_audio:
                     postproduction_audio.append(clean(item["audio_bridge"]))
             sections.append("Transitions:\n" + "\n".join(transition_lines))

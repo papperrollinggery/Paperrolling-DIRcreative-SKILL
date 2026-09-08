@@ -5,15 +5,21 @@ then essential bindings. Do not imply generation or media exists.
 
 ## Content and structure
 
-Video starts with Style, Cinematography, Lighting, Color, Camera, Skin, Acting,
-Physics, Composition, Continuity, Technical and Audio, then concrete shots.
-Use declared scene facts; `video-quality-prefix.md` is optional detail. One block
-per submission, not per shot. Image work keeps still-image rules. The user's
-structure overrides a collaborator's default heading-free prose.
+Use `prompt-structure.md` for scene-led structure: establish the relevant intent,
+reference roles and stable facts once, then write the evolving events with their
+camera, environment, performance and sound. Simple beats can remain natural
+paragraphs; multi-shot work can use a compact context plus timeline. Retain
+source-authored craft, not an automatic twelve-part cinematic prefix. The user
+may request a structured quality block; `video-quality-prefix.md` then describes
+how authored fields are carried once per submission. Image work keeps still-image
+rules. Do not add missing fields merely to fill a format.
 
 Keep a complete tested prompt as the authored baseline. Change only requested
 or demonstrably conflicting content; do not automatically translate, expand or
-add a style capsule. Formal bindings, when needed, are mechanical metadata.
+add a style capsule. When an upload-order correction keeps exactly the same input set, renumber it
+mechanically. If files were added, removed or changed, inspect those inputs and
+reconcile their roles and temporal state; a screenshot order is not reference
+suitability or proof of generation.
 
 Resolve the relevant visible facts before surface adaptation:
 

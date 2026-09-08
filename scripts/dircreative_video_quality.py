@@ -61,6 +61,27 @@ def _audio_text(payload: dict[str, Any], unit: dict[str, Any] | None) -> str:
         parts.append(f"music: {music}")
     else:
         parts.append("no score")
+    all_shot_ids = {shot.get("shot_id") for shot in payload.get("shot_blocks", []) if isinstance(shot, dict)}
+    unit_shot_ids = set(unit.get("shot_ids", [])) if isinstance(unit, dict) else set()
+    if unit is not None and unit_shot_ids != all_shot_ids:
+        entities = {
+            item.get("entity_id"): _text(item.get("external_name"))
+            for item in payload.get("entities", [])
+            if isinstance(item, dict)
+        }
+        scoped_events = []
+        for shot in _unit_shots(payload, unit):
+            for cue in shot.get("audio_cues", []):
+                if isinstance(cue, str) and _planned(cue):
+                    scoped_events.append(f"sound event: {_planned(cue)}")
+                elif isinstance(cue, dict) and _planned(cue.get("cue")):
+                    source_id = cue.get("speaker_entity_id") or cue.get("source_entity_id")
+                    source = entities.get(source_id, "")
+                    source_text = f" from {source}" if source else ""
+                    scoped_events.append(
+                        f"{_planned(cue.get('kind')) or 'sound event'}{source_text}: {_planned(cue.get('cue'))}"
+                    )
+        parts.extend(dict.fromkeys(scoped_events))
     if payload.get("output", {}).get("text_policy") != "exact_text":
         parts.append("no subtitles")
     return "; ".join(parts) or "no generated audio content"
@@ -79,11 +100,11 @@ def _optics_text(layer: Any) -> str:
 
 
 def build_video_quality_prefix(payload: dict[str, Any], unit: dict[str, Any] | None = None) -> str:
-    """Return exactly twelve ordered prefix lines for one video submission.
+    """Render only the relevant, authored quality directions for a submission.
 
-    `video_quality` is an optional explicit twelve-key override map, not a
-    mandatory schema field. Existing PromptIR facts remain the source for look,
-    camera, continuity and audio.
+    ``video_quality`` may explicitly supply any of the ordered directions.  In
+    its absence, PromptIR facts are forwarded without inventing a camera,
+    cadence, human detail, or visual medium.
     """
     if not isinstance(payload, dict):
         raise ValueError("prompt_ir_payload_required")
@@ -104,14 +125,12 @@ def build_video_quality_prefix(payload: dict[str, Any], unit: dict[str, Any] | N
     route = (payload.get("audio_plan") or {}).get("generation_route") if isinstance(payload.get("audio_plan"), dict) else None
     if route in NATIVE_AUDIO_ROUTES:
         all_locks.extend(_items(locks.get("audio_spine")))
-    human_present = any(entity.get("entity_type") in {"human", "character", "person"} for entity in payload.get("entities", []) if isinstance(entity, dict))
-    # Preserve existing medium statements without requiring an extra override.
-    # Conservatively retain the source wording even when it mentions a medium
-    # as an exclusion; never invert it into a mandatory photoreal treatment.
+    # Preserve source medium statements without converting them into a generic
+    # photoreal or live-action requirement.
     medium_source = [_text(payload.get("project", {}).get("intended_use")),
                      *_items(look.get("preserve")), *_items(locks.get("palette_material"))]
     medium_pattern = re.compile(
-        r"\b(?:photoreal(?:istic)?[_ -]?cg|stylized[_ -]?cg|animat\w*|anime|cartoon|"
+        r"\b(?:photoreal(?:istic)?[_ -]?cg|stylized[_ -]?cg|animat\w*|anime|cartoon|2d|"
         r"illustrat\w*|stop[- ]?motion|claymation|watercolo[u]?r|pixel[- ]art|hand[- ]drawn|"
         r"stylized|stylised|3d|cgi|cg|cel[- ]shad\w*|game[- ](?:engine|cutscene))\b|"
         r"产品\s*(?:cg|cgi)|(?:cg|cgi)\s*(?:产品|广告|材质|微距)|动画|插画|定格|漫画|水彩|手绘|像素画|游戏引擎|过场动画",
@@ -123,40 +142,41 @@ def build_video_quality_prefix(payload: dict[str, Any], unit: dict[str, Any] | N
         or MEDIUM_NEGATION_RE.search(item)
         or MEDIUM_CHINESE_NEGATION_RE.search(item)
     ]
-    explicit_style = _text(overrides.get("style"))
-    alternate_medium = bool(stated_medium or medium_pattern.search(explicit_style))
-    values = {
-        "style": "8K IMAX photoreal cinema, live-action presence, not 3D or game-cutscene rendering",
-        "cinematography": (
-            "camera shares physical space with performers; painterly silhouette and motivated observation"
-            if human_present else
-            "camera observes the declared subject and material in physical or virtual space; motivated framing and readable surface detail"
-        ),
-        "lighting": (lighting + (f"; atmosphere: {atmosphere}" if atmosphere else "")) or "natural sky or window motivated key, backlight, shadow-side camera placement and gentle atmospheric haze",
-        "color": (grade + "; maintain a 60:30:10 palette hierarchy") if grade else "60:30:10 palette hierarchy anchored to declared wardrobe, props and environment",
-        "camera": "; ".join(item for item in (optics, lens, "cinematic 180-degree-shutter motion character, motivated movement and stable spatial axis") if item),
-        "skin": "visible pores, fine vellus hair, asymmetric lived-in detail and natural micro-redness" if human_present else "material-appropriate microtexture, asymmetric detail and physically credible surface response",
-        "acting": "accurate eyelines, readable listener reactions, brief pauses, moist eye catchlights and breathing" if human_present else "declared attention, reaction timing and motion cues remain readable",
-        "physics": "gravity, inertia, weight transfer, contact, cloth and object consequences remain physically legible",
-        "composition": "; ".join(dict.fromkeys(item for item in (
-            *(_text(composition.get(key)) for key in ("visual_center", "subject_hierarchy", "foreground_midground_background", "negative_space", "movement_room", "screen_direction", "balance_symmetry", "leading_lines_occlusion_parallax", "perspective_depth")),
-            "painterly thirds or golden-ratio relationships within the declared composition",
-            "from the first frame, sustain the declared action or restrained living stillness",
-        ) if item)),
-        "continuity": "; ".join(item for item in (*all_locks, *_items(look.get("preserve")), _text(look.get("exit_or_continuity"))) if item) or "preserve declared identity, props, environment, screen direction and exit state across cuts",
-        "technical": "requested 24 fps smooth cinematic motion with 8K-detail intent, stable focus and no jitter",
-        "audio": _audio_text(payload, unit),
-    }
-    if alternate_medium:
-        if not explicit_style:
-            values["style"] = "; ".join(stated_medium) + "; preserve this declared visual treatment and coherent detail"
-        values["skin"] = "preserve the declared character and surface rendering; detail follows the chosen medium and shot scale"
-        values["technical"] = "preserve declared cadence and detail treatment; coherent motion and stable framing"
+    values: dict[str, str] = {}
+    if stated_medium:
+        values["style"] = "; ".join(dict.fromkeys(stated_medium))
+    if lighting or atmosphere:
+        values["lighting"] = "; ".join(item for item in (lighting, f"atmosphere: {atmosphere}" if atmosphere else "") if item)
+    if grade:
+        values["color"] = grade
+    if optics or lens:
+        values["camera"] = "; ".join(item for item in (optics, lens) if item)
+    composition_values = [
+        _planned(composition.get(key))
+        for key in (
+            "visual_center", "subject_hierarchy", "foreground_midground_background",
+            "negative_space", "movement_room", "screen_direction", "balance_symmetry",
+            "leading_lines_occlusion_parallax", "perspective_depth",
+        )
+    ]
+    if any(composition_values):
+        values["composition"] = "; ".join(dict.fromkeys(item for item in composition_values if item))
+    continuity_values = [
+        *all_locks,
+        *_items(look.get("preserve")),
+        _planned(look.get("exit_or_continuity")),
+    ]
+    if any(continuity_values):
+        values["continuity"] = "; ".join(dict.fromkeys(item for item in continuity_values if item))
+    if isinstance(payload.get("audio_plan"), dict):
+        values["audio"] = _audio_text(payload, unit)
     rendered = []
     for label, key in ORDER:
-        value = _text(overrides.get(key)) or values[key]
+        value = _text(overrides.get(key)) or values.get(key)
+        if not value:
+            continue
         if key == "audio" and route not in NATIVE_AUDIO_ROUTES:
-            value = values[key]
+            value = _audio_text(payload, unit)
         rendered.append(f"{label}: {value}.")
     return "\n".join(rendered)
 

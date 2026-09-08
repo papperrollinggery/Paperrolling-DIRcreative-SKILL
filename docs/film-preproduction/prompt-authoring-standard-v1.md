@@ -1,6 +1,6 @@
 # DIRcreative Prompt Authoring Standard v1.0
 
-状态：规范草案，供 PRD 实现与后续 skill 编译使用
+状态：维护中的创作与编译规范；2026-09-09 更新视频结构，运行能力以当前 exact card 为准。
 
 适用：广告、电影预演、产品片、短剧、社媒视频、参考图组、clean frame、图像 prompt、视频 prompt。
 
@@ -43,21 +43,17 @@
 
 ### 1.3 正式输出的顺序
 
-统一使用以下顺序，再由具体模型 adapter 压缩或改写：
+视频写作以 `skills/dircreative/references/prompt-structure.md` 为统一方法，区分输入职责、稳定事实与逐拍变化。内部 IR 完整保留专业信息，模型文本按场景组织，不强制填满十一段或十二段标题。可采用：
 
 ~~~text
-A. Contract / asset role
-B. Reference map
-C. Creative purpose
-D. Global locks
-E. Composition / visual hierarchy
-F. Subject / object / environment
-G. Camera / lens / focus
-H. Lighting / optics / atmosphere / grade
-I. Time / beat / transition
-J. Audio
-K. Model-facing constraints / targeted avoid
+创作意图与媒介
+实际参考职责、人物/产品与空间的稳定事实
+连续事件：当前关系 → 触发/动作 → 结果/接力，关联本拍摄影、表演、环境和声音
+确实跨镜生效的视觉、声音与连续性方向
+针对当前误读的少量约束
 ~~~
+
+以上是内容职责，不是固定顺序。短图生视频可以是一段自然语言；长序列写共用上下文加时间轴；字效、产品、表演、动作和环境片各有主导信息。用户指定的格式和已经有效的原稿优先保留。独特风格、材质、身材比例与对白不能因精简被删除。模型名、参数、授权、资产审批与缺失槽位留在执行包；真实绑定只输出已附加且允许当前角色的素材。
 
 `QA / retry`、score、failure id、source path/hash、rights receipt 和能力证据属于内部 IR/manifest。它们在 prompt 编译完成后运行，不进入最终粘贴给模型的文本。只有可观察的 preserve、forbidden change 和当前失败风险可以被 adapter 编译成模型约束。
 
@@ -318,7 +314,7 @@ Seedance 2.0 的最终文本必须优先采用：
 REFERENCE MAP
 @Image 1 = <role + preserve + direct-use policy>
 @Image 2 = <role + preserve + secondary visual target>
-@Image 3 = <planning-only role + anti-misread>
+<planning-only assets stay outside the model prompt; no platform slot>
 @Audio1 = <audio role + rhythm / sound characteristics>
 
 CREATIVE PURPOSE
@@ -347,7 +343,7 @@ GUARDRAILS
 
 ~~~
 
-如果平台不需要章节标题，adapter 可以将这些内容编译为自然段；内部 manifest 仍保留完整字段。
+这是复杂序列的一种排版示例。按当前场景裁剪，简单事件可用自然段，内部 manifest 保留必要字段。角色/环境/动作参考不自动成为首帧；所有实际引用都需与真实上传文件和职责相符。
 
 ### 4.3 Subject / object / environment 三层
 
@@ -377,13 +373,13 @@ Trigger: <what causes movement>
 Motion path: <from -> through -> to>
 Interaction: <touch / collision / magnet / hinge / gravity>
 Physical consequence: <shadow / reflection / debris / light / sound>
-End state: <stable final state>
-Continuity: <must remain unchanged>
+End state: <visible resulting state, including continuing motion>
+Continuity: <stable design and changes that must persist>
 ~~~
 
 #### 环境层
 
-环境不是静态背景。要声明：
+环境可以持续运动、受主体影响，也可以按设计保持静止或作为唯一主体。对本镜实际出现的内容声明：
 
 - 空气、雾、烟、雨、尘、光束、反射、阴影如何动。
 - 背景运动和主体运动的速度关系。
@@ -392,7 +388,7 @@ Continuity: <must remain unchanged>
 
 ### 4.4 摄影机语言规范
 
-每个 shot 只有一个主镜头动作。复合运镜拆成顺序步骤。
+每个 shot 有清楚的主运镜意图；复合运镜按事件写顺序和观察目标，不把多条同时矛盾的相机命令叠在一起。主事件可包含连续攻防或一组因果动作，不等于每镜只能有一个动词。
 
 | 运镜 | 必须写清 | 典型动机 |
 | --- | --- | --- |
@@ -492,54 +488,17 @@ render_look:
 
 ### 4.5 时间轴规范
 
-#### 10 秒广告
+按事件的真实表演容量分配时间，不套用固定的开场铺垫、慢动作次数或三秒收尾。区分人物/物体速度、相机速度、剪辑频率与播放速度；快切不能代替身体位移，沉重也不等于全片慢放。
 
-不要只写 0–3 / 3–6 / 6–10 三块空泛概念，而写成以下密度：
+每个区间只写当前变化。共用身份、几何、环境光源与材质先写一次；持握、损坏、位置、表情、支撑与遮挡随事件推进。前一动作的收势可成为下一动作的起势，接触、衣料、呼吸与环境反应可以重叠，不需要逐项停住供模型演示。
 
-~~~text
-00.00–00.80  initial state / hook
-00.80–01.60  first visible motion
-01.60–02.50  reveal or pause
-02.50–03.00  transition bridge
-03.00–04.00  new shot settles
-04.00–05.00  object/material action
-05.00–05.50  sound or focus accent
-05.50–06.50  payoff setup
-06.50–07.50  primary reveal / turn
-07.50–08.80  final composition / negative space
-08.80–10.00  hold / end-card-safe state
-~~~
+- 短单镜：一个可读的变化，从当前状态直接推进到所需结果或继续中的动势。
+- 多镜短片：按叙事信息、身体路径和接镜需要选区间；可以开场已在运动，也可以在真正需要时停留。高潮、字效可读窗与对白均按本片分配。
+- 长序列：先保证故事与时态接续，再按所选模型真实能力拆生成单元。不因超过15秒就必拆，也不因支持30秒就塞满或牺牲可读性。
 
-每一格只写本区间发生的状态增量。主体、表情、道具、环境、摄影机、焦点、Look、声音和连续性中没有变化的字段留在内部 state ledger，不在终端 prompt 逐格重复。每格至少有一个可观察变化和一个明确结束状态。
+一个镜头的终态可继续运动；只有当前设计需要时才保持终帧。慢镜要交代进入事件、仍运动的元素和恢复正常速度的位置。人物反应停顿是表演，不自动等于慢动作播放。
 
-#### 15 秒广告/短片
-
-15 秒先按叙事功能分为 4–6 个状态变化，再由 exact-card adapter 决定一段生成或逐镜头生成：
-
-~~~text
-00.00–02.00  hook / initial relationship
-02.00–05.00  setup / ownership / spatial lock
-05.00–09.00  primary interaction
-09.00–12.00 consequence / reveal
-12.00–15.00 payoff / dialogue or final hold
-~~~
-
-这不是固定镜头数或模型能力声明。复杂多人动作优先拆镜头；单一连续表演可以合并区间。
-
-#### 30 秒 sequence
-
-30 秒不是把 10 秒 prompt 乘三。先分 sequence function：
-
-~~~text
-00–05  hook / world rule
-05–11  subject and object setup
-11–17  first action / interaction
-17–22  escalation / transformation / reveal
-22–27  consequence / payoff
-27–30  final hold / CTA-safe composition
-~~~
-
-然后每个 sequence 再拆 shot。每个边界都要有完全相等的上一段 `outgoing_state` / 下一段 `incoming_state`，以及完全相等的 handoff key；同时记录构图状态、look continuity 和音频 handoff。超过单次生成上限时，最终交付必须逐 unit 编译为本地 0 秒时间轴，禁止把完整 30 秒 assembly plan 当成单次可执行文本。
+跨生成单元保持上一段 `outgoing_state` / 下一段 `incoming_state` 及 handoff key 一致，并保留构图、光色与音频接力。超过单次生成上限时逐 unit 编译为本地0秒时间轴，不把整片assembly plan当成单次可执行文本。时间码是明确的创作目标，执行准确度必须通过成片回看验证。
 
 ### 4.6 转场规范
 
@@ -770,7 +729,7 @@ it never silently truncates or continues.
 
 ### Image prompt 通过条件
 
-- Score ≥90。
+- 通过当前适用的结构与来源检查；分数只帮助定位覆盖缺口，不代表图像或视频质量。
 - 资产角色、标题层级、继承来源、direct-input policy 齐全。
 - visual decomposition 11 项齐全：subject、action/pose、details、environment、lighting、composition、style/camera、color、materials、proportion、intent。
 - composition card 明确视觉重心、层次、负空间、运动空间、遮挡/动线和构图目的。
@@ -781,9 +740,9 @@ it never silently truncates or continues.
 
 ### Video prompt 通过条件
 
-- Score ≥90。
+- 通过当前适用的结构与来源检查；分数只帮助定位覆盖缺口，不代表图像或视频质量。
 - 每个引用都能解析为 @Image/@Video/@Audio 或明确无引用。
-- 每个 shot 有一个主动作和一个主运镜。
+- 每个 shot 有一个可读的主事件和主运镜意图，连续攻防可以共享一镜；已有剧情的关键动作不因“一个主动作”被删掉。
 - 每个 shot 有构图状态和一个可解释的 composition purpose。
 - 每个启用的光学、空气介质和调色效果都有触发条件；不能用 generic filter 或 cinematic look 代替。
 - 时间轴没有无解释空档。

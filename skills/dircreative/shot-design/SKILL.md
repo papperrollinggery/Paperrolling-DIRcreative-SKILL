@@ -55,7 +55,9 @@ derived references or prompts stale.
 
 ## Rules
 
-- One main action per shot.
+- One intelligible main event per shot; a causal exchange may contain several
+  connected actions. Use `references/prompt-structure.md` when translating it to
+  video prose; do not turn readability into a universal one-verb or slow-motion rule.
 - Keep the intended action intensity and its preparation, force, contact,
   response and consequence. A single dramatic event can be fast and forceful;
   readability does not require slow, slight or contact-free movement. Storyboard

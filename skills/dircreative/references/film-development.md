@@ -123,7 +123,7 @@ Adapt to the request, usually in this order:
 For a whole-film shot table, keep one visible row per formal shot. Start each
 row with its canonical `S01`-style ID and include a continuous start-end
 timecode so the full duration can be checked without interpreting prose. Each
-row must make the start state, single action, end state, causal/match bridge,
+row must make the start state, connected main event, end state, causal/match bridge,
 media method, and continuity or ambiguity control recoverable from the row.
 
 Offer alternatives only for materially incompatible strategy; only then use
@@ -140,3 +140,5 @@ an explicitly selected provider. Follow that reference's evidence/preservation
 contract; protect IDs, timecodes, SUPER, claims and paste-ready model syntax.
 
 For explicit groups/parallel work follow `docs/film-preproduction/director-room-routing.md`.
+
+For video prose use `prompt-structure.md`: source facts, evolving events and their camera/sound.

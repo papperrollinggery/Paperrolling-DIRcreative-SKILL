@@ -59,45 +59,24 @@ If any check fails, stop before generation or external handoff and route to the 
 
 ## Video Prompt Structure
 
-Use a model-agnostic five-part discipline for every video prompt:
+Use `skills/dircreative/references/prompt-structure.md` as the maintained writing
+method. Model policy is resolved internally; copyable text carries the actual
+scene and supported references. Organize relevant intent, reference jobs and
+stable design once, then causal events with camera, environment, performance,
+sound and outgoing state. The order and heading count follow the scene and the
+user's format, not a universal Model-Camera-Subject-Look-Action template.
 
-```text
-Model policy -> Camera -> Subject -> Look -> Action
-```
+Preserve the original creative scope. One dominant event may contain a connected
+exchange; do not force it into one verb, slow movement or a held ending. An
+actual start frame differs from identity/style/motion reference. Environment
+changes and object ownership persist across cuts. A written avoid list cannot
+remove unwanted pixels from a reference: review actual inputs and resolve their
+jobs before export. Model-native audio and finishing cues keep distinct routes.
 
-- Model: which target model or prompt-only target is being prepared.
-- Camera: one motivated camera behavior with start and end target.
-- Subject: visible actor, product, prop, or scene owner inherited from source truth.
-- Look: lighting, material behavior, palette, style, and surface constraints.
-- Action: one primary action that fits the shot duration.
-
-Each model adapter may expand that into its own shape. A six-slot adapter is valid when the model benefits from explicit separation:
-
-```text
-camera + subject + action + setting + style + lighting
-```
-
-Rules:
-
-- camera must name physical start and end targets or explicitly stay locked-off,
-- subject must inherit identity/product locks instead of redesigning them,
-- action must fit the shot duration and input frame,
-- setting must inherit the scene/FOV source,
-- style and lighting must be concrete production constraints, not praise words,
-- audio is separate from visual prompting unless the target model supports native audio.
-
-Before finalizing a video prompt, reduce the shot to a micro-scene beat sheet:
-
-- initial visible state,
-- trigger or pressure,
-- subject action path,
-- camera start target,
-- camera end target,
-- timing beat or pause,
-- final visible state,
-- sound or silence policy when relevant.
-
-Reject prompts that combine several unrelated actions, multiple camera moves, and a slogan into one shot.
+The internal micro-scene check is current relation, trigger, owned path,
+consequence and next condition. It detects causal gaps, not required prose
+headings. Quality is judged on the scene, then on inspected generated output;
+field counts and prompt length do not prove fidelity or cinematic effect.
 
 ## Image Prompt Structure
 

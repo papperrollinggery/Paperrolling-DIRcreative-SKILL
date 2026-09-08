@@ -67,12 +67,14 @@ prompts for every requested unit; never concatenate them as one oversized call.
 Do not export a generation-ready run that pretends missing clean frames exist.
 Real video execution requires its own existing or new scoped authorization.
 
-Start every independently copyable video prompt with the 12-part cinematic
-quality prefix in `references/video-quality-prefix.md`, then the concrete shot
-content. Apply it once per submission, not before each shot. The canonical Prompt
-IR compiler supplies it; bounded prose uses the same structure. Declared film,
-lighting, audio and medium facts override defaults. Do not apply video motion,
-backlight or atmosphere defaults to static character-master images.
+Use `references/prompt-structure.md` for scene-led prompt construction. Place the
+necessary common intent, reference roles and stable facts once, then ordered
+visible events with their camera, environment, performance and sound. Simple
+beats may stay in one paragraph. The canonical Prompt IR compiler forwards
+source-derived quality direction (`references/video-quality-prefix.md`); it does
+not invent a twelve-part cinematic default. Preserve the user's explicit format
+and all relevant authored visual facts. Static assets retain their still-image
+rules.
 
 ## Visual Decision Contract
 
