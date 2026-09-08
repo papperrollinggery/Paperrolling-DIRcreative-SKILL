@@ -2,9 +2,12 @@
 
 > DIRcreative is a chat-first Codex Skill for AI film preproduction: reference-video analysis, creative direction, screenplay and dialogue development, production ledgers, detailed storyboards, visual asset planning, Seedance 2.5/2.0 prompt compilation, sound planning, and evidence-bound quality review before video generation.
 
-Use the root Skill as the only public entrypoint. External providers such as Sepia, Jingzao, and mr-li-seedance-25 remain optional host-installed capabilities. A planned prompt, local candidate, generated file, human approval, and published release are different states.
+Use the root Skill as the only public entrypoint. Internal modules ship with DIRcreative. The explicit dependency installer includes a licensed hash-locked humanizer-zh snapshot and can synchronize Jingzao from its official latest stable Release. Other providers, including Sepia and mr-li-seedance-25, remain separately installed; not every provider is bundled. Model and service access is not included. A planned prompt, local candidate, generated file, human approval, and published release are different states.
 
 ## Start here
+
+- [简体中文](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/blob/main/README.zh-CN.md): 中文项目介绍、安装、示例和能力边界。
+- [Dependencies](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/blob/main/docs/dependencies.md): Opt-in combined installation, official Jingzao updates, local-change preservation and redistribution boundaries.
 
 - [README](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/blob/main/README.md): Product definition, use cases, examples, installation, safety boundaries, and validation.
 - [DIRcreative Skill](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/blob/main/skills/dircreative/SKILL.md): Canonical Codex Skill entrypoint and routing contract.

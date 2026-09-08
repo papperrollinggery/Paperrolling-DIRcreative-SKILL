@@ -8,9 +8,12 @@ from pathlib import Path
 
 PACKAGE_ITEMS = [
     "README.md",
+    "README.technical.md",
+    "README.zh-CN.md",
     "llms.txt",
     "VERSION",
     "CHANGELOG.md",
+    "dependency-bundles",
     "docs",
     "examples",
     "scripts",

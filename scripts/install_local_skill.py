@@ -41,6 +41,8 @@ from dircreative_verify_release import (
     strict_tree_manifest_from_fd,
     verify_release_detailed,
 )
+import dircreative_dependency_bundle as dependency_bundle
+import dircreative_jingzao_updater as jingzao_updater
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -50,6 +52,7 @@ FORMAL_INSTALL_TARGETS = (
     Path.home() / ".codex" / "skills" / "dircreative",
 )
 INTERNAL_SKILL_FILE = "INTERNAL_SKILL.md"
+LICENSED_DEPENDENCY_MANIFEST = ROOT / "dependency-bundles" / "humanizer-zh" / "manifest.json"
 
 
 def root_skill_source(base: Path = ROOT) -> Path:
@@ -1591,7 +1594,9 @@ def strip_skill_frontmatter(path: Path) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Install DIRcreative as a local Codex skill package.")
-    parser.add_argument("--target", default=str(DEFAULT_TARGET), help="Install target directory.")
+    parser.add_argument("--target", help="Install target directory.")
+    parser.add_argument("--skills-root", type=Path, help="Skills root; installs DIRcreative at <root>/dircreative.")
+    parser.add_argument("--with-dependencies", action="store_true", help="Explicitly install licensed local dependencies and sync Jingzao from its official latest stable Release.")
     parser.add_argument(
         "--formal-install",
         action="store_true",
@@ -1615,7 +1620,16 @@ def main() -> int:
 
     if args.self_test:
         return self_test()
-    expanded_target = Path(args.target).expanduser()
+    if args.target and args.skills_root:
+        parser.error("choose either --target or --skills-root")
+    if args.with_dependencies and args.skills_root is None:
+        parser.error("--with-dependencies requires an explicit --skills-root")
+    requested_target = args.target
+    if args.skills_root is not None:
+        requested_target = str(args.skills_root.expanduser() / "dircreative")
+    if requested_target is None:
+        requested_target = str(DEFAULT_TARGET)
+    expanded_target = Path(requested_target).expanduser()
     absolute_target = Path(os.path.abspath(expanded_target))
     target = absolute_target.parent.resolve(strict=False) / absolute_target.name
     try:
@@ -1668,12 +1682,26 @@ def main() -> int:
         print(f"DIRCREATIVE_INSTALL: FAIL: {exc}", file=sys.stderr)
         return 1
     print(f"installed DIRcreative skill package: {target}")
+    dependency_result: dict[str, object] | None = None
+    if args.with_dependencies:
+        skills_root = args.skills_root.expanduser()
+        offline = dependency_bundle.install_bundle(
+            LICENSED_DEPENDENCY_MANIFEST, skills_root,
+            source_root=LICENSED_DEPENDENCY_MANIFEST.parent,
+        )
+        remote = jingzao_updater.sync_jingzao(skills_root)
+        dependency_result = {"licensed_offline": offline, "jingzao": remote}
+        print(json.dumps({"dependencies": dependency_result}, ensure_ascii=False, indent=2, sort_keys=True))
     print("verify with:")
     print(f"  cd {target}")
     validation_flags = "--installed-package"
     if not args.formal_install:
         validation_flags += " --allow-development-install"
     print(f"  python3 scripts/validate_project.py {validation_flags}")
+    if dependency_result is not None and any(
+        value.get("status") != "ok" for value in dependency_result.values() if isinstance(value, dict)
+    ):
+        return 2
     return 0
 
 

@@ -2276,7 +2276,7 @@ def validate_adco_native_integration_contract() -> None:
         encoding="utf-8"
     )
     thread_text = require_path("docs/film-preproduction/thread-orchestration-protocol.md").read_text(encoding="utf-8")
-    readme_text = require_path("README.md").read_text(encoding="utf-8")
+    readme_text = require_path("README.technical.md").read_text(encoding="utf-8")
     release_text = require_path("scripts/dircreative_release_gate.py").read_text(encoding="utf-8")
 
     per_surface_terms = {
@@ -6454,6 +6454,8 @@ def validate_release_distribution_contract() -> None:
         "https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL",
     ):
         require(term in llms_text, f"llms.txt missing discovery term: {term}")
+    require("README.technical.md" in readme, "README must link the verified-install technical guide")
+    readme = require_path("README.technical.md").read_text(encoding="utf-8")
     require("--expected-commit \"$EXPECTED_COMMIT\"" in readme, "formal install docs must bind archive metadata to the remote tag commit")
     require("refs/tags/$TAG^{}" in readme, "formal install docs must resolve the annotated remote tag commit")
     require("--formal-install" in readme, "formal install docs must explicitly authorize replacing the canonical installation")
@@ -6627,6 +6629,7 @@ def validate_specialized_capability_behavior_audits() -> None:
         "test_collaboration_routing.py", "test_skill_stack_provider_discovery.py",
         "test_runtime_audit_scope.py", "test_asset_prompt_surface.py",
         "test_installed_runtime_acceptance.py",
+        "test_dependency_bundle.py", "test_jingzao_updater.py",
     ):
         proc = run(["python3", "-m", "unittest", "discover", "-s", "tests", "-p", pattern, "-v"])
         require(proc.returncode == 0, f"runtime workflow regression {pattern} failed:\n{proc.stderr}\n{proc.stdout}")

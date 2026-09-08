@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.9.6 - 2026-09-08
+
+- Add opt-in dependency installation, a licensed hash-locked humanizer-zh snapshot, and an official Jingzao latest-stable-release updater. Preserve unmanaged installations, local edits and newer or unorderable versions; verify files and protect rollback without running upstream scripts.
+- Add Chinese and English product overviews, introduction artwork and static landing pages. Keep the detailed technical and verified-release guide, add dependency setup and provider availability documentation, and refresh search/social metadata and the machine-readable index.
+- Validate release-versus-tag selection, annotated tag resolution, edited and malformed receipts, concurrent edits, version protection, archive extraction and actual isolated public installation. Marketing illustrations are explicitly illustrative, not runtime acceptance evidence.
+
 ## 0.9.5 - 2026-09-08
 
 - Add public asset preparation and batch review commands over the existing provider, design, evidence and execution contracts. Reuse authored design passes and selected style capsules without task-local adapter scripts; retain actionable provider review results and immutable input bindings.

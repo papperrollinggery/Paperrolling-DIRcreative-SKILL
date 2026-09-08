@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "bundle_id": "dircreative-licensed-dependencies",
+  "skills": [
+    {
+      "skill_id": "humanizer-zh",
+      "version": "1.0.0-local",
+      "source": {
+        "directory": "source",
+        "reference": "MIT license confirmed from installed source"
+      },
+      "relative_directory": "humanizer-zh",
+      "files": [
+        {
+          "path": "LICENSE",
+          "sha256": "aa00e74769e1b9d8e7fa7094dbfcca9b129a0ded6dce1cf4da050b99146d2fa7",
+          "executable": false
+        },
+        {
+          "path": "README.md",
+          "sha256": "60cd3ed8b4753837ca8f8fcebf6076a38591a269d91ea1791aa7448e5a1b1b58",
+          "executable": false
+        },
+        {
+          "path": "SKILL.md",
+          "sha256": "e0edbdbc9008644263d5573fb59beac95794e188fd99c35012bfd79e9ae4beeb",
+          "executable": false,
+          "source_path": "SKILL.payload"
+        }
+      ]
+    }
+  ]
+}
