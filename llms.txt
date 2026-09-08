@@ -1,0 +1,9 @@
+# DIRcreative
+
+DIRcreative is a chat-first film preproduction Skill for Codex. It develops stories, screenplays, shots, visual-asset plans, continuity decisions, and model-ready prompts before image or video generation.
+
+Source: https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL
+Release downloads: https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/releases/latest
+Documentation: https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL#documentation
+
+Use the root `$dircreative` invocation in a Codex task. Published releases include only dependency snapshots that their licenses permit. External providers, including Jingzao, are independently installed and versioned.

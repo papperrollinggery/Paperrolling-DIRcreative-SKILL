@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://papperrollinggery.github.io/Paperrolling-DIRcreative-SKILL/sitemap.xml
