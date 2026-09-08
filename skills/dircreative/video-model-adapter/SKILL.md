@@ -67,6 +67,13 @@ prompts for every requested unit; never concatenate them as one oversized call.
 Do not export a generation-ready run that pretends missing clean frames exist.
 Real video execution requires its own existing or new scoped authorization.
 
+Start every independently copyable video prompt with the 12-part cinematic
+quality prefix in `references/video-quality-prefix.md`, then the concrete shot
+content. Apply it once per submission, not before each shot. The canonical Prompt
+IR compiler supplies it; bounded prose uses the same structure. Declared film,
+lighting, audio and medium facts override defaults. Do not apply video motion,
+backlight or atmosphere defaults to static character-master images.
+
 ## Visual Decision Contract
 
 When visualization adds clarity, use `skills/dircreative/assets/visualizations/stage-surface-registry.json#video-route-capability-comparison`. Compare exact model, duration, reference slots, audio, evidence status, and route risk from current capability cards; model choice remains a conversation intent with a table fallback.

@@ -20,6 +20,7 @@ from dircreative_adapters.base import (
     ordered_attached_references,
 )
 from dircreative_verify_release import read_relative_regular_file_once
+from dircreative_video_quality import wrap_video_prompt
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -50,13 +51,14 @@ def character_pose_lock(details: list[str]) -> str:
     pose_details = [
         item
         for item in details
-        if re.search(r"\bpose\b", item.lower()) is not None or "姿势" in item
+        if re.search(r"\bpose\b", item.lower()) is not None or "姿势" in item or "站姿" in item or "体态" in item
     ]
     if pose_details:
         return "; ".join(pose_details)
     return (
-        "neutral 20-degree A-pose, straight elbows, both hands fully visible, feet apart, "
-        "clear arm-to-torso gaps and an anatomically legible back view"
+        "natural, stable garment-display stance with relaxed shoulders and neck, balanced weight, "
+        "softly bent elbows, both hands visible, naturally placed feet, complete head-to-toe framing, "
+        "and readable front, profile and back silhouettes"
     )
 
 
@@ -76,7 +78,7 @@ def build_character_master_prompt(
             materials.strip(),
             side_specific.strip(),
             "Use one fully opaque wide physical image on a neutral mid-gray seamless background with soft even studio light and no cinematic grade.",
-            "Place one dominant high-resolution front-facing face close-up framed crown-to-neck at the far left, head level and facing the camera with both eyes and both sides of the face visible.",
+            "Place one dominant high-resolution front-facing face close-up at the far left, including crown and neck; preserve a declared head-and-shoulders or upper-chest crop. Keep the head level and both eyes and both sides of the face visible.",
             "After it, use one single horizontal row of four full-body headed views at identical scale and one shared ground line: Panel 1 front; Panel 2 left profile; Panel 3 right profile; Panel 4 back.",
             "Panel 2 shows the subject's anatomical left side to camera and the nose points frame-left; Panel 3 shows the anatomical right side and the nose points frame-right. Panels 2 and 3 are not interchangeable or mirror substitutes.",
             "The portrait and every full-body subject must each span at least 75% of the canvas height.",
@@ -94,8 +96,9 @@ def build_character_master_prompt_from_contract(
 ) -> str:
     details = [str(item) for item in contract.get("side_specific_details", [])]
     pose_lock = character_pose_lock(details)
+    identity_facts = "; ".join(str(item) for item in contract.get("identity_facts", []))
     return build_character_master_prompt(
-        identity=authoritative_purpose,
+        identity="; ".join(item for item in (authoritative_purpose.strip(), identity_facts) if item),
         wardrobe="; ".join(str(item) for item in contract.get("wardrobe_facts", [])),
         materials="; ".join(str(item) for item in contract.get("wardrobe_materials", [])),
         side_specific="; ".join(details),
@@ -117,7 +120,7 @@ def build_headed_state_prompt_from_contract(
             "; ".join(str(item) for item in contract.get("state_facts", [])),
             "Change only the declared visible state; preserve the same identity, body, hair, outfit construction, materials, accessories, footwear and side-specific placements.",
             "Use one fully opaque wide physical image on a neutral mid-gray seamless background with soft even studio light and no cinematic grade.",
-            "Place one dominant high-resolution front-facing face close-up framed crown-to-neck at the far left, head level and facing the camera with both eyes and both sides of the face visible.",
+            "Place one dominant high-resolution front-facing face close-up at the far left, including crown and neck; preserve a declared head-and-shoulders or upper-chest crop. Keep the head level and both eyes and both sides of the face visible.",
             "After it, use one single horizontal row of four full-body headed views at identical scale and one shared ground line: Panel 1 front; Panel 2 left profile; Panel 3 right profile; Panel 4 back.",
             "Panel 2 shows the subject's anatomical left side to camera and the nose points frame-left; Panel 3 shows the anatomical right side and the nose points frame-right. Panels 2 and 3 are not interchangeable or mirror substitutes.",
             "The portrait and every full-body subject must each span at least 75% of the canvas height.",
@@ -646,11 +649,25 @@ def compile_prompt(
         adapter = get_adapter(adapter_name)
         prompt = adapter.compile_full(payload)
         unit_prompts = [adapter.compile_unit(payload, unit) for unit in units]
+        if adapter_name != "gpt_image":
+            prompt = wrap_video_prompt(payload, prompt)
+            unit_prompts = [wrap_video_prompt(payload, text, unit) for text, unit in zip(unit_prompts, units)]
+        # Keep the composed prefix inside the existing budget and hygiene
+        # contract. Model configuration and audio routing do not change.
+        for candidate in (prompt, *unit_prompts):
+            errors = adapter.surface_errors(candidate, payload)
+            if errors:
+                raise AdapterContractError("; ".join(errors))
         postproduction_audio = adapter.postproduction_audio(payload)
         unit_postproduction_audio = [
             adapter.unit_postproduction_audio(payload, unit)
             for unit in units
         ]
+        quality_audio = payload.get("video_quality", {}).get("audio")
+        if adapter_name != "gpt_image" and quality_audio and payload["audio_plan"]["generation_route"] not in {"native", "reference_audio"}:
+            postproduction_audio.append(quality_audio)
+            for audio in unit_postproduction_audio:
+                audio.append(quality_audio)
     except AdapterContractError as exc:
         raise PromptContractError(str(exc)) from exc
 

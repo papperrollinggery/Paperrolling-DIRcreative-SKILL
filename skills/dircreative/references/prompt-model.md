@@ -1,70 +1,60 @@
 # Model Prompt Craft
 
-Use this card for a bounded image/video prompt or model-specific prompt revision.
-Return the copyable prompt first, followed by only the bindings or risks the user
-needs to run it correctly.
+Use for bounded image/video prompts and revisions. Return the copyable prompt,
+then essential bindings. Do not imply generation or media exists.
 
-## Prompt content
+## Content and structure
 
-Build a model-neutral intent before adapting the surface:
+Video starts with Style, Cinematography, Lighting, Color, Camera, Skin, Acting,
+Physics, Composition, Continuity, Technical and Audio, then concrete shots.
+Use declared scene facts; `video-quality-prefix.md` is optional detail. One block
+per submission, not per shot. Image work keeps still-image rules. The user's
+structure overrides a collaborator's default heading-free prose.
 
-- subject identity and the one dominant action;
-- environment, spatial relation, and relevant object states;
-- camera size, angle, lens intent, support, movement start/end, and focus;
-- temporal beats in observable order;
-- lighting, material, atmosphere, color, and grade that affect the shot;
-- reference role for each input: identity, environment, composition, first frame,
-  end frame, style, motion, or planning-only;
-- preserve, change, allowed incidental change, and forbidden change;
-- desired audio versus where audio will actually be generated or finished;
-- targeted avoid constraints for likely failures, not a generic negative dump.
+Keep a complete tested prompt as the authored baseline. Change only requested
+or demonstrably conflicting content; do not automatically translate, expand or
+add a style capsule. Formal bindings, when needed, are mechanical metadata.
 
-Templates supply structure only. Check compiled people, props, setting, camera,
-actions and sound against current facts. Delete old content; do not turn it into
-negative lists. Use `prompt-contamination-guard` if residue remains, preserving
-current reference/annotation boundaries. Keep internal IDs and QA/account notes
-outside copyable text. Input aliases must map to real files and selected nodes.
+Resolve the relevant visible facts before surface adaptation:
 
-## Adaptation rules
+- identity, dominant action, environment, spatial relations and object states;
+- shot size, angle, lens, support, movement endpoints, focus and temporal beats;
+- motivated light, material, atmosphere, palette and grade;
+- each input's role: identity, environment, composition, literal frame, style,
+  motion or planning-only;
+- preserve/change boundaries, allowed incidental changes and targeted avoids;
+- desired sound versus its actual generation or finishing route.
 
-1. Use exactly one named model/version/provider surface when supplied. If current
-   capability facts affect the answer, verify them from official evidence; do not
-   guess reference counts, duration, audio, edit, or extension support.
-2. Keep identity, action, camera, and temporal order ahead of decorative style.
-   When over budget, remove redundant adjectives, secondary atmosphere, repeated
-   negatives, and optional metadata in that order.
-3. One generation unit should have one dominant action and a coherent spatial
-   problem. Split overloaded transformations, crowds, handoffs, or long causal
-   chains rather than hiding them in prose.
-4. A storyboard is planning truth unless the exact model surface supports its
-   direct role. Do not silently treat a dense board as a clean first frame.
-   A readable hand-drawn narrative board may be a conditional image reference
-   for shot order, action path, and camera direction when the exact card exposes
-   `storyboard_reference: conditional_with_explicit_role_binding`. The value
-   `conditional_inferred_from_omni_reference` permits a labeled trial from
-   documented image-reference input; its control effect remains unverified.
-   Bind that role with an anti-misread clause that forbids only storyboard production
-   marks—panel borders, shot labels, arrows, and production annotations—from
-   being reproduced. It never bans intentional in-world text or a requested
-   SUPER. It never substitutes for a clean
-   first/end frame. UI screenshots and ordinary management tables remain
-   planning-only.
-5. For edits, state the invariant and mutable subfield separately. Never ask one
-   pass to both preserve and change the same property.
-6. Prompt revision alone does not require a rights audit, capability receipt,
-   file hash, or generation authorization. Those belong only to a real execution
-   or formal handoff.
-7. When the target is Seedance 2.5, formal compilation routes to Studio and uses
-   `mr-li-seedance-25` 1.9.0 as the priority method owner or isolated method
-   collaborator. Add `seedance-25-emotion-prompt` only for explicitly
-   emotion/micro-performance-led work. Small existing-prompt edits remain Fast
-   without claiming the full method; exact model cards still own capability facts.
-8. For a recurring clothed human, bind one active unified character master per
-   generation unit. Default to the headed master; use a user-requested or
-   evidence-triggered headless-safe derivative instead, never alongside it. Add
-   a detail sheet only when the visible shot needs one of its named callouts.
-   Use `character-master-sheet.md` as the single layout, provenance and visual-
-   review owner; this prompt layer only binds the selected active asset.
+Templates supply structure. Compare people, props, setting, camera, actions and
+sound with current facts. Remove old content instead of turning it into negative
+lists. If residue remains, use `prompt-contamination-guard`. Keep internal IDs,
+QA/account notes and local paths outside copyable text; aliases bind real inputs.
 
-Never imply that a prompt was run or media exists. State one exact unknown when a
-volatile capability or missing reference materially changes usability.
+## Adaptation boundaries
+
+1. Keep the supplied model/version/surface. Verify relevant capabilities officially;
+   do not guess reference limits, duration, audio, editing or extension support.
+2. Prioritize identity, action, camera and chronology. To fit a prompt budget,
+   remove repeated adjectives/negatives, secondary atmosphere and optional metadata;
+   retain unique design constraints. Split overloaded action chains rather than
+   hiding missing capacity in prose.
+3. Storyboards remain planning truth, not substitutes for clean first/end frames.
+   Hand-drawn shot-order/action/camera references require the exact card's
+   `storyboard_reference: conditional_with_explicit_role_binding`.
+   `conditional_inferred_from_omni_reference` permits a labeled, unverified trial
+   from documented image input. Prevent copied panel borders, shot labels, arrows
+   and production marks; retain intentional in-world text/SUPER. UI screenshots
+   and management tables stay planning-only.
+4. Never preserve and change the same property in one edit. Rights audits,
+   capability receipts, hashes and generation authorization belong to execution
+   or formal handoff, not ordinary prompt revision.
+5. Seedance 2.5 formal work uses Studio and the current `mr-li-seedance-25` method.
+   Add `seedance-25-emotion-prompt` only for emotion/micro-performance-led work.
+   Small revisions stay Fast without claiming the full method; cards own surface
+   capabilities.
+6. Bind one unified recurring-character master per unit: headed by default, or
+   a user-requested/evidence-triggered headless-safe derivative, never both.
+   Add detail sheets only for visible shot needs. `character-master-sheet.md`
+   owns layout, provenance and review; this layer binds the selected asset.
+
+State a specific missing capability/reference only when it changes usability.

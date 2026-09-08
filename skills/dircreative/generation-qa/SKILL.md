@@ -79,6 +79,7 @@ When visualization adds clarity, use `skills/dircreative/assets/visualizations/s
 - Treat multilingual prompt fields as optional delivery fields. Do not fail a normal DIRcreative prompt for being single-language.
 - Treat post-generation QA as a backstop. The primary prevention layer is the image-prompt-compiler `pre_generation_contract`.
 - For an authorized batch with ready shared inputs, finish the batch and conduct one consolidated review before dependent use, final selection or delivery. Interrupt only for a critical defect affecting the next real input; unrelated images and content keep moving.
+- Reuse one valid review for the same pixels, truth and intended use. Do not run an executor checklist, a second routine independent visual review and a new downstream viewing ceremony for the same unchanged candidate. `dircreative_review_batch.py` records the actual batch decision; ordinary `executor` review is draft-only. Separate independent review is for explicit requirements or material unresolved risk, and final adoption keeps its authority boundary.
 - The user must not be the first QA pass, but the assistant also must not rely on post-QA as the first defense.
 - Check whether a failure is caused by missing generated files, external pending assets, or unlocked candidates.
 - Check whether a failure is caused by rights, card/version mismatch, duration/reference incompatibility, audio-route mismatch, deprecated status, or a generate/edit/extension route collision.

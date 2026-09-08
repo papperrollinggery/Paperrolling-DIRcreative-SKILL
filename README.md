@@ -20,7 +20,7 @@
 
 DIRcreative 不是“输入一句话、吐出一堆提示词”的黑盒。它先判断任务是局部修改、完整开发还是交付审计，再只加载对应合同。局部任务直接交付修改结果；只有真实方向冲突、生成授权或客户交付才停下来询问。
 
-当前源码版本为 `v0.9.4`；已发布版本与下载以 [GitHub Releases](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/releases) 为准。本版保留完整五视图，分开首次设计与局部修图提示词，支持独立资产连续产出后集中审核，避免反复编辑最新候选导致细节退化。已联动镜造 v1.8.0 的风格胶囊、条件引用和非阻断审核范围。已有参考、摄影、动作、材质与真实依赖约束继续生效；简单单图请求保持其简洁路径。生成、批次检查、正式验收、用户采用与视频完成分别记录，不保证所有图一次成功或编辑区域外逐像素不变。
+当前源码版本为 `v0.9.5`；已发布版本与下载以 [GitHub Releases](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/releases) 为准。本版用公共入口完成资产准备与一次批次审阅，复用未变化的候选质量证据，减少生产任务手写协议和重复看图；保留五视图、真实依赖与最终采纳边界。成人体型和服装剪裁按明确设计传递，不以固定 A-pose 或默认保守服装覆盖；视频提示词在镜头正文前统一采用十二项电影质感前缀。真实生成和输出审核仍有服务与模型限制，不保证每次出图或普遍一次成功。
 
 源码仓库包含 DIRcreative 根 Skill、19 个 `skills/dircreative/*` 内部子 Skill，以及 `ai-film-asset-stress-test`、`ai-film-production-ledger` 两个 P0 能力入口。正式 DIRcreative 安装包按安全设计只暴露根 `$dircreative`，其余入口会内部化后由 selector 路由；Skill Stack 还会发现宿主中已安装的外部专业 provider。这些依赖不会被复制进本仓库，也不能把“宿主可调用”表述成“GitHub 已内置”。ADCO 始终是独立外部编排方。
 
@@ -299,12 +299,12 @@ Skill; see [review trust host configuration](docs/film-preproduction/review-trus
 正式安装源是同一 GitHub Release 中的归档和 `SHA256SUMS`，再由该 tag 的精确、
 干净源码执行同进程验证与安装；不能运行归档内的 installer，也不能用 metadata
 自证。下面的信任链从 `v0.5.0` 起适用；更早版本不满足这条正式安装门。
-以下命令在 `v0.9.4` tag 与 Release 实际发布后生效。
+以下命令在 `v0.9.5` tag 与 Release 实际发布后生效。
 
 ```bash
-gh release download v0.9.4 \
+gh release download v0.9.5 \
   --repo papperrollinggery/Paperrolling-DIRcreative-SKILL \
-  --pattern 'dircreative-0.9.4.tar.gz' \
+  --pattern 'dircreative-0.9.5.tar.gz' \
   --pattern 'SHA256SUMS'
 ```
 
@@ -314,7 +314,7 @@ gh release download v0.9.4 \
 ```bash
 set -euo pipefail
 REPO_URL="https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL.git"
-TAG="v0.9.4"
+TAG="v0.9.5"
 EXPECTED_COMMIT="$(
   git ls-remote --exit-code --tags "$REPO_URL" \
     "refs/tags/$TAG" "refs/tags/$TAG^{}" |
@@ -326,7 +326,7 @@ EXPECTED_COMMIT="$(
     }
   '
 )"
-ARTIFACT="$(pwd)/dircreative-0.9.4.tar.gz"
+ARTIFACT="$(pwd)/dircreative-0.9.5.tar.gz"
 CHECKSUMS="$(pwd)/SHA256SUMS"
 VERIFY_ROOT="$(mktemp -d)"
 trap 'rm -rf "$VERIFY_ROOT"' EXIT

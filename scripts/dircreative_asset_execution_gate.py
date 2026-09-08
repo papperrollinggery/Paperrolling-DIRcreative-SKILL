@@ -1161,14 +1161,25 @@ def validate_packet(
                         f"dependency_visual_review_manifest_invalid:{dependency_id}:{visual_problem}"
                     )
                     continue
-                _visual_authorization, visual_authorization_errors = (
-                    load_visual_review_authorization(
+                # A producer's explicit batch review permits draft production,
+                # not locking or final adoption. Other authority types retain
+                # their existing authentication rather than being downgraded.
+                draft_review = (
+                    plan_status == "generated_candidate"
+                    and visual_receipt.get("reviewer_type") == "executor"
+                    and planned_dependency.get("character_mode") != "headless_safe"
+                    and visual_plan.get("completion_claim") not in {
+                        "visual_assets_complete", "sample_visual_assets_complete",
+                    }
+                )
+                visual_authorization_errors = []
+                if not draft_review:
+                    _visual_authorization, visual_authorization_errors = load_visual_review_authorization(
                         planned_dependency,
                         base_dir=bound_plan_dir,
                         image_evidence=evidence,
-                        expected_execution_task_id=execution_task_id,
+                        expected_execution_task_id=planned_dependency.get("execution_task_id") or execution_task_id,
                     )
-                )
                 if visual_authorization_errors:
                     errors.append(
                         f"dependency_visual_review_not_host_authorized:{dependency_id}"
@@ -1555,6 +1566,7 @@ def main() -> int:
     actions.add_argument("--prepare-call", action="store_true")
     actions.add_argument("--record-output", action="store_true")
     actions.add_argument("--check-output", action="store_true")
+    parser.add_argument("--batch-review", action="store_true", help="Return compact batch-next status on output registration; keep legacy per-image templates opt-in through the existing default interface.")
     parser.add_argument("--reference-delivery", type=Path)
     parser.add_argument("--retry-failed-asset", action="store_true", help="Allow a new candidate only for this asset's explicitly reviewed retry/reject result.")
     parser.add_argument("--plan", type=Path)
@@ -1610,12 +1622,15 @@ def main() -> int:
                                                   repair_source=repair_source, project_root=root)
                 atomic_write_json(output, updated)
                 asset = next(item for item in updated["assets"] if item["asset_id"] == args.asset_id)
-                print(json.dumps({"status": "postcheck_required", "output": str(output),
+                response = {"status": "batch_review_pending" if args.batch_review else "postcheck_required", "output": str(output),
+                                  "next_action": "continue independent outputs, then record one batch review; the legacy self_check_template is optional unless diagnosing a repair",
                                   "saved_image": {"relative_path": asset["generated_file"], "sha256": asset["generated_sha256"],
                                                   "pixel_sha256": asset["generated_pixel_sha256"],
                                                   "width": asset["technical_receipt"]["width"], "height": asset["technical_receipt"]["height"]},
-                                  "self_check_template": candidate_self_check_template(updated, args.asset_id),
-                                  "visual_qa_approved": False}, ensure_ascii=False, indent=2))
+                                  "visual_qa_approved": False}
+                if not args.batch_review:
+                    response["self_check_template"] = candidate_self_check_template(updated, args.asset_id)
+                print(json.dumps(response, ensure_ascii=False, indent=2))
                 return 0
             manifest_path = project_path(args.self_check_manifest)
             relative = manifest_path.relative_to(plan_path.parent).as_posix()

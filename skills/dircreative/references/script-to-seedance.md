@@ -3,6 +3,10 @@
 Read this contract only when the selected Skill Stack scenario is
 `script_to_seedance`. It lets `convert-script-to-seedance` compile locked
 DIRcreative work without becoming a second story, shot, asset, or state owner.
+Each copyable video prompt starts with the user's structured 12-part quality
+prefix (`video-quality-prefix.md`), followed by the concrete scene prose. Keep
+the prefix once per independent submission; this explicit structure takes
+precedence over a collaborator's default heading-free presentation.
 Persist and validate the machine packet with
 `docs/film-preproduction/schemas/script-to-seedance-handoff.schema.json` and
 `python3 scripts/dircreative_script_to_seedance_handoff.py validate <packet>`.

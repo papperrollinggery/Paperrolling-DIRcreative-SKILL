@@ -295,7 +295,7 @@
         "truth_sha256": {"$ref": "#/$defs/sha256"},
         "ruleset": {"const": "dircreative-role-truth-review-v2"},
         "reviewed_at": {"$ref": "#/$defs/utcTimestamp"},
-        "reviewer_type": {"enum": ["human", "independent_ai", "authorized_reviewer"]},
+        "reviewer_type": {"enum": ["human", "independent_ai", "authorized_reviewer", "executor"]},
         "reviewer_id": {"$ref": "#/$defs/id"},
         "review_task_id": {"$ref": "#/$defs/id"},
         "review_manifest_file": {"type": "string", "minLength": 1},
