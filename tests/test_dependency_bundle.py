@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import hashlib
+import io
 import json
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from contextlib import redirect_stdout
 from unittest import mock
 
 
@@ -254,6 +256,29 @@ class DependencyBundleTests(unittest.TestCase):
         self.assertEqual(self.one(result)["status"], "conflict")
         self.assertEqual((self.skills / "linked-skill/SKILL.md").read_text(), "changed during stage\n")
 
+
+
+class CombinedInstallerTests(unittest.TestCase):
+    def test_combined_entrypoint_reports_dependencies_and_returns_correct_status(self):
+        import install_local_skill as installer
+        for remote_status, exit_code in (("ok", 0), ("attention", 2)):
+            with self.subTest(status=remote_status), tempfile.TemporaryDirectory(prefix="dir-combined-") as raw:
+                root = Path(raw) / "skills"
+                output = io.StringIO()
+                with mock.patch.object(sys, "argv", ["install_local_skill.py", "--skills-root", str(root), "--with-dependencies"]), \
+                     mock.patch.object(installer.jingzao_updater, "sync_jingzao", return_value={"status": remote_status}) as sync, \
+                     redirect_stdout(output):
+                    code = installer.main()
+                self.assertEqual(code, exit_code)
+                sync.assert_called_once_with(root)
+                text = output.getvalue()
+                start = text.index('{\n  "dependencies"')
+                report, _ = json.JSONDecoder().raw_decode(text[start:])
+                self.assertEqual(report["dependencies"]["jingzao"]["status"], remote_status)
+                self.assertEqual(report["dependencies"]["licensed_offline"]["status"], "ok")
+                self.assertTrue((root / "dircreative/SKILL.md").is_file())
+                self.assertTrue((root / "humanizer-zh/SKILL.md").is_file())
+                self.assertIn("verify with:", text)
 
 
 if __name__ == "__main__":

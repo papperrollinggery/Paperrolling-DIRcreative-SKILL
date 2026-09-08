@@ -38,7 +38,7 @@ Outputs depend on the requested scope and available providers. A prompt is ready
 
 You need a Codex environment with Skills support and Python 3.10 or newer. Image, video, transcription and media-download services have their own requirements.
 
-For a **verified release installation**, download the archive and checksums from [GitHub Releases](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/releases/latest), then follow the [exact-tag installation guide](README.technical.md#verified-release-install). The source version is **v0.9.6**; release assets are authoritative for published availability.
+For a **verified release installation**, download the archive and checksums from [GitHub Releases](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/releases/latest), then follow the [exact-tag installation guide](README.technical.md#verified-release-install). The source version is **v0.9.7**; release assets are authoritative for published availability.
 
 For a development copy:
 

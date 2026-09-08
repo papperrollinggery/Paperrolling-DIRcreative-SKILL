@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.9.7 - 2026-09-08
+
+- Fix a missing JSON import in the combined dependency installer that caused a reporting failure after installation. Add complete combined-entrypoint tests for successful dependencies and preserved/conflicting local providers, including output and exit status.
+
 ## 0.9.6 - 2026-09-08
 
 - Add opt-in dependency installation, a licensed hash-locked humanizer-zh snapshot, and an official Jingzao latest-stable-release updater. Preserve unmanaged installations, local edits and newer or unorderable versions; verify files and protect rollback without running upstream scripts.
