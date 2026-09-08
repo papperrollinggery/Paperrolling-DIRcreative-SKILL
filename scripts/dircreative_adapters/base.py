@@ -10,7 +10,7 @@ REFERENCE_TOKEN_RE = re.compile(r"@(Image|Video|Audio)\s*([0-9]+)", re.IGNORECAS
 INTERNAL_SURFACE_PATTERNS = {
     "internal_shot_or_asset_label": re.compile(r"\b(?:R|S|SHOT|SCENE|ASSET)[-_ ]?0*[0-9]+\b", re.IGNORECASE),
     "internal_asset_id": re.compile(r"\basset_[A-Za-z0-9_-]+\b", re.IGNORECASE),
-    "local_path": re.compile(r"(?:/Users/|/home/|/private/|outputs/|docs/film-preproduction/|examples/)", re.IGNORECASE),
+    "local_path": re.compile(r"(?:/(?:Users|home|private)/|outputs/|docs/film-preproduction/|examples/)", re.IGNORECASE),
     "sha256": re.compile(r"\b[0-9a-f]{64}\b", re.IGNORECASE),
     "internal_field": re.compile(r"\b(?:schema_version|source_hash|failure_id|retry_rules|manifest)\b", re.IGNORECASE),
     "internal_control_language": re.compile(

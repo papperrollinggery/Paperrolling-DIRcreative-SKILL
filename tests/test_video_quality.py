@@ -3,8 +3,10 @@ from __future__ import annotations
 import copy
 import json
 import sys
+import types
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
@@ -12,12 +14,26 @@ sys.path.insert(0, str(ROOT / "scripts"))
 from dircreative_video_quality import build_video_quality_prefix, wrap_video_prompt  # noqa: E402
 from dircreative_adapters import get_adapter  # noqa: E402
 from dircreative_adapters.base import AdapterContractError  # noqa: E402
+from dircreative_package_layout import sanitize_package_bytes  # noqa: E402
 
 
 class VideoQualityTests(unittest.TestCase):
     def setUp(self) -> None:
         self.payload = json.loads((ROOT / "examples/seedance-mirror-turn-10s/prompt-ir.json").read_text())
         self.unit = self.payload["generation_plan"]["units"][0]
+
+    def test_release_sanitization_keeps_all_host_path_guards_effective(self):
+        relative = "scripts/dircreative_adapters/base.py"
+        packaged = sanitize_package_bytes(relative, (ROOT / relative).read_bytes(), {})
+        module = types.ModuleType("_dircreative_packaged_path_guard_test")
+        with patch.dict(sys.modules, {module.__name__: module}):
+            exec(compile(packaged, relative, "exec"), module.__dict__)
+            for prefix in ("Users", "home", "private"):
+                with self.subTest(prefix=prefix):
+                    host_path = "/".join(("", prefix, "example", "frame.png"))
+                    errors = module.shared_surface_errors("continue from " + host_path, set())
+                    self.assertTrue(any(item.startswith("local_path:") for item in errors))
+            self.assertEqual(module.shared_surface_errors("Follow the cup as it rolls.", set()), [])
 
     def test_real_prompt_ir_keeps_only_ordered_source_directions(self):
         text = build_video_quality_prefix(self.payload, self.unit)

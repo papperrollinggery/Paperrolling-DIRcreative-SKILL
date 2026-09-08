@@ -52,7 +52,7 @@ DIRcreative 是面向 **AI 影视前期制作的 Codex Skill**。从一句创意
 
 需要支持 Skills 的 Codex 环境与 Python 3.10 及以上。图像、视频、转录和媒体下载服务各有自己的运行要求。
 
-**正式版本安装**：从 [GitHub Releases](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/releases/latest) 下载归档与校验文件，按[精确 tag 安装说明](README.technical.md#verified-release-install)完成验证。当前源码版本为 **v0.11.0**；已发布版本以 Release 中的实际资产为准。
+**正式版本安装**：从 [GitHub Releases](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/releases/latest) 下载归档与校验文件，按[精确 tag 安装说明](README.technical.md#verified-release-install)完成验证。当前源码版本为 **v0.11.1**；已发布版本以 Release 中的实际资产为准。
 
 安装开发副本：
 

@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 0.11.1 - 2026-09-09
+
+### Fixed
+
+- Preserve all host-path rejection branches after release privacy sanitization. The sanitizer could otherwise rewrite the literal Linux/private path alternatives inside the prompt-surface regular expression.
+- Exercise the actual sanitized adapter against synthetic macOS, Linux and private paths, with an ordinary-prose control. Prompt methods and authored examples are unchanged from 0.11.0.
+
 ## 0.11.0 - 2026-09-09
 
 ### Changed
