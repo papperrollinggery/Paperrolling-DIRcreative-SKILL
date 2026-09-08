@@ -177,7 +177,18 @@ def audit_adapter_cases() -> list[dict[str, Any]]:
         result = compile_prompt(payload, verify_project_files=False)
         require(case["expected_text"] in result.prompt, f"adapter fixture missing expected surface: {case['case_id']}")
         for forbidden in case["forbidden_text"]:
-            require(forbidden not in result.prompt, f"adapter fixture leaked forbidden surface {forbidden}: {case['case_id']}")
+            inspected = result.prompt
+            if forbidden == "Audio:" and payload["audio_plan"]["generation_route"] not in {"native", "reference_audio"}:
+                from dircreative_video_quality import build_video_quality_prefix
+
+                prefix = build_video_quality_prefix(payload) + "\n\n"
+                # The requested quality structure explicitly declares silence.
+                # Keep checking the concrete shot body for forbidden native cues.
+                if inspected.startswith(prefix):
+                    audio_line = next(line for line in prefix.splitlines() if line.startswith("Audio:"))
+                    require(audio_line in {"Audio: silent picture; no generated audio.", "Audio: silent picture; sound is supplied separately."}, "non-native quality prefix requested audible output")
+                    inspected = inspected[len(prefix):]
+            require(forbidden not in inspected, f"adapter fixture leaked forbidden surface {forbidden}: {case['case_id']}")
         results.append({"case_id": case["case_id"], "adapter": case["adapter"], "attached_references": len(result.attached_slots)})
     return results
 

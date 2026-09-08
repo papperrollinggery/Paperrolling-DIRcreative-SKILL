@@ -10,6 +10,9 @@ stop. Use `execution.mode: batch_then_review` for this workflow (the legacy
 against its current revision; batch review does not require concurrent writes.
 Only a defect affecting the next real input interrupts production. These helpers
 do not intercept arbitrary raw host-tool calls or grant visual approval.
+For an actual unexpected generation rejection, use
+`image-generation-diagnostics.md` only then; do not run a moderation investigation
+before ordinary production.
 
 ## New foundation assets
 
@@ -28,16 +31,28 @@ use the existing constraint-input stage to provide a scoped layout reference;
 do not keep appending corrective words or editing degraded pixels. Do not add a new user approval when the
 brief and authorization are sufficient.
 
-Prepare the original Jingzao spec with the current role **before** validating
-and compiling it:
+Use the public preparer for a designed foundation asset. It binds the current
+role, references, selected style capsule, provider replay and native arguments
+in one call. Do not write a local adapter, manually compute hashes or read
+validator source to assemble these records:
 
 ```text
-python3 scripts/dircreative_visual_asset_jingzao_handoff.py prepare-role-spec --project-root PROJECT --visual-plan PLAN --asset-id C01 --spec source-spec.json --output role-spec.json
+python3 scripts/dircreative_prepare_asset.py --project-root PROJECT --plan PLAN --asset-id C01 --source-spec source-spec.json --foundation-pass design-pass.json --original-request "ORIGINAL TASK REQUEST" --execution-task-id ACTUAL_TASK_ID --output-dir prepared/C01
 ```
 
-Use the returned spec for the installed Jingzao validator, compiler and reference
-delivery. This inserts the canonical character/product/prop/scene/style contract
-into actual compiler inputs while preserving the chosen medium, mode and ratio.
+For a from-zero asset, `--design-artifact` accepts the existing authored design
+stage payload instead of `--foundation-pass`; the helper builds its mechanical
+bindings, never fills missing design judgments from the purpose. Human character
+contracts can use `--character-contract` for the existing character-master fields.
+Add `--style-capsule` only when a capsule is selected. Local reference entries
+retain their actual `rights_status` and `approval_status`; these metadata are not
+sent as prompt text. Keep the original task request separate from an individual
+asset description. Same inputs revalidate existing outputs; changed inputs need
+a new output directory. `imagegen_arguments` are the exact native call arguments.
+
+The lower-level `prepare-role-spec` remains available for custom integrations.
+The public path inserts the canonical character/product/prop/scene/style contract
+while preserving the chosen medium, mode and ratio.
 Reconcile other spec fields with that contract before generation. Check actual
 source panel order, anatomical versus image left/right, numbered views, poses,
 reference responsibilities and overlapping preserve/change instructions. The
@@ -230,7 +245,7 @@ const copy = await run(["python3", "-c",
   "from pathlib import Path\nimport shutil,sys\nsrc,dst=map(Path,sys.argv[1:])\ndst.parent.mkdir(parents=True,exist_ok=True)\nwith src.open('rb') as a, dst.open('xb') as b: shutil.copyfileobj(a,b)",
   match[1], destination]);
 if (copy.exit_code !== 0) throw new Error(copy.output);
-const recorded = await run(["python3", gate, "--project-root", project, "--record-output",
+const recorded = await run(["python3", gate, "--project-root", project, "--record-output", "--batch-review",
   "--plan", call.visual_plan_path, "--asset-id", call.asset_id, "--image", destination,
   "--expected-plan-sha256", call.visual_plan_sha256,
   "--execution-task-id", task, "--output", nextPlan, ...repairArgs]);
@@ -250,38 +265,43 @@ The returned PNG dimensions describe saved pixels, not native detail gain.
 
 ## Review the completed batch before dependent use or final delivery
 
-`--record-output` returns a blank `self_check_template` and records the real image
-as `generated_candidate`, even when the picture is poor. Open that exact saved
-PNG. Fill the returned observations from what is actually visible; do not prefill
-`pass` from the prompt, existence, a preview thumbnail or a structural result.
-Characters explicitly check the frontal portrait, front, left, right, back,
-identity/scale and wardrobe side details. Other roles check their actual geometry,
-state, camera/contact, source facts and intended medium. Compare repaired images
-with both their source and the best earlier version: the requested fix must not
-hide new identity, material or detail deterioration. A common `pass` sentence
-copied over every observation is not a visual inspection.
-Use the character visual probe at the character batch/dependency review, not as
-a prerequisite to generate an unrelated asset. Its measurement cannot decide
-style quality; inspect apparent false positives before prescribing any repair.
-
-Save the completed template as an executor self-check manifest, then:
+`--record-output --batch-review` preserves the real image as `generated_candidate`, even if poor,
+and returns a compact batch-next action instead of another per-image checklist.
+Finish independent outputs, then prepare one batch review:
 
 ```text
-python3 scripts/dircreative_asset_execution_gate.py --project-root PROJECT --check-output --plan visual-plan-02.json --asset-id C01 --self-check-manifest C01-self-check.json --output visual-plan-03.json
+python3 scripts/dircreative_review_batch.py template --plan visual-plan-04.json --output review.json
+python3 scripts/dircreative_review_batch.py record --plan visual-plan-04.json --review review.json --output visual-plan-05.json
 ```
 
-Use the returned plan revision for the next packet and carry it in the existing
-project state. Old plan snapshots remain history, never a shortcut around a
-pending/failed current candidate. Replacing that candidate requires its current
-observations; unrelated pending candidates do not block the call. Actual parent
-dependencies retain their readback and review requirements. A reviewed `retry`
-may be repaired with `--retry-failed-asset` for that same asset. Changing task ID
-does not erase failures or authorize unreviewed source use.
+Between these commands, view the exact originals once and fill reviewer identity,
+rubric, explicit decisions and concrete notes. Defaults are pending, never pass.
+For ordinary production the actual producer uses `reviewer_type: executor`;
+this permits unchanged candidates as internal draft references, not user locks
+or final adoption. Use independent review when explicitly required or when a
+material unresolved risk warrants it, not as a second routine review of every
+asset. The same valid batch review replaces an additional executor checklist.
 
-Self-check observations are explicit executor statements, not authenticated
-proof that a host displayed the image. A successful self-check does not set
-`visual_qa_approved`, independent QA, user adoption, or delivery completion.
-Those retain their existing manifest/trust/readback checks. Temporary motion
+Check identity, requested five views, body proportions, silhouette, garment
+construction/side details and intended use. For repairs compare the target change
+and non-target quality with the best source. Do not fill notes from the prompt or
+from file existence. The template prepares character measurements before this
+review; diagnose detector disagreements within it using `probe_resolution`, never
+redraw good clothing just to satisfy a body detector.
+
+A `retry`/`reject` entry supplies only its observed `defects`, each with existing
+`check_id` and `observed` text. The tool records those failed observations for the
+existing repair path; do not perform another full self-check to restate them.
+Use `defer` when an issue is not yet decided. Passed members get separate bound
+receipts so changing another batch member does not invalidate them. File, truth
+or intended-use changes still require review of the affected evidence. A new
+consumer task reuses the source generation/review identity instead of watching
+unchanged source pixels again merely to rebind a task ID.
+
+Keep the returned plan revision. Locks, headless-safe authority and final
+adoption retain their existing requirements. Legacy `--check-output` remains for
+explicit failed-candidate diagnosis and older integrations; it is not a second
+mandatory stop after batch review. Temporary motion
 images remain registered in coverage, as above, and receive their existing actual
 picture review before their dependent use. Image failure affects the image state; it does
 not rewind an already delivered prompt or occupy a new narrative unit ID.

@@ -65,8 +65,11 @@ VISUAL_QA_RULESET = "dircreative-role-truth-review-v2"
 VISUAL_QA_RECEIPT_VERSION = "2.0"
 VISUAL_REVIEW_MANIFEST_VERSION = "1.0"
 SCOPED_VISUAL_REVIEW_MANIFEST_VERSION = "1.1"
+LOCAL_VISUAL_REVIEW_MANIFEST_VERSION = "1.2"
 SELF_CHECK_MANIFEST_VERSION = "1.2"
 SELF_CHECK_RULESET = "dircreative-executor-role-self-check-v1"
+FAILED_BATCH_OBSERVATIONS_VERSION = "1.3"
+FAILED_BATCH_OBSERVATIONS_RULESET = "dircreative-failed-batch-observations-v1"
 SCHEMA_VERSION = "2.3"
 FUTURE_TIMESTAMP_TOLERANCE_SECONDS = 300
 TRUSTED_VISUAL_REVIEW_ADOPTION_REQUIRED = (
@@ -918,6 +921,7 @@ def visual_review_subject_sha256(
     payload: dict[str, Any],
     *,
     scope_asset_ids: list[str] | None = None,
+    asset_local: bool = False,
 ) -> str:
     scope = set(scope_asset_ids) if scope_asset_ids is not None else None
     assets = [
@@ -938,6 +942,36 @@ def visual_review_subject_sha256(
         and (scope is None or asset.get("asset_id") in scope)
     ]
     assets.sort(key=lambda item: str(item.get("asset_id")))
+    if asset_local:
+        if scope is None:
+            raise ValueError("asset_local_review_requires_scope")
+        by_id = {a["asset_id"]: a for a in payload.get("assets", []) if isinstance(a, dict)}
+        closure = set(scope)
+        pending = list(scope)
+        while pending:
+            row = by_id.get(pending.pop(), {})
+            for parent in row.get("inherits_from", []):
+                if parent not in closure:
+                    closure.add(parent); pending.append(parent)
+        contract_fields = (
+            "asset_id", "role", "purpose", "coverage", "inherits_from", "truth_sha256",
+            "generated_sha256", "generated_pixel_sha256", "generated_perceptual_hash",
+            "planning_only", "direct_video_input", "character_mode", "identity_kind",
+            "character_master_requirements", "derived_from_asset_id", "approved_source_master_sha256",
+        )
+        contracts = [{key: by_id.get(i, {}).get(key) for key in contract_fields} for i in sorted(closure)]
+        spatial_roles = DELIVERY_FRAME_ROLES | {"professional_storyboard_motion_map", "scene_geography_camera_fov_reference"}
+        shot_ids = {shot for i in scope if by_id.get(i, {}).get("role") in spatial_roles
+                    for shot in by_id[i].get("coverage", {}).get("shot_ids", [])}
+        return canonical_json_sha256({
+            "scheme": "asset-local-review-v1", "schema_version": payload.get("schema_version"),
+            "project_id": payload.get("project_id"), "scope_asset_ids": sorted(scope),
+            "delivery_profile": ({key: payload.get("delivery_profile", {}).get(key)
+                                  for key in ("medium", "aspect_ratio", "raster_width", "raster_height")}
+                                 if payload.get("scope") == "asset_only" or any(by_id.get(i, {}).get("role") in DELIVERY_FRAME_ROLES for i in scope) else None),
+            "contracts": contracts,
+            "shot_truth": [row for row in payload.get("shot_truth", []) if row.get("shot_id") in shot_ids],
+        })
     return canonical_json_sha256(
         {
             "schema_version": payload.get("schema_version"),
@@ -1078,6 +1112,11 @@ def validate_candidate_self_check(
     if not isinstance(asset.get("technical_receipt"), dict):
         return ["candidate_self_check_technical_missing"]
     expected = candidate_self_check_template(payload, asset_id)
+    failed_batch = manifest.get("schema_version") == FAILED_BATCH_OBSERVATIONS_VERSION
+    if failed_batch:
+        # Failed observations authorize only a bounded repair, never a pass.
+        expected.update(schema_version=FAILED_BATCH_OBSERVATIONS_VERSION,
+                        ruleset=FAILED_BATCH_OBSERVATIONS_RULESET, reviewer_type="batch_review")
     if set(manifest) != set(expected) or any(manifest.get(key) != expected[key] for key in (
         "schema_version", "ruleset", "review_subject_sha256", "scope_asset_ids", "reviewer_type",
     )):
@@ -1098,13 +1137,17 @@ def validate_candidate_self_check(
     if not isinstance(observations, list) or any(not isinstance(item, dict) for item in observations):
         return ["candidate_self_check_observations_missing"]
     required = candidate_check_ids(asset)
-    if [item.get("check_id") for item in observations] != required:
+    observation_ids = [item.get("check_id") for item in observations]
+    if (failed_batch and (not observation_ids or len(set(observation_ids)) != len(observation_ids) or any(key not in required for key in observation_ids))
+        or not failed_batch and observation_ids != required):
         return ["candidate_self_check_role_coverage_invalid"]
     for item in observations:
         if (set(item) != {"check_id", "result", "observed"}
             or item.get("result") not in {"pass", "fail", "not_applicable"}
             or not isinstance(item.get("observed"), str) or len(item["observed"].strip()) < 12):
             return ["candidate_self_check_observation_invalid"]
+        if failed_batch and item["result"] != "fail":
+            return ["failed_batch_observations_cannot_claim_pass"]
         if item["result"] == "not_applicable" and (
             asset.get("role") == "character_identity_reference"
             or item["check_id"] in {"saved_pixels_and_detail", "truth_and_reference_match", "artifacts_and_downstream_fit"}
@@ -1112,6 +1155,8 @@ def validate_candidate_self_check(
             return ["candidate_self_check_required_observation_not_applicable"]
     if entry.get("decision") not in {"checked", "retry", "reject"}:
         return ["candidate_self_check_decision_invalid"]
+    if failed_batch and entry["decision"] == "checked":
+        return ["failed_batch_observations_cannot_claim_pass"]
     if entry["decision"] == "checked" and any(item["result"] == "fail" for item in observations):
         return ["candidate_self_check_failed_observation"]
     image = contained_file(asset.get("generated_file"), base_dir)
@@ -1149,6 +1194,12 @@ def pending_candidate_self_checks(
         if asset_ids is not None and asset.get("asset_id") not in asset_ids:
             continue
         if "execution_task_id" not in asset:
+            continue
+        # One valid substantive review is enough for these exact pixels and
+        # facts. Do not demand a second executor checklist after batch review.
+        if asset.get("visual_qa_receipt") is not None and not candidate_visual_review_errors(
+            payload, asset_id=asset["asset_id"], base_dir=base_dir,
+        ):
             continue
         binding = asset.get("candidate_self_check")
         asset_id = asset["asset_id"]
@@ -1284,7 +1335,7 @@ def validate_visual_review_manifest(
         return {}, "manifest_shape"
     version = manifest.get("schema_version")
     scope_asset_ids = manifest.get("scope_asset_ids")
-    is_scoped = version == SCOPED_VISUAL_REVIEW_MANIFEST_VERSION
+    is_scoped = version in {SCOPED_VISUAL_REVIEW_MANIFEST_VERSION, LOCAL_VISUAL_REVIEW_MANIFEST_VERSION}
     if is_scoped:
         if (
             not isinstance(scope_asset_ids, list)
@@ -1298,10 +1349,11 @@ def validate_visual_review_manifest(
     subject_hash = visual_review_subject_sha256(
         payload,
         scope_asset_ids=scope_asset_ids if is_scoped else None,
+        asset_local=version == LOCAL_VISUAL_REVIEW_MANIFEST_VERSION,
     )
     root_checks = {
         "manifest_version": version
-        in {VISUAL_REVIEW_MANIFEST_VERSION, SCOPED_VISUAL_REVIEW_MANIFEST_VERSION},
+        in {VISUAL_REVIEW_MANIFEST_VERSION, SCOPED_VISUAL_REVIEW_MANIFEST_VERSION, LOCAL_VISUAL_REVIEW_MANIFEST_VERSION},
         "manifest_ruleset": manifest.get("ruleset") == VISUAL_QA_RULESET,
         "manifest_subject": manifest.get("review_subject_sha256") == subject_hash,
         "manifest_timestamp": timestamp_in_review_window(
@@ -1309,7 +1361,7 @@ def validate_visual_review_manifest(
             not_before=truth_locked_at,
         ),
         "manifest_reviewer_type": manifest.get("reviewer_type")
-        in {"human", "independent_ai", "authorized_reviewer"},
+        in {"human", "independent_ai", "authorized_reviewer", "executor"},
         "manifest_reviewer_id": isinstance(manifest.get("reviewer_id"), str)
         and ID_RE.fullmatch(manifest["reviewer_id"]) is not None,
         "manifest_review_task_id": isinstance(manifest.get("review_task_id"), str)
@@ -1477,7 +1529,7 @@ def validate_visual_qa_receipt(
             not_before=truth_locked_at,
         ),
         "reviewer_type": receipt.get("reviewer_type")
-        in {"human", "independent_ai", "authorized_reviewer"},
+        in {"human", "independent_ai", "authorized_reviewer", "executor"},
         "reviewer_id": isinstance(receipt.get("reviewer_id"), str)
         and ID_RE.fullmatch(receipt["reviewer_id"]) is not None,
         "review_task_id": isinstance(receipt.get("review_task_id"), str)
@@ -1503,12 +1555,13 @@ def validate_visual_qa_receipt(
         return "review_manifest_hash"
     scope_asset_ids = (
         manifest.get("scope_asset_ids")
-        if manifest.get("schema_version") == SCOPED_VISUAL_REVIEW_MANIFEST_VERSION
+        if manifest.get("schema_version") in {SCOPED_VISUAL_REVIEW_MANIFEST_VERSION, LOCAL_VISUAL_REVIEW_MANIFEST_VERSION}
         else None
     )
     expected_subject = visual_review_subject_sha256(
         payload,
         scope_asset_ids=scope_asset_ids,
+        asset_local=manifest.get("schema_version") == LOCAL_VISUAL_REVIEW_MANIFEST_VERSION,
     )
     if receipt.get("review_subject_sha256") != expected_subject:
         return "review_subject"
@@ -1548,6 +1601,45 @@ def validate_visual_qa_receipt(
     ):
         return "review_manifest_asset_binding"
     return None
+
+
+def candidate_visual_review_errors(
+    payload: dict[str, Any], *, asset_id: str, base_dir: Path,
+) -> list[str]:
+    """Read existing review evidence, never create a review or grant adoption."""
+    try:
+        assets = {row["asset_id"]: row for row in payload["assets"]}
+        asset = assets[asset_id]
+        receipt = asset["visual_qa_receipt"]
+        raw = read_relative_regular_file_once(
+            base_dir, receipt["review_manifest_file"], max_bytes=8 * 1024 * 1024,
+            label="candidate batch review",
+        )
+        if hashlib.sha256(raw).hexdigest() != receipt["review_manifest_sha256"]:
+            return ["candidate_visual_review_manifest_changed"]
+        manifest = json.loads(raw)
+        evidence_map = {}
+        for entry in manifest["assets"]:
+            row = assets[entry["asset_id"]]
+            path = contained_file(row.get("generated_file"), base_dir)
+            evidence, reason = inspect_raster(path) if path else (None, "missing")
+            if evidence is None or row.get("generated_sha256") != evidence["sha256"] or row.get("generated_pixel_sha256") != evidence["pixel_sha256"]:
+                return ["candidate_visual_review_pixels_changed:" + str(reason or row["asset_id"])]
+            problem = validate_technical_receipt(
+                row.get("technical_receipt"), asset_id=row["asset_id"], evidence=evidence,
+                truth_locked_at=str(payload["truth_locked_at"]),
+            )
+            if problem:
+                return ["candidate_visual_review_technical_invalid:" + problem]
+            evidence_map[row["asset_id"]] = evidence
+        problem = validate_visual_qa_receipt(
+            receipt, asset=asset, evidence=evidence_map[asset_id],
+            truth_locked_at=str(payload["truth_locked_at"]), base_dir=base_dir,
+            payload=payload, evidence_by_asset=evidence_map, manifest_cache={},
+        )
+        return ["candidate_visual_review_invalid:" + problem] if problem else []
+    except (OSError, ValueError, KeyError, TypeError):
+        return ["candidate_visual_review_unreadable"]
 
 
 def test_png_bytes(
@@ -3326,6 +3418,10 @@ def validate_plan(
             errors.append(f"asset_status_invalid:{asset_id}")
         if asset.get("required") is True and asset.get("status") == "rejected":
             errors.append(f"required_asset_rejected:{asset_id}")
+        if (asset.get("status") in {"user_locked", "reused_locked"}
+            and isinstance(asset.get("visual_qa_receipt"), dict)
+            and asset["visual_qa_receipt"].get("reviewer_type") == "executor"):
+            errors.append(f"executor_review_cannot_grant_asset_lock:{asset_id}")
         for field in ("generated_sha256", "generated_pixel_sha256"):
             value = asset.get(field)
             if not isinstance(value, str) or (value and SHA256_RE.fullmatch(value) is None):
@@ -3858,6 +3954,12 @@ def validate_plan(
                 errors.append(
                     f"required_asset_visual_qa_receipt_invalid:{asset_id}:{visual_problem}"
                 )
+        if all_images_required and any(
+            isinstance(asset.get("visual_qa_receipt"), dict)
+            and asset["visual_qa_receipt"].get("reviewer_type") == "executor"
+            for asset in assets if asset.get("required") is True
+        ):
+            errors.append("executor_review_cannot_grant_visual_assets_complete")
         if all_images_required and any(
             isinstance(asset.get("visual_qa_receipt"), dict)
             and asset["visual_qa_receipt"].get("reviewer_type") == "independent_ai"

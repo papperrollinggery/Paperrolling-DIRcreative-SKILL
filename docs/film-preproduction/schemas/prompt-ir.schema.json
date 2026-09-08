@@ -119,6 +119,24 @@
       "minItems": 1,
       "items": { "$ref": "#/$defs/shot" }
     },
+    "video_quality": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "style": { "$ref": "#/$defs/nonEmptyString" },
+        "cinematography": { "$ref": "#/$defs/nonEmptyString" },
+        "lighting": { "$ref": "#/$defs/nonEmptyString" },
+        "color": { "$ref": "#/$defs/nonEmptyString" },
+        "camera": { "$ref": "#/$defs/nonEmptyString" },
+        "skin": { "$ref": "#/$defs/nonEmptyString" },
+        "acting": { "$ref": "#/$defs/nonEmptyString" },
+        "physics": { "$ref": "#/$defs/nonEmptyString" },
+        "composition": { "$ref": "#/$defs/nonEmptyString" },
+        "continuity": { "$ref": "#/$defs/nonEmptyString" },
+        "technical": { "$ref": "#/$defs/nonEmptyString" },
+        "audio": { "$ref": "#/$defs/nonEmptyString" }
+      }
+    },
     "audio_plan": {
       "type": "object",
       "additionalProperties": false,

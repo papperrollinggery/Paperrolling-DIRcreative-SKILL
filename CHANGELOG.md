@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## 0.9.5 - 2026-09-08
+
+- Add public asset preparation and batch review commands over the existing provider, design, evidence and execution contracts. Reuse authored design passes and selected style capsules without task-local adapter scripts; retain actionable provider review results and immutable input bindings.
+- Reuse a valid substantive review instead of a duplicate executor checklist. Explicit executor reviews permit only generated candidates as internal draft references; locks, headless-safe authority and final adoption keep their stronger requirements. Bind authenticated downstream reuse to the source generation task.
+- Record batch failures as concrete failed check observations that feed the existing repair path. Keep passed members independent, and scope new review hashes to their actual asset, use and dependencies rather than unrelated inventory administration.
+- Preserve declared adult body proportions, garment cut/openings and portrait framing. Replace the invented approved A-pose default with natural garment-display stance while retaining explicit pose locks and all requested five views. Keep tested complete prompts as authored baselines without automatic translation or second style-layer expansion.
+- Prefix every compiled video submission with twelve ordered cinematic quality sections, before shot content. Preserve explicit scene lighting, optical facts, continuity and audio routing; remove redundant old global sections. Optional quality overrides do not change provider parameters or claim actual 8K/24fps delivery.
+- Document input/output image-block diagnostics and uncertainty boundaries. Real tests include a successful authored five-view adult costume, retained blocked variants, and a native product run through preparation, registration and one review. These are bounded cases, not a universal speed or generation-success claim.
+
 ## 0.9.4 - 2026-09-08
 
 - Separate local image-repair prompts from initial design and layout requirements. Keep original asset truth in the bound plan while compiling only the source-preserving edit intent and observed corrections; allow either valid side-profile order on new human masters.

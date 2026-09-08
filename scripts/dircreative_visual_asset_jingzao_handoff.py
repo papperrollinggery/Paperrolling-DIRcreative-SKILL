@@ -128,8 +128,8 @@ def canonical_asset_role_requirements(asset: dict[str, Any], *, operation: str =
         return requirements
     requirements = [
         "One physical master sheet for exactly one character identity and one appearance state; never combine different characters on this sheet.",
-        "One dominant front-facing crown-to-neck face close-up at the far left, level and readable with both eyes visible.",
-        "Four full-body views in one horizontal row after the portrait: front, anatomical left profile and anatomical right profile in either order, and back. Front first and back last; both sides are required and are not mirror substitutes.",
+        "One dominant front-facing face close-up at the far left, level and readable with both eyes visible; include crown and neck, preserving a declared head-and-shoulders or upper-chest crop for garment details.",
+        "Four full-body views in one horizontal row after the portrait: front, anatomical left and right side views in either order, and back. Use profiles unless a near-profile three-quarter angle is explicitly requested. Front first and back last; both sides are required and are not mirror substitutes.",
         "The portrait and each full-body subject occupy at least 75% of the saved canvas height; equal body scale, shared ground line, complete head-to-toe framing and separated silhouettes.",
         "Preserve this character's identity, body proportions, hair, garment construction and materials, footwear, anatomical left/right detail placement, and the declared pose and appearance state in every view.",
         "Use a fully opaque neutral background with readable even lighting; no extra identity, undeclared prop, costume variant, text, label, border or watermark.",
@@ -148,6 +148,11 @@ def known_asset_role_requirements() -> set[str]:
     """Only clauses owned by this compiler; custom artistic constraints are untouched."""
     from dircreative_prompt_compiler import ASSET_ROLE_RULES
     clauses = set(ASSET_ROLE_RULES.values())
+    # Exact former compiler clauses, not user-authored framing or body facts.
+    clauses.update({
+        "One dominant front-facing crown-to-neck face close-up at the far left, level and readable with both eyes visible.",
+        "Four full-body views in one horizontal row after the portrait: front, anatomical left profile and anatomical right profile in either order, and back. Front first and back last; both sides are required and are not mirror substitutes.",
+    })
     clauses.update([EDIT_SOURCE_REQUIREMENT, REPAIR_PRESERVE_REQUIREMENT])
     # Retire the old fixed profile order when reopening an existing spec.
     clauses.add("Four full-body views in one horizontal row after the portrait: front, anatomical left profile with nose pointing frame-left, anatomical right profile with nose pointing frame-right, and back. Front first and back last; both side profiles are required and are not mirror substitutes.")

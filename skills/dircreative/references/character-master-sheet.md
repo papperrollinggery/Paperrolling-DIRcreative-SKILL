@@ -104,7 +104,7 @@ manifest records the physical order accurately. It contains:
 
 Both side profiles are mandatory. One generic side view cannot describe
 left/right asymmetry. Keep all four full-body panels at identical scale, ground
-line, camera height, relaxed A-pose, anatomy, body proportions, garment hem,
+line, camera height, anatomy, body proportions, garment hem,
 sleeve length, footwear, and lighting. The dominant face close-up owns fine identity;
 the full-body panels own build, silhouette, wardrobe construction, side-specific
 placement, and hair/body integration.
@@ -161,6 +161,36 @@ Add portrait front/left/right close-ups only when planned profile close-ups,
 prosthetics, hair asymmetry, or identity stress justify the extra pixels. Do not
 mechanically turn every master into an eight-panel board if the main portrait
 and four body views already cover the shot plan.
+
+## Adult body and garment expression
+
+Describe the adult character's actual body build, shoulder/waist/hip and leg
+proportions, garment cut, openings, support and material zones when those facts
+are part of the approved design. Anatomical accuracy means those declared facts
+remain readable across five views; it does not impose one body type. A fully
+opaque background does not make every garment opaque, and a neutral studio sheet
+does not close a declared neckline. Do not add sensual exposure, a deep V, or a
+specific figure by default; preserve it only when the approved identity or
+wardrobe facts request it.
+
+For example, an adult crimson formal look may explicitly specify pale-blue irises;
+relaxed shoulders and a visible waist; a fitted crimson bodice with a narrow
+stand collar only at the rear neck sides; a vertical V opening to the navel with
+solid shaped panels covering the key chest area; light-transmitting gauze sleeves;
+long skirt panels, high boots and one shoulder pauldron. State the neckline,
+support, seam/edge contour, exposed upper-abdomen/navel area and opaque versus
+translucent material zones so front, profiles and back retain the same garment
+logic. This is an optional adult costume situation, not a default suffix or a
+replacement for an explicit pose lock. Without one, use a natural stable
+garment-display stance with readable five-view coverage; when an explicit pose
+lock is supplied, preserve it exactly.
+
+A user-declared head-and-shoulders or upper-chest portrait crop may show neckline
+and shoulder construction; do not crop it to neck-only by template. Keep the
+frontal identity readable. An explicitly requested near-profile three-quarter
+body angle may replace that side's strict profile while preserving both distinct
+side views and the full five-view count. Headless-safe remains its stricter
+derived contract.
 
 ## Headless-safe sheet contract
 
@@ -248,7 +278,8 @@ Create one professional character master sheet based strictly on
 the approved identity and wardrobe facts. Fully opaque neutral mid-gray seamless background,
 soft even studio light, neutral expression, no cinematic grade, no text, no
 labels, no watermark. One unified sheet: one dominant front-facing face
-close-up framed crown-to-neck at far left; then one horizontal row of four
+close-up including crown and neck at far left, retaining a declared upper-chest
+crop for neckline/shoulder detail; then one horizontal row of four
 full-body headed views at identical scale and ground line — Panel 1 front,
 Panel 2 left profile, Panel 3 right profile, Panel 4 back. Every portrait and
 body spans at least 75% of canvas height.

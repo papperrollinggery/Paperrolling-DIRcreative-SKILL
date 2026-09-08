@@ -624,7 +624,8 @@ class AssetExecutionGateTests(unittest.TestCase):
             CHARACTER_PURPOSE + " exposed earpiece at the right ear",
             contract,
         )
-        self.assertIn("Pose lock: neutral 20-degree A-pose", prompt)
+        self.assertIn("Pose lock: natural", prompt)
+        self.assertNotIn("20-degree A-pose", prompt)
         self.assertNotIn("Pose lock: exposed earpiece", prompt)
 
     def test_headed_state_and_headless_safe_modes_have_reachable_exact_prompts(self):
