@@ -8,9 +8,8 @@ Reuse the brief and artifacts; start at the needed film stage.
 - One task reference, at most three useful perspectives and one critical pass.
 - Zero routing/audit calls before an obvious first artifact; no full-project
   validation. At least 70% of the answer is usable film content or craft judgment.
-- Creative perspectives cover audience, concept and brand role; director
-  perspectives cover performance, camera and sound. Actual joint/parallel
-  dispatch follows `docs/film-preproduction/director-room-routing.md`.
+- For photography during conception and actual joint dispatch, follow
+  `docs/film-preproduction/director-room-routing.md`.
 
 ## Execution
 
@@ -24,7 +23,8 @@ Reuse the brief and artifacts; start at the needed film stage.
    Preserve actual SUPER, UI/data, proposal brand lines and ADCO/client claims.
 3. Maintain one creative spine: audience tension, applicable brand role, core action,
    start-action-end, physical/media rules, visual motif, continuity and sound/edit
-   logic. Challenge substitutable ideas and unsupported claims with concrete
+   logic. Develop photography with story and blocking before locking shots.
+   Challenge substitutable ideas and unsupported claims with concrete
    alternatives; repair the result in the same turn.
 4. For whole-film technical scope, derive assets from recurring identities,
    products/critical props, distinct scenes, shots and generation units. Include

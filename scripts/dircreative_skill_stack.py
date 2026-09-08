@@ -1000,6 +1000,16 @@ def validate_registry(registry: dict[str, Any]) -> list[str]:
     for skill_id, provider in providers.items():
         if not valid_reference_pack(provider.get("reference_pack", [])):
             failures.append(f"{skill_id}: invalid provider reference pack")
+        if not valid_reference_pack(provider.get("advisory_reference_pack", [])):
+            failures.append(f"{skill_id}: invalid advisory reference pack")
+        collaborator_media_gate = provider.get("collaborator_media_gate")
+        if collaborator_media_gate is not None and (
+            "collaborator" not in provider.get("provider_roles", [])
+            or not isinstance(collaborator_media_gate, list)
+            or not collaborator_media_gate
+            or not set(collaborator_media_gate) <= {"any", "still", "image_series", "storyboard", "video", "audio", "document"}
+        ):
+            failures.append(f"{skill_id}: invalid collaborator media gate")
         collaborator_context_cost = provider.get("collaborator_context_cost")
         if collaborator_context_cost is not None and (
             collaborator_context_cost != "isolated_method_contract"
@@ -1041,11 +1051,19 @@ def validate_registry(registry: dict[str, Any]) -> list[str]:
     jingzao = providers.get("jingzao-image-forge", {})
     if (
         jingzao.get("context_cost") != "isolated_craft_contract"
-        or jingzao.get("provider_roles") != ["craft_owner"]
+        or jingzao.get("provider_roles") != ["craft_owner", "collaborator"]
+        or not {"asset_compile", "frame_compile", "shot", "visual_system", "story"}.issubset(
+            set(jingzao.get("trigger_stages", []))
+        )
+        or jingzao.get("collaborator_context_cost") != "isolated_method_contract"
+        or jingzao.get("advisory_reference_pack") != [
+            "references/shot-tension-design.md",
+            "references/cinematic-shot-design.md",
+        ]
         or jingzao.get("external_write") is not False
         or jingzao.get("may_cost_money") is not False
     ):
-        failures.append("Jingzao must remain a non-executing isolated craft owner")
+        failures.append("Jingzao must remain a non-executing isolated craft owner and advisory collaborator")
     prompt_preflight = providers.get("ai-video-prompt-preflight", {})
     if prompt_preflight.get("validator_context_cost") != "isolated_validator_contract":
         failures.append("video prompt preflight must retain isolated validator context")
@@ -1808,7 +1826,11 @@ def _eligible(
         and provider.get("separate_payment_action") is not False
     ):
         return False
-    media_gate = set(provider["media_gate"])
+    media_gate = set(
+        provider.get("collaborator_media_gate", provider["media_gate"])
+        if role == "collaborator"
+        else provider["media_gate"]
+    )
     if "any" not in media_gate and media not in media_gate:
         return False
     trigger_stages = set(provider.get("trigger_stages", []))
@@ -2592,7 +2614,7 @@ def select_stack(
     if ledger_candidate_blocked:
         reason_codes.append("ledger_candidate_not_final")
     materialization_failures: dict[str, str] = {}
-    reference_request_cache: dict[tuple[str, str], list[dict[str, Any]]] = {}
+    reference_request_cache: dict[tuple[str, str, str], list[dict[str, Any]]] = {}
 
     def materialize(skill_id: str) -> bool:
         if skill_id == "dircreative":
@@ -2633,11 +2655,14 @@ def select_stack(
     def provider_reference_requests(
         skill_id: str,
         context_scope: str = "isolated_craft_contract",
+        role: str = "craft_owner",
     ) -> list[dict[str, Any]]:
-        cache_key = (skill_id, context_scope)
+        cache_key = (skill_id, context_scope, role)
         if cache_key in reference_request_cache:
             return reference_request_cache[cache_key]
         reference_pack = list(providers.get(skill_id, {}).get("reference_pack", []))
+        if role == "collaborator":
+            reference_pack.extend(providers.get(skill_id, {}).get("advisory_reference_pack", []))
         reference_profile_field = scenario.get("reference_profile_field")
         provider_reference_profiles = scenario.get("provider_reference_profiles", {})
         if isinstance(reference_profile_field, str) and isinstance(
@@ -2747,7 +2772,9 @@ def select_stack(
         )
         for item in isolated_craft:
             try:
-                requests = provider_reference_requests(item["skill_id"])
+                requests = provider_reference_requests(
+                    item["skill_id"], role=str(item.get("role", "craft_owner"))
+                )
             except (OSError, SkillStackError) as exc:
                 materialization_failures[item["skill_id"]] = str(exc)
                 return False
@@ -2765,7 +2792,7 @@ def select_stack(
         for item in isolated_methods:
             try:
                 requests = provider_reference_requests(
-                    item["skill_id"], "isolated_method_contract"
+                    item["skill_id"], "isolated_method_contract", "collaborator"
                 )
             except (OSError, SkillStackError) as exc:
                 materialization_failures[item["skill_id"]] = str(exc)
@@ -3206,7 +3233,9 @@ def select_stack(
         for item in slots
         if item.get("context_scope") in {"isolated_craft_contract", "isolated_method_contract"}
         for request in provider_reference_requests(
-            str(item["skill_id"]), str(item.get("context_scope"))
+            str(item["skill_id"]),
+            str(item.get("context_scope")),
+            str(item.get("role", "craft_owner")),
         )
     ]
     isolated_craft_reference_requests = [

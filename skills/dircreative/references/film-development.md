@@ -10,10 +10,11 @@ tension, opposing pressure, turn, consequence and visible
 ending. Fit the real duration; generation-unit limits are production constraints.
 For branded work, give the brand a causal role.
 
-Each beat needs an observable start, decisive action and changed end motivating
-the next. Keep readable performance, camera, sound and continuity. Distinguish
-live action, boards, clean inputs, generation units and post. Bridges require
-causal or matched action, object, sound, gaze or geometry. Keep the protagonist.
+Co-design story, acting, space and photography before locking shots: wide
+geography, medium interaction and close detail each reveal useful information,
+without quotas. Let setting enable action, concealment or revelation. Separate
+facts from tentative cameras; apply Director Room photography. Preserve causal
+cuts, the protagonist and media boundaries.
 
 Before production matrices, give the client a clear idea, causal story,
 visual/sound system and feasible route. A transcript or ledger is not the idea.

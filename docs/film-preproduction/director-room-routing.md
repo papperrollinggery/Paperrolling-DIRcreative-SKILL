@@ -29,6 +29,53 @@ Do not route by a broad word such as “script” or “storyboard” alone. Sco
 requested outputs, existing artifacts, and whether the user asks for revision or
 full development determine the result.
 
+## Photography during conception
+
+Within `visual_production`, involve photography while story beats and blocking
+are still being designed. Jingzao can contribute its current cinematic-shot and
+shot-tension methods through the existing Studio collaborator selection; it
+does not require finished assets or a locked shot table to advise. Read and
+apply the selected provider before claiming its participation. If unavailable,
+make the local photography judgment explicitly without inventing a provider run.
+
+Give the photographer the intended viewer experience, current causal beat,
+supplied facts, actual reference roles and known geography. Distinguish hard
+story/identity/custody/topology constraints from proposed focal lengths, crops,
+camera heights and screen layouts. Tentative choices remain redesignable;
+user-approved choices stay authoritative. Return a usable proposed view and
+its effect on acting, movement, reveal and the neighboring cut. DIR integrates
+that advice into the story and canonical shots before downstream compilation.
+An unresolved visual idea can change staging or a beat in the same creative
+pass; do not wait until the script is final to discover the scene cannot work.
+
+Design variety as information progression. A wide view may establish a route,
+barrier, scale or hidden observer; a medium view carries body/hand interaction;
+a close view reveals a clue, decision or reaction. Choose only useful views for
+the scene, allowing sustained takes and deliberate repeated setups. Lens labels
+alone do not create variety: vary viewer position, subject/environment ratio,
+depth and what is revealed or withheld. Do not make every view wide, frontal,
+equally sharp, spectacular or tightly cropped.
+
+When references matter, inspect their images and name the mechanisms worth
+carrying: for example a dark aperture around a distant lit court, asymmetric
+negative space, overlapping planes or material/value separation. Identify how
+each adopted mechanism participates in an actual story shot; an attractive
+location asset alone does not carry it into the film. Preserve world geometry
+while allowing the new camera projection. With no reference, design those
+relationships from the brief and world rules; missing images do not justify a
+generic close-up or a mandatory reference hunt.
+
+Keep the result in the current treatment/shot cards, not a new mandatory form.
+Carry adopted photographic choices into the existing Jingzao frame handoff.
+At compilation, a real conflict returns to its source decision; do not silently
+flatten a working composition to satisfy a generic readability default. A
+detail that cannot be read in the wide can receive a motivated insert.
+Set readability at that shot's scale: an establishing view can prove an exchange
+through posture and object silhouette; its insert proves fingertip separation.
+Do not copy close-up demands for facial or finger detail into every wide-frame
+field. Check the actual image's crop, depth and action phase; a focal-length
+label or requested subject percentage is not evidence that the view was made.
+
 ## Execution Budget
 
 - one controlling agent;

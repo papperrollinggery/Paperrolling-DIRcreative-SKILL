@@ -15,9 +15,201 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
 import dircreative_skill_stack as stack  # noqa: E402
+from dircreative_route import route_request  # noqa: E402
 
 
 class SkillStackRouteContextTests(unittest.TestCase):
+    def test_natural_story_route_emits_story_stage_and_selects_jingzao_advisory(self):
+        request = (
+            "$dircreative 写故事构思和摄影方向，暂不做技术分镜和生成。"
+        )
+        routed = route_request(request)
+        self.assertEqual(routed["deliverable_layer"], "client_story")
+        self.assertEqual(routed["shot_matrix_allowed"], False)
+        story_stage = next(item for item in routed["craft_stages"] if item["stage"] == "story")
+        intent = story_stage["selection_intent"]
+        self.assertEqual(intent["scenario_id"], "client_story")
+        self.assertEqual(intent["gaps"], ["cinematic_composition"])
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            stack._write_mock_skill(root, "jingzao-image-forge")
+            stack._write_mock_skill(root, "screenwriting-story-craft")
+            registry = stack.load_registry()
+            catalog, rejected = stack.discover_roots([("codex_skill", root)], registry)
+            self.assertEqual(rejected, [])
+            receipt = stack.select_stack(
+                intent,
+                registry,
+                stack.load_routing(),
+                catalog,
+                route_context=stack._fixture_route_context({"intent": intent}),
+                body_loader=stack.body_loader_for_roots([("codex_skill", root)], registry),
+            )
+        self.assertEqual(receipt["craft_owner"]["skill_id"], "screenwriting-story-craft")
+        self.assertEqual(
+            [item["skill_id"] for item in receipt["collaborators"]],
+            ["jingzao-image-forge"],
+        )
+        self.assertFalse(receipt["execution_performed"])
+        self.assertFalse(receipt["generated"])
+
+    def test_jingzao_composition_advisory_is_opt_in_for_studio_shot_design(self):
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            stack._write_mock_skill(root, "jingzao-image-forge")
+            stack._write_mock_skill(root, "professional-storyboard-director")
+            registry = stack.load_registry()
+            catalog, rejected = stack.discover_roots([("codex_skill", root)], registry)
+            self.assertEqual(rejected, [])
+            case = {
+                "intent": {
+                    "scenario_id": "technical_storyboard",
+                    "mode": "studio",
+                    "route_id": "film_development",
+                    "media": "storyboard",
+                    "gaps": ["cinematic_composition"],
+                    "needs_validation": False,
+                }
+            }
+            receipt = stack.select_stack(
+                stack._fixture_intent(case),
+                registry,
+                stack.load_routing(),
+                catalog,
+                route_context=stack._fixture_route_context(case),
+                body_loader=stack.body_loader_for_roots([("codex_skill", root)], registry),
+            )
+        self.assertEqual(receipt["status"], "ready", receipt)
+        self.assertEqual(receipt["craft_owner"]["skill_id"], "professional-storyboard-director")
+        self.assertEqual(
+            [item["skill_id"] for item in receipt["collaborators"]],
+            ["jingzao-image-forge"],
+        )
+        self.assertEqual(receipt["collaborators"][0]["context_scope"], "isolated_method_contract")
+        self.assertEqual(
+            [item["relative_path"] for item in receipt["reference_read_requests"]],
+            ["references/shot-tension-design.md", "references/cinematic-shot-design.md"],
+        )
+        self.assertGreater(receipt["context"]["isolated_method_reference_bytes"], 0)
+        self.assertGreater(
+            receipt["context"]["isolated_method_context_bytes"],
+            receipt["context"]["isolated_method_reference_bytes"],
+        )
+        self.assertFalse(receipt["execution_performed"])
+        self.assertFalse(receipt["generated"])
+
+    def test_jingzao_composition_advisory_does_not_enter_fast_or_unrequested_shot_work(self):
+        registry = stack.load_registry()
+        catalog = {"jingzao-image-forge": object()}
+        self.assertFalse(
+            stack._eligible(
+                "jingzao-image-forge",
+                "collaborator",
+                "fast",
+                "storyboard",
+                "shot",
+                "technical_production",
+                set(),
+                stack.normalize_providers(registry),
+                catalog,
+                set(),
+            )
+        )
+        self.assertTrue(
+            stack._eligible(
+                "jingzao-image-forge",
+                "collaborator",
+                "studio",
+                "storyboard",
+                "shot",
+                "technical_production",
+                set(),
+                stack.normalize_providers(registry),
+                catalog,
+                set(),
+            )
+        )
+        self.assertTrue(
+            stack._eligible(
+                "jingzao-image-forge",
+                "collaborator",
+                "studio",
+                "document",
+                "story",
+                "client_story",
+                set(),
+                stack.normalize_providers(registry),
+                catalog,
+                set(),
+            )
+        )
+        self.assertFalse(
+            stack._eligible(
+                "jingzao-image-forge",
+                "craft_owner",
+                "studio",
+                "document",
+                "story",
+                "client_story",
+                set(),
+                stack.normalize_providers(registry),
+                catalog,
+                set(),
+            )
+        )
+
+    def test_jingzao_advisory_can_join_story_video_planning_without_opening_compile_video(self):
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            stack._write_mock_skill(root, "jingzao-image-forge")
+            stack._write_mock_skill(root, "screenwriting-story-craft")
+            registry = stack.load_registry()
+            catalog, rejected = stack.discover_roots([("codex_skill", root)], registry)
+            self.assertEqual(rejected, [])
+            case = {
+                "intent": {
+                    "scenario_id": "scene_writing",
+                    "mode": "studio",
+                    "route_id": "film_development",
+                    "media": "video",
+                    "gaps": ["cinematic_composition"],
+                    "needs_validation": False,
+                }
+            }
+            receipt = stack.select_stack(
+                stack._fixture_intent(case),
+                registry,
+                stack.load_routing(),
+                catalog,
+                route_context=stack._fixture_route_context(case),
+                body_loader=stack.body_loader_for_roots([("codex_skill", root)], registry),
+            )
+            compile_case = {
+                "intent": {
+                    "scenario_id": "cinematic_storyboard_frames",
+                    "mode": "studio",
+                    "route_id": "film_development",
+                    "media": "video",
+                    "downstream_use": "rough_planning",
+                    "gaps": [],
+                    "needs_validation": False,
+                }
+            }
+            with self.assertRaisesRegex(stack.SkillStackError, "media does not match scenario"):
+                stack.select_stack(
+                    stack._fixture_intent(compile_case),
+                    registry,
+                    stack.load_routing(),
+                    catalog,
+                    route_context=stack._fixture_route_context(compile_case),
+                    body_loader=stack.body_loader_for_roots([("codex_skill", root)], registry),
+                )
+        self.assertEqual(receipt["craft_owner"]["skill_id"], "screenwriting-story-craft")
+        self.assertEqual(
+            [item["skill_id"] for item in receipt["collaborators"]],
+            ["jingzao-image-forge"],
+        )
+
     def test_handoff_validator_is_executed_not_loaded_as_craft_text(self):
         with tempfile.TemporaryDirectory() as raw:
             root=Path(raw)

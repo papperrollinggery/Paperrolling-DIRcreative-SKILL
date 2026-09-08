@@ -255,6 +255,47 @@ class CollaborationRoutingTests(unittest.TestCase):
             if "task_reference" in item:
                 self.assertTrue((ROOT / item["task_reference"]).is_file())
 
+    def test_explicit_composition_request_adds_jingzao_advisory_gap_without_execution(self):
+        result = self.route(
+            "$dircreative 开发一部完整古风短片，故事、剧本、分镜和图片资产都要；"
+            "导演组在构思时研究镜造摄影构图，明确广角、中近景、特写和空间纵深，"
+            "停在视频生成前。"
+        )
+        self.assertEqual((result["mode"], result["route"]), ("studio", "film_development"))
+        stages = {item["stage"]: item for item in result["craft_stages"]}
+        self.assertEqual(
+            stages["shot_design"]["selection_intent"]["gaps"],
+            ["cinematic_composition"],
+        )
+        self.assertEqual(
+            stages["frame_compile"]["selection_intent"]["gaps"],
+            [],
+        )
+        self.assertFalse(stages["shot_design"]["selection_intent"]["real_side_effect"])
+
+    def test_ordinary_preproduction_keeps_jingzao_advisory_opt_in(self):
+        result = self.route(
+            "$dircreative 开发一部完整古风短片，故事、剧本、分镜和图片资产都要，"
+            "停在视频生成前。"
+        )
+        stages = {item["stage"]: item for item in result["craft_stages"]}
+        self.assertEqual(stages["shot_design"]["selection_intent"]["gaps"], [])
+
+    def test_spatial_action_need_infers_composition_gap_without_jingzao_wording(self):
+        result = self.route(
+            "$dircreative 开发一部两人交接印信的动作短片，包含反打、走位和门内外空间，"
+            "给故事、剧本、分镜和图片资产，停在视频生成前。"
+        )
+        stages = {item["stage"]: item for item in result["craft_stages"]}
+        self.assertEqual(
+            stages["shot_design"]["selection_intent"]["gaps"],
+            ["cinematic_composition"],
+        )
+        self.assertEqual(
+            stages["camera_geography"]["selection_intent"]["gaps"],
+            ["cinematic_composition"],
+        )
+
     def test_action_effects_are_conditional_and_never_authorize_execution(self):
         result = self.route("做一部完整武侠动作短片，环境破碎要有因果，暂时只做前期计划。")
         intents = [item["selection_intent"] for item in result["craft_stages"] if "selection_intent" in item]

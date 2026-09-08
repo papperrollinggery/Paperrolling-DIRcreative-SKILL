@@ -4,6 +4,8 @@
 
 ## 0.10.0 - 2026-09-08
 
+- Bring Jingzao photography advice into existing Studio story and shot development before camera choices are locked. Connect composition and environment to story, blocking and shot information; preserve story ownership, Fast scope, existing budgets and separate image execution.
+- Support reference-free and reference-backed composition work, with role-scoped advisory media and reference reads. Keep ordinary asset compilation on its original reference pack; test natural story-only entry, negative requests, missing/oversized providers and unchanged execution gates.
 - Add an optional product-CG directing method and six source-image-free style capsules. Reuse existing film/production-design routing and hash-bound Jingzao style handoffs; preserve target identity, materials, scope and authorization.
 - Connect product facts to material events, shot information, transitions and timing. Include powder-compact and precision-drive PromptIR examples with different product logic, and 11 official source cases with observation/inference boundaries.
 - Preserve CG and explicitly excluded media in the video-quality prefix, without forcing live action or performer language into product-only scenes. Respect later cancellation and explicit restart of CG requests.

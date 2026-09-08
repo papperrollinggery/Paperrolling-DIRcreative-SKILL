@@ -790,14 +790,17 @@ def classify_deliverable_layer(request: str, route: str) -> tuple[str | None, bo
         clause, r"(?:客户可读|客户|提案).{0,12}(?:故事|故事线)|client[- ](?:readable\s+)?stor(?:y|ies)",
     ) for clause in clauses)
     story_only = any(explicit_action_match(
-        clause, r"(?:只要|只写|只给|只输出|仅需|仅写|仅输出)\s*(?:纯)?(?:故事|故事线)|(?:story|narrative)[- ]only",
-    ) for clause in clauses)
+        clause, r"(?:只要|只写|只给|只输出|仅需|仅写|仅输出)\s*(?:纯)?(?:故事|故事线|故事构思)|(?:story|narrative)[- ]only",
+    ) for clause in clauses) or (
+        has(text, r"故事构思|story concept")
+        and has(text, r"(?:暂不|不要|不做|先不).{0,10}(?:技术分镜|分镜|生成|storyboard|generation)")
+    )
     additional_outputs = any(
         explicit_action_match(clause, r"分镜|资产|镜头表|提示词|storyboard|shot\s*list|assets?|prompts?")
         and has(clause, TECHNICAL_ACTION_RE.pattern)
         for clause in clauses
     )
-    if not additional_outputs and (client_story_requested and (compact_pages or story_only)):
+    if not additional_outputs and ((client_story_requested and (compact_pages or story_only)) or story_only):
         return "client_story", False
     dual_story = has(text, r"双方向|两个方向|两种方向|两条方向|dual[- ]direction") and has(
         text, r"故事|故事线|story|客户|提案"
@@ -827,7 +830,15 @@ def film_craft_stages(
         return []
     assets = requested_asset_components(request)
     spatial_only = deliverable_layer == "spatial_discussion"
-    if not shot_matrix_allowed and not any(assets.values()) and not spatial_only:
+    story_advisory_requested = explicit_action_match(
+        action_text(request),
+        r"镜造|摄影方向|摄影构图|空间构图|镜头构图|景别|广角|中近景|特写|"
+        r"构图顾问|构图建议|前景|中景|后景|纵深|透视|层次|"
+        r"cinematic\s+composition|composition\s+advis(?:or|ory)|"
+        r"wide(?:\s+angle)?|medium[- ]close|close[- ]up|perspective\s+depth|"
+        r"门内外|空间关系|空间层次|机位关系|镜头关系",
+    )
+    if not shot_matrix_allowed and not any(assets.values()) and not spatial_only and not story_advisory_requested:
         return []
     # Current shot-card facts can inform craft even inside quotation marks.
     # They never enter route selection or the original-request authorization pass.
@@ -851,28 +862,48 @@ def film_craft_stages(
         r"两人|二人|三人|多人|反打|过肩|机位|走位|动线|遮挡|"
         r"blocking|staging|reverse[ -]?shot|multiple\s+characters"
     )
+    composition_advisory_requested = requested(
+        r"镜造|摄影构图|空间构图|镜头构图|景别|广角|中近景|特写|"
+        r"构图顾问|构图建议|前景|中景|后景|纵深|透视|层次|"
+        r"cinematic\s+composition|composition\s+advis(?:or|ory)|"
+        r"wide(?:\s+angle)?|medium[- ]close|close[- ]up|perspective\s+depth"
+    ) or (shot_matrix_allowed and (motion_required or spatial_required))
     effects_required = requested(
         r"环境(?:破碎|破坏)|爆裂|爆炸|碎裂|飞石|法术|异能|"
         r"\b(?:destruction|explosion|shattering|magic|vfx)\b"
     )
 
-    def selection(scenario_id: str, **fields: Any) -> dict[str, Any]:
+    def selection(scenario_id: str, *, gaps: list[str] | None = None, **fields: Any) -> dict[str, Any]:
         return {
             "scenario_id": scenario_id,
             "mode": "studio",
             "route_id": "film_development",
             "media": "storyboard",
-            "gaps": [],
+            "gaps": list(gaps or []),
             "needs_validation": False,
             "real_side_effect": False,
             **fields,
         }
 
     stages: list[dict[str, Any]] = []
+    if story_advisory_requested:
+        story_scenario = "client_story" if deliverable_layer == "client_story" else "scene_writing"
+        stages.append({
+            "stage": "story",
+            "task_reference": "skills/dircreative/story-development/SKILL.md",
+            "selection_intent": selection(
+                story_scenario,
+                gaps=["cinematic_composition"],
+            ),
+            "status": "pending",
+        })
     if shot_matrix_allowed:
         stages.append({
             "stage": "shot_design", "task_reference": "skills/dircreative/references/shot-development.md",
-            "selection_intent": selection("technical_storyboard"), "status": "pending",
+            "selection_intent": selection(
+                "technical_storyboard",
+                gaps=["cinematic_composition"] if composition_advisory_requested else [],
+            ), "status": "pending",
         })
     if action_required and (shot_matrix_allowed or spatial_only):
         stages.append({"stage": "action", "selection_intent": selection("action_choreography"), "status": "pending"})
@@ -882,7 +913,10 @@ def film_craft_stages(
         stages.append({
             "stage": "camera_geography",
             "task_reference": "skills/dircreative/references/spatial-discussion.md",
-            "selection_intent": selection("master_camera"),
+            "selection_intent": selection(
+                "master_camera",
+                gaps=["cinematic_composition"] if composition_advisory_requested else [],
+            ),
             "status": "pending",
         })
     asset_gaps = {"identity_state": "character_continuity", "production_design": "production_design", "camera_geography": "camera_geography"}

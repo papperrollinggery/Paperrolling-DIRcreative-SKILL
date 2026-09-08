@@ -64,6 +64,12 @@ without a verified tool and cost boundary.
 - Structure owns Hook and macro beats; story owns scenes/dialogue; shot
   progression owns cut information; storyboard owns delivery rows; master-shot
   planning owns geography.
+- During Studio conception, Jingzao may advise on photography through the
+  existing composition gap while DIR integrates story and blocking. Apply its
+  current methods before locking camera choices; advice does not generate
+  images or replace story/geography ownership. The Director Room routing
+  reference owns this co-design method. Late frame compilation retains its
+  existing handoff and approved source facts.
 - Performance owns observable acting. Model Skills compile an approved acting
   contract and do not perform a second creative pass.
 - General VFX owns effect causality; construction owns effect atoms; mechanical

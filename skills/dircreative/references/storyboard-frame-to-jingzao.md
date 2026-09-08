@@ -6,6 +6,11 @@ and current generation scope.
 
 Use `storyboard_frame_to_jingzao_v1` for cinematic storyboard or clean input frames
 from locked story, shots, state and assets. Jingzao owns frame compilation.
+Those locks follow story/photography co-design in the existing Director Room;
+this late compilation contract does not prohibit earlier photographic advice.
+Preserve adopted composition mechanisms and scene functions, not only palette
+and costume. Distinguish a source world's geometry from one reference camera's
+projection; do not turn every scene reference into a fixed frontal background.
 Persist and validate with
 `docs/film-preproduction/schemas/storyboard-frame-to-jingzao.schema.json` and
 `python3 scripts/dircreative_storyboard_frame_handoff.py validate <receipt>`.
