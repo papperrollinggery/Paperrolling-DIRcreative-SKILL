@@ -1,0 +1,96 @@
+{
+  "visual_generation_spec": "1.0",
+  "mode": "create",
+  "intent": "制作一个原创、无品牌的产品CG纯画面。微距捕捉两段刚分开的状态，断裂的酥脆层与连续黏稠连接形成对比，碎屑少而有明确来源。",
+  "platform": "openai",
+  "language": "zh-CN",
+  "canvas": {
+    "profile": "standard_widescreen",
+    "aspect_ratio": "16:9",
+    "dimensions": {
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "inputs": [],
+  "knowledge_anchors": [],
+  "creative_routing": {
+    "scenario_profile": "product_tabletop",
+    "genre_family": "commercial_editorial",
+    "aesthetic_family": "luxury_editorial",
+    "capture_or_render_method": "photoreal_cg",
+    "style_authority": "style_capsule",
+    "adaptation_rule": "目标产品的几何、颜色、材料、动作与文字政策优先；只迁移兼容风格机制。",
+    "design_priority": "目标产品识别、材料响应和当前动作状态"
+  },
+  "scene": {
+    "summary": "微距捕捉两段刚分开的状态，断裂的酥脆层与连续黏稠连接形成对比，碎屑少而有明确来源。",
+    "setting": "按所选风格胶囊组织简洁三维产品空间",
+    "atmosphere": [
+      "有目的的层次",
+      "材料可读"
+    ]
+  },
+  "subjects": [
+    {
+      "id": "target-product",
+      "description": "一块无品牌的虚构榛果巧克力威化条被分成两段，层状薄威化断面清楚，中间仅有少量缓慢拉开的浓稠巧克力连接。",
+      "count": 1,
+      "action": "微距捕捉两段刚分开的状态，断裂的酥脆层与连续黏稠连接形成对比，碎屑少而有明确来源。",
+      "scale": "主视觉清楚，画面保留足够余量"
+    }
+  ],
+  "composition": {
+    "shot_size": "产品CG近景或微距关键帧",
+    "camera_angle": "按目标镜头描述",
+    "perspective": "有设计的虚拟摄影透视；焦段为设计意图",
+    "focal_length_mm": 90,
+    "framing": "微距捕捉两段刚分开的状态，断裂的酥脆层与连续黏稠连接形成对比，碎屑少而有明确来源。",
+    "negative_space": "保持主件以外的明确安静区域"
+  },
+  "color": {
+    "palette": [
+      "巧克力棕、浅米色威化与少量暖高光，不增加其他原料。"
+    ],
+    "grade": "目标固有色优先，按所选胶囊控制明暗与层级"
+  },
+  "style": {
+    "medium": "photoreal_cg",
+    "realism": "目标声明的产品CG表现",
+    "visual_traits": [
+      "有主次的材料细节",
+      "轮廓清楚"
+    ],
+    "references": []
+  },
+  "constraints": {
+    "must_preserve": [
+      "两段同一巧克力条",
+      "薄威化断面",
+      "浓稠连接与干燥碎屑分开",
+      "单幅16:9纯画面",
+      "目标文字政策为空"
+    ],
+    "must_change": [],
+    "exclude": [
+      "人物",
+      "品牌标识",
+      "字幕",
+      "焦段标注",
+      "箭头",
+      "镜头编号",
+      "水印"
+    ]
+  },
+  "render": {
+    "detail_priority": [
+      "产品几何",
+      "关键材料或接触界面",
+      "光的归属"
+    ],
+    "artifact_budget": "strict",
+    "quality_controls": [
+      "细节只出现在有材料归属且焦面能解析的位置"
+    ]
+  }
+}

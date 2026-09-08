@@ -90,6 +90,59 @@ class VideoQualityTests(unittest.TestCase):
         self.assertNotIn("visible pores", text)
         self.assertNotIn("24 fps", text)
 
+    def test_product_cg_medium_is_preserved_and_does_not_inject_live_action_or_performer_language(self):
+        item = copy.deepcopy(self.payload)
+        item["project"]["intended_use"] = "10-second photoreal_cg product material macro"
+        item["entities"] = [{"entity_type": "product"}]
+        text = build_video_quality_prefix(item)
+        self.assertIn("photoreal_cg", text.splitlines()[0])
+        self.assertNotIn("not 3D", text)
+        self.assertNotIn("camera shares physical space with performers", text)
+        self.assertIn("declared subject and material", text)
+
+    def test_negative_cg_language_does_not_count_as_positive_medium(self):
+        item = copy.deepcopy(self.payload)
+        item["project"]["intended_use"] = "10-second product film; do not use CG or 3D"
+        text = build_video_quality_prefix(item)
+        self.assertIn("Style: 10-second product film; do not use CG or 3D; preserve this declared visual treatment", text)
+        self.assertNotIn("8K IMAX photoreal cinema", text)
+
+    def test_chinese_product_cg_medium_is_positive_but_chinese_negation_is_not(self):
+        positive = copy.deepcopy(self.payload)
+        positive["project"]["intended_use"] = "10秒产品CG广告"
+        positive_text = build_video_quality_prefix(positive)
+        self.assertIn("产品CG广告", positive_text.splitlines()[0])
+        self.assertNotIn("not 3D", positive_text)
+
+        negative = copy.deepcopy(self.payload)
+        negative["project"]["intended_use"] = "10秒产品广告，不要产品CG"
+        negative_text = build_video_quality_prefix(negative)
+        self.assertIn("Style: 10秒产品广告，不要产品CG; preserve this declared visual treatment", negative_text)
+        self.assertNotIn("8K IMAX photoreal cinema", negative_text)
+
+    def test_excluding_3d_preserves_the_declared_flat_vector_statement(self):
+        item = copy.deepcopy(self.payload)
+        item["project"]["intended_use"] = "flat vector product film, no 3D"
+        text = build_video_quality_prefix(item)
+        self.assertIn("Style: flat vector product film, no 3D; preserve this declared visual treatment", text)
+        self.assertNotIn("8K IMAX photoreal cinema", text)
+
+    def test_human_scene_keeps_live_action_performer_default(self):
+        item = copy.deepcopy(self.payload)
+        item["project"]["intended_use"] = "10-second live-action product film"
+        item["entities"] = [{"entity_type": "person"}]
+        text = build_video_quality_prefix(item)
+        self.assertIn("camera shares physical space with performers", text)
+
+    def test_stylized_cg_override_keeps_explicit_style_and_medium_safe_defaults(self):
+        item = copy.deepcopy(self.payload)
+        item["video_quality"] = {"style": "stylized_cg product commercial"}
+        item["entities"] = [{"entity_type": "product"}]
+        text = build_video_quality_prefix(item)
+        self.assertIn("Style: stylized_cg product commercial.", text)
+        self.assertNotIn("not 3D", text)
+        self.assertNotIn("camera shares physical space with performers", text)
+
     def test_gpt_image_adapter_never_receives_video_quality_prefix(self):
         from unittest import mock
         import dircreative_prompt_compiler as compiler

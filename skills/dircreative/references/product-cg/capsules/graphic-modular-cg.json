@@ -1,0 +1,74 @@
+{
+  "style_capsule": "1.0",
+  "id": "graphic-modular-cg",
+  "name": "图形模块 · Graphic Modular",
+  "scope": "skill_candidate",
+  "status": "validated",
+  "adoption_approved": false,
+  "source_summary": {
+    "source_count": 3,
+    "raw_images_stored": false,
+    "provenance": "Design interpretation from inspected local stills and/or the cited makers’ descriptions. Sources: https://futuredeluxe.com/work/heineken; https://futuredeluxe.com/work/vizio; https://futuredeluxe.com/work/google-pixel"
+  },
+  "visual_rules": {
+    "medium_behavior": "具有图形设计秩序的风格化产品CG；简化表面频率和色彩角色，保留目标产品形态。",
+    "palette_logic": [
+      "少量有明确角色的色块形成对比；目标品牌色和输出要求优先。"
+    ],
+    "shape_line_language": "清楚体块、间距、重复和节奏构成系统；轮廓可以图标化但关键产品结构维持可识别。",
+    "texture_material_logic": [
+      "大面积连续哑面或目标指定的单纯反射，与少量精细主件形成层级。",
+      "表面细节服从选定的风格化程度，不自动添加实拍颗粒或满铺微纹理。"
+    ],
+    "lighting_logic": "简明而有方向的棚光、形状清楚的阴影或目标指定的风格化光；图形层级保持稳定。",
+    "composition_logic": [
+      "一个主件与有序辅助模块形成清楚阅读路径。",
+      "重复、切边和尺度对比服务于产品识别；文字只有目标明确要求时才参与构图。"
+    ],
+    "typography_logic": [],
+    "optics_rendering_logic": "采用目标声明的正交或透视投影，保持投影和轮廓一致；节拍与模糊按风格选定。",
+    "motifs": [
+      "重复体块的节奏",
+      "产品轮廓与辅助几何的呼应"
+    ]
+  },
+  "inferred_traits": [
+    "用简明体块、节奏与形态呼应表达产品个性，适配清楚的短时识别。",
+    "These rules are a transferable design interpretation, not the source creators’ complete production method."
+  ],
+  "unknowns": [
+    "Exact source lens, shader parameters, simulation settings and full frame-by-frame motion are not established by these rules.",
+    "Image transfer does not establish temporal stability or final video quality."
+  ],
+  "transfer_rules": [
+    "Target identity, material, geometry, function, palette, layout, text and requested medium remain authoritative.",
+    "Select compatible visual mechanisms; do not import every motif into every target."
+  ],
+  "forbidden_transfer": [
+    "Source product identity, exact packaging, protected marks, source wording and layout coordinates.",
+    "不复制来源字形、口号或标识；抽象模块不证明环保、显示性能或其他产品功效。"
+  ],
+  "validation": {
+    "prompts": [
+      "制作一个原创、无品牌的产品CG纯画面。风格化CG，主件完整清楚，圆柱与方块沿同一弧线错落排列；影子形成有序节奏，表面连续而简明。 一副虚构无品牌珊瑚色头戴式耳机，深灰耳垫，作为主件与几个无字的圆柱和圆角方块组成图形式三维构图。",
+      "制作一个原创、无品牌的产品CG纯画面。风格化三维产品英雄画面，近似正交透视，曲柄和收粉仓读清，阶梯阴影与机身轮廓形成简洁图形节奏。 一台虚构无品牌小型手摇咖啡磨豆器，奶油黄圆柱机身、黑色曲柄与透明小收粉仓，旁边两个简洁无字阶梯模块。"
+    ],
+    "notes": "Two different target scenarios were generated without source-image attachments and independently inspected. Static style transfer passed with recorded limitations. Actual PNGs are 1672x941; exact canvas, some framing/material-scale facts and moving-video behavior are not fully verified. This is not user adoption. See the validation record and separate evidence asset. Prompt entries are the target briefs; exact compiled native prompts and their SHA-256 are retained in the separate evidence asset.",
+    "evidence": [
+      {
+        "case_id": "graphic-headphones",
+        "prompt_index": 0,
+        "scenario": "audio_product",
+        "evidence_ref": "docs/film-preproduction/research/product-cg-transfer-validation-2026-09-08.json#graphic-headphones",
+        "review": "Coral, pale blue and ivory volumes, repeated modules and directional shadows establish graphic rhythm. The full headphones remain readable; finer cushion detail is subordinate to the simplified modules."
+      },
+      {
+        "case_id": "graphic-grinder",
+        "prompt_index": 1,
+        "scenario": "kitchen_appliance",
+        "evidence_ref": "docs/film-preproduction/research/product-cg-transfer-validation-2026-09-08.json#graphic-grinder",
+        "review": "A restrained palette, near-orthographic body, steps and shadows establish a modular system. The crank and clear grounds chamber are visible. Added coffee-bean props are a minor scene variation."
+      }
+    ]
+  }
+}

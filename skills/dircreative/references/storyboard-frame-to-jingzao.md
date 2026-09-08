@@ -1,5 +1,9 @@
 # Storyboard Frame to Jingzao Handoff
 
+For requested product CG styles, use [product CG direction](product-cg-direction.md)
+and only the selected capsule within this existing handoff. Preserve target facts
+and current generation scope.
+
 Use `storyboard_frame_to_jingzao_v1` for cinematic storyboard or clean input frames
 from locked story, shots, state and assets. Jingzao owns frame compilation.
 Persist and validate with

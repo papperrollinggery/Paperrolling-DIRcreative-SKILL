@@ -1,0 +1,137 @@
+{
+  "schema_version": "1.0",
+  "cases": [
+    {
+      "case_id": "powder-compact",
+      "family": "pastel-dry-powder-cg",
+      "scenario": "cosmetic_powder",
+      "spec": "specs/powder-compact.json",
+      "target_facts": [
+        "六角形粉盒",
+        "米白与浅杏双色干粉",
+        "仅一只产品"
+      ]
+    },
+    {
+      "case_id": "artist-pigment",
+      "family": "pastel-dry-powder-cg",
+      "scenario": "artist_pigment",
+      "spec": "specs/artist-pigment.json",
+      "target_facts": [
+        "两个陶瓷碟",
+        "靛蓝与赭红干粉",
+        "短绒工具不是长毛刷"
+      ]
+    },
+    {
+      "case_id": "precision-drive",
+      "family": "precision-hard-surface-cg",
+      "scenario": "portable_storage",
+      "spec": "specs/precision-drive.json",
+      "target_facts": [
+        "矩形硬壳和四角倒角",
+        "一个USB-C接口",
+        "不展示内部电路"
+      ]
+    },
+    {
+      "case_id": "precision-tool",
+      "family": "precision-hard-surface-cg",
+      "scenario": "precision_tool",
+      "spec": "specs/precision-tool.json",
+      "target_facts": [
+        "刀头与螺钉对齐",
+        "银色刚性握柄",
+        "只有一把工具"
+      ]
+    },
+    {
+      "case_id": "knit-shoe",
+      "family": "elastic-fiber-cg",
+      "scenario": "knit_footwear",
+      "spec": "specs/knit-shoe.json",
+      "target_facts": [
+        "一只低帮鞋",
+        "针织鞋面和泡棉中底分离",
+        "形变只在指定柔性部位"
+      ]
+    },
+    {
+      "case_id": "woven-speaker",
+      "family": "elastic-fiber-cg",
+      "scenario": "woven_acoustic_object",
+      "spec": "specs/woven-speaker.json",
+      "target_facts": [
+        "方形刚性边框",
+        "深蓝织物",
+        "小幅布面波纹是虚构概念设计"
+      ]
+    },
+    {
+      "case_id": "chocolate-layer",
+      "family": "viscous-sensory-cg",
+      "scenario": "chocolate_material",
+      "spec": "specs/chocolate-layer.json",
+      "target_facts": [
+        "两段同一巧克力条",
+        "薄威化断面",
+        "浓稠连接与干燥碎屑分开"
+      ]
+    },
+    {
+      "case_id": "ceramic-glaze",
+      "family": "viscous-sensory-cg",
+      "scenario": "ceramic_glaze",
+      "spec": "specs/ceramic-glaze.json",
+      "target_facts": [
+        "一个浅口陶瓷碗",
+        "靛蓝黏稠釉浆",
+        "湿亮釉面与干燥瓷面区分"
+      ]
+    },
+    {
+      "case_id": "sculptural-watch",
+      "family": "sculptural-luxury-cg",
+      "scenario": "watch_object",
+      "spec": "specs/sculptural-watch.json",
+      "target_facts": [
+        "腕表和表带完整",
+        "无字表盘",
+        "石板玻璃只是衬托"
+      ]
+    },
+    {
+      "case_id": "sculptural-pen",
+      "family": "sculptural-luxury-cg",
+      "scenario": "writing_instrument",
+      "spec": "specs/sculptural-pen.json",
+      "target_facts": [
+        "一支钢笔",
+        "银色笔尖",
+        "瓷质支架接触清楚"
+      ]
+    },
+    {
+      "case_id": "graphic-headphones",
+      "family": "graphic-modular-cg",
+      "scenario": "audio_product",
+      "spec": "specs/graphic-headphones.json",
+      "target_facts": [
+        "一副耳机",
+        "无字几何块",
+        "产品结构可辨"
+      ]
+    },
+    {
+      "case_id": "graphic-grinder",
+      "family": "graphic-modular-cg",
+      "scenario": "kitchen_appliance",
+      "spec": "specs/graphic-grinder.json",
+      "target_facts": [
+        "一台手摇磨豆器",
+        "曲柄与收粉仓",
+        "无字辅助模块"
+      ]
+    }
+  ]
+}

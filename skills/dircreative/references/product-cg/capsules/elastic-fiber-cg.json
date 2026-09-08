@@ -1,0 +1,74 @@
+{
+  "style_capsule": "1.0",
+  "id": "elastic-fiber-cg",
+  "name": "弹性与织构 · Elastic Fiber",
+  "scope": "skill_candidate",
+  "status": "validated",
+  "adoption_approved": false,
+  "source_summary": {
+    "source_count": 2,
+    "raw_images_stored": false,
+    "provenance": "Design interpretation from inspected local stills and/or the cited makers’ descriptions. Sources: https://futuredeluxe.com/work/converse-4; https://futuredeluxe.com/work/huawei-mate-70"
+  },
+  "visual_rules": {
+    "medium_behavior": "精细织构与可控形变的产品CG；表现性辅助物与真实产品各有明确运动边界。",
+    "palette_logic": [
+      "目标颜色维持产品识别；一处功能色或材质对比指示受力区域。"
+    ],
+    "shape_line_language": "线束、编织孔隙和曲面走向连续；刚性部件与柔性区域保持明确分工。",
+    "texture_material_logic": [
+      "纤维细节随观察距离和焦面解析，织物孔隙与线束直径具有稳定比例。",
+      "软性材料的局部压缩、拉伸和回弹来自目标允许的物性，硬件连接保持刚性。"
+    ],
+    "lighting_logic": "柔光建立整体，低角度侧光揭示织纹；局部高光随曲面运动而非贴在画面上。",
+    "composition_logic": [
+      "以重复节距、曲线张力和清晰主件建立有序运动。",
+      "允许把目标已有纹理放大为环境，但必须有回到产品表面的视觉锚点。"
+    ],
+    "typography_logic": [],
+    "optics_rendering_logic": "近景读形变范围，微距读纤维或接触；浅景深不遮掉承担功能解释的部位。",
+    "motifs": [
+      "受力区域与松弛区域的差异",
+      "线束或织纹的方向连续"
+    ]
+  },
+  "inferred_traits": [
+    "让柔韧、编织、回弹或运动个性具备可感知的材料依据。",
+    "These rules are a transferable design interpretation, not the source creators’ complete production method."
+  ],
+  "unknowns": [
+    "Exact source lens, shader parameters, simulation settings and full frame-by-frame motion are not established by these rules.",
+    "Image transfer does not establish temporal stability or final video quality."
+  ],
+  "transfer_rules": [
+    "Target identity, material, geometry, function, palette, layout, text and requested medium remain authoritative.",
+    "Select compatible visual mechanisms; do not import every motif into every target."
+  ],
+  "forbidden_transfer": [
+    "Source product identity, exact packaging, protected marks, source wording and layout coordinates.",
+    "运动隐喻不能成为未经证实的性能或弹性证明；不得把硬质产品本体自动变为充气物或软胶。"
+  ],
+  "validation": {
+    "prompts": [
+      "制作一个原创、无品牌的产品CG纯画面。侧前方近景，前掌局部压缩、鞋面织纹随弯曲方向延续；鞋跟仍稍抬起，鞋底与支撑面的接触位置清楚。 一只虚构无品牌青绿色低帮针织运动鞋，白色泡棉中底、深色薄橡胶外底，鞋头轻压在一个浅灰支撑面上。",
+      "制作一个原创、无品牌的产品CG纯画面。靠近织面与金属框交界的三分之四微距，纤维方向连续，布面波纹幅度很小；产品整体边框可辨，结构和背景简洁。 一个虚构无品牌圆角方形桌面音箱，外层为深蓝编织声学布，侧面金属框保持刚性，前面一块布面形成极轻微有序波纹的概念状态。"
+    ],
+    "notes": "Two different target scenarios were generated without source-image attachments and independently inspected. Static style transfer passed with recorded limitations. Actual PNGs are 1672x941; exact canvas, some framing/material-scale facts and moving-video behavior are not fully verified. This is not user adoption. See the validation record and separate evidence asset. Prompt entries are the target briefs; exact compiled native prompts and their SHA-256 are retained in the separate evidence asset.",
+    "evidence": [
+      {
+        "case_id": "knit-shoe",
+        "prompt_index": 0,
+        "scenario": "knit_footwear",
+        "evidence_ref": "docs/film-preproduction/research/product-cg-transfer-validation-2026-09-08.json#knit-shoe",
+        "review": "Fiber direction follows the upper; foam and rubber remain distinct. Forefoot contact and raised heel are visible. Collar cropping and a stronger heel raise are minor deviations; compression magnitude is not measured."
+      },
+      {
+        "case_id": "woven-speaker",
+        "prompt_index": 1,
+        "scenario": "woven_acoustic_object",
+        "evidence_ref": "docs/film-preproduction/research/product-cg-transfer-validation-2026-09-08.json#woven-speaker",
+        "review": "Ordered low-amplitude cloth waves remain inside a rigid frame. Weave and metal response differ. This validates a fictional still concept, not acoustic vibration or performance."
+      }
+    ]
+  }
+}

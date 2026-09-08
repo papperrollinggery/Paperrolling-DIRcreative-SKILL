@@ -1,0 +1,393 @@
+{
+  "schema_version": "1.1.0",
+  "fixture_id": "powder-compact-material-study",
+  "project": {
+    "title": "Powder Compact Material Study",
+    "intended_use": "9-second prompt-only photoreal CG product film",
+    "safety_boundary": "fictional unbranded product only; no person, logo, claim, performance proof, or visible text",
+    "source_of_truth": "this authored Prompt IR and its fictional product brief"
+  },
+  "output": {
+    "aspect_ratio": "16:9",
+    "target_duration_sec": 9,
+    "generation_unit_sec": 9,
+    "text_policy": "post_only",
+    "visual_output_mode": "prompt_only"
+  },
+  "intake": {
+    "read_before_regenerate": true,
+    "source_precedence": [
+      "this authored Prompt IR",
+      "fictional product brief",
+      "generic model knowledge"
+    ],
+    "reuse_or_derive_policy": "From-text concept demonstration only; no image references are attached or claimed.",
+    "supplied_assets": []
+  },
+  "references": [],
+  "entities": [
+    {
+      "entity_id": "target_product",
+      "external_name": "the fictional unbranded six-sided powder compact",
+      "entity_type": "product",
+      "reference_asset_ids": [],
+      "immutable": [
+        "six-sided ivory and pale-apricot dry-pressed powder surface",
+        "graphite outer shell",
+        "powder core remains complete",
+        "no logo or visible text"
+      ],
+      "starting_state": "closed, dry, and centered",
+      "screen_position": "dominant center with protected negative space"
+    },
+    {
+      "entity_id": "applicator",
+      "external_name": "the unbranded short-fiber applicator",
+      "entity_type": "prop",
+      "reference_asset_ids": [],
+      "immutable": [
+        "flat oval applicator with a short velvet contact surface",
+        "no visible text"
+      ],
+      "starting_state": "outside the frame until the contact macro",
+      "screen_position": "enters from upper right toward the powder surface"
+    }
+  ],
+  "global_locks": {
+    "identity": [
+      "fictional unbranded product only",
+      "no person or body"
+    ],
+    "product_or_prop": [
+      "same six-sided compact geometry, graphite shell, ivory and pale-apricot surfaces throughout"
+    ],
+    "scene": [
+      "neutral dark virtual studio with matte ground and continuous background"
+    ],
+    "composition_axis": [
+      "16:9 horizontal frame",
+      "same three-quarter product axis across all shots"
+    ],
+    "palette_material": [
+      "ivory",
+      "pale apricot",
+      "graphite shell",
+      "restrained neutral reflections"
+    ],
+    "lens_grammar": [
+      "controlled virtual product cinematography",
+      "macro material detail without wide-angle distortion"
+    ],
+    "audio_spine": [
+      "no dialogue or voiceover; declared material foley only"
+    ]
+  },
+  "composition": {
+    "visual_center": "the fictional product silhouette and declared material event",
+    "subject_hierarchy": "product first; material consequence second; studio background last",
+    "foreground_midground_background": "foreground: declared material detail; midground: product; background: quiet virtual studio",
+    "negative_space": "quiet space around the hero silhouette for optional post text",
+    "movement_room": "all declared object action remains fully inside frame",
+    "screen_direction": "all transitions preserve a stable product axis",
+    "narrative_purpose": "move from product identity through material action to a resolved hero frame",
+    "balance_symmetry": "stable opening, controlled material action, resolved final balance",
+    "leading_lines_occlusion_parallax": "surface edges and reflections guide attention without hiding identity",
+    "perspective_depth": "shallow but readable product depth"
+  },
+  "render_look": {
+    "lighting": {
+      "condition": "large soft virtual key with controlled local edge reflection",
+      "effect": "material boundaries remain readable without uncontrolled glare",
+      "intensity": "subtle"
+    },
+    "optics": {
+      "condition": "virtual macro-to-hero product optics with stable focus",
+      "physical_behavior": "no lens distortion beyond declared product perspective",
+      "lens_family": "spherical virtual product lens",
+      "filtration": "clean restrained diffusion",
+      "intensity": "subtle"
+    },
+    "atmosphere": {
+      "condition": "clear virtual studio air with no generic haze",
+      "medium": "clean air",
+      "intensity": "none"
+    },
+    "grade": {
+      "condition": "neutral product color with restrained accent separation",
+      "contrast_gamma": "moderate contrast with readable darks",
+      "black_level": "deep but not crushed",
+      "highlight_rolloff": "smooth on hard and soft surfaces",
+      "saturation_density": "restrained except declared accent colors",
+      "palette_separation": "product colors remain separated from background",
+      "intensity": "subtle"
+    },
+    "preserve": [
+      "product geometry",
+      "material action boundaries",
+      "no visible text"
+    ],
+    "exit_or_continuity": "light direction, product axis, material response, and final hold remain continuous across shots"
+  },
+  "shot_blocks": [
+    {
+      "shot_id": "S01",
+      "time_start": "00.00",
+      "time_end": "01.80",
+      "story_beat": "powder compact identity hook",
+      "emotional_or_attention_beat": "Recognize the hexagonal graphite shell first, then read the two powder colors after the lid opens.",
+      "entity_actions": [
+        {
+          "owner_entity_id": "target_product",
+          "initial_state": "The unbranded six-sided dry-pressed powder compact is closed, centered, and dry.",
+          "trigger": "A soft studio reflection reveals the graphite shell as the lid begins to rotate on its rear hinge.",
+          "path": "open the lid from closed to 105 degrees during the first second, then hold for 0.8 seconds with both powder colors visible",
+          "physical_consequence": "The rigid lid moves only around its hinge; the powder core remains intact and seated in the tray.",
+          "final_state": "The lid is open at 105 degrees; the hexagonal casing and ivory/pale-apricot powder surface are readable."
+        }
+      ],
+      "environment_action": {
+        "initial_state": "Neutral dark virtual studio; matte ground and background remain continuous.",
+        "response": "The shell reflection follows its curved edge; the backdrop remains still.",
+        "final_state": "The virtual studio remains quiet and the product stays spatially anchored."
+      },
+      "camera": {
+        "shot_size": "three-quarter macro product shot",
+        "angle_height_axis": "eye-level virtual product axis",
+        "lens_feel_reason": "virtual product perspective without distortion",
+        "support": "virtual stabilized dolly",
+        "start_target": "closed hexagonal shell",
+        "path": "short axial creep-in",
+        "end_target": "opened powder surface and hinge",
+        "speed_easing": "smooth ease",
+        "focus": "stable product focus",
+        "motivation": "recognize the object, then reveal the material it contains"
+      },
+      "composition_state": "eye-level virtual product axis",
+      "look_delta": "a broad reflection follows the opening graphite lid and reveals the two powder colors",
+      "audio_cues": [
+        "quiet room tone",
+        "single transition accent"
+      ],
+      "transition_in": "fade up from clean black",
+      "transition_out": "Match the diagonal powder-color boundary to the same boundary in the contact macro; keep the lid open.",
+      "continuity_locks": [
+        "same declared product geometry",
+        "same declared material palette",
+        "same virtual axis",
+        "no logo or visible text"
+      ]
+    },
+    {
+      "shot_id": "S02",
+      "time_start": "01.80",
+      "time_end": "04.60",
+      "story_beat": "short-fiber contact",
+      "emotional_or_attention_beat": "The tool contact is readable as a deliberate material visualization, while the powder core stays complete.",
+      "entity_actions": [
+        {
+          "owner_entity_id": "applicator",
+          "initial_state": "The compact lid remains open at 105 degrees; the short velvet contact face hovers just above the intact powder surface.",
+          "trigger": "The applicator lowers until its short-fiber face makes light contact with the powder.",
+          "path": "press gently without gouging, travel a few millimeters along the color boundary, then lift to show a small clear gap",
+          "physical_consequence": "The velvet nap compresses, a thin layer of powder adheres to it, and a few fine dry grains leave the contact edge as the nap separates.",
+          "final_state": "The applicator has lifted clear of the surface; only a shallow contact trace remains and the pressed core is intact."
+        }
+      ],
+      "environment_action": {
+        "initial_state": "Neutral dark virtual studio; matte ground and background remain continuous.",
+        "response": "A small local contact shadow closes and reopens as the applicator touches and lifts.",
+        "final_state": "The virtual studio remains quiet and the product stays spatially anchored."
+      },
+      "camera": {
+        "shot_size": "close material insert",
+        "angle_height_axis": "low three-quarter material axis",
+        "lens_feel_reason": "macro detail without distortion",
+        "support": "virtual stabilized dolly",
+        "start_target": "the same powder-color boundary",
+        "path": "short lateral material pass",
+        "end_target": "the gap between lifted velvet and powder",
+        "speed_easing": "smooth ease",
+        "focus": "focus remains on the contact edge and fine departing grains",
+        "motivation": "make contact, adhesion and separation readable"
+      },
+      "composition_state": "tool edge and powder surface in one readable plane",
+      "look_delta": "local contact shadow; no smoke, liquid, or deep excavation",
+      "audio_cues": [
+        "material contact foley",
+        "single transition accent"
+      ],
+      "transition_in": "Continue the powder-color boundary and diagonal orientation established at the end of the opening reveal.",
+      "transition_out": "Follow the few lifted grains from this exact contact patch into the wider material event in the particle return.",
+      "continuity_locks": [
+        "powder core remains complete",
+        "only the applicator short-fiber face contacts the powder surface",
+        "no efficacy or manufacturing claim"
+      ]
+    },
+    {
+      "shot_id": "S03",
+      "time_start": "04.60",
+      "time_end": "07.00",
+      "story_beat": "fine powder spread and recovery",
+      "emotional_or_attention_beat": "Fine powder briefly opens and falls back as a controlled visual metaphor, without claiming process or performance.",
+      "entity_actions": [
+        {
+          "owner_entity_id": "target_product",
+          "initial_state": "The lid stays open and the applicator leaves the frame; fine grains depart the contact patch without breaking the core.",
+          "trigger": "The departing grains become an explicitly art-directed CG material visualization.",
+          "path": "expand a thin veil from the contact patch for 0.6 seconds, curve it downward for 0.8 seconds, then let it settle toward visible front-tray contact points for one second",
+          "physical_consequence": "Individual dry grains remain fine and separated; the tray is the visible destination below the hinge, and the pressed core remains intact. This artistic excursion is not a performance or manufacturing demonstration.",
+          "final_state": "The lid is still open, the powder core is complete, and nearly all loose grains have settled onto the tray."
+        }
+      ],
+      "environment_action": {
+        "initial_state": "Neutral dark virtual studio; matte ground and background remain continuous.",
+        "response": "Background remains still; only the declared fine-powder layer changes and then recedes.",
+        "final_state": "The virtual studio remains quiet and the product stays spatially anchored."
+      },
+      "camera": {
+        "shot_size": "medium macro transition",
+        "angle_height_axis": "same three-quarter axis",
+        "lens_feel_reason": "controlled product scale",
+        "support": "virtual stabilized dolly",
+        "start_target": "material consequence",
+        "path": "small controlled pull-back",
+        "end_target": "complete product",
+        "speed_easing": "smooth ease",
+        "focus": "stable product focus",
+        "motivation": "show recovery and material consequence"
+      },
+      "composition_state": "compact remains dominant; powder veil is secondary and sparse",
+      "look_delta": "slightly brighter pale-apricot plane; graphite stays stable",
+      "audio_cues": [
+        "material contact foley",
+        "single transition accent"
+      ],
+      "transition_in": "The contact patch and lifted grains from the contact macro remain the origin; do not start an unrelated particle effect.",
+      "transition_out": "Carry the same open-lid silhouette and last settling grains into the wider final hero composition.",
+      "continuity_locks": [
+        "same compact geometry",
+        "powder layer remains sparse and symbolic",
+        "no performance claim"
+      ]
+    },
+    {
+      "shot_id": "S04",
+      "time_start": "07.00",
+      "time_end": "09.00",
+      "story_beat": "open hero resolution",
+      "emotional_or_attention_beat": "The final hero returns to the complete object and its two-tone material hierarchy.",
+      "entity_actions": [
+        {
+          "owner_entity_id": "target_product",
+          "initial_state": "The same compact remains open at 105 degrees with its intact powder core and the last fine grains settling in the tray.",
+          "trigger": "The final loose grain comes to rest.",
+          "path": "hold the open compact in a stable three-quarter hero with no further product movement; keep both powder colors visible through the final recognition hold",
+          "physical_consequence": "The rigid casing and open lid stay fixed; settled grains remain in the tray rather than disappearing or entering the hinge.",
+          "final_state": "The open graphite hexagonal shell, hinge and two-color powder core remain simultaneously readable with no text."
+        }
+      ],
+      "environment_action": {
+        "initial_state": "Neutral dark virtual studio; matte ground and background remain continuous.",
+        "response": "The last grains settle and the broad shell reflection remains stable.",
+        "final_state": "The virtual studio remains quiet and the product stays spatially anchored."
+      },
+      "camera": {
+        "shot_size": "slightly wider three-quarter hero",
+        "angle_height_axis": "same virtual horizon and axis",
+        "lens_feel_reason": "hero product perspective",
+        "support": "virtual stabilized dolly",
+        "start_target": "the open compact and last settling grains",
+        "path": "small ease-out then stop",
+        "end_target": "complete open compact with two-color powder core",
+        "speed_easing": "finish the small ease-out by 07.60, then hold through 09.00",
+        "focus": "stable hero focus over the shell, hinge and powder face",
+        "motivation": "resolve the hero frame"
+      },
+      "composition_state": "same virtual horizon and axis",
+      "look_delta": "full compact silhouette with quiet negative space",
+      "audio_cues": [
+        "material contact foley",
+        "clean final hold"
+      ],
+      "transition_in": "Continue the same open-lid silhouette and material state from the particle return.",
+      "transition_out": "End after a clear 1.4-second recognition hold; no new object or graphic enters.",
+      "continuity_locks": [
+        "same six-sided compact geometry",
+        "same two-tone material hierarchy",
+        "no efficacy, manufacturing, or text claim"
+      ]
+    }
+  ],
+  "audio_plan": {
+    "dialogue": "",
+    "voiceover": "",
+    "ambience": "quiet virtual studio room tone",
+    "music": "",
+    "foley": "declared material contact and settling only",
+    "sfx": "",
+    "silence": "brief silence on final hero hold",
+    "perspective": "close material foley, no dialogue or voiceover",
+    "generation_route": "postproduction"
+  },
+  "capability": {
+    "capability_card_id": "seedance_2_5_official_launch",
+    "model_key": "seedance",
+    "version": "2.5",
+    "provider_surface": "Seedance 2.5 launch product surfaces described by ByteDance Seed",
+    "access_mode": "documented_product",
+    "execution_mode": "manual_export",
+    "execution_verification_status": "unverified"
+  },
+  "generation_plan": {
+    "selected_adapter": "seedance",
+    "units": [
+      {
+        "unit_id": "U01",
+        "time_start": "00.00",
+        "time_end": "09.00",
+        "shot_ids": [
+          "S01",
+          "S02",
+          "S03",
+          "S04"
+        ],
+        "incoming_handoff_key": "clean_start_from_text",
+        "outgoing_handoff_key": "hero_hold_prompt_only",
+        "incoming_state": "declared opening product state",
+        "outgoing_state": "declared resolved hero state",
+        "audio_handoff": "postproduction foley only"
+      }
+    ]
+  },
+  "qa": {
+    "status": "unverified",
+    "pass_signals": [
+      "schema and compiler validation only",
+      "four authored shot blocks cover the 9-second timeline"
+    ],
+    "failure_ids": [
+      "real_video_not_generated",
+      "visual_quality_not_reviewed"
+    ],
+    "retry_rules": [
+      "If material motion misreads, revise only the material-action wording.",
+      "If product geometry drifts, revise immutable product locks before style."
+    ],
+    "next_action": "Prompt-only review; no real video generation or visual acceptance has occurred."
+  },
+  "video_quality": {
+    "style": "photoreal CG product film; physically credible surface rendering; artistic powder visualization without efficacy or manufacturing proof",
+    "cinematography": "virtual product camera with motivated macro-to-hero progression and stable axis",
+    "lighting": "soft virtual key with local material separation",
+    "color": "declared product colors remain separated from the background",
+    "camera": "controlled three-quarter macro, material insert, small pull-back, final hero hold",
+    "skin": "not applicable; preserve product surface rendering",
+    "acting": "not applicable; product attention and material consequence remain readable",
+    "physics": "short-fiber contact remains shallow; powder core stays complete; fine powder expands once and falls back under gravity as an explicitly artistic visualization",
+    "composition": "product stays dominant; material event remains readable; final hero has quiet negative space",
+    "continuity": "same product geometry, material palette, axis, light direction, and final hold across shots",
+    "technical": "prompt-only 9-second design; no claim of rendered frame rate or temporal verification",
+    "audio": "postproduction foley only; no dialogue, voiceover, or native audio claim"
+  }
+}

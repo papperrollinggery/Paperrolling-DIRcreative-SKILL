@@ -1,0 +1,95 @@
+{
+  "schema_version": "1.0",
+  "selection": "Optional craft data within existing production_design / aesthetic_system work; not an independent route or automatic generation authorization.",
+  "families": [
+    {
+      "id": "pastel-dry-powder-cg",
+      "name": "柔光干粉 · Pastel Dry Powder",
+      "capsule": "capsules/pastel-dry-powder-cg.json",
+      "visual_job": "让细、轻、可接触的干粉材料被看见，而非只展示包装。",
+      "motion_grammar": [
+        "阵列通过→主件出列→辨认产品",
+        "接触→压缩或粘附→提起→细粒离面",
+        "外扩粉体与内收粉体分别写明源点、方向和落点"
+      ],
+      "misuse_boundary": "不是液体、烟雾或碎石的通用模板；粉体类型、颗粒尺度、工具类别与颜色来自目标。",
+      "example_scenarios": [
+        "cosmetic_powder",
+        "artist_pigment"
+      ]
+    },
+    {
+      "id": "precision-hard-surface-cg",
+      "name": "精密硬表面 · Precision Hard Surface",
+      "capsule": "capsules/precision-hard-surface-cg.json",
+      "visual_job": "把结构、工艺和功能因果读清，建立可信的精密感。",
+      "motion_grammar": [
+        "装配前→对位→连接完成",
+        "运动件启动→载荷或接触→结果"
+      ],
+      "misuse_boundary": "不凭空补内部机构、尺寸、精度或性能；概念装置须说明是虚构设计，不能冒充真实工程证据。",
+      "example_scenarios": [
+        "portable_storage",
+        "precision_tool"
+      ]
+    },
+    {
+      "id": "elastic-fiber-cg",
+      "name": "弹性与织构 · Elastic Fiber",
+      "capsule": "capsules/elastic-fiber-cg.json",
+      "visual_job": "让柔韧、编织、回弹或运动个性具备可感知的材料依据。",
+      "motion_grammar": [
+        "施力→形变→释放→回稳",
+        "辅助材料延展→形态呼应→产品辨认"
+      ],
+      "misuse_boundary": "运动隐喻不能成为未经证实的性能或弹性证明；不得把硬质产品本体自动变为充气物或软胶。",
+      "example_scenarios": [
+        "knit_footwear",
+        "woven_acoustic_object"
+      ]
+    },
+    {
+      "id": "viscous-sensory-cg",
+      "name": "流变触感 · Viscous Sensory",
+      "capsule": "capsules/viscous-sensory-cg.json",
+      "visual_job": "通过黏度、包覆、断裂或流动，把材料的感官差异讲清。",
+      "motion_grammar": [
+        "接近→接触→包覆或拉伸→分离/落定",
+        "完整→断裂→层次显露→产品回扣"
+      ],
+      "misuse_boundary": "不把水、油、巧克力、釉浆或膏体当成同一种流体；不凭空添加成分、营养或性能事实。",
+      "example_scenarios": [
+        "chocolate_material",
+        "ceramic_glaze"
+      ]
+    },
+    {
+      "id": "sculptural-luxury-cg",
+      "name": "雕塑材质 · Sculptural Luxury",
+      "capsule": "capsules/sculptural-luxury-cg.json",
+      "visual_job": "用真实材料细节与克制超现实构造建立产品的工艺与记忆点。",
+      "motion_grammar": [
+        "细节引入→材料关系展开→产品揭示→停留"
+      ],
+      "misuse_boundary": "不自动复制珠宝、节日、城市地标或某品牌色；奢华不是为每个表面添加金属亮片。",
+      "example_scenarios": [
+        "watch_object",
+        "writing_instrument"
+      ]
+    },
+    {
+      "id": "graphic-modular-cg",
+      "name": "图形模块 · Graphic Modular",
+      "capsule": "capsules/graphic-modular-cg.json",
+      "visual_job": "用简明体块、节奏与形态呼应表达产品个性，适配清楚的短时识别。",
+      "motion_grammar": [
+        "模块排列→节奏变化→主件显露→清楚停留"
+      ],
+      "misuse_boundary": "不复制来源字形、口号或标识；抽象模块不证明环保、显示性能或其他产品功效。",
+      "example_scenarios": [
+        "audio_product",
+        "kitchen_appliance"
+      ]
+    }
+  ]
+}

@@ -60,7 +60,7 @@
     "provider_runtime_files": {
       "type": "array",
       "minItems": 4,
-      "maxItems": 4,
+      "maxItems": 5,
       "uniqueItems": true,
       "items": {"$ref": "#/$defs/provider_file"}
     },

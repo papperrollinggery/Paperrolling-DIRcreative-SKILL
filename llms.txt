@@ -15,6 +15,8 @@ Use the root Skill as the only public entrypoint. Internal modules ship with DIR
 
 ## AI video workflows
 
+- [Product CG styles and directing](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/blob/main/examples/product-cg-style-library/README.md): Six optional material/style families, product-led reasoning, shot joins, real still-transfer tests and explicit video/technical limits.
+
 - [Reference-video distillation](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/blob/main/skills/dircreative/references/video-distillation.md): Evidence-first video breakdown and transferable production-method analysis.
 - [Storyboard coverage](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/blob/main/skills/dircreative/references/storyboard-coverage.md): Within-shot action panels, reverse shots, eyelines, and coverage validation.
 - [Seedance compilation](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/blob/main/skills/dircreative/references/script-to-seedance.md): Script-to-Seedance handoff, visual baseline, asset bindings, continuity, and duration rules.

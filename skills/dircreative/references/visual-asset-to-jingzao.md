@@ -1,5 +1,9 @@
 # Visual asset to Jingzao
 
+For requested product CG styles, use [product CG direction](product-cg-direction.md)
+and only the selected capsule within this existing handoff. Preserve target facts
+and current generation scope.
+
 Use this handoff only after DIR has decided that a formal image asset needs a
 maintainable visual spec, reference-aware compilation, an edit/preserve plan, or
 complex continuity/layout control. It is not the default for every image.

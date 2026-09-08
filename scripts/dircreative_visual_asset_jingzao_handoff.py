@@ -35,12 +35,23 @@ REQUIRED_REFERENCE_READS = {
     "references/reference-delivery.md",
     "references/quality-controls.md",
 }
-REQUIRED_PROVIDER_RUNTIME_FILES = {
+REQUIRED_PROVIDER_RUNTIME_FILES = frozenset({
     "scripts/validate_spec.py",
     "scripts/compile_prompt.py",
     "scripts/reference_delivery.py",
     "scripts/validate_style_capsule.py",
-}
+})
+OPTIONAL_PROVIDER_RUNTIME_FILES = frozenset({"scripts/reference_profile.py"})
+
+
+def expected_runtime_paths(provider_root: Path) -> frozenset[str]:
+    """Return the sealed runtime closure supported by this provider version."""
+    paths = set(REQUIRED_PROVIDER_RUNTIME_FILES)
+    for relative in OPTIONAL_PROVIDER_RUNTIME_FILES:
+        candidate = provider_root / relative
+        if candidate.exists():
+            paths.add(relative)
+    return frozenset(paths)
 INPUT_SPEC_FIELDS = {
     "contract_id",
     "asset_id",
@@ -616,7 +627,8 @@ def provider_errors(
         for item in runtime_entries
         if isinstance(item, dict)
     }
-    if runtime_paths != REQUIRED_PROVIDER_RUNTIME_FILES:
+    expected_paths = expected_runtime_paths(resolved)
+    if runtime_paths != expected_paths:
         errors.append("jingzao_provider_runtime_file_set_mismatch")
     for item in runtime_entries:
         if not isinstance(item, dict) or not isinstance(item.get("relative_path"), str):
@@ -1157,7 +1169,7 @@ def validate(
 
     replay_validation: dict[str, Any] | None = None
     replay_compiled: dict[str, Any] | None = None
-    if isinstance(spec, dict) and set(runtime_files) == REQUIRED_PROVIDER_RUNTIME_FILES:
+    if isinstance(spec, dict) and set(runtime_files).issuperset(REQUIRED_PROVIDER_RUNTIME_FILES):
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)
             replay_provider = root / "provider"
@@ -1166,6 +1178,8 @@ def validate(
                 target = replay_provider / relative
                 target.parent.mkdir(parents=True, exist_ok=True)
                 target.write_bytes(payload)
+            if set(runtime_files) != expected_runtime_paths(replay_provider):
+                return ["jingzao_provider_runtime_replay_closure_mismatch"], None
             spec_relative = output["visual_generation_spec"]["relative_path"]
             replay_spec = replay_project / spec_relative
             replay_spec.parent.mkdir(parents=True, exist_ok=True)

@@ -1,0 +1,74 @@
+{
+  "style_capsule": "1.0",
+  "id": "sculptural-luxury-cg",
+  "name": "雕塑材质 · Sculptural Luxury",
+  "scope": "skill_candidate",
+  "status": "validated",
+  "adoption_approved": false,
+  "source_summary": {
+    "source_count": 2,
+    "raw_images_stored": false,
+    "provenance": "Design interpretation from inspected local stills and/or the cited makers’ descriptions. Sources: https://futuredeluxe.com/work/genesis; https://tendril.studio/work/tiffany-holiday-icons/"
+  },
+  "visual_rules": {
+    "medium_behavior": "雕塑式产品CG，精细材料响应与一处经过选择的超现实空间关系并存。",
+    "palette_logic": [
+      "目标产品材质占主导，背景与辅助材料分担衬托角色；珍贵色有局部归属。"
+    ],
+    "shape_line_language": "精确产品轮廓搭配简洁雕塑体；尺度、悬浮或平衡只在目标授权范围内变化。",
+    "texture_material_logic": [
+      "金属、玻璃、瓷或石材呈现相互区分的反射与透射，保留边缘厚度。",
+      "光泽变化承担形体说明，细节集中在工艺接缝、切面或目标关键部位。"
+    ],
+    "lighting_logic": "控制反射形状、深暗分区和细小亮点；一个主光结构组织画面，局部透光呼应产品。",
+    "composition_logic": [
+      "留白与间距让主件优先；超现实辅助关系不压过目标轮廓。",
+      "材料特写与完整产品之间保持形态或高光的连接点。"
+    ],
+    "typography_logic": [],
+    "optics_rendering_logic": "使用稳定、克制的虚拟摄影；微距只放大真实声明的材料或工艺细节。",
+    "motifs": [
+      "真实材料与单一超现实关系",
+      "负空间与反射轮廓的呼应"
+    ]
+  },
+  "inferred_traits": [
+    "用真实材料细节与克制超现实构造建立产品的工艺与记忆点。",
+    "These rules are a transferable design interpretation, not the source creators’ complete production method."
+  ],
+  "unknowns": [
+    "Exact source lens, shader parameters, simulation settings and full frame-by-frame motion are not established by these rules.",
+    "Image transfer does not establish temporal stability or final video quality."
+  ],
+  "transfer_rules": [
+    "Target identity, material, geometry, function, palette, layout, text and requested medium remain authoritative.",
+    "Select compatible visual mechanisms; do not import every motif into every target."
+  ],
+  "forbidden_transfer": [
+    "Source product identity, exact packaging, protected marks, source wording and layout coordinates.",
+    "不自动复制珠宝、节日、城市地标或某品牌色；奢华不是为每个表面添加金属亮片。"
+  ],
+  "validation": {
+    "prompts": [
+      "制作一个原创、无品牌的产品CG纯画面。英雄近景，腕表完整可辨，薄石板与玻璃圆环形成克制的平衡关系；反射边缘与深暗空间强调工艺，只有一处轻微超现实平衡。 一只虚构无品牌不锈钢腕表，深蓝无字表盘与简洁银色指针，黑色皮革表带；靠在一片竖立薄石板与一个透明玻璃圆环之间。",
+      "制作一个原创、无品牌的产品CG纯画面。低角度产品近景，笔尖朝右前方，漆面长反射带和黄铜笔夹的小亮点有明确层级；大量安静负空间，接触位置可信。 一支虚构无品牌黑色漆面钢笔，银色笔尖、细窄黄铜笔夹，横置于一个奶白瓷质弧形支架上。"
+    ],
+    "notes": "Two different target scenarios were generated without source-image attachments and independently inspected. Static style transfer passed with recorded limitations. Actual PNGs are 1672x941; exact canvas, some framing/material-scale facts and moving-video behavior are not fully verified. This is not user adoption. See the validation record and separate evidence asset. Prompt entries are the target briefs; exact compiled native prompts and their SHA-256 are retained in the separate evidence asset.",
+    "evidence": [
+      {
+        "case_id": "sculptural-watch",
+        "prompt_index": 0,
+        "scenario": "watch_object",
+        "evidence_ref": "docs/film-preproduction/research/product-cg-transfer-validation-2026-09-08.json#sculptural-watch",
+        "review": "Steel, leather, stone and glass have distinct responses; the dial is blank and the watch remains the recognition anchor. Hidden fastening and support mechanics are not verified."
+      },
+      {
+        "case_id": "sculptural-pen",
+        "prompt_index": 1,
+        "scenario": "writing_instrument",
+        "evidence_ref": "docs/film-preproduction/research/product-cg-transfer-validation-2026-09-08.json#sculptural-pen",
+        "review": "Lacquer reflections, a local warm metal accent and porcelain support form a hierarchy. Fine nib engraving is present without discernible brand text; hidden balance is not verified."
+      }
+    ]
+  }
+}

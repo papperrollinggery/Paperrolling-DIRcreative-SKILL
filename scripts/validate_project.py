@@ -1740,6 +1740,8 @@ def validate_execution_scope_regressions() -> None:
         "tests.test_review_batch",
         "tests.test_character_expression",
         "tests.test_video_quality",
+        "tests.test_product_cg_library",
+        "tests.test_product_cg_video_example",
         "tests.test_asset_prompt_surface",
         "tests.test_pre_video_assets_gate",
         "tests.test_narrative_spec_preflight",

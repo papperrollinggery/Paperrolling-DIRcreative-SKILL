@@ -34,11 +34,19 @@ Start with the work you need. A small edit stays small; a complete preproduction
 
 Outputs depend on the requested scope and available providers. A prompt is ready for submission only after its actual references and model requirements are checked. Image generation, video generation and final approval remain distinct steps.
 
+## Product CG styles
+
+Choose from six optional families: dry powder, precision hard surfaces, elastic
+fibers, viscous materials, sculptural luxury and graphic modules. The method
+connects product facts, material behavior, shot purpose, transitions and timing.
+It includes two contrasting video-prompt examples and source-backed research.
+See the [product CG library and test boundaries](examples/product-cg-style-library/README.md).
+
 ## Get started
 
 You need a Codex environment with Skills support and Python 3.10 or newer. Image, video, transcription and media-download services have their own requirements.
 
-For a **verified release installation**, download the archive and checksums from [GitHub Releases](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/releases/latest), then follow the [exact-tag installation guide](README.technical.md#verified-release-install). The source version is **v0.9.7**; release assets are authoritative for published availability.
+For a **verified release installation**, download the archive and checksums from [GitHub Releases](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/releases/latest), then follow the [exact-tag installation guide](README.technical.md#verified-release-install). The source version is **v0.10.0**; release assets are authoritative for published availability.
 
 For a development copy:
 

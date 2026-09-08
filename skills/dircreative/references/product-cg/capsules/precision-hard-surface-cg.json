@@ -1,0 +1,74 @@
+{
+  "style_capsule": "1.0",
+  "id": "precision-hard-surface-cg",
+  "name": "精密硬表面 · Precision Hard Surface",
+  "scope": "skill_candidate",
+  "status": "validated",
+  "adoption_approved": false,
+  "source_summary": {
+    "source_count": 3,
+    "raw_images_stored": false,
+    "provenance": "Design interpretation from inspected local stills and/or the cited makers’ descriptions. Sources: https://www.maxon.net/en/article/using-maxon-one-for-future-facing-product-launches; https://tendril.studio/work/figure02/; https://futuredeluxe.com/work/audi"
+  },
+  "visual_rules": {
+    "medium_behavior": "精密产品可视化CG，以摄影可读的硬表面和有依据的机械关系为中心。",
+    "palette_logic": [
+      "由目标工业材料与品牌色分配主次；中性空间让局部功能色有明确归属。"
+    ],
+    "shape_line_language": "刚性壳体、倒角、接缝、孔隙与连接边界具有一致比例；几何细节依目标资料。",
+    "texture_material_logic": [
+      "拉丝方向随曲面与加工方向延续；金属、涂层、橡胶各有独立粗糙度。",
+      "亮面反射呈连续光带，暗面仍有形体；局部接触阴影帮助读清连接与层级。"
+    ],
+    "lighting_logic": "以受控长条光带扫描曲率，局部轮廓光与负补光分离层件，背景从属于功能焦点。",
+    "composition_logic": [
+      "先读整体或关键轮廓，再进入连接/加工细节，最后回扣同一产品。",
+      "拆解或剖视只在目标明确允许且有结构依据时采用。"
+    ],
+    "typography_logic": [],
+    "optics_rendering_logic": "有意识地切换产品透视与微距；虚拟镜头、焦点、反射和遮挡保持空间连续。",
+    "motifs": [
+      "有来源的装配层级",
+      "沿真实曲率移动的反射带"
+    ]
+  },
+  "inferred_traits": [
+    "把结构、工艺和功能因果读清，建立可信的精密感。",
+    "These rules are a transferable design interpretation, not the source creators’ complete production method."
+  ],
+  "unknowns": [
+    "Exact source lens, shader parameters, simulation settings and full frame-by-frame motion are not established by these rules.",
+    "Image transfer does not establish temporal stability or final video quality."
+  ],
+  "transfer_rules": [
+    "Target identity, material, geometry, function, palette, layout, text and requested medium remain authoritative.",
+    "Select compatible visual mechanisms; do not import every motif into every target."
+  ],
+  "forbidden_transfer": [
+    "Source product identity, exact packaging, protected marks, source wording and layout coordinates.",
+    "不凭空补内部机构、尺寸、精度或性能；概念装置须说明是虚构设计，不能冒充真实工程证据。"
+  ],
+  "validation": {
+    "prompts": [
+      "制作一个原创、无品牌的产品CG纯画面。三分之四近景，壳体前缘与接口同处清晰焦段；长条反射沿拉丝曲面延续，窄橙线只在侧面，暗背景有足够轮廓分离。 一块虚构无品牌便携固态硬盘，扁平矩形钛灰铝壳，四角小倒角，一端可见一个USB-C接口和一道细窄橙色状态线。",
+      "制作一个原创、无品牌的产品CG纯画面。低角度微距，刀头与螺钉的轴向对齐关系清楚，金属拉丝与黑色滚花尺度区分，连接处有窄而真实的接触阴影。 一把虚构无品牌精密扭矩螺丝刀，银色圆柱金属握柄、黑色滚花环、一个细短钢制刀头；刀头对齐一个独立螺钉。"
+    ],
+    "notes": "Two different target scenarios were generated without source-image attachments and independently inspected. Static style transfer passed with recorded limitations. Actual PNGs are 1672x941; exact canvas, some framing/material-scale facts and moving-video behavior are not fully verified. This is not user adoption. See the validation record and separate evidence asset. Prompt entries are the target briefs; exact compiled native prompts and their SHA-256 are retained in the separate evidence asset.",
+    "evidence": [
+      {
+        "case_id": "precision-drive",
+        "prompt_index": 0,
+        "scenario": "portable_storage",
+        "evidence_ref": "docs/film-preproduction/research/product-cg-transfer-validation-2026-09-08.json#precision-drive",
+        "review": "A single rigid chamfered shell, directional brushing, continuous reflection band, one USB-C-shaped port and a narrow local orange line are visible. No internal circuit or engineering-performance claim is established."
+      },
+      {
+        "case_id": "precision-tool",
+        "prompt_index": 1,
+        "scenario": "precision_tool",
+        "evidence_ref": "docs/film-preproduction/research/product-cg-transfer-validation-2026-09-08.json#precision-tool",
+        "review": "Metal, knurling and bit have distinct surface scales; bit and screw align with a contact shadow. The upper handle is cropped and the screw rests on a plate rather than being fully isolated."
+      }
+    ]
+  }
+}

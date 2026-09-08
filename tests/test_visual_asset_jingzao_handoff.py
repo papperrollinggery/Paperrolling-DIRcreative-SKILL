@@ -793,6 +793,54 @@ class VisualAssetJingzaoHandoffTests(unittest.TestCase):
             path.write_text('Changed provider style instructions.')
             self.assertIn('jingzao_reference_read_binding_mismatch:'+relative,check(document))
 
+    def test_optional_reference_profile_runtime_is_sealed_and_tamper_blocks(self):
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            project = root / "project"
+            project.mkdir()
+            provider = root / "provider/jingzao-image-forge"
+            document, _ = self.fixture(project, provider)
+            optional = provider / "scripts/reference_profile.py"
+            optional.write_text("marker = 'sealed optional runtime'\n", encoding="utf-8")
+            script = provider / "scripts/compile_prompt.py"
+            script.write_text(
+                "import reference_profile\n" + script.read_text(encoding="utf-8"),
+                encoding="utf-8",
+            )
+            document["provider_runtime_files"].append({
+                "relative_path": "scripts/reference_profile.py",
+                "sha256": hashlib.sha256(optional.read_bytes()).hexdigest(),
+                "bytes": optional.stat().st_size,
+            })
+            compile_record = next(
+                item for item in document["provider_runtime_files"]
+                if item["relative_path"] == "scripts/compile_prompt.py"
+            )
+            compile_record.update(
+                sha256=hashlib.sha256(script.read_bytes()).hexdigest(),
+                bytes=script.stat().st_size,
+            )
+            errors, _ = handoff.validate(
+                document,
+                project_root=project,
+                provider_root=provider,
+                trusted_provider_roots=(provider,),
+                allow_unsandboxed_test_replay=True,
+            )
+            self.assertEqual(errors, [])
+            optional.write_text("marker = 'tampered'\n", encoding="utf-8")
+            errors, _ = handoff.validate(
+                document,
+                project_root=project,
+                provider_root=provider,
+                trusted_provider_roots=(provider,),
+                allow_unsandboxed_test_replay=True,
+            )
+            self.assertIn(
+                "jingzao_provider_runtime_binding_mismatch:scripts/reference_profile.py",
+                errors,
+            )
+
     def test_unready_prompt_review_blocks(self):
         with tempfile.TemporaryDirectory() as project_raw, tempfile.TemporaryDirectory() as provider_raw:
             project = Path(project_raw)

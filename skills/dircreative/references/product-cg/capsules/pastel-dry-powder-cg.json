@@ -1,0 +1,76 @@
+{
+  "style_capsule": "1.0",
+  "id": "pastel-dry-powder-cg",
+  "name": "柔光干粉 · Pastel Dry Powder",
+  "scope": "skill_candidate",
+  "status": "validated",
+  "adoption_approved": false,
+  "source_summary": {
+    "source_count": 11,
+    "raw_images_stored": false,
+    "provenance": "Observed from eleven supplied product storyboard stills and their authored production notes; private images and client documents are not redistributed."
+  },
+  "visual_rules": {
+    "medium_behavior": "摄影级产品CG，柔光棚拍的包材塑形与选择性干粉微距；真实材质响应服务于可控的艺术化运动。",
+    "palette_logic": [
+      "目标产品颜色优先；未锁色时以浅紫空间、冷白底面和低饱和浅粉作柔和层次，黑色包材承担轮廓对比。",
+      "不同粉色只出现在目标声明的材料区域，色彩边界在近焦面仍可区分。"
+    ],
+    "shape_line_language": "主体几何与目标产品一致；阵列靠重复、错位和透视建立节奏，英雄主体保持清晰轮廓。",
+    "texture_material_logic": [
+      "包材以宽柔反射带、清楚倒角与受控轮廓高光呈现；哑面、镜面和粉体有不同响应。",
+      "干压粉芯边缘完整。松散粉体的主体是极细干燥颜料尘，绝大多数单粒在当前距离不可独立分辨；清晰粒子的最大直径以承载盘可见宽度的1/150为视觉设计上限，密根部逐渐过渡到薄而透光的稀疏前缘。",
+      "接触材质按目标工具区分绒面、刷毛或硬探头；接触形变、粘附和离面颗粒分别可读。"
+    ],
+    "lighting_logic": "大面积侧前柔光塑形，受控边缘光分离深色壳体；微距用掠射光读粉面，背景保持低频连续渐变。",
+    "composition_logic": [
+      "一个明确主产品，前景掠过元素和后景阵列只提供层次。",
+      "微距将焦点落在材料交界或接触边缘；回到英雄画面时保留产品整体识别。"
+    ],
+    "typography_logic": [],
+    "optics_rendering_logic": "按镜头目的选择产品近景与窄焦面微距；细节分布随焦面变化，运动模糊只属于有运动的层。",
+    "motifs": [
+      "密度渐变的干粉流",
+      "接触与离面之间的可见状态差"
+    ]
+  },
+  "inferred_traits": [
+    "让细、轻、可接触的干粉材料被看见，而非只展示包装。",
+    "These rules are a transferable design interpretation, not the source creators’ complete production method."
+  ],
+  "unknowns": [
+    "Exact source lens, shader parameters, simulation settings and full frame-by-frame motion are not established by these rules.",
+    "Image transfer does not establish temporal stability or final video quality."
+  ],
+  "transfer_rules": [
+    "Target identity, material, geometry, function, palette, layout, text and requested medium remain authoritative.",
+    "Select compatible visual mechanisms; do not import every motif into every target."
+  ],
+  "forbidden_transfer": [
+    "Source product identity, exact packaging, protected marks, source wording and layout coordinates.",
+    "粉体不能借用碎石、糖粒、结块、湿液体或棉花烟团的外观；相对颗粒尺度只是视觉设计意图，不是产品实测粒径或功效声明。"
+  ],
+  "validation": {
+    "prompts": [
+      "制作一个原创、无品牌的产品CG纯画面。斜俯视产品近景，盖缘、铰链与干粉表面清楚，一小束双色极细干粉在盘缘起始展开；粉芯完整。 一个无品牌六角形深石墨色铝制压粉盒，盖子以真实后铰链打开，内部只有一块米白与浅杏双色干压粉芯。",
+      "制作一个原创、无品牌的产品CG纯画面。真实细粒颜料的接触微距，短绒接触面带少量粉末，与粉面之间有清楚间隙和极细离面颗粒；焦点在绒面与粉面交界，两个颜色不混成一种。 两个无品牌浅圆陶瓷碟并排盛放极细磨制靛蓝与赭红艺术颜料，一枚扁平椭圆短绒涂抹头刚离开右碟表面。绒面为细密极短的天鹅绒，仅一毫米级短绒观感，不是长刷毛。"
+    ],
+    "notes": "Two different target scenarios were generated without source-image attachments and independently inspected. Static style transfer passed with recorded limitations. Actual PNGs are 1672x941; exact canvas, some framing/material-scale facts and moving-video behavior are not fully verified. This is not user adoption. See the validation record and separate evidence asset. Initial coarse-grain/long-brush attempts are retained as failures; the two revised attempts were evaluated. Lid cropping remains a known output defect. Prompt entries are the target briefs; exact compiled native prompts and their SHA-256 are retained in the separate evidence asset.",
+    "evidence": [
+      {
+        "case_id": "powder-compact",
+        "prompt_index": 0,
+        "scenario": "cosmetic_powder",
+        "evidence_ref": "docs/film-preproduction/research/product-cg-transfer-validation-2026-09-08.json#powder-compact",
+        "review": "Soft graphite reflections, two-color pressed core and a finer dense-to-sparse dry plume transferred. Coarse chunks were reduced after the first attempt. The upper lid remains cropped; part of the powder edge is occluded. Particle-size ratio is not measured."
+      },
+      {
+        "case_id": "artist-pigment",
+        "prompt_index": 1,
+        "scenario": "artist_pigment",
+        "evidence_ref": "docs/film-preproduction/research/product-cg-transfer-validation-2026-09-08.json#artist-pigment",
+        "review": "Two pigment colors remain separate. The revised oval short-velvet applicator replaces the initial long bristles; adhered powder and lifted fine dust are visible. Granule aggregation remains qualitative; the stated ratio and fiber length are unmeasured."
+      }
+    ]
+  }
+}

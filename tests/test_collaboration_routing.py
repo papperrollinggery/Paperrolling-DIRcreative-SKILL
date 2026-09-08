@@ -315,6 +315,58 @@ class NaturalAssetRoutingTests(unittest.TestCase):
                 self.assertNotIn("frame_compile", stages)
                 self.assertEqual(stages[stage]["selection_intent"]["scenario_id"], scenario)
 
+    def test_product_cg_asset_uses_product_direction_reference_without_new_scenario(self):
+        result = self.route("$dircreative 制作产品CG材质微距参考图，锁定产品表面和反射，不做人物和故事。")
+        stages = {item["stage"]: item for item in result["craft_stages"]}
+        self.assertEqual(result["route"], "film_development")
+        self.assertIn("production_design", stages)
+        self.assertEqual(stages["production_design"]["selection_intent"]["scenario_id"], "asset_foundation")
+        self.assertEqual(stages["production_design"]["task_reference"], "skills/dircreative/references/product-cg-direction.md")
+        self.assertFalse(stages["production_design"]["selection_intent"]["real_side_effect"])
+
+    def test_product_cg_reference_is_not_selected_for_prompt_only_or_negative_cg(self):
+        for request in (
+            "$dircreative 把产品 CG 提示词改短，不出图。",
+            "$dircreative 制作产品材质参考图，但不要CG，只要真实摄影质感。",
+            "$dircreative 制作产品资产 no CG，只要真实摄影质感。",
+            "$dircreative 只写产品广告故事，不要产品资产和 CG 参考图。",
+        ):
+            with self.subTest(request=request):
+                result = self.route(request)
+                stages = {item["stage"]: item for item in result["craft_stages"]}
+                if "不要 CG" in request or "不要CG" in request or "no CG" in request:
+                    self.assertEqual(
+                        stages["production_design"]["task_reference"],
+                        "skills/dircreative/references/asset-foundation-pass.md",
+                    )
+                else:
+                    self.assertNotIn("production_design", stages)
+
+    def test_product_cg_cancellation_overrides_earlier_cg_but_explicit_restart_reenables_it(self):
+        cancelled = self.route("$dircreative 制作产品CG参考图。不要CG，改为实拍。")
+        cancelled_stage = {item["stage"]: item for item in cancelled["craft_stages"]}["production_design"]
+        self.assertEqual(cancelled_stage["task_reference"], "skills/dircreative/references/asset-foundation-pass.md")
+
+        for request in (
+            "$dircreative 启用CG制作产品参考图。不要CG，改为实拍。",
+            "$dircreative 制作产品CG参考图。不要CG，改为实拍；后续重启CG；最终不要CG，只做实拍。",
+        ):
+            result = self.route(request)
+            stage = {item["stage"]: item for item in result["craft_stages"]}["production_design"]
+            self.assertEqual(stage["task_reference"], "skills/dircreative/references/asset-foundation-pass.md")
+
+        restarted = self.route("$dircreative 制作产品CG参考图。不要CG，改为实拍；后续重启CG并锁定材质。")
+        restarted_stage = {item["stage"]: item for item in restarted["craft_stages"]}["production_design"]
+        self.assertEqual(restarted_stage["task_reference"], "skills/dircreative/references/product-cg-direction.md")
+
+    def test_product_cg_optional_reference_does_not_leak_to_other_requests(self):
+        reference = "skills/dircreative/references/product-cg-direction.md"
+        cg = self.route("$dircreative 制作产品CG材质参考图。")
+        self.assertIn(reference, cg["optional_files"])
+        self.assertNotIn(reference, cg["required_files"])
+        plain = self.route("$dircreative 制作产品参考图，不要CG，只做实拍。")
+        self.assertNotIn(reference, plain["optional_files"])
+
     def test_character_state_design_keeps_the_character_reference(self):
         for request in (
             "$dircreative 已有人物母版，只把外套换成棉袍，脸和身材不变，生成新服装状态图片。",

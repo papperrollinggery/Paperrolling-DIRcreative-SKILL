@@ -34,9 +34,7 @@ ROLE_STAGE = {
     "scene_geography_camera_fov_reference": ("camera_geography", "camera_geography", "master-shot-camera-planning", None, "skills/dircreative/references/asset-foundation-pass.md"),
     "lighting_material_style_board": ("material_response", "material_physics", "ai-material-realism", None, "skills/dircreative/references/asset-foundation-pass.md"),
 }
-REQUIRED_RUNTIME = (
-    "scripts/validate_spec.py", "scripts/compile_prompt.py", "scripts/reference_delivery.py", "scripts/validate_style_capsule.py",
-)
+REQUIRED_RUNTIME = tuple(sorted(handoff.REQUIRED_PROVIDER_RUNTIME_FILES))
 
 
 def sha(raw: bytes) -> str:
@@ -283,7 +281,8 @@ def prepare_asset(*, project_root: Path, plan_path: str, asset_id: str, source_s
         input_lock["character_contract"] = {"relative_path": character_contract_path, "sha256": sha(contract_path.read_bytes())}
     write_immutable(root, f"{out}/input-lock.json", input_lock)
     provider = provider_root.resolve(strict=True)
-    if not (provider / "SKILL.md").is_file() or any(not (provider / item).is_file() for item in REQUIRED_RUNTIME):
+    runtime_paths = handoff.expected_runtime_paths(provider)
+    if not (provider / "SKILL.md").is_file() or any(not (provider / item).is_file() for item in runtime_paths):
         raise ValueError("provider_runtime_incomplete")
     # Immutable input locking prevents overwrite.  Re-read every formal contract
     # on reuse so a changed provider/reference cannot be mistaken for ready work.
@@ -367,7 +366,7 @@ def prepare_asset(*, project_root: Path, plan_path: str, asset_id: str, source_s
     handoff_doc = {"contract_id": "visual_asset_to_jingzao_v1", "authority": "compile_only", "source_owner": "dircreative", "target_owner": "jingzao-image-forge", "output_owner": "dircreative", "fixture_only": False,
                    "active_asset": {"asset_id": asset_id, "role": asset["role"], "truth_sha256": asset["truth_sha256"], "purpose_sha256": sha(str(asset["purpose"]).encode()), "visual_plan_sha256": sha(plan_raw), "operation": "create"},
                    "visual_plan": {"relative_path": plan_path, "sha256": sha(plan_raw)}, "skill_stack_request": stack_request_binding, "skill_stack_receipt": stack_binding, "input_spec": input_binding,
-                   "provider_skill": {"skill_id": "jingzao-image-forge", "sha256": sha((provider / "SKILL.md").read_bytes())}, "provider_runtime_files": [provider_file(provider, item) for item in REQUIRED_RUNTIME], "reference_reads": [provider_file(provider, item) for item in sorted(reference_reads)], "output_spec": output_spec,
+                   "provider_skill": {"skill_id": "jingzao-image-forge", "sha256": sha((provider / "SKILL.md").read_bytes())}, "provider_runtime_files": [provider_file(provider, item) for item in sorted(runtime_paths)], "reference_reads": [provider_file(provider, item) for item in sorted(reference_reads)], "output_spec": output_spec,
                    "delivery_consumption": {"route_id": "generation_authorization", "adapter": "imagegen", "status": "planned", "consumed_prompt_sha256": output_spec["prompt_sha256"], "generated": False}}
     handoff_binding = write_immutable(root, f"{out}/jingzao-handoff.json", handoff_doc)
     errors, _prompt = handoff.validate(handoff_doc, project_root=root, provider_root=provider,

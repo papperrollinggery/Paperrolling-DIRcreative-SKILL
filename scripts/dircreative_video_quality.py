@@ -25,6 +25,20 @@ def _items(value: Any) -> list[str]:
     return [_text(item) for item in value if _text(item)] if isinstance(value, list) else []
 
 
+MEDIUM_NEGATION_RE = re.compile(
+    r"(?:\b(?:no|not|without|avoid|exclude)\b\s*|"
+    r"\bdo\s+not(?:\s+(?:use|render|include))?\s+|\bdon't(?:\s+use)?\s*)"
+    r"(?:the\s+)?(?:[a-z0-9_-]*cg[a-z0-9_-]*|3d|cgi|stylized|stylised|动画|插画|定格|漫画|水彩|手绘|像素画|游戏引擎|过场动画)"
+    r"(?:\s+or\s+(?:[a-z0-9_-]*cg[a-z0-9_-]*|3d|cgi|stylized|stylised))?",
+    re.IGNORECASE,
+)
+MEDIUM_CHINESE_NEGATION_RE = re.compile(
+    r"(?:禁止|不要|不含|无需|不用|避免)\s*"
+    r"(?:产品\s*)?(?:cg|cgi|3d|动画|插画|定格|漫画|水彩|手绘|像素画|游戏引擎|过场动画)",
+    re.IGNORECASE,
+)
+
+
 def _unit_shots(payload: dict[str, Any], unit: dict[str, Any] | None) -> list[dict[str, Any]]:
     shots = [shot for shot in payload.get("shot_blocks", []) if isinstance(shot, dict)]
     wanted = unit.get("shot_ids") if isinstance(unit, dict) else None
@@ -96,13 +110,28 @@ def build_video_quality_prefix(payload: dict[str, Any], unit: dict[str, Any] | N
     # as an exclusion; never invert it into a mandatory photoreal treatment.
     medium_source = [_text(payload.get("project", {}).get("intended_use")),
                      *_items(look.get("preserve")), *_items(locks.get("palette_material"))]
-    medium_pattern = re.compile(r"\b(?:animat\w*|anime|cartoon|illustrat\w*|stop[- ]?motion|claymation|watercolo[u]?r|pixel[- ]art|hand[- ]drawn|stylized|stylised|3d|cgi|cel[- ]shad\w*|game[- ](?:engine|cutscene))\b|动画|插画|定格|漫画|水彩|手绘|像素画|游戏引擎|过场动画", re.I)
-    stated_medium = [item for item in medium_source if medium_pattern.search(item)]
+    medium_pattern = re.compile(
+        r"\b(?:photoreal(?:istic)?[_ -]?cg|stylized[_ -]?cg|animat\w*|anime|cartoon|"
+        r"illustrat\w*|stop[- ]?motion|claymation|watercolo[u]?r|pixel[- ]art|hand[- ]drawn|"
+        r"stylized|stylised|3d|cgi|cg|cel[- ]shad\w*|game[- ](?:engine|cutscene))\b|"
+        r"产品\s*(?:cg|cgi)|(?:cg|cgi)\s*(?:产品|广告|材质|微距)|动画|插画|定格|漫画|水彩|手绘|像素画|游戏引擎|过场动画",
+        re.I,
+    )
+    stated_medium = [
+        item for item in medium_source
+        if medium_pattern.search(item)
+        or MEDIUM_NEGATION_RE.search(item)
+        or MEDIUM_CHINESE_NEGATION_RE.search(item)
+    ]
     explicit_style = _text(overrides.get("style"))
     alternate_medium = bool(stated_medium or medium_pattern.search(explicit_style))
     values = {
         "style": "8K IMAX photoreal cinema, live-action presence, not 3D or game-cutscene rendering",
-        "cinematography": "camera shares physical space with performers; painterly silhouette and motivated observation",
+        "cinematography": (
+            "camera shares physical space with performers; painterly silhouette and motivated observation"
+            if human_present else
+            "camera observes the declared subject and material in physical or virtual space; motivated framing and readable surface detail"
+        ),
         "lighting": (lighting + (f"; atmosphere: {atmosphere}" if atmosphere else "")) or "natural sky or window motivated key, backlight, shadow-side camera placement and gentle atmospheric haze",
         "color": (grade + "; maintain a 60:30:10 palette hierarchy") if grade else "60:30:10 palette hierarchy anchored to declared wardrobe, props and environment",
         "camera": "; ".join(item for item in (optics, lens, "cinematic 180-degree-shutter motion character, motivated movement and stable spatial axis") if item),

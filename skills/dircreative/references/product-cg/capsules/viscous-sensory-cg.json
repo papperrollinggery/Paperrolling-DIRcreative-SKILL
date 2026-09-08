@@ -1,0 +1,74 @@
+{
+  "style_capsule": "1.0",
+  "id": "viscous-sensory-cg",
+  "name": "流变触感 · Viscous Sensory",
+  "scope": "skill_candidate",
+  "status": "validated",
+  "adoption_approved": false,
+  "source_summary": {
+    "source_count": 1,
+    "raw_images_stored": false,
+    "provenance": "Design interpretation from inspected local stills and/or the cited makers’ descriptions. Sources: https://futuredeluxe.com/work/kinder-bueno"
+  },
+  "visual_rules": {
+    "medium_behavior": "感官材料产品CG，液体、膏体与固体的响应区别清晰，尺度变化可艺术化。",
+    "palette_logic": [
+      "色彩来自目标材料与允许的配方；环境提供对比，不替换产品固有色。"
+    ],
+    "shape_line_language": "流体界面连续，弯月面、薄缘或拉丝有明确材料归属；固体断面保持目标声明的层次。",
+    "texture_material_logic": [
+      "每种介质按目标指定黏度、透明度和粗糙度呈现；包覆层厚度与重力方向可读。",
+      "光泽属于湿润界面，酥脆或干燥区域保持相应响应；局部气泡或颗粒仅在目标需要时出现。"
+    ],
+    "lighting_logic": "侧逆光读薄缘和厚度，柔反射读连续表面；明暗层次让液体与固体分开。",
+    "composition_logic": [
+      "选一个材料行为作为视觉主事件；宏观产品与材料内部景观有明确比例转换。",
+      "近焦面读接触或断裂，背景简化，让触感信息具有主次。"
+    ],
+    "typography_logic": [],
+    "optics_rendering_logic": "微距焦面沿接触界面或薄缘展开；流动模糊与凝固状态遵循目标动作相位。",
+    "motifs": [
+      "厚薄变化的包覆层",
+      "固液交界的感官对比"
+    ]
+  },
+  "inferred_traits": [
+    "通过黏度、包覆、断裂或流动，把材料的感官差异讲清。",
+    "These rules are a transferable design interpretation, not the source creators’ complete production method."
+  ],
+  "unknowns": [
+    "Exact source lens, shader parameters, simulation settings and full frame-by-frame motion are not established by these rules.",
+    "Image transfer does not establish temporal stability or final video quality."
+  ],
+  "transfer_rules": [
+    "Target identity, material, geometry, function, palette, layout, text and requested medium remain authoritative.",
+    "Select compatible visual mechanisms; do not import every motif into every target."
+  ],
+  "forbidden_transfer": [
+    "Source product identity, exact packaging, protected marks, source wording and layout coordinates.",
+    "不把水、油、巧克力、釉浆或膏体当成同一种流体；不凭空添加成分、营养或性能事实。"
+  ],
+  "validation": {
+    "prompts": [
+      "制作一个原创、无品牌的产品CG纯画面。微距捕捉两段刚分开的状态，断裂的酥脆层与连续黏稠连接形成对比，碎屑少而有明确来源。 一块无品牌的虚构榛果巧克力威化条被分成两段，层状薄威化断面清楚，中间仅有少量缓慢拉开的浓稠巧克力连接。",
+      "制作一个原创、无品牌的产品CG纯画面。侧面微距，釉浆与干燥瓷面的接触界线和厚薄变化清楚，下缘一颗即将落下的液滴；碗口椭圆与曲率稳定。 一个无品牌浅口乳白陶瓷碗正在被一条浓稠靛蓝釉浆覆盖外缘，釉浆沿碗壁形成连续薄缘，未覆盖部分仍是干燥哑面。"
+    ],
+    "notes": "Two different target scenarios were generated without source-image attachments and independently inspected. Static style transfer passed with recorded limitations. Actual PNGs are 1672x941; exact canvas, some framing/material-scale facts and moving-video behavior are not fully verified. This is not user adoption. See the validation record and separate evidence asset. Prompt entries are the target briefs; exact compiled native prompts and their SHA-256 are retained in the separate evidence asset.",
+    "evidence": [
+      {
+        "case_id": "chocolate-layer",
+        "prompt_index": 0,
+        "scenario": "chocolate_material",
+        "evidence_ref": "docs/film-preproduction/research/product-cg-transfer-validation-2026-09-08.json#chocolate-layer",
+        "review": "Dry wafer fracture and glossy viscous chocolate remain distinct across matching halves. The connecting membrane is wider than the small-amount intent; viscosity and temperature are not measured."
+      },
+      {
+        "case_id": "ceramic-glaze",
+        "prompt_index": 1,
+        "scenario": "ceramic_glaze",
+        "evidence_ref": "docs/film-preproduction/research/product-cg-transfer-validation-2026-09-08.json#ceramic-glaze",
+        "review": "The blue glossy layer, matte ceramic boundary and hanging drop provide distinct interface cues. The glossy appearance does not establish an unfired slurry or an actual glazing process."
+      }
+    ]
+  }
+}

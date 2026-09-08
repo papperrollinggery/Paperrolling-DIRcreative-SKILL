@@ -353,6 +353,38 @@ def requested_asset_components(request: str) -> dict[str, bool]:
     }
 
 
+def product_cg_direction_requested(request: str) -> bool:
+    """Return whether a positive product-CG/material-macro context is present.
+
+    This only selects the craft reference for an already requested production
+    design asset. It never creates a production-design stage by itself.
+    """
+    text = action_text(request)
+    clauses = re.split(r"[。；;!?！？\n，,]", text)
+    product = has(text, r"产品|商品|product")
+    cg_positive = False
+    cg_cancelled = False
+    cg_restarted = False
+    for clause in clauses:
+        cg = has(clause, r"(?<![A-Za-z])(?:cg|cgi)(?![A-Za-z])")
+        if not cg:
+            continue
+        if has(clause, r"不要|不需要|无需|不用|不做|别做|不改变|do\s+not|don't|without|no\s+",):
+            cg_cancelled = True
+            cg_restarted = False
+        elif has(clause, r"重启|重新启用|恢复|改为|切换到|启用|restart|re-?enable|switch\s+to|use|enable"):
+            cg_restarted = True
+            cg_positive = True
+        else:
+            cg_positive = True
+    if cg_cancelled and not cg_restarted:
+        return False
+    return bool(
+        product
+        and (cg_positive or has(text, r"材质\s*微距|微距\s*材质|material\s*macro|macro\s*material"))
+    )
+
+
 def requests_whole_film_development(request: str) -> bool:
     text = action_text(request)
     return explicit_action_match(text, r"(?:做|制作|创作|开发|完成|筹备).{0,24}(?:短片|广告片|品牌片|电影)|"
@@ -854,11 +886,18 @@ def film_craft_stages(
             "status": "pending",
         })
     asset_gaps = {"identity_state": "character_continuity", "production_design": "production_design", "camera_geography": "camera_geography"}
+    product_cg_reference = product_cg_direction_requested(request)
     for pass_id, gap in asset_gaps.items():
         if assets[pass_id]:
             stages.append({
                 "stage": pass_id,
-                "task_reference": "skills/dircreative/references/character-master-sheet.md" if pass_id == "identity_state" else "skills/dircreative/references/asset-foundation-pass.md",
+                "task_reference": (
+                    "skills/dircreative/references/character-master-sheet.md"
+                    if pass_id == "identity_state"
+                    else "skills/dircreative/references/product-cg-direction.md"
+                    if pass_id == "production_design" and product_cg_reference
+                    else "skills/dircreative/references/asset-foundation-pass.md"
+                ),
                 "selection_intent": selection("asset_foundation", media="image_series", active_stage=pass_id,
                     asset_pass_id=pass_id, asset_pass_scope="initial_design", asset_pass_status="in_progress", gaps=[gap]),
                 "status": "pending",
@@ -965,12 +1004,17 @@ def route_request(
     elif deliverable_layer == "client_story":
         required_files = ["skills/dircreative/references/client-story.md"]
     collaboration = collaboration_contract(request, route, action, policy)
+    optional_files = list(config["optional_files"])
+    if route == "film_development" and product_cg_direction_requested(request):
+        cg_reference = "skills/dircreative/references/product-cg-direction.md"
+        if cg_reference not in optional_files:
+            optional_files.append(cg_reference)
     return {
         "execution_context": execution_context,
         "mode": config["mode"],
         "route": route,
         "required_files": required_files,
-        "optional_files": config["optional_files"],
+        "optional_files": optional_files,
         "external_user_gate": external_user_gate,
         "action": action,
         "first_response_contract": (

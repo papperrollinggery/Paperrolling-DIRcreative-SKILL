@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 0.10.0 - 2026-09-08
+
+- Add an optional product-CG directing method and six source-image-free style capsules. Reuse existing film/production-design routing and hash-bound Jingzao style handoffs; preserve target identity, materials, scope and authorization.
+- Connect product facts to material events, shot information, transitions and timing. Include powder-compact and precision-drive PromptIR examples with different product logic, and 11 official source cases with observation/inference boundaries.
+- Preserve CG and explicitly excluded media in the video-quality prefix, without forcing live action or performer language into product-only scenes. Respect later cancellation and explicit restart of CG requests.
+- Seal the installed Jingzao compiler's optional reference_profile module when present while retaining four-file provider compatibility and strict hash/path checks.
+- Test 12 target scenarios with 14 native still outputs, retaining two initial powder failures and bounded independent visual conclusions. Actual raster size, cropping and material-scale limitations are recorded; no moving-video acceptance is claimed.
+
 ## 0.9.7 - 2026-09-08
 
 - Fix a missing JSON import in the combined dependency installer that caused a reporting failure after installation. Add complete combined-entrypoint tests for successful dependencies and preserved/conflicting local providers, including output and exit status.

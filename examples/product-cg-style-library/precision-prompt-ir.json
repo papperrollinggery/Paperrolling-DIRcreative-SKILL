@@ -1,0 +1,380 @@
+{
+  "schema_version": "1.1.0",
+  "fixture_id": "precision-drive-material-study",
+  "project": {
+    "title": "Precision Drive Material Study",
+    "intended_use": "9-second prompt-only photoreal CG product film",
+    "safety_boundary": "fictional unbranded product only; no person, logo, claim, performance proof, or visible text",
+    "source_of_truth": "this authored Prompt IR and its fictional product brief"
+  },
+  "output": {
+    "aspect_ratio": "16:9",
+    "target_duration_sec": 9,
+    "generation_unit_sec": 9,
+    "text_policy": "post_only",
+    "visual_output_mode": "prompt_only"
+  },
+  "intake": {
+    "read_before_regenerate": true,
+    "source_precedence": [
+      "this authored Prompt IR",
+      "fictional product brief",
+      "generic model knowledge"
+    ],
+    "reuse_or_derive_policy": "From-text concept demonstration only; no image references are attached or claimed.",
+    "supplied_assets": []
+  },
+  "references": [],
+  "entities": [
+    {
+      "entity_id": "target_product",
+      "external_name": "the fictional unbranded portable solid-state drive",
+      "entity_type": "product",
+      "reference_asset_ids": [],
+      "immutable": [
+        "flat rectangular titanium-gray aluminum shell",
+        "four corner chamfers",
+        "one USB-C port",
+        "one narrow orange status line",
+        "no logo or visible text"
+      ],
+      "starting_state": "stationary on a matte studio surface, complete and closed",
+      "screen_position": "dominant center with protected negative space"
+    }
+  ],
+  "global_locks": {
+    "identity": [
+      "fictional unbranded product only",
+      "no person or body"
+    ],
+    "product_or_prop": [
+      "same shell geometry, chamfers, port, status line and proportions throughout"
+    ],
+    "scene": [
+      "neutral dark virtual studio with matte ground and continuous background"
+    ],
+    "composition_axis": [
+      "16:9 horizontal frame",
+      "same three-quarter product axis across all shots"
+    ],
+    "palette_material": [
+      "titanium-gray aluminum",
+      "deep graphite",
+      "single narrow orange accent",
+      "restrained neutral reflections"
+    ],
+    "lens_grammar": [
+      "controlled virtual product cinematography",
+      "macro detail without wide-angle distortion"
+    ],
+    "audio_spine": [
+      "silent concept picture"
+    ]
+  },
+  "composition": {
+    "visual_center": "the fictional product silhouette and declared material event",
+    "subject_hierarchy": "product first; material consequence second; studio background last",
+    "foreground_midground_background": "foreground: declared material detail; midground: product; background: quiet virtual studio",
+    "negative_space": "quiet space around the hero silhouette for optional post text",
+    "movement_room": "all declared object action remains fully inside frame",
+    "screen_direction": "all transitions preserve a stable product axis",
+    "narrative_purpose": "move from product identity through material action to a resolved hero frame",
+    "balance_symmetry": "stable opening, controlled material action, resolved final balance",
+    "leading_lines_occlusion_parallax": "surface edges and reflections guide attention without hiding identity",
+    "perspective_depth": "shallow but readable product depth"
+  },
+  "render_look": {
+    "lighting": {
+      "condition": "large soft virtual key with controlled local edge reflection",
+      "effect": "material boundaries remain readable without uncontrolled glare",
+      "intensity": "subtle"
+    },
+    "optics": {
+      "condition": "virtual macro-to-hero product optics with stable focus",
+      "physical_behavior": "no lens distortion beyond declared product perspective",
+      "lens_family": "spherical virtual product lens",
+      "filtration": "clean restrained diffusion",
+      "intensity": "subtle"
+    },
+    "atmosphere": {
+      "condition": "clear virtual studio air with no generic haze",
+      "medium": "clean air",
+      "intensity": "none"
+    },
+    "grade": {
+      "condition": "neutral product color with restrained accent separation",
+      "contrast_gamma": "moderate contrast with readable darks",
+      "black_level": "deep but not crushed",
+      "highlight_rolloff": "smooth on hard and soft surfaces",
+      "saturation_density": "restrained except declared accent colors",
+      "palette_separation": "product colors remain separated from background",
+      "intensity": "subtle"
+    },
+    "preserve": [
+      "product geometry",
+      "material action boundaries",
+      "no visible text"
+    ],
+    "exit_or_continuity": "light direction, product axis, material response, and final hold remain continuous across shots"
+  },
+  "shot_blocks": [
+    {
+      "shot_id": "S01",
+      "time_start": "00.00",
+      "time_end": "01.80",
+      "story_beat": "product silhouette recognition",
+      "emotional_or_attention_beat": "Recognize the complete flat object before examining its finish.",
+      "entity_actions": [
+        {
+          "owner_entity_id": "target_product",
+          "initial_state": "The same closed titanium-gray drive rests stationary on the matte surface.",
+          "trigger": "Only the declared lighting and viewpoint change.",
+          "path": "remain stationary; keep the rigid shell, chamfers, USB-C-shaped interface and narrow orange line unchanged",
+          "physical_consequence": "The contact shadow stays attached to the base; no component opens, deforms or performs a test.",
+          "final_state": "The drive remains in the same position, orientation and closed state."
+        }
+      ],
+      "environment_action": {
+        "initial_state": "A neutral dark studio surrounds the stationary drive.",
+        "response": "One broad reflected light band separates the top plane from its chamfer.",
+        "final_state": "The studio and support surface remain stable."
+      },
+      "camera": {
+        "shot_size": "product medium close-up",
+        "angle_height_axis": "same three-quarter product side and screen direction",
+        "lens_feel_reason": "authored virtual product/macro perspective; preserve edge proportions and avoid wide-angle exaggeration",
+        "support": "stable virtual dolly",
+        "start_target": "complete shell silhouette",
+        "path": "a short slow push toward the front-left corner",
+        "end_target": "front-left corner within the still-readable complete shell",
+        "speed_easing": "motivated small movement; ease before the next read or hold",
+        "focus": "focus follows the named feature without obscuring the adjacent product edge",
+        "motivation": "Recognize the complete flat object before examining its finish."
+      },
+      "composition_state": "front-left corner within the still-readable complete shell carries attention; supporting surfaces remain quiet",
+      "look_delta": "One broad reflected light band separates the top plane from its chamfer.",
+      "audio_cues": [
+        "silent picture"
+      ],
+      "transition_in": "Fade up on the complete stationary object.",
+      "transition_out": "Match the front-left chamfer contour into the next macro view.",
+      "continuity_locks": [
+        "same titanium-gray rigid drive",
+        "same orange line and USB-C-shaped interface",
+        "same support and three-quarter axis",
+        "no visible text or branding"
+      ]
+    },
+    {
+      "shot_id": "S02",
+      "time_start": "01.80",
+      "time_end": "04.60",
+      "story_beat": "brushing and chamfer read",
+      "emotional_or_attention_beat": "Use a controlled highlight to distinguish the brushed face from the smoother chamfer.",
+      "entity_actions": [
+        {
+          "owner_entity_id": "target_product",
+          "initial_state": "The same closed titanium-gray drive rests stationary on the matte surface.",
+          "trigger": "Only the declared lighting and viewpoint change.",
+          "path": "remain stationary; keep the rigid shell, chamfers, USB-C-shaped interface and narrow orange line unchanged",
+          "physical_consequence": "The contact shadow stays attached to the base; no component opens, deforms or performs a test.",
+          "final_state": "The drive remains in the same position, orientation and closed state."
+        }
+      ],
+      "environment_action": {
+        "initial_state": "A neutral dark studio surrounds the stationary drive.",
+        "response": "The broad reflection rolls across the existing edge, revealing continuous brushing and a clean chamfer.",
+        "final_state": "The studio and support surface remain stable."
+      },
+      "camera": {
+        "shot_size": "chamfer macro",
+        "angle_height_axis": "same three-quarter product side and screen direction",
+        "lens_feel_reason": "authored virtual product/macro perspective; preserve edge proportions and avoid wide-angle exaggeration",
+        "support": "stable virtual dolly",
+        "start_target": "the same front-left chamfer",
+        "path": "track a short distance along the front edge while holding the same side of the axis",
+        "end_target": "junction between brushed top and smooth front chamfer",
+        "speed_easing": "motivated small movement; ease before the next read or hold",
+        "focus": "focus follows the named feature without obscuring the adjacent product edge",
+        "motivation": "Use a controlled highlight to distinguish the brushed face from the smoother chamfer."
+      },
+      "composition_state": "junction between brushed top and smooth front chamfer carries attention; supporting surfaces remain quiet",
+      "look_delta": "The broad reflection rolls across the existing edge, revealing continuous brushing and a clean chamfer.",
+      "audio_cues": [
+        "silent picture"
+      ],
+      "transition_in": "Continue the same edge orientation from the opening view.",
+      "transition_out": "Follow that edge toward its junction with the front interface; retain the orange accent as a secondary anchor.",
+      "continuity_locks": [
+        "same titanium-gray rigid drive",
+        "same orange line and USB-C-shaped interface",
+        "same support and three-quarter axis",
+        "no visible text or branding"
+      ]
+    },
+    {
+      "shot_id": "S03",
+      "time_start": "04.60",
+      "time_end": "07.00",
+      "story_beat": "interface and accent recognition",
+      "emotional_or_attention_beat": "Locate the interface and status-line design without implying operation or performance.",
+      "entity_actions": [
+        {
+          "owner_entity_id": "target_product",
+          "initial_state": "The same closed titanium-gray drive rests stationary on the matte surface.",
+          "trigger": "Only the declared lighting and viewpoint change.",
+          "path": "remain stationary; keep the rigid shell, chamfers, USB-C-shaped interface and narrow orange line unchanged",
+          "physical_consequence": "The contact shadow stays attached to the base; no component opens, deforms or performs a test.",
+          "final_state": "The drive remains in the same position, orientation and closed state."
+        }
+      ],
+      "environment_action": {
+        "initial_state": "A neutral dark studio surrounds the stationary drive.",
+        "response": "A restrained reflection separates the port rim from the dark front face; the orange line stays constant and local.",
+        "final_state": "The studio and support surface remain stable."
+      },
+      "camera": {
+        "shot_size": "front-interface detail",
+        "angle_height_axis": "same three-quarter product side and screen direction",
+        "lens_feel_reason": "authored virtual product/macro perspective; preserve edge proportions and avoid wide-angle exaggeration",
+        "support": "stable virtual dolly",
+        "start_target": "the front edge adjacent to the interface",
+        "path": "a small lateral adjustment settles at the front face; remain close rather than pulling back",
+        "end_target": "USB-C-shaped opening and adjacent narrow orange line",
+        "speed_easing": "motivated small movement; ease before the next read or hold",
+        "focus": "focus follows the named feature without obscuring the adjacent product edge",
+        "motivation": "Locate the interface and status-line design without implying operation or performance."
+      },
+      "composition_state": "USB-C-shaped opening and adjacent narrow orange line carries attention; supporting surfaces remain quiet",
+      "look_delta": "A restrained reflection separates the port rim from the dark front face; the orange line stays constant and local.",
+      "audio_cues": [
+        "silent picture"
+      ],
+      "transition_in": "The same front edge leads from the preceding material detail to the interface.",
+      "transition_out": "Keep the interface in the same screen region as the view widens to the hero.",
+      "continuity_locks": [
+        "same titanium-gray rigid drive",
+        "same orange line and USB-C-shaped interface",
+        "same support and three-quarter axis",
+        "no visible text or branding"
+      ]
+    },
+    {
+      "shot_id": "S04",
+      "time_start": "07.00",
+      "time_end": "09.00",
+      "story_beat": "complete product hero",
+      "emotional_or_attention_beat": "Reconnect the details to the same complete product and allow clear recognition.",
+      "entity_actions": [
+        {
+          "owner_entity_id": "target_product",
+          "initial_state": "The same closed titanium-gray drive rests stationary on the matte surface.",
+          "trigger": "Only the declared lighting and viewpoint change.",
+          "path": "remain stationary; keep the rigid shell, chamfers, USB-C-shaped interface and narrow orange line unchanged",
+          "physical_consequence": "The contact shadow stays attached to the base; no component opens, deforms or performs a test.",
+          "final_state": "The drive remains in the same position, orientation and closed state."
+        }
+      ],
+      "environment_action": {
+        "initial_state": "A neutral dark studio surrounds the stationary drive.",
+        "response": "The broad shell reflection settles into a stable shape; the background remains subdued.",
+        "final_state": "The studio and support surface remain stable."
+      },
+      "camera": {
+        "shot_size": "three-quarter product hero",
+        "angle_height_axis": "same three-quarter product side and screen direction",
+        "lens_feel_reason": "authored virtual product/macro perspective; preserve edge proportions and avoid wide-angle exaggeration",
+        "support": "stable virtual dolly",
+        "start_target": "the interface and orange-line anchor",
+        "path": "pull back smoothly during the first 0.6 seconds, then hold for 1.4 seconds",
+        "end_target": "complete drive silhouette with its interface and orange accent readable",
+        "speed_easing": "motivated small movement; ease before the next read or hold",
+        "focus": "focus follows the named feature without obscuring the adjacent product edge",
+        "motivation": "Reconnect the details to the same complete product and allow clear recognition."
+      },
+      "composition_state": "complete drive silhouette with its interface and orange accent readable carries attention; supporting surfaces remain quiet",
+      "look_delta": "The broad shell reflection settles into a stable shape; the background remains subdued.",
+      "audio_cues": [
+        "silent picture"
+      ],
+      "transition_in": "Widen from the interface anchor without changing object orientation.",
+      "transition_out": "Finish the 1.4-second recognition hold with the product stationary.",
+      "continuity_locks": [
+        "same titanium-gray rigid drive",
+        "same orange line and USB-C-shaped interface",
+        "same support and three-quarter axis",
+        "no visible text or branding"
+      ]
+    }
+  ],
+  "audio_plan": {
+    "dialogue": "none",
+    "voiceover": "none",
+    "ambience": "none",
+    "music": "none",
+    "foley": "none",
+    "sfx": "none",
+    "silence": "full silent concept picture",
+    "generation_route": "none"
+  },
+  "capability": {
+    "capability_card_id": "seedance_2_5_official_launch",
+    "model_key": "seedance",
+    "version": "2.5",
+    "provider_surface": "Seedance 2.5 launch product surfaces described by ByteDance Seed",
+    "access_mode": "documented_product",
+    "execution_mode": "manual_export",
+    "execution_verification_status": "unverified"
+  },
+  "generation_plan": {
+    "selected_adapter": "seedance",
+    "units": [
+      {
+        "unit_id": "U01",
+        "time_start": "00.00",
+        "time_end": "09.00",
+        "shot_ids": [
+          "S01",
+          "S02",
+          "S03",
+          "S04"
+        ],
+        "incoming_handoff_key": "clean_start_from_text",
+        "outgoing_handoff_key": "hero_hold_prompt_only",
+        "incoming_state": "declared opening product state",
+        "outgoing_state": "declared resolved hero state",
+        "audio_handoff": "postproduction foley only"
+      }
+    ]
+  },
+  "qa": {
+    "status": "unverified",
+    "pass_signals": [
+      "schema and compiler validation only",
+      "four authored shot blocks cover the 9-second timeline"
+    ],
+    "failure_ids": [
+      "real_video_not_generated",
+      "visual_quality_not_reviewed"
+    ],
+    "retry_rules": [
+      "If material motion misreads, revise only the material-action wording.",
+      "If product geometry drifts, revise immutable product locks before style."
+    ],
+    "next_action": "Prompt-only review; no real video generation or visual acceptance has occurred."
+  },
+  "video_quality": {
+    "style": "photoreal CG product film; physically credible hard-surface rendering; no live performer language",
+    "cinematography": "virtual product camera with motivated macro-to-hero progression and stable axis",
+    "lighting": "soft virtual key with local material separation",
+    "color": "declared product colors remain separated from the background",
+    "camera": "controlled three-quarter macro, material insert, small pull-back, final hero hold",
+    "skin": "not applicable; preserve product surface rendering",
+    "acting": "not applicable; product attention and material consequence remain readable",
+    "physics": "rigid hard-surface object remains stable; reflections follow curvature; no liquid or performance test",
+    "composition": "product stays dominant; material event remains readable; final hero has quiet negative space",
+    "continuity": "same product geometry, material palette, axis, light direction, and final hold across shots",
+    "technical": "prompt-only 9-second design; no claim of rendered frame rate or temporal verification",
+    "audio": "silent concept picture"
+  }
+}
