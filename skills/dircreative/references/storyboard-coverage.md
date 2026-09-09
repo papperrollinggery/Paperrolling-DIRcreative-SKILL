@@ -52,6 +52,28 @@ bound to existing shot cards. Its standalone `assets` check retains individual
 image requirements. For `annotated_reference` units, use the pre-video gate with
 the same coverage and actual `--prompt-ir`; that gate validates the alternative.
 
+### Discover the input once, then author in a batch
+
+When the coverage shape is unfamiliar, first read the checker-owned input
+description once:
+
+```bash
+python3 scripts/dircreative_storyboard_coverage.py --describe-input
+```
+
+It reports the live allowed values and a minimum editable object skeleton from
+the same constants used by validation. Use that shape to write the requirements
+and panels together; do not turn it into a required lookup before every image
+or revision. The command only prints JSON. It does not read a project, create
+media, modify a plan, or count planned material as a real image.
+
+`look_direction` records where the viewed subject looks on screen: `left` and
+`right` mean screen left/right, `center` means no lateral screen look (for
+example, facing camera), and `not_applicable` means gaze direction has no
+meaningful application. A conventional eyeline reverse pair needs opposing
+`left`/`right` values; a deliberate axis exception still needs
+`axis_break_reason` and visual review.
+
 ```bash
 python3 scripts/dircreative_storyboard_coverage.py validate /path/coverage.json \
   --project-root /path/project --phase design

@@ -50,7 +50,8 @@ class AssetExecutionGateTests(unittest.TestCase):
             purpose_sha256=gate.sha256_text(asset["purpose"]), visual_plan_sha256=plan_binding["sha256"],
             operation="styleboard",
         )
-        request = "$dircreative 做一部完整武侠短片，图片真实生成好，视频我自己做。"
+        # This fixture replays a production gate after the user selected direct mode.
+        request = "$dircreative 做一部完整武侠短片，图片真实生成好，视频我自己做。直接执行。"
         stack_request = json.loads((project / "stack-request.json").read_text())
         stack_request["request_text"] = request
         document["skill_stack_request"] = write_json(project / "stack-request.json", stack_request)

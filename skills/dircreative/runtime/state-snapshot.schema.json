@@ -53,6 +53,192 @@
       "deprecated": true,
       "description": "Legacy aggregate readback only. New runs use separate image/video authorization fields."
     },
+    "interaction": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Project-scoped user interaction. Missing legacy state is not consent to direct execution.",
+      "required": [
+        "scope_id",
+        "status",
+        "mode",
+        "professional_groups",
+        "discussion_stage",
+        "checkpoint_stages",
+        "awaiting_checkpoint",
+        "choice_source",
+        "production_scope",
+        "production_revision",
+        "approved_production_revision",
+        "pending_question",
+        "question_sequence"
+      ],
+      "properties": {
+        "scope_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "enum": [
+            "pending",
+            "confirmed",
+            "not_required"
+          ]
+        },
+        "mode": {
+          "enum": [
+            null,
+            "discuss",
+            "direct",
+            "checkpoints"
+          ]
+        },
+        "professional_groups": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "creative",
+              "director"
+            ]
+          }
+        },
+        "discussion_stage": {
+          "type": "string",
+          "minLength": 1
+        },
+        "checkpoint_stages": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "awaiting_checkpoint": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "choice_source": {
+          "enum": [
+            null,
+            "current_user"
+          ]
+        },
+        "production_scope": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "production_revision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "approved_production_revision": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "question_sequence": {"type": "integer", "minimum": 0},
+        "pending_question": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "id",
+                "kind",
+                "payload",
+                "host_call_id",
+                "presented"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "kind": {
+                  "enum": [
+                    "interaction_setup",
+                    "production_start",
+                    "checkpoint"
+                  ]
+                },
+                "payload": {
+                  "type": "object"
+                },
+                "presented": {"type": "boolean"},
+                "host_call_id": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "minLength": 1
+                }
+              }
+            }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "confirmed"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "mode": {
+                "enum": [
+                  "discuss",
+                  "direct",
+                  "checkpoints"
+                ]
+              },
+              "choice_source": {
+                "const": "current_user"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "pending"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "mode": {
+                "type": "null"
+              },
+              "choice_source": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ]
+    },
     "client_delivery_approved": {"type": "boolean"}
   },
   "allOf": [

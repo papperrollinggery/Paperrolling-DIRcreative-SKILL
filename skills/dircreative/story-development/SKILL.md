@@ -31,6 +31,10 @@ The root v2 route owns scope and authorization; legacy records do not add gates.
 - source bindings and concept substitutability check
 - story review
 
+During creative discussion, keep work at the current agreed scope and follow
+the root interaction contract. Once production is authorized, return the
+requested story and continue without new stage approvals.
+
 ## Chat Surface
 
 Deliver the complete requested story, not a preview that withholds its ending.

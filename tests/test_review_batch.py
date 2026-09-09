@@ -19,6 +19,13 @@ import dircreative_asset_execution_gate as gate
 
 
 class BatchReviewTests(unittest.TestCase):
+    def test_template_help_exposes_conditional_rejection_inputs(self):
+        help_text = batch.review_input_help({"assets": [{"asset_id": "C01", "role": "character_identity_reference"}]}, ["C01"])
+        self.assertIn("executor", help_text["reviewer_type_values"])
+        self.assertEqual(help_text["rubric_values"], [True, False, None])
+        self.assertIn("right_profile", help_text["check_ids_by_asset"]["C01"])
+        self.assertEqual(set(help_text["retry_or_reject_requires"]["defects"][0]), {"check_id", "observed"})
+
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)

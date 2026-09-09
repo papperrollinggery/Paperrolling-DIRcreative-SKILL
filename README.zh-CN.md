@@ -52,7 +52,7 @@ DIRcreative 是面向 **AI 影视前期制作的 Codex Skill**。从一句创意
 
 需要支持 Skills 的 Codex 环境与 Python 3.10 及以上。图像、视频、转录和媒体下载服务各有自己的运行要求。
 
-**正式版本安装**：从 [GitHub Releases](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/releases/latest) 下载归档与校验文件，按[精确 tag 安装说明](README.technical.md#verified-release-install)完成验证。当前源码版本为 **v0.11.1**；已发布版本以 Release 中的实际资产为准。
+**正式版本安装**：从 [GitHub Releases](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/releases/latest) 下载归档与校验文件，按[精确 tag 安装说明](README.technical.md#verified-release-install)完成验证。当前源码版本为 **v0.12.0**；已发布版本以 Release 中的实际资产为准。
 
 安装开发副本：
 
@@ -68,6 +68,10 @@ python3 scripts/install_local_skill.py
 $dircreative 把“两位多年未见的朋友，因为一把遗失的钥匙再次相遇”
 发展成一支 30 秒短片。先完成故事和分镜方案。
 ```
+
+新项目未明确协作偏好时，会先用宿主原生询问框介绍“讨论共创、直接执行、关键节点讨论”。创意组负责剧情与人物，导演组负责表演、风格、空间和镜头。普通讨论不逐句弹框；方向明确后，列出本轮制作范围，让你选择开始制作或继续调整。选择直接执行，或明确说“自行编排、自主完成”，就沿用该授权连续完成。制作中的内部审查和返工不再逐阶段询问。
+
+已完成的故事、镜头表和图片会以内容、文件链接或预览呈现。输入准备新增只读的基础资产候选与字段说明，减少靠错误重试摸索接口；它们不替代真实出图和视觉检查。
 
 也可以只做局部工作：
 

@@ -31,36 +31,40 @@ class CollaborationRoutingTests(unittest.TestCase):
         self.assertFalse(result["collaboration"]["subagents_allowed"])
 
     def test_named_groups_are_not_proof_of_real_workers(self):
+        # A named group on the first film request preserves its selection, but
+        # remains blocked until the user chooses an interaction mode.
         result = self.route("请调用导演组和创意组，开发完整广告片。")
         collaboration = result["collaboration"]
         self.assertEqual(collaboration["requested_groups"], ["creative", "director"])
         self.assertEqual(collaboration["execution_mode"], "main_thread_perspectives")
-        self.assertEqual(collaboration["execution_status"], "not_dispatched")
+        self.assertEqual(result["action"], "ask_interaction_mode")
+        self.assertEqual(collaboration["execution_status"], "blocked_by_gate")
         self.assertEqual(collaboration["dispatch_receipts"], [])
 
     def test_explicit_subagents_do_not_create_user_tasks(self):
-        result = self.route("请导演组和创意组启用真实子代理并行，开发完整广告片。")
+        # Real worker dispatch starts only after the user has selected direct mode.
+        result = self.route("请导演组和创意组启用真实子代理并行，开发完整广告片。直接执行。")
         self.assertEqual(result["collaboration"]["execution_mode"], "host_subagents")
         self.assertTrue(result["collaboration"]["subagents_allowed"])
         self.assertFalse(result["threads_allowed"])
         self.assertEqual(result["collaboration"]["dispatch_receipts"], [])
 
     def test_joint_group_work_selects_bounded_subagents(self):
-        result = self.route("请调用导演组与创意组联合协作，开发完整广告片。")
+        result = self.route("请调用导演组与创意组联合协作，开发完整广告片。直接执行。")
         self.assertEqual(result["collaboration"]["execution_mode"], "host_subagents")
         self.assertEqual(result["collaboration"]["max_subagents"], 2)
 
     def test_worker_assignment_can_contain_an_explanation_or_research_question(self):
         for request in (
             "请启用子代理研究怎么优化这个镜头。",
-            "请调用导演组与创意组联合研究如何完善完整广告片。",
+            "请调用导演组与创意组联合研究如何完善完整广告片。直接执行。",
             "请启用子代理解释这个镜头是否满足时长。",
         ):
             with self.subTest(request=request):
                 self.assertEqual(self.route(request)["collaboration"]["execution_mode"], "host_subagents")
 
     def test_explicit_new_task_is_separate_from_subagents(self):
-        result = self.route("请创建两个新任务，分别让创意组和导演组开发完整广告片。")
+        result = self.route("请创建两个新任务，分别让创意组和导演组开发完整广告片。直接执行。")
         self.assertEqual(result["collaboration"]["execution_mode"], "host_threads")
         self.assertTrue(result["threads_allowed"])
         self.assertFalse(result["collaboration"]["subagents_allowed"])
@@ -147,8 +151,8 @@ class CollaborationRoutingTests(unittest.TestCase):
 
     def test_resolved_or_delegated_concept_choice_does_not_reask(self):
         for request in (
-            "两个方向冲突已经解决，按 A 继续写完整脚本。",
-            "方向冲突时按你的专业判断选择，开发完整广告片。",
+            "两个方向冲突已经解决，按 A 继续写完整脚本。直接执行。",
+            "方向冲突时按你的专业判断选择，开发完整广告片。直接执行。",
         ):
             with self.subTest(request=request):
                 self.assertEqual(self.route(request)["action"], "continue")
@@ -176,10 +180,10 @@ class CollaborationRoutingTests(unittest.TestCase):
 
     def test_small_story_excerpt_does_not_shrink_full_film_or_extra_outputs(self):
         for request in (
-            "开发完整广告片，先给一句核心概念，再给故事、脚本和分镜。",
-            "开发完整广告片，给我一页客户故事和分镜。",
-            "不要只给一页客户故事，开发完整广告片。",
-            '开发完整广告片。原文是“一页客户可读的故事，只要故事”。',
+            "开发完整广告片，先给一句核心概念，再给故事、脚本和分镜。直接执行。",
+            "开发完整广告片，给我一页客户故事和分镜。直接执行。",
+            "不要只给一页客户故事，开发完整广告片。直接执行。",
+            '开发完整广告片。原文是“一页客户可读的故事，只要故事”。直接执行。',
         ):
             with self.subTest(request=request):
                 result = self.route(request)
@@ -208,7 +212,7 @@ class CollaborationRoutingTests(unittest.TestCase):
         )
 
     def test_full_preproduction_with_reverse_shots_is_not_collapsed_to_spatial_discussion(self):
-        result = self.route("给我做一支两人对话广告片的完整前期：故事、剧本、逐镜代表图、完整视频提示词和实际上传顺序，包含正反打。")
+        result = self.route("给我做一支两人对话广告片的完整前期：故事、剧本、逐镜代表图、完整视频提示词和实际上传顺序，包含正反打。直接执行。")
         self.assertEqual((result["mode"], result["route"]), ("studio", "film_development"))
         self.assertNotEqual(result["deliverable_layer"], "spatial_discussion")
         self.assertTrue(result["shot_matrix_allowed"])
@@ -229,7 +233,7 @@ class CollaborationRoutingTests(unittest.TestCase):
     def test_natural_action_preproduction_exposes_existing_craft_stages(self):
         result = self.route(
             "$dircreative 帮我做一部一分钟武侠动作短片，要有故事，"
-            "把需要的图片都真实生成好，停在视频生成前，视频我自己生成。"
+            "把需要的图片都真实生成好，停在视频生成前，视频我自己生成。直接执行。"
         )
         self.assertEqual(result["route"], "film_development")
         self.assertEqual(result["media_scope"], "pre_video_assets")
@@ -259,7 +263,7 @@ class CollaborationRoutingTests(unittest.TestCase):
         result = self.route(
             "$dircreative 开发一部完整古风短片，故事、剧本、分镜和图片资产都要；"
             "导演组在构思时研究镜造摄影构图，明确广角、中近景、特写和空间纵深，"
-            "停在视频生成前。"
+            "停在视频生成前。直接执行。"
         )
         self.assertEqual((result["mode"], result["route"]), ("studio", "film_development"))
         stages = {item["stage"]: item for item in result["craft_stages"]}
@@ -276,7 +280,7 @@ class CollaborationRoutingTests(unittest.TestCase):
     def test_ordinary_preproduction_keeps_jingzao_advisory_opt_in(self):
         result = self.route(
             "$dircreative 开发一部完整古风短片，故事、剧本、分镜和图片资产都要，"
-            "停在视频生成前。"
+            "停在视频生成前。直接执行。"
         )
         stages = {item["stage"]: item for item in result["craft_stages"]}
         self.assertEqual(stages["shot_design"]["selection_intent"]["gaps"], [])
@@ -284,7 +288,7 @@ class CollaborationRoutingTests(unittest.TestCase):
     def test_spatial_action_need_infers_composition_gap_without_jingzao_wording(self):
         result = self.route(
             "$dircreative 开发一部两人交接印信的动作短片，包含反打、走位和门内外空间，"
-            "给故事、剧本、分镜和图片资产，停在视频生成前。"
+            "给故事、剧本、分镜和图片资产，停在视频生成前。直接执行。"
         )
         stages = {item["stage"]: item for item in result["craft_stages"]}
         self.assertEqual(
@@ -297,11 +301,11 @@ class CollaborationRoutingTests(unittest.TestCase):
         )
 
     def test_action_effects_are_conditional_and_never_authorize_execution(self):
-        result = self.route("做一部完整武侠动作短片，环境破碎要有因果，暂时只做前期计划。")
+        result = self.route("做一部完整武侠动作短片，环境破碎要有因果，暂时只做前期计划。直接执行。")
         intents = [item["selection_intent"] for item in result["craft_stages"] if "selection_intent" in item]
         self.assertIn("vfx_design", [intent["scenario_id"] for intent in intents])
         self.assertTrue(all(intent["real_side_effect"] is False for intent in intents))
-        quiet = self.route("做一部完整静物短片，不要打斗，不要爆炸，真实生成全部图片，视频我自己做。")
+        quiet = self.route("做一部完整静物短片，不要打斗，不要爆炸，真实生成全部图片，视频我自己做。直接执行。")
         quiet_scenarios = [item["selection_intent"]["scenario_id"] for item in quiet["craft_stages"] if "selection_intent" in item]
         self.assertNotIn("action_choreography", quiet_scenarios)
         self.assertNotIn("vfx_design", quiet_scenarios)
@@ -460,7 +464,7 @@ class NaturalAssetRoutingTests(unittest.TestCase):
         self.assertEqual(result["craft_stages"], [])
 
     def test_reuse_request_exposes_readback_without_requiring_new_character_design(self):
-        result = self.route("$dircreative 做一部完整短片，图片真实生成好，视频我自己做。已给人物、场景和道具图片，沿用这些素材，只生成缺少的分镜图片。")
+        result = self.route("$dircreative 做一部完整短片，图片真实生成好，视频我自己做。已给人物、场景和道具图片，沿用这些素材，只生成缺少的分镜图片。直接执行。")
         stages = {item["stage"]: item for item in result["craft_stages"]}
         self.assertIn("asset_readback", stages)
         self.assertEqual(stages["asset_readback"]["task_reference"], "skills/dircreative/references/image-execution.md")

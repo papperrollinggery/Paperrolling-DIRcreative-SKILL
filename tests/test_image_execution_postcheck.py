@@ -35,6 +35,12 @@ class ImageExecutionPostcheckTests(unittest.TestCase):
 
 
 class LiveCallAndCandidateTests(unittest.TestCase):
+    def test_original_create_packet_cannot_masquerade_as_a_failed_asset_retry(self):
+        result = self.prepare(self.packet(), retry_failed_asset=True)
+        self.assertEqual(result["preflight_status"], "blocked")
+        self.assertIsNone(result["imagegen_arguments"])
+        self.assertTrue(any(x.startswith("retry_requires_current_rejected_plan") for x in result["errors"]))
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(); self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
@@ -184,9 +190,12 @@ class LiveCallAndCandidateTests(unittest.TestCase):
         self.asset=next(a for a in self.plan['assets'] if a['role']=='prop_continuity_board')
         packet=self.packet(candidate)
         self.assertEqual(packet['dependencies'],[])
-        for retry in (False,True):
-            result=self.prepare(packet,retry_failed_asset=retry)
-            self.assertEqual(result['preflight_status'],'ready',result)
+        result=self.prepare(packet)
+        self.assertEqual(result['preflight_status'],'ready',result)
+        # An unrelated rejection does not turn this never-generated prop into
+        # a retry target; the flag must name an actual reviewed candidate.
+        incorrect_retry=self.prepare(packet,retry_failed_asset=True)
+        self.assertEqual(incorrect_retry['preflight_status'],'blocked')
         self.assertIn('candidate_postcheck_required:'+prior_id,
                       planmod.pending_candidate_self_checks(candidate,base_dir=self.root,execution_task_id=self.task))
 

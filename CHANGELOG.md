@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+## 0.12.0 - 2026-09-09
+
+### Changed
+
+- Ask once for a new film project's collaboration pace when it is unknown: discuss, execute directly, or agree creative checkpoints. Explicit self-direction reuses its existing scope. Professional groups remain independent from real subagent dispatch.
+- Use native host questions only for creative decisions and the transition to a concrete production scope. Keep ordinary discussion conversational, deduplicate pending questions, reject stale or negated starts, and continue authorized production and repairs without per-stage approvals.
+- Preserve current interaction state across tools and installed handoff replay without rewriting the original media request. Temporary analysis detours retain the project's choice.
+- Expose root foundation candidates and role-specific editable preparation inputs through read-only CLI helpers. Validate character execution fields and their current authored facts before provider work; preserve content words while tolerating cosmetic punctuation. Coverage authoring can inspect current allowed values and an editable input shape before writing a large batch.
+- Route reviewed local repairs through the same public preparer, with one bound source image and explicit edit arguments. Reject stale create packets posing as repairs and unused best-base flags. Keep unapproved aspect-defective candidates usable as repair inputs while final delivery remains strict.
+- Align the entrypoint with batch generation and dependency-based review. Show useful completed content and saved image previews; keep real visual QA, five-view identity, parent evidence and full deliverable coverage.
+
+### Verification boundary
+
+- Routing, question lifecycle and production handoff tests cover declared behavior. Read-only input helpers do not generate media or approve image quality; timing improvements require observed forward runs.
+- Private project transcripts, timing logs and generated test media are kept outside the release package. Synthetic fixtures are not visual approval.
+
 ## 0.11.1 - 2026-09-09
 
 ### Fixed

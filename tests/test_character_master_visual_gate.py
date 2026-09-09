@@ -26,6 +26,20 @@ import dircreative_media_forward_audit as media_audit  # noqa: E402
 import dircreative_visual_asset_plan as planmod  # noqa: E402
 
 
+class CharacterReceiptInputTests(unittest.TestCase):
+    def test_bad_receipt_path_fails_before_expensive_probe_with_actionable_detail(self):
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            image = root / "candidate.png"
+            image.write_bytes(b"unread because receipt path is invalid")
+            argv = ["gate", "--image", str(image), "--asset-id", "C01", "--asset-truth-sha256", "a" * 64, "--receipt", str(root / "wrong.json")]
+            output = io.StringIO()
+            with patch.object(sys, "argv", argv), patch.object(gate, "run_probe") as probe, patch("sys.stdout", output):
+                self.assertEqual(gate.main(), 1)
+            probe.assert_not_called()
+            self.assertIn("omit --receipt", json.loads(output.getvalue())["detail"])
+
+
 def rgba_png(width: int, height: int, pixel: tuple[int, int, int, int]) -> bytes:
     def chunk(kind: bytes, payload: bytes) -> bytes:
         return (

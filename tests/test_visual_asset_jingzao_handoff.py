@@ -114,7 +114,7 @@ class VisualAssetJingzaoHandoffTests(unittest.TestCase):
             root = Path(raw); project = root / "project"; project.mkdir(); provider = root / "providers/jingzao-image-forge"
             factory = AssetExecutionGateTests()
             packet, _, document = factory.rough_motion_fixture(project, provider, planning_target=True, storyboard_strategy="individual_frames")
-            request = "$dircreative 做一部完整武侠短片的前期制作，先写全部分镜和提示词，不要生成图片或视频。"
+            request = "$dircreative 直接执行，做一部完整武侠短片的前期制作，先写全部分镜和提示词，不要生成图片或视频。"
             self.assertFalse(route_request(request)["image_generation_authorized"])
             stack_request = json.loads((project / "stack-request.json").read_text())
             stack_request["request_text"] = request

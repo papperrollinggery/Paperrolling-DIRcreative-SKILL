@@ -15,7 +15,11 @@ New runs may block for exactly these gates:
 | `generation_authorization` | real image or video generation is ready and lacks scoped authorization | the exact authorized generation scope |
 | `client_delivery_approval` | an external client-visible handoff is ready and lacks scoped approval | the exact approved delivery |
 
-No other stage is a default external user gate.
+No other production stage is a default external user gate. Before production,
+project interaction setup and a discussion-to-production decision follow
+`chat-co-creation-interface.md`. They are pacing decisions, not new media rights.
+After a scoped start, internal review, repair and stage completion do not ask the
+user again. Show actual artifacts when useful; do not display every stage.
 
 ## Internal State Integrity
 
@@ -30,7 +34,8 @@ state.
 
 ## Stop Algorithm
 
-1. If no real blocker exists, continue and return useful work.
+1. First preserve any pending creative interaction decision. Otherwise continue
+   within the chosen mode and authorized production scope.
 2. If incompatible directions require a human preference, show the work and stop
    at `concept_lock`.
 3. If real generation lacks scoped authorization, show the exact input/output
@@ -40,7 +45,8 @@ state.
 5. Unknown facts may trigger one blocking question only when proceeding would be
    misleading or unsafe; that question does not create a new named gate.
 
-“继续” continues internal work and actions with still-valid scoped permission.
+In execution, “继续” continues internal work with still-valid scoped permission.
+In discussion or while production start is pending, it stays in that stage.
 It cannot manufacture permission for a new side effect. `system_default` cannot
 manufacture a user approval.
 

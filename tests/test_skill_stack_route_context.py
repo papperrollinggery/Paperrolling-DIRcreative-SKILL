@@ -21,7 +21,7 @@ from dircreative_route import route_request  # noqa: E402
 class SkillStackRouteContextTests(unittest.TestCase):
     def test_natural_story_route_emits_story_stage_and_selects_jingzao_advisory(self):
         request = (
-            "$dircreative 写故事构思和摄影方向，暂不做技术分镜和生成。"
+            "$dircreative 写故事构思和摄影方向，暂不做技术分镜和生成。直接执行。"
         )
         routed = route_request(request)
         self.assertEqual(routed["deliverable_layer"], "client_story")
@@ -412,7 +412,7 @@ class SkillStackRouteContextTests(unittest.TestCase):
             proc = subprocess.run(
                 [sys.executable, str(ROOT / "scripts/dircreative_skill_stack.py"),
                  "select", "--stage", "action", "--root", str(root),
-                 "--request", "$dircreative 做一部完整武侠动作短片，图片真实生成好，停在视频生成前。"],
+                 "--request", "$dircreative 做一部完整武侠动作短片，图片真实生成好，停在视频生成前。直接执行。"],
                 text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False,
             )
         self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
@@ -425,7 +425,8 @@ class SkillStackRouteContextTests(unittest.TestCase):
         self.assertFalse(receipt["execution_performed"])
 
     def test_quoted_story_facts_activate_craft_but_cannot_grant_permissions(self):
-        request = "$dircreative 做一部完整短片，先只做前期计划。"
+        # These stage-selector tests start after the user has selected direct mode.
+        request = "$dircreative 做一部完整短片，先只做前期计划。直接执行。"
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)
             cards = root / "cards.json"
@@ -476,7 +477,7 @@ class SkillStackRouteContextTests(unittest.TestCase):
                     stack.select_stack({**original, **overrides}, stack.load_registry(), stack.load_routing(), {}, route_context=context)
 
     def test_current_shot_source_can_activate_craft_without_changing_authorization(self):
-        request = "$dircreative 做一部完整短片，先只做前期计划。"
+        request = "$dircreative 做一部完整短片，先只做前期计划。直接执行。"
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)
             cards = root / "cards.json"
@@ -507,7 +508,7 @@ class SkillStackRouteContextTests(unittest.TestCase):
 
     def test_panel_coverage_stage_consumes_existing_storyboard_craft(self):
         intent, dispatch = stack.stage_selection_intent(
-            request_text="$dircreative 做一部完整武侠短片，图片真实生成好，视频我自己做。",
+            request_text="$dircreative 做一部完整武侠短片，图片真实生成好，视频我自己做。直接执行。",
             stage="panel_coverage",
         )
         self.assertEqual(intent["scenario_id"], "technical_storyboard")
@@ -515,17 +516,17 @@ class SkillStackRouteContextTests(unittest.TestCase):
         self.assertFalse(intent["real_side_effect"])
 
     def test_action_motion_board_uses_existing_rough_jingzao_path(self):
-        request = "$dircreative 做一部完整武侠短片，图片真实生成好，视频我自己做。"
+        request = "$dircreative 做一部完整武侠短片，图片真实生成好，视频我自己做。直接执行。"
         intent, dispatch = stack.stage_selection_intent(request_text=request, stage="motion_board")
         self.assertEqual(intent["scenario_id"], "cinematic_storyboard_frames")
         self.assertEqual(intent["downstream_use"], "rough_planning")
         self.assertEqual(dispatch["provider_spec_contract"]["presentation"], "line_art")
         self.assertFalse(intent["real_side_effect"])
         with self.assertRaises(stack.SkillStackError):
-            stack.stage_selection_intent(request_text="$dircreative 做一部完整静物短片，图片真实生成好，视频我自己做。", stage="motion_board")
+            stack.stage_selection_intent(request_text="$dircreative 做一部完整静物短片，图片真实生成好，视频我自己做。直接执行。", stage="motion_board")
 
     def test_frame_stage_returns_existing_rehearsal_step_without_changing_authorization(self):
-        request = "$dircreative 做一部完整武侠短片，图片真实生成好，视频我自己做。"
+        request = "$dircreative 做一部完整武侠短片，图片真实生成好，视频我自己做。直接执行。"
         intent, dispatch = stack.stage_selection_intent(request_text=request, stage="frame_compile")
         recovery = dispatch["before_image_submission"]
         self.assertEqual(dispatch["stage"], "frame_compile")
@@ -561,13 +562,13 @@ class SkillStackRouteContextTests(unittest.TestCase):
             )
             self.assertNotIn("before_image_submission", complete_dispatch)
         _intent, quiet = stack.stage_selection_intent(
-            request_text="$dircreative 做一部完整静物短片，图片真实生成好，视频我自己做。",
+            request_text="$dircreative 做一部完整静物短片，图片真实生成好，视频我自己做。直接执行。",
             stage="frame_compile",
         )
         self.assertNotIn("before_image_submission", quiet)
 
     def test_recovery_cli_preserves_explicit_provider_discovery_scope(self):
-        request = "$dircreative 做一部完整武侠短片，图片真实生成好，视频我自己做。"
+        request = "$dircreative 做一部完整武侠短片，图片真实生成好，视频我自己做。直接执行。"
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)
             host = root / "host"
@@ -613,7 +614,7 @@ class SkillStackRouteContextTests(unittest.TestCase):
                     self.assertFalse(receipt["execution_performed"])
 
     def test_task_view_keeps_current_work_and_default_json_receipt_separate(self):
-        request = "$dircreative 做一部完整武侠短片，图片真实生成好，视频我自己做。"
+        request = "$dircreative 做一部完整武侠短片，图片真实生成好，视频我自己做。直接执行。"
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)
             command = [sys.executable, str(ROOT / "scripts/dircreative_skill_stack.py"),
@@ -646,7 +647,7 @@ class SkillStackRouteContextTests(unittest.TestCase):
             self.assertFalse(motion_intent["real_side_effect"])
 
     def test_handoff_story_and_declared_coverage_activate_motion_without_user_naming_it(self):
-        request = "$dircreative 做一部完整短片，图片真实生成好，视频我自己做。"
+        request = "$dircreative 做一部完整短片，图片真实生成好，视频我自己做。直接执行。"
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)
             cards = root / "cards.json"
@@ -670,7 +671,7 @@ class SkillStackRouteContextTests(unittest.TestCase):
                 stack.stage_selection_intent(request_text=request, stage="motion_board", craft_source=other, craft_coverage=coverage_file, project_root=root)
 
     def test_image_execution_stage_reuses_original_permission_without_authorizing_video(self):
-        request = "$dircreative 做一部完整武侠短片，把图片真实生成好，停在视频生成前。"
+        request = "$dircreative 做一部完整武侠短片，把图片真实生成好，停在视频生成前。直接执行。"
         intent, _dispatch = stack.stage_selection_intent(request_text=request, stage="asset_execution")
         context = stack.validate_primary_route_context(intent, request_text=request)
         self.assertEqual(context.original_request_text, request)

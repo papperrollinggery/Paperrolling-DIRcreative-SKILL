@@ -5,7 +5,6 @@ description: "Use after explicit $dircreative for film concepts, stories, script
 
 # DIRcreative
 
-Develop film work and execute authorized assets.
 Plans and prompts are not media.
 
 ## Invocation Boundary
@@ -48,7 +47,6 @@ A handoff must validate its actual descriptor, sources, locks and output scope.
 
 Preserve supplied material and the whole requested output set. Story-only stops
 at story; full preparation continues through script, shots, assets and prompts.
-A first concept does not cancel the remaining film work.
 
 - **Fast:** one bounded change, zero Threads or Director Room. Return the edit.
 - **Studio:** one controller, at most three dynamic professional perspectives
@@ -57,14 +55,27 @@ A first concept does not cancel the remaining film work.
 - **Delivery:** check tool/reviewer/readback availability early; validate the
   asset and dependencies, execute authorized work, inspect, then continue.
 
-For `spatial_discussion`, read the current host Visualize contract and use its
-response surface or complete fallback. Camera switching is presentation-only;
-scene/shot facts remain authoritative. A concise prompt edit remains Fast.
-
 Named 导演组/创意组 use the active craft card. For real/ambiguous collaboration read
 `docs/film-preproduction/director-room-routing.md`. Distinguish perspectives,
 subagents and user tasks. Never simulate delegation. No nested dispatch
 through ADCO; disclose unavailable tools before substituting single-agent work.
+
+## Project Interaction
+
+For a new story or film-preproduction project with unknown preference, use the
+host's native choice control for `讨论共创（推荐）`、`直接执行`、`关键节点讨论` and
+wait for a real reply. `自行编排`、`自主完成`、`直接执行` are direct-mode choices:
+record them for this project and do not ask again. 创意组 covers story, motivation
+and writing; 导演组 covers performance, shots, space and sound. They are
+perspectives, not a subagent claim. Detailed tool, deduplication and fallback
+rules live in `docs/film-preproduction/chat-co-creation-interface.md`.
+
+Skip this setup for bounded edits, analysis, already-designed assets, source
+maintenance and ADCO workers. Discussion answers the current issue without a
+mandatory question each turn. When a direction is ready, state direction, style
+and concrete scope, then offer `按此开始制作` or `继续调整`. Production start only
+executes that shown, authorized scope; it never authorizes unlisted media or
+client delivery.
 
 ## Intelligent Skill Stack
 
@@ -78,36 +89,29 @@ own future images.
 
 For canonical asset generation, use `references/image-execution.md`: prepare the
 role-bound Jingzao spec, validate the current packet, submit its returned arguments,
-record the real PNG and inspect its role-specific checks before the next image.
-Repair failed candidates within scope. A generic compiled prompt, later plan,
-or unchecked generation cannot replace this sequence. Contact/action rehearsals
-and narrative frames retain their selected craft and coverage requirements.
+record the real PNG, and inspect the batch before an actual downstream dependency
+uses it. Repair failed candidates within scope. A generic compiled prompt, later
+plan, or unchecked generation cannot replace this sequence. Contact/action
+rehearsals and narrative frames retain their selected craft and coverage requirements.
 
-Reuse the scenario/gaps/staged-pass selector: one craft owner, needed collaborators,
-at most one validator. The authorized adapter executes the owner's exact output.
-Fast/Studio/Delivery allow 1/3/1 external bodies within 14/20/30 KB; count isolated
-contexts separately. Prefer the host catalog; inspect discovery/handoffs with
-`references/visual-skill-stack.md`. “已用” requires full-body reading and application.
-Liu/Sophia are explicit overlays; `ai-visual-production-director` is reference-only.
+Reuse the scenario/gaps/staged-pass selector: one craft owner, needed
+collaborators and at most one validator. Read each selected method once and
+reuse it; when a public helper already returns the needed output, do not read its
+source or tests. “已用” requires applying the selected body.
 
 ## External User Gates
 
-Only unresolved incompatible directions (`concept_lock`), unapproved generation
-(`generation_authorization`) and unapproved client-visible actions
-(`client_delivery_approval`) need user gates. Existing scoped authorization
-satisfies them; “continue” preserves that scope. Reversible craft stages and old
-modules cannot impose seven approvals. Keep image/video authorization separate.
-Unknown facts block affected claims; state assumptions and continue independent work.
+External gates are `concept_lock`, `generation_authorization` and
+`client_delivery_approval`. Reuse scoped authorization; image, video and delivery
+remain separate. Unknown facts block only affected claims.
 
 ## State and truth
 
 `standalone_chat` owns response/state. In `orchestrated_worker`, ADCO owns
-adoption, versions, visibility and cleanup; DIR returns artifacts, domain QA, status and open questions.
-
-Use `runtime/state-snapshot.schema.json` for resume, multi-file output or execution.
-For project files read `references/project-hygiene.md` after the first useful
-artifact. Keep one physical owner for identical bytes and one creative source;
-mark only affected descendants stale.
+adoption, versions, visibility and cleanup; return artifacts, domain QA, status and open questions.
+Keep one creative source and one physical owner for identical bytes; mark only affected descendants stale.
+Use `runtime/state-snapshot.schema.json` for resume or multi-file execution;
+follow `references/project-hygiene.md` after the first useful artifact.
 
 ## Quality and completion
 
@@ -122,15 +126,14 @@ Keep Prompt IR model-neutral; compile one verified model surface at a time.
 Preserve reference roles, acting, scene/support truth and preserve/change limits.
 Record final candidates in `ai-film-production-ledger`; it neither executes nor approves.
 
-Whole-film coverage follows `references/film-development.md`. Compare the original
-requested roles/units with the current plan and inspected outputs before delivery.
-`visual_assets_complete` requires real
-canonical PNGs, visual review and trusted host readback; it never means a finished
-video, user acceptance or client/broadcaster approval.
-
-For required real images, run the pre-video gate and complete its executable
-missing work. `partial` is a continuation state, not a finished preproduction pack.
-
-Lead with the requested artifact and relevant limits. Visualize useful decisions;
-otherwise provide native files and readable text. Finish required work or report
-the specific blocker; plans and receipts do not complete it.
+Whole-film coverage follows `references/film-development.md`. A ready root asset
+starts as soon as its design/authorization are ready; do not wait for unrelated
+downstream coverage. Generate independent assets in a batch; review only blocks
+the real next dependency. Preserve five-view masters, approved parent locks and
+actual image QA. Required coverage remains checked at its own stage and delivery
+gate. Show a newly completed story/shot artifact briefly with its openable file;
+preview each saved image immediately, but do not call either acceptance. Continue
+authorized self-check and repair without stage-by-stage process broadcasts.
+`visual_assets_complete` requires real canonical PNGs, visual review and trusted
+readback across the requested scope. It is not a finished video or user/client
+acceptance. Required pre-video gate gaps remain work to finish, not completion.

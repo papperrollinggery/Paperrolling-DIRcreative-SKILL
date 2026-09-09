@@ -38,6 +38,7 @@ KINDS = {"action", "dialogue", "reaction", "reveal", "establish", "transition", 
 RISKS = {"low", "medium", "high"}
 IMAGE_STATUSES = {"planned", "available"}
 LOOKS = {"left", "right", "center", "not_applicable"}
+SCOPES = {"whole_film", "sequence"}
 MAX_JSON_BYTES = 16 * 1024 * 1024
 ANNOTATION_SOURCES = {"manual_overlay", "model_generated"}
 MODEL_ANNOTATION_KINDS = {
@@ -45,6 +46,75 @@ MODEL_ANNOTATION_KINDS = {
 }
 SHEET_EXTRACTION_CONTRACT_ID = "storyboard_clean_sheet_extraction_v1"
 MODEL_ANNOTATION_LAYOUT_CONTRACT_ID = "model_annotation_layout_v1"
+
+
+def describe_input() -> dict[str, Any]:
+    """Return the editable coverage shape without inspecting or changing a project.
+
+    Keep enum values sourced from the validator constants so this discovery output
+    cannot become a parallel authoring contract.
+    """
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "command": "--describe-input",
+        "read_only": True,
+        "notes": [
+            "Read this once before authoring an unfamiliar coverage file; then batch author the requirements and panels.",
+            "This describes declared coverage only. Planned images and planning evidence are not generated or accepted production images.",
+        ],
+        "allowed_values": {
+            "scope": sorted(SCOPES),
+            "requirement.kind": sorted(KINDS),
+            "requirement.risk": sorted(RISKS),
+            "panel.image.status": sorted(IMAGE_STATUSES),
+            "panel.look_direction": sorted(LOOKS),
+        },
+        "look_direction": {
+            "left": "The viewed subject looks toward screen left.",
+            "right": "The viewed subject looks toward screen right.",
+            "center": "The subject has no lateral screen look, for example faces camera.",
+            "not_applicable": "No meaningful gaze direction applies to this panel.",
+            "eyeline_pairs": "A conventional reverse pair needs left/right values that oppose each other; use axis_break_reason for a deliberate exception.",
+        },
+        "minimum_editable_object": {
+            "schema_version": SCHEMA_VERSION,
+            "project_id": "PROJECT_ID",
+            "frame_rate_fps": 24,
+            "scope": "sequence",
+            "shot_cards_file": "shot-cards.json",
+            "shot_cards_sha256": "CANONICAL_JSON_SHA256",
+            "requirements": [{
+                "requirement_id": "REQ_01",
+                "source_anchor": "script-or-cards anchor",
+                "kind": "action",
+                "shot_ids": ["S01"],
+                "phases": ["start", "contact", "result"],
+                "risk": "medium",
+                "image_required": True,
+            }],
+            "panels": [{
+                "panel_id": "P01",
+                "shot_id": "S01",
+                "requirement_id": "REQ_01",
+                "phase": "start",
+                "at_seconds": 0.0,
+                "state": "visible starting state",
+                "camera_setup": "camera position and framing",
+                "view_subject": "visible subject",
+                "gaze_target": "gaze target",
+                "axis_id": "shared axis",
+                "axis_side": "declared side",
+                "look_direction": "left",
+                "image": {"status": "planned"},
+            }],
+        },
+        "field_rules": {
+            "ids": "IDs are 1-128 characters matching ^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$.",
+            "phases": "Requirement and panel phases are author-defined non-empty strings; every declared requirement phase needs a panel.",
+            "available_image": "An available image additionally needs a project-relative PNG path and its lowercase SHA-256. A planned image must not bind path or sha256.",
+            "high_risk": "High-risk requirements must set image_required to true.",
+        },
+    }
 
 
 def json_hash(value: Any) -> str:
@@ -812,7 +882,7 @@ def validate(
     if frame_rate is None or frame_rate <= 0:
         errors.append("frame_rate_fps_invalid")
     scope = plan.get("scope")
-    if not isinstance(scope, str) or scope not in {"whole_film", "sequence"}:
+    if not isinstance(scope, str) or scope not in SCOPES:
         errors.append("scope_invalid")
     shots, shot_order, source_errors = source_shots(project_root, plan.get("shot_cards_file"), plan.get("shot_cards_sha256"))
     errors.extend(source_errors)
@@ -1196,8 +1266,14 @@ def report(status: str, errors: list[str], missing_images: list[str], coverage: 
 
 
 def main() -> int:
+    if len(sys.argv) == 2 and sys.argv[1] == "--describe-input":
+        print(json.dumps(describe_input(), ensure_ascii=False, sort_keys=True, indent=2))
+        return 0
     if len(sys.argv) > 1 and sys.argv[1] == "resolve-planning-target":
-        parser = argparse.ArgumentParser(description="Resolve a coverage-owned motion drawing target without generating or changing plans.")
+        parser = argparse.ArgumentParser(
+            description="Resolve a coverage-owned motion drawing target without generating or changing plans.",
+            epilog="For the coverage input shape and allowed values, run --describe-input.",
+        )
         parser.add_argument("resolve-planning-target")
         parser.add_argument("coverage", type=Path)
         parser.add_argument("--project-root", type=Path, required=True)
@@ -1224,7 +1300,10 @@ def main() -> int:
             result = {"status": "blocked", "errors": [str(exc)]}
         print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
         return 0 if result["status"] == "ready" else 1
-    parser = argparse.ArgumentParser(description="Validate DIRcreative explicit storyboard panel coverage.")
+    parser = argparse.ArgumentParser(
+        description="Validate DIRcreative explicit storyboard panel coverage.",
+        epilog="For the coverage input shape and allowed values, run --describe-input.",
+    )
     parser.add_argument("validate", nargs="?", help="required command")
     parser.add_argument("plan", type=Path)
     parser.add_argument("--project-root", required=True, type=Path)
@@ -1232,7 +1311,10 @@ def main() -> int:
     parser.add_argument("--legacy-plan", type=Path, help="Optional legacy visual asset plan under --project-root.")
     args = parser.parse_args()
     if args.validate != "validate":
-        parser.error("usage: validate PLAN --project-root ROOT --phase design|planning|assets")
+        parser.error(
+            "usage: validate PLAN --project-root ROOT --phase design|planning|assets; "
+            "run --describe-input for the editable input shape and allowed values"
+        )
     try:
         root = args.project_root.resolve(strict=True)
         if not root.is_dir():

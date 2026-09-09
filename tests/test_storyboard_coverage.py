@@ -19,6 +19,45 @@ from dircreative_visual_asset_plan import inspect_raster_cached, test_png_bytes 
 
 
 class StoryboardCoverageTests(unittest.TestCase):
+    def test_describe_input_is_derived_from_validator_contract(self) -> None:
+        description = coverage.describe_input()
+        self.assertTrue(description["read_only"])
+        self.assertEqual(description["schema_version"], coverage.SCHEMA_VERSION)
+        self.assertEqual(description["allowed_values"]["scope"], sorted(coverage.SCOPES))
+        self.assertEqual(description["allowed_values"]["requirement.kind"], sorted(coverage.KINDS))
+        self.assertEqual(description["allowed_values"]["requirement.risk"], sorted(coverage.RISKS))
+        self.assertEqual(description["allowed_values"]["panel.image.status"], sorted(coverage.IMAGE_STATUSES))
+        self.assertEqual(description["allowed_values"]["panel.look_direction"], sorted(coverage.LOOKS))
+        skeleton = description["minimum_editable_object"]
+        self.assertEqual(skeleton["requirements"][0]["kind"], "action")
+        self.assertEqual(skeleton["panels"][0]["image"], {"status": "planned"})
+        self.assertIn("author-defined", description["field_rules"]["phases"])
+
+    def test_describe_input_cli_is_read_only_and_help_errors_link_to_it(self) -> None:
+        script = ROOT / "scripts" / "dircreative_storyboard_coverage.py"
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            before = sorted(path.name for path in root.iterdir())
+            described = subprocess.run(
+                [sys.executable, str(script), "--describe-input"], cwd=root,
+                capture_output=True, text=True, check=False,
+            )
+            self.assertEqual(described.returncode, 0, described.stderr)
+            self.assertTrue(json.loads(described.stdout)["read_only"])
+            self.assertEqual(sorted(path.name for path in root.iterdir()), before)
+            help_result = subprocess.run(
+                [sys.executable, str(script), "--help"], cwd=root,
+                capture_output=True, text=True, check=False,
+            )
+            self.assertEqual(help_result.returncode, 0, help_result.stderr)
+            self.assertIn("--describe-input", help_result.stdout)
+            invalid_command = subprocess.run(
+                [sys.executable, str(script), "unknown", "coverage.json", "--project-root", str(root), "--phase", "design"],
+                cwd=root, capture_output=True, text=True, check=False,
+            )
+            self.assertEqual(invalid_command.returncode, 2)
+            self.assertIn("--describe-input", invalid_command.stderr)
+
     def test_small_native_crop_with_nested_board_panel_ids_is_invalid_not_exception(self):
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw); plan = self.plan(root)

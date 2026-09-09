@@ -123,6 +123,45 @@ delegation and continue independent local work without claiming real teamwork.
 Existing external gates remain effective; collaboration cannot authorize media,
 external delivery or nested dispatch.
 
+## Interaction Choice
+
+For a new story or film-preproduction project without a stated preference, the
+controller first offers `讨论共创`, `直接执行`, and `关键节点讨论`, plus 创意组,
+导演组, or both. The group choice selects these responsibility areas and never
+claims a subagent. Wait for the selection, retain it only for the current project
+scope, and accept a later switch. Skip this interaction setup for bounded edits,
+analysis, already-designed asset execution, source maintenance, and ADCO workers.
+
+`讨论共创` handles ordinary responses, explanations, and additions with substantive
+judgment and usable recommendations, then waits for natural feedback; “继续” stays
+in the current discussion stage. `直接执行`
+continues the authorized scope. `关键节点讨论` waits at the agreed checkpoint
+stages. This interaction behavior is distinct from generation and client-delivery
+authorization.
+
+Discussion must resolve the current creative question, not create a perpetual
+turn-taking loop. When enough information exists, summarize the direction,
+style, and concrete production scope and offer a natural choice such as `按这个
+方向开始做，还是继续调整？` Do not force story, script, and storyboard approvals.
+Explicit equivalents of `确认故事，进入剧本` and `确认剧本，进入分镜` advance
+`discussion_stage` to `script` and `shots`; bare “继续”/“可以” stays in the
+current stage. An equivalent of `讨论完成，准备生产` sets
+`discussion_stage: production_ready` and waits at `production_start` after
+presenting the nonempty `production_scope`, deliverables, and planned media. Only
+a later explicit equivalent of `确认开始生产` enters direct `production`, limited
+to already-authorized listed work. It never authorizes every medium or a client
+handoff.
+
+Use a native host choice control only for initial setup, real direction choices,
+agreed-stage wrap-up, and production start. Prefer `request_user_input_async`
+when available, `request_user_input` only in a permitted host mode, otherwise a
+callable host equivalent. Label them `DIRcreative · 协作方式`, `DIRcreative ·
+方向确认`, and `DIRcreative · 开始制作`; initial choices are `讨论共创（推荐）`、
+`直接执行`、`关键节点讨论`, and wrap-up choices are `按此开始制作`、`继续调整`.
+Wait for a real user reply: defaults, timeouts, or a successful tool call are not
+confirmation. If unavailable, report `TOOL_BLOCKED` for button display and use
+text fallback without claiming a button was shown. Do not create a new UI site.
+
 Ten v1 roles remain detailed knowledge in
 `docs/film-preproduction/schemas/director-role-harness.yaml#legacy_v1_role_contracts`.
 They are not activation seats. New results use the three v2 perspective IDs.
@@ -133,7 +172,8 @@ They are not activation seats. New results use the three v2 perspective IDs.
 2. selected professional judgments;
 3. material conflict only when one exists;
 4. options only when the user requested a choice or a conflict requires one;
-5. one open question only when blocked.
+5. an open question or native choice only when a real decision, authorization
+   gate, or indispensable unknown requires it.
 
 Aligned judgments record `no_material_conflict`. There is no minimum disagreement count. A direct optimization request receives the optimized result, not a meeting record.
 
