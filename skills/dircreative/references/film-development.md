@@ -39,10 +39,11 @@ visual/sound system and feasible route. A transcript or ledger is not the idea.
   Repeat only evidence-bound locked facts. Do not infer algorithms, parameters,
   timing, capabilities, or product ownership from a creative idea.
 
-Do not enter a shot or asset matrix until audience state change, one core action,
-brand role when applicable, start-action-end, media/physical rules, continuity logic, and
-sound/edit logic are explicit. Structural coverage proves production planning,
-not creative quality, client readability, asset authorization, or approval.
+Set audience change, core action, brand role where applicable, start/end,
+physical rules, continuity and sound before a technical matrix. A root foundation
+asset may begin once its own design facts and authorization exist; do not wait for
+unrelated shot cards or downstream coverage. Structural coverage is planning, not
+creative quality, asset authorization or approval.
 
 At technical-shot development, follow the active craft handoffs in
 `shot-development.md`; replace this general reference at that stage. Infer
@@ -72,6 +73,13 @@ The minimum whole-film coverage is:
 - only the clean inputs required by the selected model/unit strategy; no
   per-shot first/key/end quota;
 - a style board only when existing locks do not establish look/material truth.
+
+For a full requested film, keep the full plan and return to its outstanding units
+after staged foundation generation. `asset_only` is useful for an isolated asset;
+it cannot substitute for the requested film's story, shots, coverage or delivery.
+Generate independent roots as a batch, preview saved candidates, and let review
+block only an actual dependent asset; retain five-view masters, parent locks and
+real QA.
 
 Apply `storyboard-motion-planning.md` for early action drawings and model-drawn
 annotations. A final frame overview follows the individual-frame strategy.

@@ -310,7 +310,7 @@ def main() -> int:
                 [
                     "New runs may block for exactly these gates",
                     "reversible",
-                    "No other stage is a default external user gate",
+                    "No other production stage is a default external user gate",
                     "put valid work in the first response",
                     "Do not dump raw YAML/JSON",
                     "stage_gate_integrity: ok",

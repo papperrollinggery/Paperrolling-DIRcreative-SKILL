@@ -6,6 +6,8 @@ import hashlib
 import json
 import tempfile
 import copy
+import re
+import unicodedata
 from pathlib import Path
 from typing import Any
 
@@ -154,6 +156,8 @@ def _rough_motion_panels(
     request_text: str | None,
     errors: list[str],
     planning_resolution: dict[str, Any] | None = None,
+    interaction_state: dict[str, Any] | None = None,
+    interaction_scope_id: str = "current_conversation",
 ) -> list[dict[str, Any]] | None:
     """Bind an early drawing to current design truth, never to adopted parent pixels."""
     binding = packet.get("motion_planning")
@@ -212,6 +216,7 @@ def _rough_motion_panels(
         intent, _dispatch = stage_selection_intent(
             request_text=request_text or "", stage="motion_board", craft_source=source,
             craft_coverage=Path(binding["coverage_file"]), project_root=project_root,
+            interaction_state=interaction_state, interaction_scope_id=interaction_scope_id,
         )
         if intent.get("active_stage") != "motion_board" or intent.get("downstream_use") != "rough_planning":
             raise ValueError("motion stage unavailable")
@@ -321,6 +326,69 @@ def build_prompt_authority(
 
 def _file_sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+CHARACTER_MASTER_LAYOUT = {
+    "layout": "single_horizontal_row", "portrait_position": "far_left",
+    "full_body_views": ["front", "left_profile", "right_profile", "back"],
+    "min_subject_height_ratio": 0.75, "body_scale": "equal", "ground_line": "shared",
+}
+
+
+def character_fact_in_text(fact: str, text: str) -> bool:
+    """Ignore cosmetic punctuation/conjunction edits, never identity words.
+
+    This is lexical preservation, not a semantic or visual quality verdict.
+    Side, material, number, negation and word order remain significant.
+    """
+    word_pattern = r"[\u3400-\u9fff]|[^\W_\u3400-\u9fff]+"
+    def tokens(value: str) -> list[str]:
+        return [word for word in re.findall(word_pattern, unicodedata.normalize("NFKC", value).casefold()) if word != "and"]
+    normalized_text = unicodedata.normalize("NFKC", text).casefold()
+    matches = [match for match in re.finditer(word_pattern, normalized_text) if match.group() != "and"]
+    needle, haystack = tokens(fact), [match.group() for match in matches]
+    if not needle:
+        return False
+    for offset in range(len(haystack) - len(needle) + 1):
+        if haystack[offset:offset + len(needle)] == needle:
+            clause_prefix = re.split(r"[.;:,，。；：]", normalized_text[:matches[offset].start()])[-1]
+            before = tokens(clause_prefix)[-2:]
+            if not any(word in {"no", "not", "without", "无", "不", "没", "未", "非"} for word in before):
+                return True
+    return False
+
+
+def character_master_contract_errors(master: Any) -> list[str]:
+    """Validate the same execution contract before provider work and at the gate."""
+    if not isinstance(master, dict):
+        return ["character_master_object_required"]
+    errors: list[str] = []
+    mode = master.get("mode")
+    identity_kind = master.get("identity_kind", "human")
+    if mode not in {"headed_master", "headed_state", "headless_safe"}:
+        errors.append("mode")
+    if identity_kind not in {"human", "nonhuman"}:
+        errors.append("identity_kind")
+    if identity_kind == "nonhuman" and mode == "headless_safe":
+        errors.append("nonhuman_headless_not_supported")
+    if identity_kind != "nonhuman":
+        errors.extend(key for key, value in CHARACTER_MASTER_LAYOUT.items() if master.get(key) != value)
+        for key in ("identity_facts", "wardrobe_facts", "wardrobe_materials"):
+            if not isinstance(master.get(key), list) or not master[key] or not all(isinstance(x, str) and x.strip() for x in master[key]):
+                errors.append(key)
+        if not isinstance(master.get("side_specific_details"), list) or not all(isinstance(x, str) and x.strip() for x in master.get("side_specific_details", [])):
+            errors.append("side_specific_details")
+    if mode != "headed_master":
+        source_sha = master.get("approved_source_master_sha256")
+        if not isinstance(source_sha, str) or len(source_sha) != 64:
+            errors.append("approved_source_master_sha256")
+        if not isinstance(master.get("derived_from_asset_id"), str) or not master["derived_from_asset_id"]:
+            errors.append("derived_from_asset_id")
+    if mode == "headed_state" and not master.get("state_facts"):
+        errors.append("state_facts")
+    if mode == "headless_safe" and master.get("body_mode") != "fully_headless":
+        errors.append("body_mode")
+    return errors
 
 
 def character_plan_binding_errors(
@@ -886,7 +954,8 @@ def _bound_visual_plan(
     except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError, RuntimeError):
         errors.append("visual_plan_file_invalid")
         return None
-    plan_errors, _metrics = validate_plan(plan, base_dir=candidate.parent)
+    from dircreative_visual_asset_plan import validate_in_progress_plan
+    plan_errors, _metrics = validate_in_progress_plan(plan, base_dir=candidate.parent)
     if plan_errors:
         errors.append("visual_plan_invalid")
         return None
@@ -955,10 +1024,20 @@ def validate_packet(
     project_root: Path | None = None,
     execution_task_id: str | None = None,
     request_text: str | None = None,
+    interaction_state: dict[str, Any] | None = None,
+    interaction_scope_id: str = "current_conversation",
     _trusted_jingzao_provider_roots: tuple[Path, ...] | None = None,
     _allow_unsandboxed_jingzao_replay_for_tests: bool = False,
 ) -> list[str]:
     errors: list[str] = []
+    if interaction_state is not None:
+        from dircreative_route import route_request
+        try:
+            pacing = route_request(request_text or "继续", interaction_state=interaction_state, scope_id=interaction_scope_id, interaction_event_request="")
+            if pacing.get("action") != "continue":
+                errors.append("interaction_not_ready_for_production")
+        except ValueError:
+            errors.append("interaction_state_invalid")
     if not isinstance(packet, dict):
         return ["packet_must_be_object"]
     if packet.get("contract_id") != CONTRACT_ID:
@@ -970,6 +1049,8 @@ def validate_packet(
     bound_plan_dir: Path | None = None
     planning_resolution: dict[str, Any] | None = None
     if visual_plan is not None:
+        if interaction_state is not None and interaction_state.get("scope_id") != visual_plan.get("project_id"):
+            errors.append("interaction_scope_does_not_match_visual_plan")
         bound_plan_dir = Path(str(visual_plan.pop("_bound_plan_dir")))
         active_plan_asset = next(
             (
@@ -1004,6 +1085,7 @@ def validate_packet(
         packet, active_plan_asset, visual_plan, project_root=project_root,
         plan_dir=bound_plan_dir, request_text=request_text, errors=errors,
         planning_resolution=planning_resolution,
+        interaction_state=interaction_state, interaction_scope_id=interaction_scope_id,
     )
     expected = (
         ("motion_board", "skills/dircreative/references/storyboard-motion-planning.md")
@@ -1314,38 +1396,7 @@ def validate_packet(
         mode = master.get("mode") if isinstance(master, dict) else None
         identity_kind = master.get("identity_kind", "human") if isinstance(master, dict) else None
         nonhuman_master = isinstance(master, dict) and identity_kind == "nonhuman"
-        canonical_master = (
-            isinstance(master, dict)
-            and mode in {"headed_master", "headed_state", "headless_safe"}
-            and identity_kind in {"human", "nonhuman"}
-            and (not nonhuman_master or mode != "headless_safe")
-            and (
-                nonhuman_master
-                or (
-                    master.get("layout") == "single_horizontal_row"
-                    and master.get("portrait_position") == "far_left"
-                    and master.get("full_body_views") == ["front", "left_profile", "right_profile", "back"]
-                    and master.get("min_subject_height_ratio") == 0.75
-                    and master.get("body_scale") == "equal"
-                    and master.get("ground_line") == "shared"
-                    and bool(master.get("identity_facts"))
-                    and bool(master.get("wardrobe_facts"))
-                    and bool(master.get("wardrobe_materials"))
-                    and isinstance(master.get("side_specific_details"), list)
-                )
-            )
-            and (
-                mode == "headed_master"
-                or (
-                    isinstance(master.get("approved_source_master_sha256"), str)
-                    and len(master["approved_source_master_sha256"]) == 64
-                    and isinstance(master.get("derived_from_asset_id"), str)
-                    and bool(master["derived_from_asset_id"])
-                )
-            )
-            and (mode != "headed_state" or bool(master.get("state_facts")))
-            and (mode != "headless_safe" or master.get("body_mode") == "fully_headless")
-        )
+        canonical_master = not character_master_contract_errors(master)
         prompt_markers = [
             "front-facing face close-up",
             "far left",
@@ -1384,7 +1435,7 @@ def validate_packet(
             ]
             is_verified_repair = packet.get("candidate_repair") is not None and formal_asset_jingzao_prompt is not None
             if not is_verified_repair and any(
-                str(detail).lower() not in lowered_prompt
+                not character_fact_in_text(str(detail), lowered_prompt)
                 for detail in bound_details
             ):
                 errors.append("character_master_material_or_side_detail_missing")
@@ -1393,7 +1444,7 @@ def validate_packet(
                 *master.get("wardrobe_facts", []),
             ]
             if not is_verified_repair and any(
-                str(detail).lower() not in lowered_prompt
+                not character_fact_in_text(str(detail), lowered_prompt)
                 for detail in identity_and_wardrobe
             ):
                 errors.append("character_master_identity_or_wardrobe_fact_missing")
@@ -1401,7 +1452,7 @@ def validate_packet(
                 (active_plan_asset or {}).get("purpose", "")
             ).lower()
             if any(
-                str(detail).lower() not in authoritative_purpose
+                not character_fact_in_text(str(detail), authoritative_purpose)
                 for detail in [
                     *identity_and_wardrobe,
                     *master.get("wardrobe_materials", []),
@@ -1469,6 +1520,8 @@ def prepare_image_call(
     packet: dict[str, Any], *, project_root: Path, reference_delivery: dict[str, Any],
     execution_task_id: str, repo_root: Path = ROOT, request_text: str | None = None,
     retry_failed_asset: bool = False,
+    interaction_state: dict[str, Any] | None = None,
+    interaction_scope_id: str = "current_conversation",
     _trusted_jingzao_provider_roots: tuple[Path, ...] | None = None,
     _allow_unsandboxed_jingzao_replay_for_tests: bool = False,
 ) -> dict[str, Any]:
@@ -1476,6 +1529,7 @@ def prepare_image_call(
     errors = validate_packet(
         packet, project_root=project_root, repo_root=repo_root,
         execution_task_id=execution_task_id, request_text=request_text,
+        interaction_state=interaction_state, interaction_scope_id=interaction_scope_id,
         _trusted_jingzao_provider_roots=_trusted_jingzao_provider_roots,
         _allow_unsandboxed_jingzao_replay_for_tests=_allow_unsandboxed_jingzao_replay_for_tests,
     )
@@ -1496,6 +1550,8 @@ def prepare_image_call(
             asset_ids={packet["asset_id"]},
         )
         permitted_retry = f"candidate_postcheck_failed:{packet['asset_id']}:candidate_self_check_requires_repair"
+        if retry_failed_asset and permitted_retry not in pending and packet.get("candidate_repair") is None:
+            errors.append("retry_requires_current_rejected_plan: use the reviewed plan and prepare a bound edit; an original create packet is not a repair")
         # A reviewed rejection can be repaired in place with a new candidate;
         # no missing, stale or structurally invalid review is silently skipped.
         errors.extend(error for error in pending if not (retry_failed_asset and error == permitted_retry))
@@ -1543,6 +1599,7 @@ def prepare_image_call(
         if errors:
             return result
         return {**result, "preflight_status": "ready", "errors": [], "imagegen_arguments": args,
+                "operation": "edit" if packet.get("candidate_repair") else "create",
                 "imagegen_arguments_sha256": canonical_packet_sha256(args),
                 "packet_sha256": canonical_packet_sha256(packet),
                 "visual_plan_path": str((project_root / packet["visual_plan"]["path"]).resolve(strict=True)),
@@ -1562,6 +1619,8 @@ def main() -> int:
     parser.add_argument("--project-root", required=True, type=Path)
     parser.add_argument("--execution-task-id")
     parser.add_argument("--request", help="original authorized request; required for early motion-board drawing")
+    parser.add_argument("--interaction-state", type=Path, help="Current project interaction object or compact snapshot")
+    parser.add_argument("--interaction-scope-id", default="current_conversation")
     actions = parser.add_mutually_exclusive_group()
     actions.add_argument("--prepare-call", action="store_true")
     actions.add_argument("--record-output", action="store_true")
@@ -1662,12 +1721,16 @@ def main() -> int:
             label="asset execution packet",
         )
         packet = json.loads(packet_bytes.decode("utf-8"))
+        interaction_state = json.loads(args.interaction_state.read_text()) if args.interaction_state else None
+        if isinstance(interaction_state, dict) and "project_id" in interaction_state:
+            interaction_state = interaction_state.get("interaction")
         if args.prepare_call:
             delivery_path = args.reference_delivery.resolve(strict=True)
             delivery_raw = read_relative_regular_file_once(delivery_path.parent, delivery_path.name, max_bytes=MAX_PACKET_BYTES, label="reference delivery")
             result = prepare_image_call(packet, repo_root=args.repo_root.resolve(), project_root=args.project_root.resolve(),
                                         reference_delivery=json.loads(delivery_raw), execution_task_id=args.execution_task_id,
-                                        request_text=args.request, retry_failed_asset=args.retry_failed_asset)
+                                        request_text=args.request, retry_failed_asset=args.retry_failed_asset,
+                                        interaction_state=interaction_state, interaction_scope_id=args.interaction_scope_id)
             print(json.dumps(result, ensure_ascii=False, indent=2))
             return 0 if result["preflight_status"] == "ready" else 1
         errors = validate_packet(
@@ -1676,6 +1739,7 @@ def main() -> int:
             project_root=args.project_root.resolve(),
             execution_task_id=args.execution_task_id,
             request_text=args.request,
+            interaction_state=interaction_state, interaction_scope_id=args.interaction_scope_id,
         )
     except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
         errors = [f"packet_unreadable:{type(exc).__name__}"]

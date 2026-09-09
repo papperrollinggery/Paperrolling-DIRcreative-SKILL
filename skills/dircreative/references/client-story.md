@@ -4,6 +4,10 @@ Use for a client-readable story, concept or treatment whose requested scope
 stops before technical shots and asset production. Return the full story,
 including its ending. A first concept is only a milestone when more was requested.
 
+During creative discussion, keep work at the current agreed scope and follow
+the root interaction contract. Once production is authorized, return the
+requested story and continue without new stage approvals.
+
 ## Create and review
 
 Use the supplied audience, duration, product/service facts, characters and tone.

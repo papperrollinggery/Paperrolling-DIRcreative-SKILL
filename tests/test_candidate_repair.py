@@ -17,6 +17,40 @@ from tests import test_visual_asset_jingzao_handoff as fixtures
 
 
 class CandidateRepairTests(unittest.TestCase):
+    def test_wrong_aspect_candidate_is_a_repair_input_not_a_deliverable(self):
+        from tests.test_asset_only_plan import AssetOnlyPlanTests
+        temp, inventory_path, inventory = AssetOnlyPlanTests().materialize("character-still-inventory.json")
+        self.addCleanup(temp.cleanup)
+        project = inventory_path.parent
+        original_plan = planmod.derive_plan(inventory, inventory_file=inventory_path.name, base_dir=project)
+        asset_id = original_plan["assets"][0]["asset_id"]
+        image = project / "wrong-aspect.png"
+        image.write_bytes(planmod.test_png_bytes(seed=41, width=1024, height=1024))
+        plan = planmod.record_candidate_output(original_plan, base_dir=project, asset_id=asset_id,
+                                               image_path=image, execution_task_id="test-executor")
+        asset = next(a for a in plan["assets"] if a["asset_id"] == asset_id)
+        review = planmod.candidate_self_check_template(plan, asset["asset_id"])
+        review.update(reviewed_at=asset["technical_receipt"]["checked_at"], reviewer_id="test-reviewer", review_task_id="test-review")
+        review["assets"][0]["decision"] = "retry"
+        for row in review["assets"][0]["observations"]:
+            row.update(result="fail" if row["check_id"] == "saved_pixels_and_detail" else "pass",
+                       observed="Synthetic fixture: saved canvas does not match the required wide aspect.")
+        asset["candidate_self_check"] = fixtures.write_json(project / "aspect-review.json", review)
+        binding = fixtures.write_json(project / "aspect-plan.json", plan)
+        strict, _ = planmod.validate_plan(plan, base_dir=project)
+        self.assertTrue(any(e.startswith("required_asset_delivery_aspect_ratio_mismatch:") for e in strict))
+        errors, metrics = planmod.validate_in_progress_plan(plan, base_dir=project)
+        self.assertEqual(errors, [])
+        self.assertTrue(metrics["deferred_candidate_quality_errors"])
+        repair = planmod.build_candidate_repair_source(project_root=project, visual_plan_binding=binding,
+            asset_id=asset["asset_id"], changes=[{"check_id": "saved_pixels_and_detail", "instruction": "Restore the required wide canvas while preserving the full character views."}])
+        self.assertEqual(repair["source_image"]["sha256"], asset["generated_sha256"])
+        claimed = copy.deepcopy(plan)
+        next(a for a in claimed["assets"] if a["asset_id"] == asset["asset_id"])["visual_qa_receipt"] = {}
+        self.assertTrue(any(e.startswith("required_asset_delivery_aspect_ratio_mismatch:") for e in planmod.validate_in_progress_plan(claimed, base_dir=project)[0]))
+        image.write_bytes(b"corrupted")
+        self.assertTrue(planmod.validate_in_progress_plan(plan, base_dir=project)[0])
+
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory();self.addCleanup(self.temp.cleanup)
         self.root=Path(self.temp.name).resolve();self.project=self.root/'project';self.project.mkdir()

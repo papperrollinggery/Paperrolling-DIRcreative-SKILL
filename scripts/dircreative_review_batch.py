@@ -17,6 +17,20 @@ RUBRIC = (
     "truth_and_role_match", "coverage_and_continuity_match", "composition_readable",
     "artifact_free", "downstream_use_fit",
 )
+REVIEWER_TYPES = ("executor", "independent_ai", "human", "authorized_reviewer")
+
+
+def review_input_help(plan: dict[str, Any], asset_ids: list[str]) -> dict[str, Any]:
+    """Describe conditional inputs alongside the template, not inside its schema."""
+    return {
+        "reviewer_type_values": list(REVIEWER_TYPES),
+        "rubric_values": [True, False, None],
+        "rubric_note": "Use JSON booleans, not pass/fail strings. A pass requires all rubric values true; null remains unreviewed.",
+        "decision_values": ["pass", "retry", "reject", "defer"],
+        "retry_or_reject_requires": {"defects": [{"check_id": "one id from check_ids_by_asset", "observed": "the concrete visible failure"}]},
+        "check_ids_by_asset": {a["asset_id"]: planmod.candidate_check_ids(a) for a in plan["assets"] if a["asset_id"] in asset_ids},
+        "note": "Keep protected hashes/IDs from the template. Observations support AI review, not user acceptance. Do not add this help object to the saved review.",
+    }
 
 
 def read_object(root: Path, relative: str) -> dict[str, Any]:
@@ -169,7 +183,7 @@ def record_review(
             reviewed["reviewed_at"] = existing.get("reviewed_at")
         else:
             reviewed["reviewed_at"] = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
-    if (reviewed.get("reviewer_type") not in {"executor", "independent_ai", "human", "authorized_reviewer"}
+    if (reviewed.get("reviewer_type") not in REVIEWER_TYPES
         or any(not isinstance(reviewed.get(k), str) or not planmod.ID_RE.fullmatch(reviewed[k]) for k in ("reviewer_id", "review_task_id"))
         or not planmod.timestamp_in_review_window(reviewed["reviewed_at"], not_before=plan["truth_locked_at"])):
         raise ValueError("batch_review_identity_or_timestamp_required")
@@ -290,7 +304,8 @@ def main() -> int:
             immutable_json(output, draft)
             print(json.dumps({"status": "review_pending", "review": str(output),
                               "asset_ids": draft["scope_asset_ids"],
-                              "instruction": "view saved images once; fill explicit reviewer identity, rubric, decision and concrete notes; no pass is prefilled"}))
+                              "instruction": "view saved images once; fill explicit reviewer identity, rubric, decision and concrete notes; no pass is prefilled",
+                              "input_help": review_input_help(plan, draft["scope_asset_ids"])}))
         else:
             if args.review is None:
                 raise ValueError("record_requires_review")

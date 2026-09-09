@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import copy
 import hashlib
 import json
 import os
@@ -328,6 +329,8 @@ class ValidatedRouteContext:
     execution_task_id: str | None
     _seal: object
     original_request_text: str = ""
+    interaction_state: dict[str, Any] | None = None
+    interaction_scope_id: str = "current_conversation"
 
     def __post_init__(self) -> None:
         if self._seal is not _ROUTE_CONTEXT_SEAL:
@@ -405,6 +408,8 @@ def validate_primary_route_context(
     descriptor_path: Path | None = None,
     execution_project_root: Path | None = None,
     execution_task_id: str | None = None,
+    interaction_state: dict[str, Any] | None = None,
+    interaction_scope_id: str = "current_conversation",
 ) -> ValidatedRouteContext:
     from dircreative_route import route_request
 
@@ -428,6 +433,9 @@ def validate_primary_route_context(
         project_root=resolved_project,
         descriptor=descriptor,
         handoff_path=resolved_handoff,
+        interaction_state=interaction_state,
+        scope_id=interaction_scope_id,
+        interaction_event_request="" if interaction_state is not None else None,
     )
     image_execution_stage = (
         primary.get("route") == "film_development"
@@ -449,6 +457,8 @@ def validate_primary_route_context(
         raise SkillStackError("intent execution context does not match the validated primary route")
     if primary.get("action") == "stop_skill_runtime":
         raise SkillStackError("validated primary route stopped Skill runtime")
+    if primary.get("action") in {"ask_interaction_mode", "ask_production_start", "prepare_production_scope", "review_checkpoint_and_wait"}:
+        raise SkillStackError("project interaction is awaiting a user decision; reuse the current question, do not prepare production")
     resolved_execution_project = resolved_project
     if execution_project_root is not None:
         try:
@@ -487,6 +497,8 @@ def validate_primary_route_context(
         ),
         _seal=_ROUTE_CONTEXT_SEAL,
         original_request_text=request_text,
+        interaction_state=copy.deepcopy(interaction_state),
+        interaction_scope_id=interaction_scope_id,
     )
 
 
@@ -498,12 +510,15 @@ def stage_selection_intent(
     craft_source: Path | None = None,
     craft_coverage: Path | None = None,
     project_root: Path | None = None,
+    interaction_state: dict[str, Any] | None = None,
+    interaction_scope_id: str = "current_conversation",
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     """Consume one existing craft stage, leaving media authorization untouched."""
     from dircreative_route import film_craft_stages, route_request
     from dircreative_storyboard_coverage import contained_regular_file, motion_panel_ids, validate as validate_coverage, validate_motion_planning
 
-    primary = route_request(request_text)
+    primary = route_request(request_text, interaction_state=interaction_state, scope_id=interaction_scope_id,
+                            interaction_event_request="" if interaction_state is not None else None)
     if primary.get("route") != "film_development" or primary.get("action") != "continue":
         raise SkillStackError("craft stage requires an active film-development scope")
     source_binding = None
@@ -542,7 +557,7 @@ def stage_selection_intent(
     if craft_source is not None:
         source, source_binding, source_path = read_craft_source(craft_source)
         if not isinstance(source.get("cards"), list):
-            raise SkillStackError("craft source must be canonical shot cards")
+            raise SkillStackError('craft source must be canonical shot cards: use a JSON object with "schema_version": "1.0" and "cards": [...], not a "shots" wrapper; each card keeps its canonical shot_id')
         fields = ("narrative_purpose", "shot_design", "action", "continuity_model")
         story_context = " ".join(
             card[field]
@@ -3104,6 +3119,8 @@ def select_stack(
                 project_root=route_context.execution_project_root,
                 execution_task_id=route_context.execution_task_id,
                 request_text=route_context.original_request_text,
+                interaction_state=route_context.interaction_state,
+                interaction_scope_id=route_context.interaction_scope_id,
             )
         except (OSError, ValueError, RuntimeError):
             asset_packet_errors = ["asset_execution_project_root_invalid"]
@@ -4858,11 +4875,13 @@ def main() -> int:
     select_parser.add_argument("--intent", type=Path, help="explicit intent or supplemental inputs for --stage")
     select_parser.add_argument("--stage", help="consume one craft stage derived from the request and current shot cards")
     select_parser.add_argument("--format", choices=("json", "task"), default="json", help="task displays current work and full read requests; json preserves the complete receipt")
-    select_parser.add_argument("--craft-source", type=Path, help="current project shot cards for post-story craft selection")
+    select_parser.add_argument("--craft-source", type=Path, help='current shot-card JSON object: schema_version "1.0", cards array; not a shots wrapper')
     select_parser.add_argument("--craft-coverage", type=Path, help="current coverage design with story-derived planning requirements")
     select_parser.add_argument("--root", action="append", help="override provider discovery with [source_type=]/directory/containing/Skills; normally omit, even for candidate DIR packages")
     select_parser.add_argument("--catalog", type=Path, help="host-injected metadata catalog JSON")
     select_parser.add_argument("--request", default="", help="original request for primary-route validation")
+    select_parser.add_argument("--interaction-state", type=Path, help="Current project interaction object or compact snapshot; optional when the request already explicitly selects execution.")
+    select_parser.add_argument("--interaction-scope-id", default="current_conversation")
     select_parser.add_argument("--handoff", type=Path, help="real ADCO Specialist Exchange handoff")
     select_parser.add_argument("--project-root", type=Path, help="ADCO project root")
     select_parser.add_argument(
@@ -4920,6 +4939,9 @@ def main() -> int:
             max_bytes=MAX_INTENT_BYTES,
             label="intent",
         ) if args.intent is not None else {}
+        interaction_state = load_json(args.interaction_state, max_bytes=MAX_INTENT_BYTES, label="interaction state") if args.interaction_state else None
+        if isinstance(interaction_state, dict) and "project_id" in interaction_state:
+            interaction_state = interaction_state.get("interaction")
         stage_dispatch = None
         if args.stage:
             if args.handoff is not None or args.project_root is not None:
@@ -4928,6 +4950,8 @@ def main() -> int:
                 request_text=args.request, stage=args.stage, supplemental=intent,
                 craft_source=args.craft_source, craft_coverage=args.craft_coverage,
                 project_root=args.execution_project_root,
+                interaction_state=interaction_state,
+                interaction_scope_id=args.interaction_scope_id,
             )
             recovery = stage_dispatch.get("before_image_submission")
             if recovery is not None:
@@ -4939,6 +4963,8 @@ def main() -> int:
                     recovery["command_args"] += ["--catalog", str(args.catalog.expanduser().absolute())]
                 if args.format == "task":
                     recovery["command_args"] += ["--format", "task"]
+                if args.interaction_state:
+                    recovery["command_args"] += ["--interaction-state", str(args.interaction_state.resolve()), "--interaction-scope-id", args.interaction_scope_id]
         elif args.craft_source is not None or args.craft_coverage is not None:
             raise SkillStackError("--craft-source and --craft-coverage require --stage")
         calibration_readback = None
@@ -4965,6 +4991,8 @@ def main() -> int:
             descriptor_path=args.descriptor,
             execution_project_root=args.execution_project_root,
             execution_task_id=args.execution_task_id,
+            interaction_state=interaction_state,
+            interaction_scope_id=args.interaction_scope_id,
         )
         receipt = select_stack(
             intent,

@@ -970,7 +970,16 @@ def route_request(
     project_root: Path | None = None,
     descriptor: dict[str, Any] | None = None,
     handoff_path: Path | None = None,
+    interaction_state: dict[str, Any] | None = None,
+    scope_id: str = "current_conversation",
+    checkpoint_stage: str | None = None,
+    production_scope: list[str] | None = None,
+    question_receipt: dict[str, Any] | None = None,
+    question_answer: dict[str, str] | None = None,
+    interaction_event_request: str | None = None,
 ) -> dict[str, Any]:
+    from dircreative_interaction import resolve as resolve_interaction, response as interaction_response
+
     policy = load_policy()
     media_scope = classify_media_scope(request)
     route, reason_codes = classify_route(
@@ -1000,6 +1009,15 @@ def route_request(
             **media_scope,
             "reason_codes": [*reason_codes, "skill_runtime_forbidden"],
         }
+    interaction, interaction_active = resolve_interaction(
+        request, route, reason_codes, scope_id=scope_id,
+        previous=interaction_state, checkpoint_stage=checkpoint_stage,
+        production_scope=production_scope, question_receipt=question_receipt,
+        question_answer=question_answer,
+        event_request=interaction_event_request,
+    )
+    if interaction_active and route == "bounded_revision":
+        route = "film_development"
     config = policy["routes"][route]
     execution_context = (
         "orchestrated_worker"
@@ -1028,8 +1046,15 @@ def route_request(
     if media_scope["media_scope"] == "scope_conflict":
         action = "stop_for_scope_conflict"
         reason_codes = [*reason_codes, "forwarded_media_scope_conflict"]
+    pacing_action, interaction_question = interaction_response(interaction, interaction_active)
+    if action == "continue" and pacing_action:
+        action = pacing_action
+    elif action != "continue":
+        interaction_question = None
     persistence = policy["interaction_contract"]["state_persistence"][config["mode"]]
     deliverable_layer, shot_matrix_allowed = classify_deliverable_layer(request, route)
+    if action in {"ask_interaction_mode", "discuss_and_wait", "review_checkpoint_and_wait", "ask_production_start", "prepare_production_scope"}:
+        shot_matrix_allowed = False
     required_files = list(config["required_files"])
     if "identity_state_contract_required" in reason_codes:
         required_files = ["skills/dircreative/references/character-master-sheet.md"]
@@ -1058,16 +1083,28 @@ def route_request(
             if action == "stop_for_scope_conflict"
             else "gate_question"
             if action == "stop_for_external_gate"
+            else "interaction_setup"
+            if action == "ask_interaction_mode"
+            else "discussion_turn"
+            if action == "discuss_and_wait"
+            else "checkpoint_review"
+            if action == "review_checkpoint_and_wait"
+            else "production_start_confirmation"
+            if action == "ask_production_start"
+            else "production_scope_draft"
+            if action == "prepare_production_scope"
             else "useful_artifact_first"
         ),
         "reuse_known_brief": True,
         "state_persistence": persistence,
         "threads_allowed": collaboration["threads_allowed"],
         "collaboration": collaboration,
+        "interaction": interaction,
+        "interaction_question": interaction_question,
         "full_receipt_required": config["full_receipt_required"],
         "deliverable_layer": deliverable_layer,
         "shot_matrix_allowed": shot_matrix_allowed,
-        "craft_stages": film_craft_stages(
+        "craft_stages": [] if action == "ask_interaction_mode" else film_craft_stages(
             request,
             route=route,
             deliverable_layer=deliverable_layer,
@@ -1194,6 +1231,12 @@ def main() -> int:
     parser.add_argument("--project-root", type=Path, help="Project root required for a real handoff.")
     parser.add_argument("--descriptor", type=Path, default=DESCRIPTOR_PATH)
     parser.add_argument("--self-test", action="store_true")
+    parser.add_argument("--interaction-state", type=Path, help="Current project interaction object or compact snapshot; read-only.")
+    parser.add_argument("--scope-id", default="current_conversation", help="Project/conversation scope; must match saved interaction state.")
+    parser.add_argument("--checkpoint-stage", help="An agreed checkpoint just reached, e.g. story or visual_direction.")
+    parser.add_argument("--production-item", action="append", help="One deliverable in the proposed production scope; present and await user confirmation.")
+    parser.add_argument("--question-receipt", type=Path, help="Actual host question_id/host_call_id JSON; no UI is invoked by this script.")
+    parser.add_argument("--question-answer", type=Path, help="Submitted host question_id/choice JSON for the current pending question.")
     args = parser.parse_args()
     if args.self_test:
         failures = self_test()
@@ -1207,6 +1250,9 @@ def main() -> int:
     handoff = json.loads(args.handoff.read_text(encoding="utf-8")) if args.handoff else None
     descriptor = json.loads(args.descriptor.read_text(encoding="utf-8")) if handoff and args.project_root else None
     project_root = args.project_root.expanduser().resolve() if args.project_root else None
+    interaction_state = json.loads(args.interaction_state.read_text(encoding="utf-8")) if args.interaction_state else None
+    if isinstance(interaction_state, dict) and "project_id" in interaction_state:
+        interaction_state = interaction_state.get("interaction")
     print(
         json.dumps(
             route_request(
@@ -1215,6 +1261,12 @@ def main() -> int:
                 project_root=project_root,
                 descriptor=descriptor,
                 handoff_path=args.handoff.expanduser().resolve() if args.handoff else None,
+                interaction_state=interaction_state,
+                scope_id=args.scope_id,
+                checkpoint_stage=args.checkpoint_stage,
+                production_scope=args.production_item,
+                question_receipt=json.loads(args.question_receipt.read_text()) if args.question_receipt else None,
+                question_answer=json.loads(args.question_answer.read_text()) if args.question_answer else None,
             ),
             ensure_ascii=False,
             indent=2,

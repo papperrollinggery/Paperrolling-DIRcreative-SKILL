@@ -112,6 +112,7 @@ EXISTING_SOURCE_ROLES = {
     "character_identity_reference", "product_identity_board", "prop_continuity_board",
     "scene_geography_camera_fov_reference", "lighting_material_style_board",
 }
+FOUNDATION_GENERATION_ROLES = frozenset(EXISTING_SOURCE_ROLES)
 COMPLETION_CLAIMS = {
     "none",
     "plan_complete",
@@ -1216,6 +1217,26 @@ def pending_candidate_self_checks(
     return errors
 
 
+def validate_in_progress_plan(payload: dict[str, Any], *, base_dir: Path) -> tuple[list[str], dict[str, Any]]:
+    """Keep evidence validation, defer only unapproved candidate aspect defects.
+
+    A failed-size candidate must be usable as a repair source and must not hold
+    unrelated roots hostage. Approved assets and final delivery use strict
+    validate_plan; downstream dependencies still require their actual review.
+    """
+    errors, metrics = validate_plan(payload, base_dir=base_dir)
+    if not isinstance(payload, dict):
+        return errors, metrics
+    prefixes = tuple(
+        f"required_asset_delivery_aspect_ratio_mismatch:{a['asset_id']}:"
+        for a in payload.get("assets", []) if isinstance(a, dict)
+        and a.get("status") == "generated_candidate" and a.get("visual_qa_receipt") is None
+        and isinstance(a.get("asset_id"), str)
+    )
+    deferred = [error for error in errors if prefixes and error.startswith(prefixes)]
+    return [error for error in errors if error not in deferred], {**metrics, "deferred_candidate_quality_errors": deferred}
+
+
 def build_candidate_repair_source(
     *, project_root: Path, visual_plan_binding: Any, asset_id: str, changes: Any,
     base_plan_binding: Any = None,
@@ -1229,7 +1250,7 @@ def build_candidate_repair_source(
         raise ValueError("candidate_repair_plan_changed")
     plan = json.loads(raw)
     base = (root / visual_plan_binding["relative_path"]).parent
-    if validate_plan(plan, base_dir=base)[0]:
+    if validate_in_progress_plan(plan, base_dir=base)[0]:
         raise ValueError("candidate_repair_plan_invalid")
     asset = next((item for item in plan["assets"] if item["asset_id"] == asset_id), None)
     if (not isinstance(asset, dict) or asset.get("status") != "generated_candidate"
@@ -1262,7 +1283,7 @@ def build_candidate_repair_source(
             raise ValueError("candidate_repair_base_plan_changed")
         source_plan = json.loads(base_raw)
         source_dir = (root / base_plan_binding["relative_path"]).parent
-        if validate_plan(source_plan, base_dir=source_dir)[0] or source_plan.get("project_id") != plan["project_id"]:
+        if validate_in_progress_plan(source_plan, base_dir=source_dir)[0] or source_plan.get("project_id") != plan["project_id"]:
             raise ValueError("candidate_repair_base_plan_invalid")
         source_asset = next((item for item in source_plan["assets"] if item["asset_id"] == asset_id), None)
         if not isinstance(source_asset, dict) or any(source_asset.get(key) != asset.get(key) for key in (
@@ -4028,6 +4049,73 @@ def validate_plan(
     return list(dict.fromkeys(errors)), metrics
 
 
+def foundation_frontier(payload: dict[str, Any]) -> dict[str, Any]:
+    """Describe independently preparable foundation assets without claiming readiness."""
+    assets = [item for item in payload.get("assets", []) if isinstance(item, dict)]
+    outstanding = [
+        item for item in assets
+        if item.get("required") is True and item.get("status") not in GENERATED_STATUSES
+    ]
+    candidates: list[dict[str, Any]] = []
+    dependency_blocked: list[dict[str, Any]] = []
+    for asset in assets:
+        if (
+            asset.get("required") is not True
+            or asset.get("action") != "generate"
+            or asset.get("role") not in FOUNDATION_GENERATION_ROLES
+            or asset.get("status") in GENERATED_STATUSES
+        ):
+            continue
+        parents = safe_id_list(asset.get("inherits_from"))
+        item = {
+            "asset_id": asset["asset_id"],
+            "role": asset["role"],
+            "purpose": asset["purpose"],
+            "plan_status": asset["status"],
+            "generated": False,
+            "visual_qa_approved": False,
+            "next_command": (
+                "python3 scripts/dircreative_prepare_asset.py "
+                "--project-root PROJECT --plan PLAN "
+                f"--asset-id {asset['asset_id']} --explain-inputs"
+            ),
+        }
+        if parents:
+            dependency_blocked.append({
+                **item,
+                "preparation_state": "blocked_by_dependencies",
+                "dependency_blockers": parents,
+                "design_inputs": "not_checked_until_dependencies_are_approved",
+            })
+        else:
+            candidates.append({
+                **item,
+                "preparation_state": "design_inputs_required",
+                "dependency_blockers": [],
+                "design_inputs": [
+                    "source_spec",
+                    "design_artifact_or_foundation_pass",
+                    *(
+                        ["character_contract"]
+                        if asset["role"] == "character_identity_reference"
+                        else []
+                    ),
+                ],
+            })
+    return {
+        "scope": payload["scope"],
+        "project_id": payload["project_id"],
+        "completion_claim": payload["completion_claim"],
+        "remaining_required_assets": len(outstanding),
+        "foundation_candidates": candidates,
+        "foundation_assets_blocked_by_dependencies": dependency_blocked,
+        "note": (
+            "Candidates are root foundation assets that can be prepared next. "
+            "They are not generated, visually reviewed, or authorized by this report."
+        ),
+    }
+
+
 def stamp_plan_evidence(
     payload: dict[str, Any],
     *,
@@ -5236,6 +5324,14 @@ def main() -> int:
         description="Derive, stamp, and validate DIRcreative whole-film visual asset coverage."
     )
     parser.add_argument("--plan", type=Path, help="JSON visual asset plan to validate or stamp.")
+    parser.add_argument(
+        "--foundation-frontier",
+        action="store_true",
+        help=(
+            "After validating --plan, list root foundation assets that can be "
+            "prepared next. Read-only; never claims generation or visual QA."
+        ),
+    )
     parser.add_argument("--inventory", type=Path, help="JSON film inventory to expand and validate.")
     parser.add_argument("--output", type=Path, help="Write an expanded plan or stamped evidence plan.")
     parser.add_argument(
@@ -5255,6 +5351,10 @@ def main() -> int:
         parser.error("choose exactly one of --self-test, --plan, or --inventory")
     if args.stamp_evidence and (not args.plan or not args.output):
         parser.error("--stamp-evidence requires --plan and --output")
+    if args.foundation_frontier and not args.plan:
+        parser.error("--foundation-frontier requires --plan")
+    if args.foundation_frontier and args.stamp_evidence:
+        parser.error("--foundation-frontier cannot be combined with --stamp-evidence")
     if args.output and not args.inventory and not args.stamp_evidence:
         parser.error("--output requires --inventory or --stamp-evidence")
     if args.checked_at and not args.stamp_evidence:
@@ -5284,6 +5384,8 @@ def main() -> int:
             else:
                 errors, metrics = validate_plan(payload, base_dir=plan_path.parent)
                 report = {"plan": str(plan_path), "metrics": metrics}
+                if not errors and args.foundation_frontier:
+                    report["foundation_frontier"] = foundation_frontier(payload)
         else:
             inventory_path = args.inventory.expanduser().resolve()
             inventory = load_json(inventory_path)

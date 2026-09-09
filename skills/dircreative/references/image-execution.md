@@ -31,6 +31,25 @@ use the existing constraint-input stage to provide a scoped layout reference;
 do not keep appending corrective words or editing degraded pixels. Do not add a new user approval when the
 brief and authorization are sufficient.
 
+If the next independent foundation asset is unclear, inspect the read-only frontier:
+
+```text
+python3 scripts/dircreative_visual_asset_plan.py --plan PLAN --foundation-frontier
+```
+
+It lists only root foundation assets that can be prepared next; it does not claim
+that an image exists, passed QA, or is authorized. Prepare those independent
+identity/prop/scene assets before their storyboard and clean-input dependents.
+If the input shape is unclear, inspect one selected asset without provider work:
+
+```text
+python3 scripts/dircreative_prepare_asset.py --project-root PROJECT --plan PLAN --asset-id ASSET_ID --explain-inputs
+```
+
+Once the design inputs exist, run the public preparer, then use its ready native
+arguments for the actual image call and preview the returned candidate. These
+helpers expose the next step; they are not an extra per-image approval stage.
+
 Use the public preparer for a designed foundation asset. It binds the current
 role, references, selected style capsule, provider replay and native arguments
 in one call. Do not write a local adapter, manually compute hashes or read
@@ -43,12 +62,18 @@ python3 scripts/dircreative_prepare_asset.py --project-root PROJECT --plan PLAN 
 For a from-zero asset, `--design-artifact` accepts the existing authored design
 stage payload instead of `--foundation-pass`; the helper builds its mechanical
 bindings, never fills missing design judgments from the purpose. Human character
-contracts can use `--character-contract` for the existing character-master fields.
+contracts can use `--character-contract` with the execution fields printed by
+`--explain-inputs`; inventory/stress descriptors are a different input shape.
+Use the same authored fact wording as the current plan purpose; punctuation is
+not identity evidence. Missing content facts are reported before provider work.
 Add `--style-capsule` only when a capsule is selected. Local reference entries
 retain their actual `rights_status` and `approval_status`; these metadata are not
 sent as prompt text. Keep the original task request separate from an individual
 asset description. Same inputs revalidate existing outputs; changed inputs need
 a new output directory. `imagegen_arguments` are the exact native call arguments.
+If this project chose its mode after the original brief, pass the saved
+`--interaction-state`; do not rewrite the original media request to simulate a
+new authorization. Execution reuses that choice without asking again.
 
 The lower-level `prepare-role-spec` remains available for custom integrations.
 The public path inserts the canonical character/product/prop/scene/style contract
@@ -62,20 +87,32 @@ frames and temporary motion drawings keep their own existing compilation contrac
 A generic `ready` compile lacking the current role requirements cannot pass the
 formal handoff. Do not patch its final prompt or invent a passed asset image.
 
-For a reviewed failed foundation candidate, keep its current asset and use
-`prepare-candidate-repair --project-root PROJECT --visual-plan PLAN
---expected-plan-sha256 HASH --asset-id C01 --spec SOURCE_SPEC --changes CHANGES
---output-spec REPAIR_SPEC --output-binding REPAIR_BINDING`. `CHANGES` is a JSON
-array of `{ "check_id": "frontal_portrait", "instruction": "<observed correction>" }`
-targeting failed observations. The preparer builds a compact delta spec and
-removes create-time staging, subject poses, lighting and style instructions;
-only the source, bound changes and custom preservation facts enter the repair.
-use Jingzao's `source_matched` surface policy when existing texture is sound.
-Compile the returned edit spec with the installed provider. Put its returned
-`reference_asset` in the asset request and identical `candidate_repair` bindings
-in the new handoff and packet. This candidate is the sole `base_edit_source`,
-not an approved parent or a self-dependency. The current headed master keeps its
-mode and truth; crop/pose repair does not become a headless or state derivative.
+For a reviewed failed foundation candidate, keep its current asset and use the
+public preparer with `--repair-changes`. The JSON array contains only observed
+failed checks, for example:
+
+```text
+python3 scripts/dircreative_prepare_asset.py --project-root PROJECT --plan REVIEWED_PLAN \
+  --asset-id C01 --source-spec SOURCE_SPEC.json --design-artifact ORIGINAL_DESIGN.json \
+  --character-contract CHARACTER_MASTER.json --original-request "ORIGINAL REQUEST" \
+  --execution-task-id TASK_ID --output-dir prepared/C01-repair-01 \
+  --repair-changes '[{"check_id":"frontal_portrait","instruction":"<observed correction>"}]'
+```
+
+The current reviewed plan must contain the actual rejected candidate and its
+recorded retry observations. The preparer rebuilds the candidate-repair source,
+uses the candidate as the sole `base_edit_source`, emits `operation: edit` and
+the identical `candidate_repair` binding in its input lock, handoff, execution
+packet and ready result. It reuses the supplied design/foundation and character
+contract; it does not redo asset design or turn the edit into a new prompt.
+
+The compact delta spec removes create-time staging, subject poses, lighting and
+style instructions. Only the bound correction and preservation facts enter the
+edit, using Jingzao's `source_matched` surface policy when source texture is
+sound. The returned native arguments are the only valid image call. A second
+repair after a degraded result may add `--best-base-plan REVIEWED_BEST_PLAN` to
+bind a same-truth reviewed base; it never permits an arbitrary image or a
+different character source.
 
 Keep the best-quality base, not automatically the latest output. After one
 failed repair, do not recursively edit its result. Use the reviewed same-truth

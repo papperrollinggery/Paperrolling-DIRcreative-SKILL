@@ -776,7 +776,8 @@ def validate(
     planning_resolution: dict[str, Any] | None = None
     if isinstance(visual_plan, dict):
         plan_dir = (resolved_project / document["visual_plan"]["relative_path"]).parent
-        plan_errors, _ = validate_plan(copy.deepcopy(visual_plan), base_dir=plan_dir)
+        from dircreative_visual_asset_plan import validate_in_progress_plan
+        plan_errors, _ = validate_in_progress_plan(copy.deepcopy(visual_plan), base_dir=plan_dir)
         if plan_errors:
             errors.append("visual_asset_plan_snapshot_invalid")
         active_matches = [
@@ -864,7 +865,7 @@ def validate(
     )
     if isinstance(stack_request, dict):
         if (
-            set(stack_request) != {"contract_id", "request_text", "intent"}
+            set(stack_request) not in ({"contract_id", "request_text", "intent"}, {"contract_id", "request_text", "intent", "interaction_state"})
             or stack_request.get("contract_id") != "visual_asset_skill_stack_request_v1"
             or not isinstance(stack_request_text, str)
             or not isinstance(stack_intent, dict)
@@ -894,6 +895,15 @@ def validate(
                 json.dumps(stack_intent, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
                 encoding="utf-8",
             )
+            interaction_args: list[str] = []
+            interaction_state = stack_request.get("interaction_state")
+            if interaction_state is not None:
+                if not isinstance(interaction_state, dict) or not isinstance(interaction_state.get("scope_id"), str):
+                    errors.append("visual_asset_interaction_state_invalid")
+                    return errors, None
+                interaction_path = Path(raw) / "interaction.json"
+                interaction_path.write_text(json.dumps(interaction_state), encoding="utf-8")
+                interaction_args = ["--interaction-state", str(interaction_path), "--interaction-scope-id", interaction_state["scope_id"]]
             replay, replay_error = run_json_command(
                 isolated_python_command(
                     ROOT / "scripts/dircreative_skill_stack.py",
@@ -904,6 +914,7 @@ def validate(
                     stack_request_text,
                     "--root",
                     str(provider_root.resolve(strict=True).parent),
+                    *interaction_args,
                 ),
                 cwd=ROOT,
                 label="visual_asset_skill_stack_replay",

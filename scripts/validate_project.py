@@ -1737,6 +1737,10 @@ def validate_execution_scope_regressions() -> None:
         "tests.test_candidate_repair",
         "tests.test_image_execution_postcheck",
         "tests.test_prepare_asset",
+        "tests.test_interaction_modes",
+        "tests.test_foundation_frontier",
+        "tests.test_prepare_asset_inputs",
+        "tests.test_storyboard_coverage",
         "tests.test_review_batch",
         "tests.test_character_expression",
         "tests.test_video_quality",
@@ -1982,7 +1986,7 @@ def validate_v2_interaction_contract() -> None:
         interaction.get("reversible_internal_states") == V2_REVERSIBLE_INTERNAL_STATES,
         "v2 reversible internal state set drifted",
     )
-    require(interaction.get("first_response_contract") == "useful_artifact_first", "v2 is not result-first")
+    require(interaction.get("first_response_contract") == "interaction_setup_unless_explicit_choice_or_bounded_work", "new project interaction setup is missing")
     require(interaction.get("known_brief_policy") == "reuse_without_reasking", "v2 re-asks known briefs")
     require(interaction.get("obvious_route_without_router_tool") is True, "obvious routes require a router tool")
     require(
@@ -2088,9 +2092,10 @@ def validate_v2_interaction_contract() -> None:
         "explicit_client_delivery_approval",
     ]:
         require(case_id in cases, f"missing v2 interaction case: {case_id}")
-    for case_id in ["continue", "third_line", "single_shot", "complete_ad"]:
+    for case_id in ["continue", "third_line", "single_shot"]:
         require(cases[case_id]["action"] == "continue", f"{case_id} must continue without a gate")
         require(cases[case_id]["first_response_contract"] == "useful_artifact_first", f"{case_id} is not result-first")
+    require(cases["complete_ad"]["action"] == "ask_interaction_mode", "complete brief bypassed mode selection")
     require(cases["concept_conflict"]["external_user_gate"] == "concept_lock", "concept conflict gate mismatch")
     require(cases["real_generation"]["external_user_gate"] == "generation_authorization", "generation gate mismatch")
     require(

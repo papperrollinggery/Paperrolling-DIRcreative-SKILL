@@ -34,7 +34,8 @@ The root v2 route owns scope and authorization; legacy records do not add gates.
 
 Return the requested first concept or a compact brief with the decision-changing
 assumptions. Reuse supplied channel, duration, audience and constraints. A complete
-brief needs no confirmation question. If a critical fact is missing, explain its
+brief needs no factual reconfirmation. Follow the root project-interaction
+choice if pacing is still unknown; explicit self-direction already selects direct execution. If a critical fact is missing, explain its
 specific effect and continue independent creative work.
 
 ## Creative Foundation Gate

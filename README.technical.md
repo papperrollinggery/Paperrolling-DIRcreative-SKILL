@@ -28,7 +28,7 @@ This guide preserves detailed workflow, integration, validation and verified-rel
 
 DIRcreative 不是“输入一句话、吐出一堆提示词”的黑盒。它先判断任务是局部修改、完整开发还是交付审计，再只加载对应合同。局部任务直接交付修改结果；只有真实方向冲突、生成授权或客户交付才停下来询问。
 
-当前源码版本为 `v0.11.1`；已发布版本与下载以 [GitHub Releases](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/releases) 为准。本版用公共入口完成资产准备与一次批次审阅，复用未变化的候选质量证据，减少生产任务手写协议和重复看图；保留五视图、真实依赖与最终采纳边界。成人体型和服装剪裁按明确设计传递，不以固定 A-pose 或默认保守服装覆盖；视频提示词按场景组织稳定事实与逐拍变化，保留实际参考、环境、表演、摄影和声音；仅转发已写明的质量方向，不自动补十二项电影质感前缀。真实生成和输出审核仍有服务与模型限制，不保证每次出图或普遍一次成功。
+当前源码版本为 `v0.12.0`；已发布版本与下载以 [GitHub Releases](https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL/releases) 为准。本版用公共入口完成资产准备与一次批次审阅，复用未变化的候选质量证据，减少生产任务手写协议和重复看图；保留五视图、真实依赖与最终采纳边界。成人体型和服装剪裁按明确设计传递，不以固定 A-pose 或默认保守服装覆盖；视频提示词按场景组织稳定事实与逐拍变化，保留实际参考、环境、表演、摄影和声音；仅转发已写明的质量方向，不自动补十二项电影质感前缀。真实生成和输出审核仍有服务与模型限制，不保证每次出图或普遍一次成功。
 
 源码仓库包含 DIRcreative 根 Skill、19 个 `skills/dircreative/*` 内部子 Skill，以及 `ai-film-asset-stress-test`、`ai-film-production-ledger` 两个 P0 能力入口。正式 DIRcreative 安装包按安全设计只暴露根 `$dircreative`，其余入口会内部化后由 selector 路由；Skill Stack 还会发现宿主中已安装的外部专业 provider。许可明确的依赖可通过锁定 bundle 随包提供，镜造通过显式更新入口安装；其他依赖仍由宿主发现。具体范围与命令见 [依赖安装指南](docs/dependencies.md)，不能把“宿主可调用”表述成“GitHub 已内置”。ADCO 始终是独立外部编排方。
 
@@ -69,15 +69,16 @@ candidate is approved, or that a structural PASS proves visual quality.
 | Delivery | 真实生成授权、正式版本/资产、客户可见交付、有效 ADCO handoff | <= 30 KB 上下文；只为当前真实动作运行审计与 receipt |
 
 ```text
-explicit $dircreative → direct judgment → Fast | Studio | Delivery
+explicit $dircreative → Fast | Studio | Delivery
+                     → new creative project: choose interaction pace if unknown
                      → one Route Card + at most one craft card
-                     → useful artifact first
+                     → discussion, or authorized production with visible artifacts
                      → router only for ambiguity or validated handoff
 ```
 
 ## Visual, conversational workflow
 
-可视化不是装饰，而是每个用户决策的操作界面：
+前期用原生询问框选择协作方式，在创意需要取舍或准备开始制作时确认。制作后连续完成已授权的生成、检查和返工；不逐阶段询问。必要的可视化和实际成果预览包括：
 
 - **方案比较卡**：选中项、推荐理由和下游影响同步变化，避免“选择变了、建议没变”。
 - **曲线与时间线**：展示情绪、信息密度、钩子、产品曝光和镜头节奏。
@@ -88,7 +89,7 @@ explicit $dircreative → direct judgment → Fast | Studio | Delivery
 
 2026-07-14 对 `v0.4.0` 交互面的本地浏览器验收覆盖 **14 个页面、84 个响应式场景、0 个失败**；复现命令见 [Development and validation](#development-and-validation)。技术门禁证明界面和工作流按约定运行，但不会替代具体客户项目的真人创意验收。
 
-本轮工作流优化已修复显式组协作、否定请求、单页故事范围和系统/包内 Skill 发现链，并清理旧逐阶段确认。详见 [优化记录与验证边界](docs/film-preproduction/research/workflow-optimization-2026-09-05.md)。正式发布与安装以对应 Release 和实际验证结果为准；源码测试不代表媒体效果验收。
+v0.12.0 恢复按项目选择讨论或直接执行，保留既有显式组协作、单页故事范围和 Skill 发现链；新增基础资产与输入字段说明，提前识别格式错误，并统一独立资产批量生成与实际依赖检查。详见 [优化记录与验证边界](docs/film-preproduction/research/workflow-optimization-2026-09-05.md)。正式发布与安装以对应 Release 和实际验证结果为准；源码测试不代表媒体效果验收。
 
 ## Quick start
 
@@ -307,12 +308,12 @@ Skill; see [review trust host configuration](docs/film-preproduction/review-trus
 正式安装源是同一 GitHub Release 中的归档和 `SHA256SUMS`，再由该 tag 的精确、
 干净源码执行同进程验证与安装；不能运行归档内的 installer，也不能用 metadata
 自证。下面的信任链从 `v0.5.0` 起适用；更早版本不满足这条正式安装门。
-以下命令在 `v0.11.1` tag 与 Release 实际发布后生效。
+以下命令在 `v0.12.0` tag 与 Release 实际发布后生效。
 
 ```bash
-gh release download v0.11.1 \
+gh release download v0.12.0 \
   --repo papperrollinggery/Paperrolling-DIRcreative-SKILL \
-  --pattern 'dircreative-0.11.1.tar.gz' \
+  --pattern 'dircreative-0.12.0.tar.gz' \
   --pattern 'SHA256SUMS'
 ```
 
@@ -322,7 +323,7 @@ gh release download v0.11.1 \
 ```bash
 set -euo pipefail
 REPO_URL="https://github.com/papperrollinggery/Paperrolling-DIRcreative-SKILL.git"
-TAG="v0.11.1"
+TAG="v0.12.0"
 EXPECTED_COMMIT="$(
   git ls-remote --exit-code --tags "$REPO_URL" \
     "refs/tags/$TAG" "refs/tags/$TAG^{}" |
@@ -334,7 +335,7 @@ EXPECTED_COMMIT="$(
     }
   '
 )"
-ARTIFACT="$(pwd)/dircreative-0.11.1.tar.gz"
+ARTIFACT="$(pwd)/dircreative-0.12.0.tar.gz"
 CHECKSUMS="$(pwd)/SHA256SUMS"
 VERIFY_ROOT="$(mktemp -d)"
 trap 'rm -rf "$VERIFY_ROOT"' EXIT

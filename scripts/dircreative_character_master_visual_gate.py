@@ -1153,7 +1153,7 @@ def main() -> int:
     parser.add_argument("--mode", choices=sorted(CHARACTER_MODES), default="headed_master")
     parser.add_argument("--derived-from-asset-id")
     parser.add_argument("--approved-source-master-sha256")
-    parser.add_argument("--receipt", type=Path)
+    parser.add_argument("--receipt", type=Path, help="Normally omit: the canonical sidecar beside --image is used. Arbitrary receipt paths are not accepted.")
     args = parser.parse_args()
     try:
         if not SHA256_RE.fullmatch(args.asset_truth_sha256):
@@ -1168,6 +1168,9 @@ def main() -> int:
         ):
             raise ValueError("derived mode requires an approved source asset and hash")
         image_path = args.image.expanduser().resolve(strict=True)
+        receipt_path = args.receipt.expanduser().resolve(strict=False) if args.receipt is not None else expected_receipt_path(image_path)
+        if receipt_path != expected_receipt_path(image_path):
+            raise ValueError(f"receipt path must be {expected_receipt_path(image_path)}; omit --receipt to use it")
         image_bytes = read_relative_regular_file_once(
             image_path.parent,
             image_path.name,
@@ -1205,13 +1208,6 @@ def main() -> int:
             derived_from_asset_id=args.derived_from_asset_id,
             approved_source_master_sha256=args.approved_source_master_sha256,
         )
-        receipt_path = (
-            args.receipt.expanduser().resolve(strict=False)
-            if args.receipt is not None
-            else expected_receipt_path(image_path)
-        )
-        if receipt_path != expected_receipt_path(image_path):
-            raise ValueError("receipt path must use the canonical image sidecar name")
         write_new_receipt(
             receipt_path,
             (json.dumps(receipt, ensure_ascii=False, indent=2, sort_keys=True) + "\n").encode("utf-8"),
@@ -1219,7 +1215,7 @@ def main() -> int:
         print(json.dumps(receipt, ensure_ascii=False, indent=2, sort_keys=True))
         return 0 if receipt["status"] == "pass" else 1
     except (OSError, subprocess.TimeoutExpired, ValueError) as exc:
-        print(json.dumps({"status": "blocked", "errors": [f"input_or_receipt_invalid:{type(exc).__name__}"]}))
+        print(json.dumps({"status": "blocked", "errors": [f"input_or_receipt_invalid:{type(exc).__name__}"], "detail": str(exc)}, ensure_ascii=False))
         return 1
 
 

@@ -40,7 +40,7 @@
     },
     {
       "id": "studio_complete_tvc",
-      "request": "$dircreative 根据完整 brief 直接开发一支 60 秒 16:9 广播 TVC：完整故事、24 个正式镜头、声音结构、逐镜分镜图计划、场景图计划、覆盖全部镜头的导演故事板，以及每个视频生成单元的干净输入帧。不要用短片、竖屏或代表性样片替代全片。",
+      "request": "$dircreative 根据完整 brief 直接执行，开发一支 60 秒 16:9 广播 TVC：完整故事、24 个正式镜头、声音结构、逐镜分镜图计划、场景图计划、覆盖全部镜头的导演故事板，以及每个视频生成单元的干净输入帧。不要用短片、竖屏或代表性样片替代全片。",
       "expected_mode": "studio",
       "expected_route": "film_development",
       "minimum_answer_bytes": 9000,
@@ -87,7 +87,7 @@
     },
     {
       "id": "studio_client_story_dual_direction",
-      "request": "$dircreative 用一至两页给客户讲清完整品牌片双方向故事，不要扩成镜头表、素材槽、TN/CG 编号或 production worksheet。",
+      "request": "$dircreative 直接执行，用一至两页给客户讲清完整品牌片双方向故事，不要扩成镜头表、素材槽、TN/CG 编号或 production worksheet。",
       "expected_mode": "studio",
       "expected_route": "film_development",
       "expected_deliverable_layer": "client_story",
